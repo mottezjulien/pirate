@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'generic/config/language.dart';
+import 'generic/connect/connection_start_usecase.dart';
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+
+  final ConnectionStartUseCase startUseCase = ConnectionStartUseCase();
+  startUseCase.apply();
+
 
   runApp(
       EasyLocalization(

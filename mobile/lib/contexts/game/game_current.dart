@@ -8,12 +8,14 @@ class GameCurrent {
 
   static bool get hasGame => _instance.hasGame;
 
+  static set game(Game game) => _instance._game = game;
+
 }
 
 class _GameCurrent {
 
-  Game? game;
+  Game? _game;
 
-  bool get hasGame => game != null;
+  bool get hasGame => _game != null;
 
 }

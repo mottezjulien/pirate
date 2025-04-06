@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/game_settings_usecase.dart';
 import '../../game_current.dart';
 
 class GameMenuView extends StatelessWidget {
@@ -47,30 +48,11 @@ class GameMenuViewModel {
   bool get hasGame => GameCurrent.hasGame;
 
   void start() {
-
+    GameSettingsUseCase().apply();
   }
 
   void continueGame() {
 
   }
 
-
-
-  /*final GameRepository repository = GameRepository();
-
-  final Template template;
-  final bool hasGame;
-
-  GameMenuViewModel()
-      : template = Settings.template,
-        hasGame = Settings.hasGame();
-
-  Future<void> startGame(BuildContext context) async {
-    Settings.game = await repository.generate(template);
-    context.pushNamed(AppRouter.nameGameView);
-  }
-
-  void continueGame(BuildContext context) {
-    context.pushNamed(AppRouter.nameGameView);
-  }*/
 }

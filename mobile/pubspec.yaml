@@ -17,6 +17,12 @@ dependencies:
   #Default - I18n
   easy_localization: ^3.0.7
 
+  #Default - Get Device Id
+  device_info_plus: ^11.2.2
+
+  #Geolocation
+  geolocator: ^13.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
