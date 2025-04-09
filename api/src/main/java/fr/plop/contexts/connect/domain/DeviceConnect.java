@@ -1,12 +1,10 @@
 package fr.plop.contexts.connect.domain;
 
-import java.util.Optional;
 
-public record DeviceConnect(Connect.Id id,
-                            Optional<ConnectAuth> lastAuth,
+public record DeviceConnect(Id id, ConnectUser user, String deviceId){
 
-                            ConnectUser user,
-                            String deviceId) implements Connect {
+    public record Id(String value) {
 
+    }
 
 }

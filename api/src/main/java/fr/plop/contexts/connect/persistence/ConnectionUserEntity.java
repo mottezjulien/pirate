@@ -18,7 +18,7 @@ public class ConnectionUserEntity {
     private String id;
 
     @OneToMany(mappedBy = "user")
-    private Set<ConnectionEntity> connections = new HashSet<>();
+    private Set<DeviceConnectionEntity> connections = new HashSet<>();
 
     public String getId() {
         return id;
@@ -28,11 +28,11 @@ public class ConnectionUserEntity {
         this.id = id;
     }
 
-    public Set<ConnectionEntity> getConnections() {
+    public Set<DeviceConnectionEntity> getConnections() {
         return connections;
     }
 
-    public void setConnections(Set<ConnectionEntity> connections) {
+    public void setConnections(Set<DeviceConnectionEntity> connections) {
         this.connections = connections;
     }
 
@@ -42,8 +42,8 @@ public class ConnectionUserEntity {
         return entity;
     }
 
-
     public ConnectUser toModel() {
         return new ConnectUser(new ConnectUser.Id(id));
     }
+
 }

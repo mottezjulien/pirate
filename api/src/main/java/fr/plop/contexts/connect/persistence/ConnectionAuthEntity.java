@@ -1,9 +1,11 @@
 package fr.plop.contexts.connect.persistence;
 
-
 import fr.plop.contexts.connect.domain.ConnectAuth;
+import fr.plop.contexts.connect.domain.ConnectToken;
+import fr.plop.contexts.connect.domain.DeviceConnect;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -11,7 +13,13 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(name = "TEST2_CONNECTION_AUTH")
+@Table(
+    name = "TEST2_CONNECTION_AUTH",
+    indexes = {
+        @Index(columnList = "token", unique = true)
+    }
+)
+
 public class ConnectionAuthEntity {
 
     @Id
@@ -19,7 +27,7 @@ public class ConnectionAuthEntity {
 
     @ManyToOne
     @JoinColumn(name = "connection_id")
-    private ConnectionEntity connection;
+    private DeviceConnectionEntity connection;
 
     private Instant createdAt;
 
@@ -33,11 +41,11 @@ public class ConnectionAuthEntity {
         this.id = id;
     }
 
-    public ConnectionEntity getConnection() {
+    public DeviceConnectionEntity getConnection() {
         return connection;
     }
 
-    public void setConnection(ConnectionEntity connection) {
+    public void setConnection(DeviceConnectionEntity connection) {
         this.connection = connection;
     }
 
@@ -57,7 +65,11 @@ public class ConnectionAuthEntity {
         this.token = token;
     }
 
+    public ConnectAuth toModelWithConnect(DeviceConnect connect) {
+        return new ConnectAuth(new ConnectToken(token), connect, createdAt);
+    }
+
     public ConnectAuth toModel() {
-        return new ConnectAuth(getToken(), getCreatedAt());
+        return new ConnectAuth(new ConnectToken(token), connection.toModel(), createdAt);
     }
 }

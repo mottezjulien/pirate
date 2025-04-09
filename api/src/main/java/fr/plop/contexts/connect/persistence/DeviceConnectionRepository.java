@@ -6,10 +6,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface ConnectionRepository extends JpaRepository<ConnectionEntity, String> {
+public interface DeviceConnectionRepository extends JpaRepository<DeviceConnectionEntity, String> {
+
     @Query(value = "FROM DeviceConnectionEntity connect" +
-            " LEFT JOIN FETCH connect.auths" +
+            " LEFT JOIN FETCH connect.user" +
             " WHERE connect.deviceId = :deviceId")
-    List<DeviceConnectionEntity> findByDeviceIdFetchAuth(@Param("deviceId") String deviceId);
+    List<DeviceConnectionEntity> findByDeviceIdFetchUser(@Param("deviceId") String deviceId);
 
 }

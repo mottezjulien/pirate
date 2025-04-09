@@ -21,7 +21,7 @@ public class ConnectionController {
     @PostMapping({"", "/"})
     public AuthResponseDTO auth(@RequestBody ConnectionRequestDTO request) {
         ConnectAuth auth = createAuthUseCase.byDeviceId(request.deviceId());
-        return new AuthResponseDTO(auth.token());
+        return new AuthResponseDTO(auth.token().value());
     }
 
 }
