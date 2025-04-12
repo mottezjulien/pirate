@@ -1,5 +1,6 @@
 
 
+import '../config/language.dart';
 import '../connect/connection_current.dart';
 
 class Headers {
@@ -8,7 +9,7 @@ class Headers {
     return {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
-      'Language': Settings.language().toString()
+      'Language': Language.byDefault().toString() // TODO
     };
   }
 
@@ -16,7 +17,7 @@ class Headers {
     return {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
-      'Language': Settings.language().toString(),
+      'Language': Language.byDefault().toString(), // TODO
       'Authorization': ConnectionCurrent.token
     };
   }
