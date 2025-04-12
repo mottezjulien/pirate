@@ -1,6 +1,8 @@
 package fr.plop.contexts.game.persistence;
 
 import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
+import fr.plop.contexts.game.domain.model.Game;
+import fr.plop.contexts.game.domain.model.GamePlayer;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -44,5 +46,10 @@ public class GamePlayerEntity {
 
     public void setUser(ConnectionUserEntity user) {
         this.user = user;
+    }
+
+    public GamePlayer toModel() {
+        Game.Id gameId = new Game.Id(game.getId());
+        return new GamePlayer(new GamePlayer.Atom(new GamePlayer.Id(id), gameId));
     }
 }

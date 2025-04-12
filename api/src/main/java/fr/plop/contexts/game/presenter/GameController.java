@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping("/game")
+@RequestMapping("/games")
 public class GameController {
 
     private final ConnectUseCase connectUseCase;
@@ -41,7 +41,7 @@ public class GameController {
             Game.Atom game = useCase.apply(templateCode, user.id());
             return new GameCreateResponse(game.id().value(), game.label());
         } catch (ConnectException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getType().name(), e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
             switch (e.type()) {
                 case TEMPLATE_NOT_FOUND:

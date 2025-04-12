@@ -1,15 +1,19 @@
 
 import 'package:go_router/go_router.dart';
 
+import '../../contexts/game/views/home/game_home_view.dart';
 import '../../contexts/game/views/menu/game_menu_view.dart';
 
 class AppRouter {
 
-  static const nameHome = "home";
-  static const pathHome = "/";
+  static const homeName = "home";
+  static const homePath = "/";
 
-  static const nameGameMenu = "game-menu";
-  static const pathGameMenu = "/game/menu";
+  static const gameMenuName = "game-menu";
+  static const gameMenuPath = "/game/menu";
+
+  static const gameHomeMenu = "game-home";
+  static const gameHomePath = "/game/home";
 
   static GoRouter create() {
     return GoRouter(
@@ -18,15 +22,20 @@ class AppRouter {
       },
       routes: [
         GoRoute(
-          name: nameHome,
-          path: pathHome,
+          name: homeName,
+          path: homePath,
           builder: (context, state) => GameMenuView(),
         ),
         GoRoute(
-          name: nameGameMenu,
-          path: pathGameMenu,
+          name: gameMenuName,
+          path: gameMenuPath,
           builder: (context, state) => GameMenuView(),
-        )
+        ),
+        GoRoute(
+          name: gameHomeMenu,
+          path: gameHomePath,
+          builder: (context, state) => GameHomeView(),
+        ),
       ],
     );
   }

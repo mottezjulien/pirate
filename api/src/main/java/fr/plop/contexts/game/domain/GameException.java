@@ -3,7 +3,7 @@ package fr.plop.contexts.game.domain;
 public class GameException extends Exception {
 
     public enum Type {
-        TEMPLATE_NOT_FOUND
+        PLAYER_NOT_FOUND, TEMPLATE_NOT_FOUND
     }
 
     private final Type type;

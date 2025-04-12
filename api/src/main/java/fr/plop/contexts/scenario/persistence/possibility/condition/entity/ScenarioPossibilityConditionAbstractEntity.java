@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 public abstract class ScenarioPossibilityConditionAbstractEntity {
 
     @Id
-    //@UuidGenerator
     protected String id;
 
     public String getId() {

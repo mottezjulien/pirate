@@ -9,4 +9,7 @@ public record I18n(String description, Map<Language, String> values) {
         return StringTools.toJson(values);
     }
 
+    public String value(Language language) {
+        return values.get(language);
+    }
 }

@@ -8,7 +8,7 @@ class Headers {
     return {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
-      //'Language': Settings.language().toString()
+      'Language': Settings.language().toString()
     };
   }
 
@@ -16,7 +16,7 @@ class Headers {
     return {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
-      //'Language': Settings.language().toString(),
+      'Language': Settings.language().toString(),
       'Authorization': ConnectionCurrent.token
     };
   }

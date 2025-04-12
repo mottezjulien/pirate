@@ -15,7 +15,7 @@ class GenericRepository {
   }) async {
     final http.Response response = await http.post(Server.uri(resourcePath),
         headers: Headers.auth(),
-        body: body
+        body: jsonEncode(body)
     );
     if(response.statusCode >= 400) {
       throw RepositoryException(response.statusCode, response.body);

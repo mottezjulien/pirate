@@ -12,6 +12,10 @@ public record Possibility(
         AndOrOr conditionType,
         List<PossibilityConsequence> consequences) {
 
+    public boolean isFirst() {
+        return conditions.isEmpty();
+    }
+
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());
@@ -21,4 +25,5 @@ public record Possibility(
     public Possibility(PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
         this(new Id(), trigger, conditions, conditionType, consequences);
     }
+
 }

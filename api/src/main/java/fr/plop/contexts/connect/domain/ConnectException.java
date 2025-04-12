@@ -14,7 +14,7 @@ public class ConnectException extends Exception {
         this.type = type;
     }
 
-    public Type getType() {
+    public Type type() {
         return type;
     }
 

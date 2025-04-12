@@ -16,9 +16,9 @@ class ConnectionRepository {
 
     final http.Response response = await http.post(Server.uri(path),
         headers: Headers.noAuth(),
-        body: {
+        body: jsonEncode({
           'deviceId': deviceId
-        }
+        })
     );
     if(response.statusCode >= 400) {
       throw RepositoryException(response.statusCode, response.body);

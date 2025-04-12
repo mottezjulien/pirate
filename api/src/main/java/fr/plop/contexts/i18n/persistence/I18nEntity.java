@@ -53,7 +53,6 @@ public class I18nEntity {
 
     public I18n toModel() {
         try {
-            //
             Map<String, String> result = StringTools.fromJson(jsonValues);
             return new I18n(description, result.entrySet().stream()
                     .map(entry -> new AbstractMap.SimpleEntry<>(Language.valueOf(entry.getKey().toUpperCase()), entry.getValue())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));

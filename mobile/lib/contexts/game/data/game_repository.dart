@@ -7,14 +7,14 @@ class GameRepository {
 
   static const resourcePath = '/games';
 
-  Game createLyonPirate() {
+  Future<Game> createLyonPirate() async {
 
     GenericRepository genericRepository = GenericRepository();
 
-    return toModel(genericRepository.post(
+    return toModel(await genericRepository.post(
         resourcePath: resourcePath,
         body: {
-      'templateCode': 'pirata_lyon'
+      'templateCode': 'pirate_lyon'
     }));
   }
 
@@ -23,6 +23,10 @@ class GameRepository {
       id: json['id'],
       label: json['label'],
     );
+  }
+
+  Future<List<Game>> getGames() async {
+
   }
 
 }

@@ -22,11 +22,7 @@ public class ConnectUseCase {
             throw new ConnectException(ConnectException.Type.EXPIRED_TOKEN);
         }
         DeviceConnect connect = auth.connect();
-        /*if(connect.isAnonymous()) {
-            throw new ConnectException(ConnectException.Type.ANONYMOUS);
-        }*/
         return connect.user();
     }
-
 
 }
