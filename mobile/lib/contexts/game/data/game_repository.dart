@@ -25,8 +25,4 @@ class GameRepository {
     );
   }
 
-  Future<List<Game>> getGames() async {
-
-  }
-
 }
