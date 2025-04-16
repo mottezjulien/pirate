@@ -27,7 +27,7 @@ class GameMenuView extends StatelessWidget {
                 style: buttonStyle(colorScheme),
                 onPressed: () {
                   _viewModel.start();
-                  context.goNamed(AppRouter.gameHomePath);
+                  context.goNamed(AppRouter.gameHomeName);
                 },
                 child: const Text('Démarrer :)')),
           if (_viewModel.hasGame)

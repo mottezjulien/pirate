@@ -1,5 +1,6 @@
 package fr.plop.contexts.scenario.persistence.possibility.consequence.entity;
 
+import fr.plop.contexts.i18n.persistence.I18nEntity;
 import fr.plop.contexts.scenario.domain.model.PossibilityConsequence;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -33,6 +34,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case ScenarioPossibilityConsequenceGameOverEntity gameOver -> gameOver.toModel();
             case ScenarioPossibilityConsequenceStartedStepEntity startedStep -> startedStep.toModel();
             case ScenarioPossibilityConsequenceEndedStepEntity endedStep -> endedStep.toModel();
+            case ScenarioPossibilityConsequenceAlertEntity alert -> alert.toModel();
             default -> throw new IllegalStateException("Unknown type");
         };
     }
@@ -70,6 +72,14 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setId(updatedMetadata.id().value());
                 entity.setMetadataId(updatedMetadata.metadataId());
                 entity.setValue(updatedMetadata.value());
+                yield entity;
+            }
+            case PossibilityConsequence.Alert alert -> {
+                ScenarioPossibilityConsequenceAlertEntity entity = new ScenarioPossibilityConsequenceAlertEntity();
+                entity.setId(alert.id().value());
+                I18nEntity message = new I18nEntity();
+                message.setId(alert.message().id().value());
+                entity.setMessage(message);
                 yield entity;
             }
         };

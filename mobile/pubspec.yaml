@@ -34,4 +34,4 @@ flutter:
 
   assets:
     - assets/translations/
-
+    - assets/pouet/

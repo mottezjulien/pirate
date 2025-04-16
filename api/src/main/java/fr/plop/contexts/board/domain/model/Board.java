@@ -4,8 +4,11 @@ package fr.plop.contexts.board.domain.model;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Board {
+
+
 
     public record Id(String value) {
         public Id() {
@@ -34,9 +37,15 @@ public class Board {
         return id;
     }
 
-    /*public Stream<BoardSpace> spaces() {
+    public Stream<BoardSpace> spaces() {
         return spaces.stream();
     }
+
+    public BoardSpace space(int index) {
+        return spaces.get(index);
+    }
+
+    /*
 
     public List<BoardSpace> spaces(GamePlayer inGamePlayer) {
         Optional<BoardSpace.Point> optPoint = inGamePlayer.position();

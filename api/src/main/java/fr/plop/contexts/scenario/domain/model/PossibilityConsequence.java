@@ -1,12 +1,13 @@
 package fr.plop.contexts.scenario.domain.model;
 
+import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
 
 public sealed interface PossibilityConsequence permits
         PossibilityConsequence.StartedStep,
         PossibilityConsequence.EndedStep,
         PossibilityConsequence.GameOver,
-        //PossibilityConsequence.FireEvent, // TODO ???
+        PossibilityConsequence.Alert,
         PossibilityConsequence.UpdatedMetadata,
         PossibilityConsequence.AddObjet,
         PossibilityConsequence.RemoveObjet {
@@ -29,9 +30,9 @@ public sealed interface PossibilityConsequence permits
 
     }
 
-        /*record FireEvent(Id id) implements PossibilityConsequence {
+    record Alert(Id id, I18n message) implements PossibilityConsequence {
 
-        }*/
+    }
 
     record UpdatedMetadata(Id id, String metadataId, float value) implements PossibilityConsequence {
 

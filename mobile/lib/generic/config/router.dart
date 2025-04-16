@@ -16,8 +16,8 @@ class AppRouter {
   static const gameHomeName = "game-home";
   static const gameHomePath = "/game/home";
 
-  static const gameGoalName = "game-home";
-  static const gameGoalPath = "/game/home";
+  static const gameGoalName = "game-goal";
+  static const gameGoalPath = "/game/goal";
 
   static GoRouter create() {
     return GoRouter(

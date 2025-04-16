@@ -14,7 +14,8 @@ class GameRepository {
     return toModel(await genericRepository.post(
         resourcePath: resourcePath,
         body: {
-      'templateCode': 'pirate_lyon'
+      //'templateCode': 'pirate_lyon'
+      'templateCode': 'first'
     }));
   }
 

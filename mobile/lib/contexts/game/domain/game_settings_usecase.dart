@@ -2,6 +2,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../data/game_repository.dart';
 import '../game_current.dart';
+import 'model/game.dart';
 
 class GameCreateUseCase {
 
@@ -27,7 +28,11 @@ class GameCreateUseCase {
 
   initGame() async {
     final GameRepository repository = GameRepository();
-    GameCurrent.game = await repository.createLyonPirate();
+    final Game game = await repository.createLyonPirate();
+    game.init();
+    GameCurrent.game = game;
+
+
   }
 
 }

@@ -20,7 +20,7 @@ class GameHomeView extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/background.jpg'), // Exemple d'image
+                image: AssetImage('assets/pouet/background.jpg'), // Exemple d'image
                 fit: BoxFit.cover,
               ),
             ),
@@ -45,7 +45,7 @@ class GameHomeView extends StatelessWidget {
                   iconSize: 80,
                   color: Colors.white,
                   onPressed: () {
-                    context.pushNamed(AppRouter.gameGoalPath);
+                    context.pushNamed(AppRouter.gameGoalName);
                   },
                 ),
                 Text('Objectifs :)', style: TextStyle(color: Colors.white)),
@@ -60,7 +60,7 @@ class GameHomeView extends StatelessWidget {
               onTap: () {
                 // Afficher l'aide
               },
-              child: Image.asset('assets/parrot.png', // Exemple d'image
+              child: Image.asset('assets/pouet/parrot.jpg', // Exemple d'image
                 width: 100,
                 height: 100,
               ),
