@@ -54,13 +54,13 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setObjetId(removeObjet.objetId());
                 yield entity;
             }
-            case PossibilityConsequence.StartedStep startedStep -> {
+            case PossibilityConsequence.ActiveGoal startedStep -> {
                 ScenarioPossibilityConsequenceStartedStepEntity entity = new ScenarioPossibilityConsequenceStartedStepEntity();
                 entity.setId(startedStep.id().value());
                 entity.setStepId(startedStep.stepId().value());
                 yield entity;
             }
-            case PossibilityConsequence.EndedStep endedStep -> {
+            case PossibilityConsequence.SuccessGoal endedStep -> {
                 ScenarioPossibilityConsequenceEndedStepEntity entity = new ScenarioPossibilityConsequenceEndedStepEntity();
                 entity.setId(endedStep.id().value());
                 entity.setStepId(endedStep.stepId().value());

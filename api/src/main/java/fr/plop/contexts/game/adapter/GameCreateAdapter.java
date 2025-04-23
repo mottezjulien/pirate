@@ -11,7 +11,7 @@ import fr.plop.contexts.game.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.persistence.GameRepository;
 import fr.plop.contexts.scenario.domain.model.Scenario;
-import fr.plop.contexts.scenario.domain.model.ScenarioGoalState;
+import fr.plop.contexts.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.scenario.persistence.core.ScenarioEntity;
 import fr.plop.contexts.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.scenario.persistence.goal.ScenarioGoalEntity;
@@ -69,7 +69,7 @@ public class GameCreateAdapter implements GameCreateUseCase.DataOutput {
         entity = gameRepository.save(entity);
 
         Game.Atom atom = new Game.Atom(new Game.Id(entity.getId()), template.label());
-        return new Game(atom, Game.State.INIT, template.scenario());
+        return new Game(atom, Game.State.INIT, List.of(), template.scenario(), template.board());
 
     }
 
@@ -95,7 +95,7 @@ public class GameCreateAdapter implements GameCreateUseCase.DataOutput {
     public void insertGoal(GamePlayer.Id playerId, Scenario.Step.Id id) {
         ScenarioGoalEntity entity = new ScenarioGoalEntity();
         entity.setId(StringTools.generate());
-        entity.setState(ScenarioGoalState.ACTIVE);
+        entity.setState(ScenarioGoal.State.ACTIVE);
 
         GamePlayerEntity playerEntity = new GamePlayerEntity();
         playerEntity.setId(playerId.value());

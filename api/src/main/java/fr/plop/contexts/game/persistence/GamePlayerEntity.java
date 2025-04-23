@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.persistence;
 
+import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
 import fr.plop.contexts.game.domain.model.Game;
 import fr.plop.contexts.game.domain.model.GamePlayer;
@@ -50,6 +51,7 @@ public class GamePlayerEntity {
 
     public GamePlayer toModel() {
         Game.Id gameId = new Game.Id(game.getId());
-        return new GamePlayer(new GamePlayer.Atom(new GamePlayer.Id(id), gameId));
+        ConnectUser.Id userId = new ConnectUser.Id(user.getId());
+        return new GamePlayer(new GamePlayer.Atom(new GamePlayer.Id(id), gameId), userId);
     }
 }

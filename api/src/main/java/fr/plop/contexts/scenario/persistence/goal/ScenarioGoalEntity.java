@@ -2,7 +2,7 @@ package fr.plop.contexts.scenario.persistence.goal;
 
 
 import fr.plop.contexts.game.persistence.GamePlayerEntity;
-import fr.plop.contexts.scenario.domain.model.ScenarioGoalState;
+import fr.plop.contexts.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.scenario.persistence.core.ScenarioStepEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,7 +28,7 @@ public class ScenarioGoalEntity {
     private ScenarioStepEntity step;
 
     @Enumerated(EnumType.STRING)
-    private ScenarioGoalState state;
+    private ScenarioGoal.State state;
 
     public String getId() {
         return id;
@@ -54,11 +54,11 @@ public class ScenarioGoalEntity {
         this.step = step;
     }
 
-    public void setState(ScenarioGoalState state) {
+    public void setState(ScenarioGoal.State state) {
         this.state = state;
     }
 
-    public ScenarioGoalState getState() {
+    public ScenarioGoal.State getState() {
         return state;
     }
 }

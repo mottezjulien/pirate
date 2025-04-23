@@ -1,14 +1,15 @@
 package fr.plop.contexts.board.domain.model;
 
 
+import fr.plop.contexts.game.domain.model.GamePlayer;
 import fr.plop.generic.tools.StringTools;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class Board {
-
-
 
     public record Id(String value) {
         public Id() {
@@ -18,6 +19,8 @@ public class Board {
 
     private final Id id;
     private final List<BoardSpace> spaces;
+
+    private final Map<GamePlayer.Id, List<BoardSpace>> positions = new HashMap<>();
 
     public Board() {
         this(List.of());
@@ -45,13 +48,17 @@ public class Board {
         return spaces.get(index);
     }
 
-    /*
+    public Stream<BoardSpace> spacesByPosition(BoardSpace.Point position) {
+        return spaces()
+                .filter(space -> space.is(position));
+    }
 
-    public List<BoardSpace> spaces(GamePlayer inGamePlayer) {
-        Optional<BoardSpace.Point> optPoint = inGamePlayer.position();
-        return optPoint.stream()
-                .flatMap(point -> spaces.stream().filter(space -> space.is(point)))
-                .toList();
-    }*/
+    public List<BoardSpace> spacesByPlayerId(GamePlayer.Id playerId) {
+        return positions.getOrDefault(playerId, List.of());
+    }
+
+    public void putPositions(GamePlayer.Id playerId, List<BoardSpace> current) {
+        positions.put(playerId, current);
+    }
 
 }

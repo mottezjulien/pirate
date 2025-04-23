@@ -4,8 +4,8 @@ import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
 
 public sealed interface PossibilityConsequence permits
-        PossibilityConsequence.StartedStep,
-        PossibilityConsequence.EndedStep,
+        PossibilityConsequence.ActiveGoal,
+        PossibilityConsequence.SuccessGoal,
         PossibilityConsequence.GameOver,
         PossibilityConsequence.Alert,
         PossibilityConsequence.UpdatedMetadata,
@@ -18,11 +18,11 @@ public sealed interface PossibilityConsequence permits
         }
     }
 
-    record StartedStep(Id id, Scenario.Step.Id stepId) implements PossibilityConsequence {
+    record ActiveGoal(Id id, Scenario.Step.Id stepId) implements PossibilityConsequence {
 
     }
 
-    record EndedStep(Id id, Scenario.Step.Id stepId) implements PossibilityConsequence {
+    record SuccessGoal(Id id, Scenario.Step.Id stepId) implements PossibilityConsequence {
 
     }
 

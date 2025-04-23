@@ -1,6 +1,8 @@
 package fr.plop.contexts.game.domain.model;
 
-public record GamePlayer(Atom atom) {
+import fr.plop.contexts.connect.domain.ConnectUser;
+
+public record GamePlayer(Atom atom, ConnectUser.Id userId) {
 
     public record Id(String value) {
 
@@ -9,6 +11,11 @@ public record GamePlayer(Atom atom) {
     public record Atom(Id id, Game.Id gameId) {
 
     }
+
+    public Id id() {
+        return atom.id();
+    }
+
 
 
 }

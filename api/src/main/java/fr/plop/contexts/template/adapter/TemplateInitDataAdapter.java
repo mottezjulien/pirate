@@ -96,7 +96,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
             spaceEntity.setId(space.id().value());
             spaceEntity.setBoard(boardEntity);
             spaceEntity.setLabel(space.label());
-            spaceEntity.setPriority(space.priority());
+            spaceEntity.setPriority(space.priority().ordinal());
             boardSpaceRepository.save(spaceEntity);
             space.rects().forEach(rect -> {
                 BoardRectEntity rectEntity = new BoardRectEntity();

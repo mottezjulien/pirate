@@ -8,9 +8,11 @@ import java.util.Optional;
 
 public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, String> {
 
+    //TODO Et le cache :)
     @Query("FROM GamePlayerEntity player" +
             " LEFT JOIN FETCH player.game game" +
-            " WHERE player.user.id = :userId" +
+            " LEFT JOIN FETCH player.user user" +
+            " WHERE user.id = :userId" +
             " AND game.state != 'OVER'")
     Optional<GamePlayerEntity> findByUserIdAndActiveGameFetchGame(@Param("userId") String userId);
 

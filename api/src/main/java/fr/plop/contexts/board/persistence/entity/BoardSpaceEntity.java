@@ -71,6 +71,6 @@ public class BoardSpaceEntity {
     }
 
     public BoardSpace toModel() {
-        return new BoardSpace(new BoardSpace.Id(id), label, priority, rects.stream().map(BoardRectEntity::toModel).toList());
+        return new BoardSpace(new BoardSpace.Id(id), label, BoardSpace.Priority.values()[priority], rects.stream().map(BoardRectEntity::toModel).toList());
     }
 }

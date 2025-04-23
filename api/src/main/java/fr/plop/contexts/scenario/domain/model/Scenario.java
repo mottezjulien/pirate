@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 
 public record Scenario(Id id, String label, List<Step> steps) {
 
-
-
     public record Id(String value) {
 
         public Id() {

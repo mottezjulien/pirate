@@ -4,14 +4,28 @@ import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
 
-public record BoardSpace(Id id, String label, int priority, List<Rect> rects) {
+public record BoardSpace(Id id, String label, Priority priority, List<Rect> rects) {
+
+    public enum Priority {
+        HIGHEST, HIGH, MEDIUM, LOW, LOWEST
+    }
 
     public record Id(String value) {
-
         public Id() {
             this(StringTools.generate());
         }
+    }
 
+    public BoardSpace(String label, Priority priority, List<Rect> rects) {
+        this(new Id(), label, priority, rects);
+    }
+
+    public BoardSpace(List<Rect> rects) {
+        this(new Id(), "", Priority.HIGHEST, rects);
+    }
+
+    public boolean is(Point point) {
+        return rects.stream().anyMatch(rect -> rect.is(point));
     }
 
     public record Rect(Point bottomLeft, Point topRight) {
@@ -25,15 +39,7 @@ public record BoardSpace(Id id, String label, int priority, List<Rect> rects) {
             return bottomLeft.lat() <= lat && lat <= topRight.lat()
                     && bottomLeft.lng() <= lng && lng <= topRight.lng();
         }
-    }
 
-    public BoardSpace(String label, int priority, List<Rect> rects) {
-        this(new Id(), label, priority, rects);
-    }
-
-    public boolean is(Point point) {
-        return rects.stream()
-                .anyMatch(rect -> rect.is(point));
     }
 
 }

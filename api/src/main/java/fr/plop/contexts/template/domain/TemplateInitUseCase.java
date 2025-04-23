@@ -49,12 +49,12 @@ public class TemplateInitUseCase {
         BoardSpace.Rect bureau = new BoardSpace.Rect(
                 new BoardSpace.Point(45.7781f, 4.8036f),
                 new BoardSpace.Point(45.77815f, 4.803545f));
-        BoardSpace spaceBureau = new BoardSpace("Bureau", 1, List.of(bureau));
+        BoardSpace spaceBureau = new BoardSpace("Bureau", BoardSpace.Priority.HIGHEST, List.of(bureau));
 
         BoardSpace.Rect cusine = new BoardSpace.Rect(
                 new BoardSpace.Point(45.7781f, 4.803747f),
                 new BoardSpace.Point(45.7780f, 4.803803f));
-        BoardSpace spaceCuisine = new BoardSpace("Cuisine", 1, List.of(cusine));
+        BoardSpace spaceCuisine = new BoardSpace("Cuisine", BoardSpace.Priority.HIGHEST, List.of(cusine));
 
         return new Board(List.of(spaceBureau, spaceCuisine));
     }
@@ -71,7 +71,7 @@ public class TemplateInitUseCase {
 
         PossibilityTrigger trigger2 = new PossibilityTrigger.GoInSpace(new PossibilityTrigger.Id(), board.space(1).id());
         PossibilityConsequence consequence2 = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes dans la cuisine"));
-        PossibilityConsequence consequence2bis = new PossibilityConsequence.EndedStep(new PossibilityConsequence.Id(), stepId);
+        PossibilityConsequence consequence2bis = new PossibilityConsequence.SuccessGoal(new PossibilityConsequence.Id(), stepId);
         List<PossibilityConsequence> consequences2 = List.of(consequence2, consequence2bis);
         Possibility possibility2 = new Possibility(trigger2, List.of(), AndOrOr.AND, consequences2);
 

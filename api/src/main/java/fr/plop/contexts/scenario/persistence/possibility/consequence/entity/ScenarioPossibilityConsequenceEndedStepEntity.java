@@ -24,7 +24,7 @@ public final class ScenarioPossibilityConsequenceEndedStepEntity extends
     }
 
     public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.EndedStep(new PossibilityConsequence.Id(id), new Scenario.Step.Id(stepId));
+        return new PossibilityConsequence.SuccessGoal(new PossibilityConsequence.Id(id), new Scenario.Step.Id(stepId));
     }
 
 }
