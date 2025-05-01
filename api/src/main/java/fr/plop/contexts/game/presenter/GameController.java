@@ -25,7 +25,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class GameController {
 
     private final ConnectUseCase connectUseCase;
-
     private final GameCreateUseCase createUseCase;
     private final GameMoveUseCase moveUseCase;
 

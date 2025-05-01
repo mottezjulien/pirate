@@ -1,9 +1,6 @@
 package fr.plop;
 
-import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
-import fr.plop.contexts.game.domain.usecase.GameConnectUseCase;
-import fr.plop.contexts.game.domain.usecase.GameCreateUseCase;
 import fr.plop.contexts.template.domain.TemplateInitUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -33,20 +30,7 @@ public class Runner {
         return new ConnectionCreateAuthUseCase(port);
     }
 
-    @Bean
-    public ConnectUseCase connectUseCase(ConnectUseCase.OutPort port) {
-        return new ConnectUseCase(port);
-    }
 
-    @Bean
-    public GameCreateUseCase gameCreateUseCase(GameCreateUseCase.DataOutput port) {
-        return new GameCreateUseCase(port);
-    }
-
-    @Bean
-    public GameConnectUseCase gameConnectUseCase(GameConnectUseCase.OutPort port) {
-        return new GameConnectUseCase(port);
-    }
 
 
     /*
@@ -74,12 +58,6 @@ public class Runner {
         return new GameGeneratorUseCase(dataOutput);
     }
 
-    @Bean
-    public GameMoveUseCase gameMoveUseCase(
-            GameMoveUseCase.DataOutput dataOutput,
-            GamePlayingUseCase gamePlayerUseCase,
-            EventOutput eventOutput) {
-        return new GameMoveUseCase(dataOutput, gamePlayerUseCase, eventOutput);
-    }*/
+    */
 
 }

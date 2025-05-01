@@ -50,7 +50,7 @@ public class Board {
 
     public Stream<BoardSpace> spacesByPosition(BoardSpace.Point position) {
         return spaces()
-                .filter(space -> space.is(position));
+                .filter(space -> space.in(position));
     }
 
     public List<BoardSpace> spacesByPlayerId(GamePlayer.Id playerId) {

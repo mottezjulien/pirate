@@ -19,9 +19,6 @@ public class BoardEntity {
     @OneToMany(mappedBy = "board")
     private Set<BoardSpaceEntity> spaces = new HashSet<>();
 
-    //@OneToMany(mappedBy = "board")
-    //private Set<GameEntity> games = new HashSet<>();
-
     public String getId() {
         return id;
     }

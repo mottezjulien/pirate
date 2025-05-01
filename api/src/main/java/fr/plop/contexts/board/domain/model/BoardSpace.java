@@ -6,6 +6,7 @@ import java.util.List;
 
 public record BoardSpace(Id id, String label, Priority priority, List<Rect> rects) {
 
+
     public enum Priority {
         HIGHEST, HIGH, MEDIUM, LOW, LOWEST
     }
@@ -24,12 +25,12 @@ public record BoardSpace(Id id, String label, Priority priority, List<Rect> rect
         this(new Id(), "", Priority.HIGHEST, rects);
     }
 
-    public boolean is(Point point) {
-        return rects.stream().anyMatch(rect -> rect.is(point));
+    public boolean in(Point point) {
+        return rects.stream().anyMatch(rect -> rect.in(point));
     }
 
     public record Rect(Point bottomLeft, Point topRight) {
-        public boolean is(Point point) {
+        public boolean in(Point point) {
             return point.in(bottomLeft, topRight);
         }
     }

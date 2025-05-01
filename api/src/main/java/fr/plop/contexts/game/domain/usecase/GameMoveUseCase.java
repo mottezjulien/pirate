@@ -22,7 +22,7 @@ public class GameMoveUseCase {
     public interface OutPort {
         Optional<GamePlayer> findByGameIdAndUserId(Game.Id gameId, ConnectUser.Id userId);
         Optional<Board> findByGameId(Game.Id gameId);
-        void saveBoard(Board board, GamePlayer.Id playerId);
+        void savePosition(Game.Id gameId, Board board, GamePlayer.Id playerId);
     }
 
     private final OutPort outPort;
@@ -50,7 +50,7 @@ public class GameMoveUseCase {
         added.forEach(space -> broadCast.fire(new GameEvent.GoIn(gameId, player.id(), space)));
         board.putPositions(player.id(), next);
 
-        outPort.saveBoard(board, player.id());
+        outPort.savePosition(gameId,board, player.id());
     }
 
 }

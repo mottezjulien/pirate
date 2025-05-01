@@ -16,7 +16,6 @@ import java.util.Set;
 public class BoardSpaceEntity {
 
     @Id
-    //@UuidGenerator
     private String id;
 
     private String label;
