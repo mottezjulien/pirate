@@ -1,12 +1,11 @@
 package fr.plop;
 
 import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.event.domain.GameEventBroadCast;
-import fr.plop.contexts.event.domain.GameEventBroadCastIntern;
-import fr.plop.contexts.event.domain.usecase.action.GameEventScenarioSuccessGoalAction;
-import fr.plop.contexts.game.domain.usecase.GameConnectUseCase;
-import fr.plop.contexts.game.domain.usecase.GameCreateUseCase;
-import fr.plop.contexts.game.domain.usecase.GameMoveUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameConnectUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
+import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,8 +19,8 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameCreateUseCase gameCreateUseCase(GameCreateUseCase.DataOutput port) {
-        return new GameCreateUseCase(port);
+    public GameCreateSessionUseCase gameCreateUseCase(GameCreateSessionUseCase.DataOutput port) {
+        return new GameCreateSessionUseCase(port);
     }
 
     @Bean
@@ -30,9 +29,8 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.OutPort outPort,
-                                                 GameEventScenarioSuccessGoalAction successGoalAction) {
-        return new GameEventBroadCastIntern(outPort, successGoalAction);
+    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.OutPort outPort) {
+        return new GameEventBroadCastIntern(outPort);
     }
 
     @Bean

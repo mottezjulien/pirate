@@ -1,7 +1,7 @@
 package fr.plop;
 
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
-import fr.plop.contexts.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
