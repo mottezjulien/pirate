@@ -20,8 +20,6 @@ public class GameMoveUseCase {
 
     public interface OutPort {
 
-        //TODO un user ne peut jouer uniquement à une partie en cours ???
-        GamePlayer playerByUserId(ConnectUser.Id userId) throws GameException;
         BoardConfig boardBySessionId(GameSession.Id gameId) throws GameException;
         void savePosition(GamePlayer.Id playerId, List<BoardSpace.Id> spaceIds) throws GameException;
 
@@ -36,9 +34,8 @@ public class GameMoveUseCase {
         this.broadCast = broadCast;
     }
 
-    public void apply(GameSession.Id sessionId, ConnectUser.Id userId, Request request) throws GameException {
+    public void apply(GameSession.Id sessionId, GamePlayer player, Request request) throws GameException {
 
-        GamePlayer player = outPort.playerByUserId(userId);
         BoardConfig board = outPort.boardBySessionId(sessionId);
 
         List<BoardSpace.Id> currentIds = player.positions();

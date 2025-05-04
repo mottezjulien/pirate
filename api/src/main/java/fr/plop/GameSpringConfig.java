@@ -1,7 +1,6 @@
 package fr.plop;
 
 import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.game.session.core.domain.usecase.GameConnectUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
@@ -21,11 +20,6 @@ public class GameSpringConfig {
     @Bean
     public GameCreateSessionUseCase gameCreateUseCase(GameCreateSessionUseCase.DataOutput port) {
         return new GameCreateSessionUseCase(port);
-    }
-
-    @Bean
-    public GameConnectUseCase gameConnectUseCase(GameConnectUseCase.OutPort port) {
-        return new GameConnectUseCase(port);
     }
 
     @Bean

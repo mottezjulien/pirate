@@ -49,7 +49,7 @@ public class ConnectionCreateAuthUseCaseTest {
         when(outPort.findByDeviceId(deviceId)).thenReturn(Optional.empty());
 
         DeviceConnect connect = new DeviceConnect(new DeviceConnect.Id("any"), new ConnectUser(new ConnectUser.Id("userId")), deviceId);
-        when(outPort.createDeviceConnectWithEmptyUser(deviceId)).thenReturn(connect);
+        when(outPort.createDeviceConnectWithUnknownUser(deviceId)).thenReturn(connect);
 
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuth(new ConnectToken("tokenC"), connect, Instant.now()));
 

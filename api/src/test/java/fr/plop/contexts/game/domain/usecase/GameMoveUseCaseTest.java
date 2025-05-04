@@ -27,7 +27,8 @@ public class GameMoveUseCaseTest {
     private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast);
 
     private final GameSession.Id gameId = new GameSession.Id("ABC");
-    private final ConnectUser.Id userId = new ConnectUser.Id("1234");
+    //private final ConnectUser.Id userId = new ConnectUser.Id("1234");
+
 
     private final BoardSpace spaceA = spaceA();
     private final BoardSpace spaceB = spaceB();
@@ -35,26 +36,13 @@ public class GameMoveUseCaseTest {
     private final BoardSpace spaceD = spaceD();
     private final BoardSpace spaceE = spaceE();
 
-    @Test
-    public void whenPlayerNotFound() throws GameException {
-        when(outPort.playerByUserId(userId)).thenThrow(new GameException(GameException.Type.PLAYER_NOT_FOUND));
 
-        BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
-        when(outPort.boardBySessionId(gameId)).thenReturn(board);
-        
-        assertThatThrownBy(() -> useCase.apply(gameId, userId, inSpaceAPosition()))
-                .isInstanceOf(GameException.class)
-                .hasFieldOrPropertyWithValue("type", GameException.Type.PLAYER_NOT_FOUND);
-
-        verify(browCast, never()).fire(any());
-        verify(outPort, never()).savePosition(any(), any());
-    }
 
     @Test
     public void whenBoardNotFound() throws GameException {
-        player(List.of(spaceA.id(), spaceB.id()));
+        GamePlayer player = player(List.of(spaceA.id(), spaceB.id()));
         when(outPort.boardBySessionId(gameId)).thenThrow(new GameException(GameException.Type.SESSION_NOT_FOUND));
-        assertThatThrownBy(() -> useCase.apply(gameId, userId, inSpaceAPosition()))
+        assertThatThrownBy(() -> useCase.apply(gameId, player, inSpaceAPosition()))
                 .isInstanceOf(GameException.class)
                 .hasFieldOrPropertyWithValue("type", GameException.Type.SESSION_NOT_FOUND);
 
@@ -64,12 +52,12 @@ public class GameMoveUseCaseTest {
 
     @Test
     public void whenSameSpacesDoNothing() throws GameException {
-        player(List.of(spaceA.id(), spaceB.id()));
+        GamePlayer player = player(List.of(spaceA.id(), spaceB.id()));
 
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
         when(outPort.boardBySessionId(gameId)).thenReturn(board);
 
-        useCase.apply(gameId, userId, inSpaceABPosition());
+        useCase.apply(gameId, player, inSpaceABPosition());
 
         verify(browCast, never()).fire(any());
         verify(outPort, never()).savePosition(any(), any());
@@ -82,7 +70,7 @@ public class GameMoveUseCaseTest {
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
         when(outPort.boardBySessionId(gameId)).thenReturn(board);
 
-        useCase.apply(gameId, userId, inSpaceAPosition());
+        useCase.apply(gameId, player, inSpaceAPosition());
 
         verify(browCast).fire(new GameEvent.GoIn(gameId, player.id(), spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of(spaceA.id()));
@@ -96,7 +84,7 @@ public class GameMoveUseCaseTest {
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
         when(outPort.boardBySessionId(gameId)).thenReturn(board);
 
-        useCase.apply(gameId, userId, outPosition());
+        useCase.apply(gameId, player, outPosition());
 
         verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of());
@@ -109,7 +97,7 @@ public class GameMoveUseCaseTest {
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB, spaceC, spaceD, spaceE));
         when(outPort.boardBySessionId(gameId)).thenReturn(board);
 
-        useCase.apply(gameId, userId, inCDEPosition());
+        useCase.apply(gameId, player, inCDEPosition());
 
         verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceA.id()));
         verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceB.id()));
@@ -119,11 +107,10 @@ public class GameMoveUseCaseTest {
         verify(outPort).savePosition(player.id(), List.of(spaceC.id(), spaceD.id(), spaceE.id()));
     }
 
-    private GamePlayer player(List<BoardSpace.Id> positions) throws GameException {
+    private GamePlayer player(List<BoardSpace.Id> positions) {
         GamePlayer player = mock(GamePlayer.class);
         when(player.id()).thenReturn(new GamePlayer.Id("any"));
         when(player.positions()).thenReturn(positions);
-        when(outPort.playerByUserId(userId)).thenReturn(player);
         return player;
     }
 

@@ -9,6 +9,7 @@ import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
 import fr.plop.contexts.connect.persistence.ConnectionUserRepository;
 import fr.plop.contexts.connect.persistence.DeviceConnectionEntity;
 import fr.plop.contexts.connect.persistence.DeviceConnectionRepository;
+import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
     public Optional<DeviceConnect> findByDeviceId(String deviceId) {
         return repository.findByDeviceIdFetchUser(deviceId)
                 .stream().findFirst()
-                .map(DeviceConnectionEntity::toModel);
+                .map(entity -> entity.toModel(null));
     }
 
     @Override
@@ -50,16 +51,18 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
     }
 
     @Override
-    public DeviceConnect createDeviceConnectWithEmptyUser(String deviceId) {
+    public DeviceConnect createDeviceConnectWithUnknownUser(String deviceId) {
         ConnectionUserEntity userEntity = new ConnectionUserEntity();
         userEntity.setId(StringTools.generate());
+        userEntity.setLanguage(Language.byDefault());
+        userEntity.setSurname("");
 
         DeviceConnectionEntity entity = new DeviceConnectionEntity();
         entity.setId(StringTools.generate());
         entity.setDeviceId(deviceId);
         entity.setUser(userRepository.save(userEntity));
         repository.save(entity);
-        return entity.toModel();
+        return entity.toModel(null);
     }
 
     @Override
@@ -70,7 +73,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         if(list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(list.getFirst().toModel());
+        return Optional.of(list.getFirst().toModel(null));
 
     }
 

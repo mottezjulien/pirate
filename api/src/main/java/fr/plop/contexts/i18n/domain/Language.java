@@ -7,11 +7,11 @@ public enum Language {
         try {
             return Language.valueOf(language.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return first();
+            return byDefault();
         }
     }
 
-    public static Language first() {
-        return EN;
+    public static Language byDefault() {
+        return FR;
     }
 }

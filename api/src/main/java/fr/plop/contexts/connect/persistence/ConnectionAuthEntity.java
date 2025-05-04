@@ -3,6 +3,7 @@ package fr.plop.contexts.connect.persistence;
 import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.DeviceConnect;
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
@@ -19,7 +20,6 @@ import java.time.Instant;
         @Index(columnList = "token", unique = true)
     }
 )
-
 public class ConnectionAuthEntity {
 
     @Id
@@ -70,6 +70,11 @@ public class ConnectionAuthEntity {
     }
 
     public ConnectAuth toModel() {
-        return new ConnectAuth(new ConnectToken(token), connection.toModel(), createdAt);
+        return toModelWithConnect(null);
     }
+
+    public ConnectAuth toModel(GamePlayer nullablePlayer) {
+        return new ConnectAuth(new ConnectToken(token), connection.toModel(nullablePlayer), createdAt);
+    }
+
 }

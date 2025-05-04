@@ -1,6 +1,7 @@
 package fr.plop.contexts.connect.domain;
 
 
+import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -17,13 +18,14 @@ class ConnectUseCaseTest {
     @Test
     public void returnEmptyIfNotFoundToken() {
         ConnectToken token = new ConnectToken("token");
+        GameSession.Id sessionId = new GameSession.Id("sessionId");
 
         ConnectUseCase.OutPort port = mock(ConnectUseCase.OutPort.class);
         ConnectUseCase useCase = new ConnectUseCase(port);
 
-        when(port.findByToken(token)).thenReturn(Optional.empty());
+        when(port.findBySessionIdAndToken(sessionId, token)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> useCase.findUserIdByRawToken(token))
+        assertThatThrownBy(() -> useCase.findUserIdBySessionIdAndRawToken(sessionId, token))
                 .isInstanceOf(ConnectException.class)
                 .hasFieldOrPropertyWithValue("type", ConnectException.Type.EMPTY);
     }
@@ -31,38 +33,23 @@ class ConnectUseCaseTest {
     @Test
     public void returnExpiredIfNotValidToken() {
         ConnectToken token = new ConnectToken("token");
+        GameSession.Id sessionId = new GameSession.Id("sessionId");
 
         ConnectUseCase.OutPort port = mock(ConnectUseCase.OutPort.class);
         ConnectUseCase useCase = new ConnectUseCase(port);
 
         DeviceConnect connect = mock(DeviceConnect.class);
-        when(port.findByToken(token)).thenReturn(Optional.of(new ConnectAuth(token, connect, Instant.now().minus(3, ChronoUnit.DAYS))));
+        when(port.findBySessionIdAndToken(sessionId, token)).thenReturn(Optional.of(new ConnectAuth(token, connect, Instant.now().minus(3, ChronoUnit.DAYS))));
 
-        assertThatThrownBy(() -> useCase.findUserIdByRawToken(token))
+        assertThatThrownBy(() -> useCase.findUserIdBySessionIdAndRawToken(sessionId, token))
                 .isInstanceOf(ConnectException.class)
                 .hasFieldOrPropertyWithValue("type", ConnectException.Type.EXPIRED_TOKEN);
     }
 
-    /*@Test
-    public void returnAnonymousIfNotUserFound() {
-        ConnectToken token = new ConnectToken("token");
-
-        ConnectUseCase.OutPort port = mock(ConnectUseCase.OutPort.class);
-        ConnectUseCase useCase = new ConnectUseCase(port);
-
-        DeviceConnect connect = mock(DeviceConnect.class);
-        when(connect.isAnonymous()).thenReturn(true);
-        ConnectAuth auth = new ConnectAuth(token, connect, Instant.now().minus(3, ChronoUnit.MINUTES));
-        when(port.findByToken(token)).thenReturn(Optional.of(auth));
-
-        assertThatThrownBy(() -> useCase.findUserIdByRawToken(token))
-                .isInstanceOf(ConnectException.class)
-                .hasFieldOrPropertyWithValue("type", ConnectException.Type.ANONYMOUS);
-    }*/
-
     @Test
     public void returnUserFromTokenIfValidToken() throws ConnectException {
         ConnectToken token = new ConnectToken("token");
+        GameSession.Id sessionId = new GameSession.Id("sessionId");
 
         ConnectUseCase.OutPort port = mock(ConnectUseCase.OutPort.class);
         ConnectUseCase useCase = new ConnectUseCase(port);
@@ -70,9 +57,9 @@ class ConnectUseCaseTest {
         DeviceConnect connect = mock(DeviceConnect.class);
         when(connect.user()).thenReturn(new ConnectUser(new ConnectUser.Id("myId")));
         ConnectAuth auth = new ConnectAuth(token, connect, Instant.now().minus(3, ChronoUnit.MINUTES));
-        when(port.findByToken(token)).thenReturn(Optional.of(auth));
+        when(port.findBySessionIdAndToken(sessionId, token)).thenReturn(Optional.of(auth));
 
-        ConnectUser user = useCase.findUserIdByRawToken(token);
+        ConnectUser user = useCase.findUserIdBySessionIdAndRawToken(sessionId, token);
 
         assertThat(user.id().value()).isEqualTo("myId");
     }

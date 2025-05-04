@@ -2,12 +2,12 @@ import 'dart:developer';
 
 import 'package:geolocator/geolocator.dart';
 
-class Game {
+class GameSession {
 
   final String _id, _label;
   late GameLocation gameLocation;
 
-  Game({required String id, required String label})
+  GameSession({required String id, required String label})
       : _id = id, _label = label;
 
   String get id => _id;

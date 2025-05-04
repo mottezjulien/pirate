@@ -2,6 +2,7 @@ package fr.plop.contexts.connect.persistence;
 
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.domain.DeviceConnect;
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -62,16 +63,9 @@ public class DeviceConnectionEntity {
         this.auths = auths;
     }
 
-    public static DeviceConnectionEntity fromModel(DeviceConnect deviceConnect, ConnectUser user) {
-        DeviceConnectionEntity entity = new DeviceConnectionEntity();
-        entity.setId(deviceConnect.id().value());
-        entity.setUser(ConnectionUserEntity.fromModel(user));
-        entity.setDeviceId(deviceConnect.deviceId());
-        return entity;
-    }
 
-    public DeviceConnect toModel() {
-        return new DeviceConnect(new DeviceConnect.Id(id), user.toModel(), deviceId);
+    public DeviceConnect toModel(GamePlayer nullablePlayer) {
+        return new DeviceConnect(new DeviceConnect.Id(id), user.toModel(nullablePlayer), deviceId);
     }
 
 }

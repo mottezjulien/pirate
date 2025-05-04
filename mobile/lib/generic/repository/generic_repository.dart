@@ -10,12 +10,24 @@ import 'http_headers.dart';
 class GenericRepository {
 
   dynamic post({
-    required String resourcePath,
+    required String path,
     Map<String, dynamic>? body
   }) async {
-    final http.Response response = await http.post(Server.uri(resourcePath),
+    final http.Response response = await http.post(Server.uri(path),
         headers: Headers.auth(),
         body: jsonEncode(body)
+    );
+    if(response.statusCode >= 400) {
+      throw RepositoryException(response.statusCode, response.body);
+    }
+    return jsonDecode(response.body);
+  }
+
+  dynamic get({
+    required String path,
+  }) async {
+    final http.Response response = await http.get(Server.uri(path),
+        headers: Headers.auth()
     );
     if(response.statusCode >= 400) {
       throw RepositoryException(response.statusCode, response.body);

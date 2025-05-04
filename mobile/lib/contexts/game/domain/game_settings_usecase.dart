@@ -2,7 +2,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../data/game_repository.dart';
 import '../game_current.dart';
-import 'model/game.dart';
+import 'model/game_session.dart';
 
 class GameCreateUseCase {
 
@@ -27,12 +27,10 @@ class GameCreateUseCase {
   }
 
   initGame() async {
-    final GameRepository repository = GameRepository();
-    final Game game = await repository.createLyonPirate();
+    final GameSessionRepository repository = GameSessionRepository();
+    final GameSession game = await repository.createLyonPirate();
     game.init();
-    GameCurrent.game = game;
-
-
+    GameSessionCurrent.session = game;
   }
 
 }

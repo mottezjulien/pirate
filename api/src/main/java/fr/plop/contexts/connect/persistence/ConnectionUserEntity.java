@@ -2,13 +2,15 @@ package fr.plop.contexts.connect.persistence;
 
 
 import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
+import fr.plop.contexts.i18n.domain.Language;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
 
 @Entity
 @Table(name = "TEST2_CONNECTION_USER")
@@ -17,8 +19,13 @@ public class ConnectionUserEntity {
     @Id
     private String id;
 
-    @OneToMany(mappedBy = "user")
-    private Set<DeviceConnectionEntity> connections = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    private Language language;
+
+    private String surname;
+
+    //@OneToMany(mappedBy = "user")
+    //private Set<DeviceConnectionEntity> connections = new HashSet<>();
 
     public String getId() {
         return id;
@@ -28,22 +35,31 @@ public class ConnectionUserEntity {
         this.id = id;
     }
 
-    public Set<DeviceConnectionEntity> getConnections() {
-        return connections;
+    public Language getLanguage() {
+        return language;
     }
 
-    public void setConnections(Set<DeviceConnectionEntity> connections) {
-        this.connections = connections;
+    public void setLanguage(Language language) {
+        this.language = language;
     }
 
-    public static ConnectionUserEntity fromModel(ConnectUser user) {
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    /*public static ConnectionUserEntity fromModel(ConnectUser user) {
         ConnectionUserEntity entity = new ConnectionUserEntity();
         entity.setId(user.id().value());
+        entity.setLanguage(user.language());
+        //TODO entity.setConnections
         return entity;
+    }*/
+
+
+    public ConnectUser toModel(GamePlayer nullablePlayer) {
+        return new ConnectUser(new ConnectUser.Id(id), language, Optional.ofNullable(nullablePlayer));
     }
 
-    public ConnectUser toModel() {
-        return new ConnectUser(new ConnectUser.Id(id));
-    }
+
 
 }

@@ -25,8 +25,8 @@ class GameMenuView extends StatelessWidget {
           if (!_viewModel.hasGame)
             TextButton(
                 style: buttonStyle(colorScheme),
-                onPressed: () {
-                  _viewModel.start();
+                onPressed: () async {
+                  await _viewModel.start();
                   context.goNamed(AppRouter.gameHomeName);
                 },
                 child: const Text('Démarrer :)')),
@@ -52,7 +52,7 @@ class GameMenuViewModel {
 
   final GameCreateUseCase createUseCase = GameCreateUseCase();
 
-  bool get hasGame => GameCurrent.hasGame;
+  bool get hasGame => GameSessionCurrent.hasSession;
 
   Future<void> start() async {
     await createUseCase.apply();

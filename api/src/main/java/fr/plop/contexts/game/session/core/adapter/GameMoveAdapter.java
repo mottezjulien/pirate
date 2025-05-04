@@ -42,12 +42,7 @@ public class GameMoveAdapter implements GameMoveUseCase.OutPort {
         this.positionRepository = positionRepository;
     }
 
-    @Override
-    public GamePlayer playerByUserId(ConnectUser.Id userId) throws GameException {
-        return playerRepository.fullByUserIdAndActiveSession(userId.value())
-                .map(GamePlayerEntity::toModel)
-                .orElseThrow(() -> new GameException(GameException.Type.PLAYER_NOT_FOUND));
-    }
+
 
     @Override
     public BoardConfig boardBySessionId(GameSession.Id gameId) throws GameException {

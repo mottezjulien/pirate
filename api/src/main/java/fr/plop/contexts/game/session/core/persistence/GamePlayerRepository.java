@@ -14,7 +14,7 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
             " LEFT JOIN FETCH player.position position" +
             " LEFT JOIN FETCH position.spaces spaces" +
             " WHERE user.id = :userId" +
-            " AND session.state = 'ACTIVE'")
-    Optional<GamePlayerEntity> fullByUserIdAndActiveSession(@Param("userId") String userId);
+            " AND session.id = :sessionId")
+    Optional<GamePlayerEntity> fullBySessionIdAndUserId(@Param("sessionId") String sessionId, @Param("userId") String userId);
 
 }

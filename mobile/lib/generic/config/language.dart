@@ -26,4 +26,13 @@ enum Language {
     }
   }
 
+  String toValue() {
+    switch(this) {
+      case Language.en:
+        return 'EN';
+      case Language.fr:
+        return 'FR';
+    }
+  }
+
 }

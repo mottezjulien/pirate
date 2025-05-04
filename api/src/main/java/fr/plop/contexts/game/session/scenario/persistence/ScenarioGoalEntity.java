@@ -64,8 +64,8 @@ public class ScenarioGoalEntity {
         return state;
     }
 
-    public ScenarioGoal toModel() {
+    /*public ScenarioGoal toModel() {
         return new ScenarioGoal(new GamePlayer.Id(player.getId()), new ScenarioConfig.Step.Id(step.getId()), state);
-    }
+    }*/
 
 }

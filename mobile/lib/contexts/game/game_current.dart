@@ -1,21 +1,23 @@
 
 
-import 'domain/model/game.dart';
+import 'domain/model/game_session.dart';
 
-class GameCurrent {
+class GameSessionCurrent {
 
-  static final _GameCurrent _instance = _GameCurrent();
+  static final _GameSessionCurrent _instance = _GameSessionCurrent();
 
-  static bool get hasGame => _instance.hasGame;
+  static bool get hasSession => _instance.hasSession;
 
-  static set game(Game game) => _instance._game = game;
+  static String get sessionId => _instance._session!.id;
+
+  static set session(GameSession session) => _instance._session = session;
 
 }
 
-class _GameCurrent {
+class _GameSessionCurrent {
 
-  Game? _game;
+  GameSession? _session;
 
-  bool get hasGame => _game != null;
+  bool get hasSession => _session != null;
 
 }

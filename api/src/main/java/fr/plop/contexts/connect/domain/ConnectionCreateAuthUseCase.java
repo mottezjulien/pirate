@@ -7,7 +7,7 @@ public class ConnectionCreateAuthUseCase {
     public interface DataOutPort {
         Optional<DeviceConnect> findByDeviceId(String deviceId);
         ConnectAuth createAuth(DeviceConnect connect);
-        DeviceConnect createDeviceConnectWithEmptyUser(String deviceId);
+        DeviceConnect createDeviceConnectWithUnknownUser(String deviceId);
         Optional<ConnectAuth> lastAuth(DeviceConnect.Id id);
     }
 
@@ -31,7 +31,7 @@ public class ConnectionCreateAuthUseCase {
             return dataOutPort.createAuth(deviceConnect);
         }
 
-        DeviceConnect deviceConnect = dataOutPort.createDeviceConnectWithEmptyUser(deviceId);
+        DeviceConnect deviceConnect = dataOutPort.createDeviceConnectWithUnknownUser(deviceId);
         return dataOutPort.createAuth(deviceConnect);
 
     }

@@ -69,9 +69,12 @@ public class GamePlayerEntity {
     public GamePlayer toModel() {
         GameSession.Id sessionId = new GameSession.Id(session.getId());
         ConnectUser.Id userId = new ConnectUser.Id(user.getId());
-        List<BoardSpace.Id> positions = position.getSpaces().stream()
-                .map(spaceEntity -> new BoardSpace.Id(spaceEntity.getId()))
-                .toList();
+        List<BoardSpace.Id> positions = List.of();
+        if(position != null) {
+            positions = position.getSpaces().stream()
+                    .map(spaceEntity -> new BoardSpace.Id(spaceEntity.getId()))
+                    .toList();
+        }
         return new GamePlayer(new GamePlayer.Atom(new GamePlayer.Id(id), sessionId), userId, positions);
     }
 }
