@@ -25,17 +25,13 @@ class GameMenuView extends StatelessWidget {
           if (!_viewModel.hasGame)
             TextButton(
                 style: buttonStyle(colorScheme),
-                onPressed: () async {
-                  await _viewModel.start();
-                  context.goNamed(AppRouter.gameHomeName);
-                },
+                onPressed: () => _viewModel.start()
+                    .then((value) => context.goNamed(AppRouter.gameHomeName)),
                 child: const Text('Démarrer :)')),
           if (_viewModel.hasGame)
             TextButton(
                 style: buttonStyle(colorScheme),
-                onPressed: () async {
-                  context.goNamed(AppRouter.gameHomeName);
-                },
+                onPressed: () => context.goNamed(AppRouter.gameHomeName),
                 child: const Text('Continuer :)')),
           TextButton(onPressed: () {}, child: const Text('Configuration :)')),
           TextButton(onPressed: () {}, child: const Text('Sortir :)')),

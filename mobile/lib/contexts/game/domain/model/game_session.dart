@@ -1,6 +1,7 @@
-import 'dart:developer';
-
 import 'package:geolocator/geolocator.dart';
+
+import '../../../geo/domain/model/coord.dart';
+import '../../data/game_repository.dart';
 
 class GameSession {
 
@@ -18,9 +19,6 @@ class GameSession {
     gameLocation = GameLocation();
     gameLocation.init();
   }
-/*
-
- */
 
 }
 
@@ -33,25 +31,22 @@ class GameLocation {
     const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation);
     streamPosition = Geolocator.getPositionStream(locationSettings: locationSettings);
     streamPosition.listen((position) {
-      print(position.latitude);
-      print(position.longitude);
       onMove(position);
-      /*if(game.isPlaying()) {
-          repository.move(Coord(lat: position.latitude, lng: position.longitude));
-        }*/
     });
   }
 
 
   void onMove(Position position) {
-    if(last == null || last != position) {
+    if(last == null || last != position) { //TODO IF MOVE IS ENOUGH
       last = position;
       fireMove(position);
     }
   }
 
   void fireMove(Position position) {
-    log("fireMove");
+    //REST -> WebSockets ???
+    GameSessionRepository repository = GameSessionRepository();
+    repository.move(Coordinate(lat: position.latitude, lng: position.longitude));
   }
 
 

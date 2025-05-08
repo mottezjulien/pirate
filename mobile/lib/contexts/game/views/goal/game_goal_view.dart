@@ -31,11 +31,11 @@ class GameGoalView extends StatelessWidget {
   Widget _buildGoalList(BuildContext context, List<GameGoal> goals) {
     // Separate active and completed goals
     List<GameGoal> activeGoals =
-    goals.where((goal) => goal.state == 'active').toList();
+    goals.where((goal) => goal.state == GameGoalState.active).toList();
     activeGoals.sort((a, b) => a.label.compareTo(b.label));
 
     List<GameGoal> completedGoals =
-    goals.where((goal) => goal.state != 'active').toList();
+    goals.where((goal) => goal.state != GameGoalState.active).toList();
 
     return ListView(
       padding: const EdgeInsets.all(8.0),
@@ -66,7 +66,7 @@ class GameGoalView extends StatelessWidget {
   Widget _buildGoalItem(BuildContext context, GameGoal goal) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

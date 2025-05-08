@@ -21,7 +21,6 @@ public class GameEventActionScenarioGoal {
 
     public void updateOrCreate(GamePlayer.Id playerId, PossibilityConsequence.Goal consequence) {
         updateStateOrCreate(playerId, consequence.stepId(), consequence.state());
-
     }
 
     private void updateStateOrCreate(GamePlayer.Id playerId, ScenarioConfig.Step.Id id, ScenarioGoal.State state) {

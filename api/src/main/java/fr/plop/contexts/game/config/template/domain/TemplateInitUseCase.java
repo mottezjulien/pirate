@@ -48,13 +48,13 @@ public class TemplateInitUseCase {
 
     private BoardConfig firstBoard() {
         BoardSpace.Rect bureau = new BoardSpace.Rect(
-                new BoardSpace.Point(45.7781f, 4.8036f),
-                new BoardSpace.Point(45.77815f, 4.803545f));
+                new BoardSpace.Point(45.77808f,  4.80353f),
+                new BoardSpace.Point(45.77818f,  4.80363f));
         BoardSpace spaceBureau = new BoardSpace("Bureau", BoardSpace.Priority.HIGHEST, List.of(bureau));
 
         BoardSpace.Rect cusine = new BoardSpace.Rect(
-                new BoardSpace.Point(45.7781f, 4.803747f),
-                new BoardSpace.Point(45.7780f, 4.803803f));
+                new BoardSpace.Point(45.7780f, 4.80372f),
+                new BoardSpace.Point(45.7781f, 4.80382f));
         BoardSpace spaceCuisine = new BoardSpace("Cuisine", BoardSpace.Priority.HIGHEST, List.of(cusine));
 
         return new BoardConfig(List.of(spaceBureau, spaceCuisine));

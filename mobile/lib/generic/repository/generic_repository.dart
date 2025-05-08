@@ -11,7 +11,8 @@ class GenericRepository {
 
   dynamic post({
     required String path,
-    Map<String, dynamic>? body
+    Map<String, dynamic>? body,
+    bool decode = true
   }) async {
     final http.Response response = await http.post(Server.uri(path),
         headers: Headers.auth(),
@@ -20,7 +21,9 @@ class GenericRepository {
     if(response.statusCode >= 400) {
       throw RepositoryException(response.statusCode, response.body);
     }
-    return jsonDecode(response.body);
+    if(decode) {
+      return jsonDecode(response.body);
+    }
   }
 
   dynamic get({

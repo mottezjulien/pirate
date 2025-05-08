@@ -1,8 +1,5 @@
 
 class GameGoal {
-
-  //String id, String label, String state, List<GameTargetSimpleResponseDTO> targets
-
   final String id;
   final String label;
   final GameGoalState state;
@@ -13,7 +10,14 @@ class GameGoal {
 }
 
 enum GameGoalState {
-  ACTIVE, SUCCESS, FAILURE
+  active, success, failure;
+
+  factory GameGoalState.fromJson(String json) {
+    String value = json.toLowerCase();
+    return GameGoalState.values
+        .where((e) => e.name == value).firstOrNull ?? GameGoalState.active;
+  }
+
 }
 
 class GameTarget {

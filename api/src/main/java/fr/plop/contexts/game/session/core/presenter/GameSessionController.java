@@ -79,7 +79,7 @@ public class GameSessionController {
     //TODO Player token ??
 
     @PostMapping({"/{sessionId}/move", "/{sessionId}/move/"})
-    public GameMoveResponseDTO move(
+    public void move(
             @RequestHeader("Authorization") String rawToken,
             @PathVariable("sessionId") String sessionIdStr,
             @RequestBody GameMoveRequestDTO request) {
@@ -90,7 +90,6 @@ public class GameSessionController {
 
             moveUseCase.apply(sessionId, player, request.toModel());
 
-            return new GameMoveResponseDTO();
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
@@ -98,12 +97,7 @@ public class GameSessionController {
         }
     }
 
-    public record GameMoveResponseDTO() {
-
-    }
-
     public record GameMoveRequestDTO(float lat, float lng) {
-
         public GameMoveUseCase.Request toModel() {
             return new GameMoveUseCase.Request(new BoardSpace.Point(lat, lng));
         }
