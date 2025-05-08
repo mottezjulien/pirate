@@ -4,7 +4,9 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioSuccessGoalAdapter;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionGame;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionMessage;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioGoal;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
 import org.springframework.stereotype.Component;
@@ -15,11 +17,15 @@ import java.util.stream.Stream;
 public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern.OutPort {
 
     private final ScenarioGoalRepository goalRepository;
-    private final GameEventActionScenarioSuccessGoalAdapter successGoalAction;
+    private final GameEventActionScenarioGoal goalAction;
+    private final GameEventActionGame gameAction;
+    private final GameEventActionMessage messageAction;
 
-    public GameEventBroadCastInternAdapter(ScenarioGoalRepository goalRepository, GameEventActionScenarioSuccessGoalAdapter successGoalAction) {
+    public GameEventBroadCastInternAdapter(ScenarioGoalRepository goalRepository, GameEventActionScenarioGoal goalAction, GameEventActionGame gameAction, GameEventActionMessage messageAction) {
         this.goalRepository = goalRepository;
-        this.successGoalAction = successGoalAction;
+        this.goalAction = goalAction;
+        this.gameAction = gameAction;
+        this.messageAction = messageAction;
     }
 
     //TODO Cache ??
@@ -31,8 +37,18 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void doSuccessGoal(GamePlayer.Id id, PossibilityConsequence.SuccessGoal successGoal) {
-        successGoalAction.apply(id, successGoal);
+    public void doGoal(GamePlayer.Id id, PossibilityConsequence.Goal consequence) {
+        goalAction.updateOrCreate(id, consequence);
+    }
+
+    @Override
+    public void doGameOver(GamePlayer.Id id, PossibilityConsequence.GameOver consequence) {
+        gameAction.over(id);
+    }
+
+    @Override
+    public void doAlert(GamePlayer.Id id, PossibilityConsequence.Alert consequence) {
+        messageAction.alert(id, consequence);
     }
 
 }

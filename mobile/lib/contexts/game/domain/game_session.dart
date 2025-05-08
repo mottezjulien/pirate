@@ -4,13 +4,13 @@ import '../data/game_repository.dart';
 import '../game_current.dart';
 import 'model/game_session.dart';
 
-class GameCreateUseCase {
+class GameSessionUseCase {
 
   String exceptionGeolocationPermission = 'Geolocation permission not granted';
 
-  Future<void> apply() async {
+  Future<void> start() async {
     await checkGeoLocalizationPermission();
-    await initGame();
+    await startSession();
   }
 
   checkGeoLocalizationPermission() async {
@@ -26,7 +26,7 @@ class GameCreateUseCase {
         || status == LocationPermission.always;
   }
 
-  initGame() async {
+  startSession() async {
     final GameSessionRepository repository = GameSessionRepository();
     final GameSession game = await repository.createLyonPirate();
     game.init();

@@ -3,17 +3,23 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.consequenc
 
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
-@DiscriminatorValue("ENDED_STEP")
-public final class ScenarioPossibilityConsequenceEndedStepEntity extends
+@DiscriminatorValue("STARTED_STEP")
+public final class ScenarioPossibilityConsequenceGoalEntity extends
         ScenarioPossibilityConsequenceAbstractEntity {
 
-    @Column(name = "ended_step_id")
+    @Column(name = "started_step_id")
     private String stepId;
+
+    @Enumerated(EnumType.STRING)
+    private ScenarioGoal.State state;
 
     public String getStepId() {
         return stepId;
@@ -23,8 +29,16 @@ public final class ScenarioPossibilityConsequenceEndedStepEntity extends
         this.stepId = stepId;
     }
 
+    public ScenarioGoal.State getState() {
+        return state;
+    }
+
+    public void setState(ScenarioGoal.State state) {
+        this.state = state;
+    }
+
     public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.SuccessGoal(new PossibilityConsequence.Id(id), new ScenarioConfig.Step.Id(stepId));
+        return new PossibilityConsequence.Goal(new PossibilityConsequence.Id(id), new ScenarioConfig.Step.Id(stepId), state);
     }
 
 }

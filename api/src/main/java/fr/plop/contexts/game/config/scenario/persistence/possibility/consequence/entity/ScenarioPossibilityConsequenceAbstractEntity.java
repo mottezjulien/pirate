@@ -32,8 +32,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case ScenarioPossibilityConsequenceRemoveObjectEntity removeObject -> removeObject.toModel();
             case ScenarioPossibilityConsequenceUpdatedMetadataEntity metadataUpdate -> metadataUpdate.toModel();
             case ScenarioPossibilityConsequenceGameOverEntity gameOver -> gameOver.toModel();
-            case ScenarioPossibilityConsequenceStartedStepEntity startedStep -> startedStep.toModel();
-            case ScenarioPossibilityConsequenceEndedStepEntity endedStep -> endedStep.toModel();
+            case ScenarioPossibilityConsequenceGoalEntity goal -> goal.toModel();
             case ScenarioPossibilityConsequenceAlertEntity alert -> alert.toModel();
             default -> throw new IllegalStateException("Unknown type");
         };
@@ -54,16 +53,11 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setObjetId(removeObjet.objetId());
                 yield entity;
             }
-            case PossibilityConsequence.ActiveGoal startedStep -> {
-                ScenarioPossibilityConsequenceStartedStepEntity entity = new ScenarioPossibilityConsequenceStartedStepEntity();
+            case PossibilityConsequence.Goal startedStep -> {
+                ScenarioPossibilityConsequenceGoalEntity entity = new ScenarioPossibilityConsequenceGoalEntity();
                 entity.setId(startedStep.id().value());
                 entity.setStepId(startedStep.stepId().value());
-                yield entity;
-            }
-            case PossibilityConsequence.SuccessGoal endedStep -> {
-                ScenarioPossibilityConsequenceEndedStepEntity entity = new ScenarioPossibilityConsequenceEndedStepEntity();
-                entity.setId(endedStep.id().value());
-                entity.setStepId(endedStep.stepId().value());
+                entity.setState(startedStep.state());
                 yield entity;
             }
             case PossibilityConsequence.GameOver ignored -> new ScenarioPossibilityConsequenceGameOverEntity();

@@ -1,11 +1,11 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
 
 public sealed interface PossibilityConsequence permits
-        PossibilityConsequence.ActiveGoal,
-        PossibilityConsequence.SuccessGoal,
+        PossibilityConsequence.Goal,
         PossibilityConsequence.GameOver,
         PossibilityConsequence.Alert,
         PossibilityConsequence.UpdatedMetadata,
@@ -18,11 +18,7 @@ public sealed interface PossibilityConsequence permits
         }
     }
 
-    record ActiveGoal(Id id, ScenarioConfig.Step.Id stepId) implements PossibilityConsequence {
-
-    }
-
-    record SuccessGoal(Id id, ScenarioConfig.Step.Id stepId) implements PossibilityConsequence {
+    record Goal(Id id, ScenarioConfig.Step.Id stepId, ScenarioGoal.State state) implements PossibilityConsequence {
 
     }
 

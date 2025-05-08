@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
@@ -71,7 +72,7 @@ public class TemplateInitUseCase {
 
         PossibilityTrigger trigger2 = new PossibilityTrigger.GoInSpace(new PossibilityTrigger.Id(), board.spaces().get(1).id());
         PossibilityConsequence consequence2 = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes dans la cuisine"));
-        PossibilityConsequence consequence2bis = new PossibilityConsequence.SuccessGoal(new PossibilityConsequence.Id(), stepId);
+        PossibilityConsequence consequence2bis = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), stepId, ScenarioGoal.State.SUCCESS);
         List<PossibilityConsequence> consequences2 = List.of(consequence2, consequence2bis);
         Possibility possibility2 = new Possibility(trigger2, List.of(), AndOrOr.AND, consequences2);
 

@@ -7,16 +7,16 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence
 
 import java.util.stream.Stream;
 
-
-//TODO pouet
-
 public class GameEventBroadCastIntern implements GameEventBroadCast {
-
-
 
     public interface OutPort {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
-        void doSuccessGoal(GamePlayer.Id id, PossibilityConsequence.SuccessGoal successGoal);
+
+        void doGoal(GamePlayer.Id id, PossibilityConsequence.Goal activeStep);
+        void doGameOver(GamePlayer.Id id, PossibilityConsequence.GameOver gameOver);
+        void doAlert(GamePlayer.Id id, PossibilityConsequence.Alert alert);
+
+
     }
 
     private final OutPort outPort;
@@ -46,12 +46,14 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
     private void _do(GamePlayer.Id id, PossibilityConsequence consequence) {
        switch (consequence) {
+           case PossibilityConsequence.Goal goal -> outPort.doGoal(id, goal);
+
            case PossibilityConsequence.AddObjet addObjet -> {}//TODO _doAddObjet(game, id, addObjet.objetId());
-           case PossibilityConsequence.Alert alert -> {} //TODO _doAlert(game, id, alert.message());
-           case PossibilityConsequence.SuccessGoal successGoal -> outPort.doSuccessGoal(id, successGoal);
-           case PossibilityConsequence.GameOver gameOver -> {}//TODO_doGameOver(game, id);
+           case PossibilityConsequence.Alert alert -> outPort.doAlert(id, alert);
+
+           case PossibilityConsequence.GameOver gameOver -> outPort.doGameOver(id, gameOver);
            case PossibilityConsequence.RemoveObjet removeObjet -> {}//TODO _doAddObjet(game, id, removeObjet.objetId());
-           case PossibilityConsequence.ActiveGoal activeStep -> {}//TODO_doStartedStep(game, id, activeStep.stepId());
+
            case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {} //TODO _doUpdatedMetadata(game, id, updatedMetadata.metadataId(), updatedMetadata.value());
        }
 

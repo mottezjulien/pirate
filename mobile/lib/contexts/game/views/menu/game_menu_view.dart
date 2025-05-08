@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../generic/config/router.dart';
-import '../../domain/game_settings_usecase.dart';
+import '../../domain/game_session.dart';
 import '../../game_current.dart';
 
 class GameMenuView extends StatelessWidget {
@@ -33,7 +33,9 @@ class GameMenuView extends StatelessWidget {
           if (_viewModel.hasGame)
             TextButton(
                 style: buttonStyle(colorScheme),
-                onPressed: () => _viewModel.continueGame(),
+                onPressed: () async {
+                  context.goNamed(AppRouter.gameHomeName);
+                },
                 child: const Text('Continuer :)')),
           TextButton(onPressed: () {}, child: const Text('Configuration :)')),
           TextButton(onPressed: () {}, child: const Text('Sortir :)')),
@@ -50,16 +52,12 @@ class GameMenuView extends StatelessWidget {
 
 class GameMenuViewModel {
 
-  final GameCreateUseCase createUseCase = GameCreateUseCase();
+  final GameSessionUseCase sessionUseCase = GameSessionUseCase();
 
   bool get hasGame => GameSessionCurrent.hasSession;
 
   Future<void> start() async {
-    await createUseCase.apply();
-  }
-
-  void continueGame() {
-
+    await sessionUseCase.start();
   }
 
 }

@@ -28,15 +28,26 @@ class GameSessionRepository {
   Future<List<GameGoal>> findGoals() async {
     GenericRepository genericRepository = GenericRepository();
     var response = await genericRepository.get(path: "$resourcePath/${GameSessionCurrent.sessionId}/goals/");
-    return response.map((goal) => goalToModel(goal)).toList();
+
+    List<GameGoal> goals = [];
+    response.forEach((goal) {
+      goals.add(goalToModel(goal));
+    });
+
+    return goals;
+
   }
 
   GameGoal goalToModel(goal) {
+    List<GameTarget> targets = [];
+    goal['targets'].forEach((target) {
+      targets.add(GameTarget(id: target['id'], label: target['label']));
+    });
     return GameGoal(
       id: goal['id'],
       label: goal['label'],
-      state: GameGoalState.values.firstWhere((e) => e.toString() == goal['state']),
-      targets: goal['targets'].map((target) => GameTarget(id: target['id'], label: target['label'])).toList()
+      state: GameGoalState.values.firstWhere((e) => e.name == goal['state']),
+      targets: targets
     );
   }
 

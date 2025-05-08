@@ -69,12 +69,11 @@ public class ConnectionAuthEntity {
         return new ConnectAuth(new ConnectToken(token), connect, createdAt);
     }
 
-    public ConnectAuth toModel() {
-        return toModelWithConnect(null);
-    }
-
     public ConnectAuth toModel(GamePlayer nullablePlayer) {
         return new ConnectAuth(new ConnectToken(token), connection.toModel(nullablePlayer), createdAt);
     }
 
+    public ConnectAuth toModel() {
+        return new ConnectAuth(new ConnectToken(token), connection.toModel(null), createdAt);
+    }
 }

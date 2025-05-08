@@ -20,6 +20,8 @@ class GameTarget {
 
   final String id;
   final String label;
+  final bool done = true;
+  final bool optional = true;
 
   GameTarget({required this.id, required this.label});
 
