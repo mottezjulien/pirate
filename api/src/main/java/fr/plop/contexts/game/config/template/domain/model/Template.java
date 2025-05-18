@@ -1,10 +1,11 @@
 package fr.plop.contexts.game.config.template.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.generic.tools.StringTools;
 
-public record Template(Atom atom, String label, String version, ScenarioConfig scenario, BoardConfig board) {
+public record Template(Atom atom, String label, String version, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
 
     public record Id(String value) {
 

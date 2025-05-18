@@ -24,9 +24,6 @@ public class ConnectionUserEntity {
 
     private String surname;
 
-    //@OneToMany(mappedBy = "user")
-    //private Set<DeviceConnectionEntity> connections = new HashSet<>();
-
     public String getId() {
         return id;
     }
@@ -46,15 +43,6 @@ public class ConnectionUserEntity {
     public void setSurname(String surname) {
         this.surname = surname;
     }
-
-    /*public static ConnectionUserEntity fromModel(ConnectUser user) {
-        ConnectionUserEntity entity = new ConnectionUserEntity();
-        entity.setId(user.id().value());
-        entity.setLanguage(user.language());
-        //TODO entity.setConnections
-        return entity;
-    }*/
-
 
     public ConnectUser toModel(GamePlayer nullablePlayer) {
         return new ConnectUser(new ConnectUser.Id(id), language, Optional.ofNullable(nullablePlayer));

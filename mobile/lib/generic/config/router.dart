@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../contexts/game/views/goal/game_goal_view.dart';
 import '../../contexts/game/views/home/game_home_view.dart';
+import '../../contexts/game/views/map/game_map_view.dart';
 import '../../contexts/game/views/menu/game_menu_view.dart';
 
 class AppRouter {
@@ -18,6 +19,9 @@ class AppRouter {
 
   static const gameGoalName = "game-goal";
   static const gameGoalPath = "/game/goal";
+
+  static const gameMapName = "game-map";
+  static const gameMapPath = "/game/map";
 
   static GoRouter create() {
     return GoRouter(
@@ -44,6 +48,11 @@ class AppRouter {
           name: gameGoalName,
           path: gameGoalPath,
           builder: (context, state) => GameGoalView(),
+        ),
+        GoRoute(
+          name: gameMapName,
+          path: gameMapPath,
+          builder: (context, state) => GameMapView(),
         ),
 
 

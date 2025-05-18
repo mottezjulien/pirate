@@ -1,23 +1,24 @@
 package fr.plop.contexts.game.session.core.adapter;
 
-import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
+import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
+import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
+import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
+import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
-import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
-import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
-import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
@@ -64,6 +65,10 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
         BoardConfigEntity boardEntity = new BoardConfigEntity();
         boardEntity.setId(template.board().id().value());
         entity.setBoard(boardEntity);
+
+        MapConfigEntity mapEntity = new MapConfigEntity();
+        mapEntity.setId(template.map().id().value());
+        entity.setMap(mapEntity);
 
         entity = sessionRepository.save(entity);
 

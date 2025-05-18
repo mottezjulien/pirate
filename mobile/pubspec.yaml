@@ -35,3 +35,5 @@ flutter:
   assets:
     - assets/translations/
     - assets/pouet/
+    - assets/generic/map/
+    - assets/game/first/map/

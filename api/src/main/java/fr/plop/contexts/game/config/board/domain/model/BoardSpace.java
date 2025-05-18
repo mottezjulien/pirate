@@ -1,11 +1,12 @@
 package fr.plop.contexts.game.config.board.domain.model;
 
+import fr.plop.generic.position.Point;
+import fr.plop.generic.position.Rect;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
 
 public record BoardSpace(Id id, String label, Priority priority, List<Rect> rects) {
-
 
     public enum Priority {
         HIGHEST, HIGH, MEDIUM, LOW, LOWEST
@@ -29,18 +30,5 @@ public record BoardSpace(Id id, String label, Priority priority, List<Rect> rect
         return rects.stream().anyMatch(rect -> rect.in(point));
     }
 
-    public record Rect(Point bottomLeft, Point topRight) {
-        public boolean in(Point point) {
-            return point.in(bottomLeft, topRight);
-        }
-    }
-
-    public record Point(float lat, float lng) {
-        public boolean in(Point bottomLeft, Point topRight) {
-            return bottomLeft.lat() <= lat && lat <= topRight.lat()
-                    && bottomLeft.lng() <= lng && lng <= topRight.lng();
-        }
-
-    }
 
 }

@@ -20,7 +20,6 @@ public sealed interface PossibilityTrigger permits
     }
 
     default boolean accept(GameEvent event) {
-        //TODO
         return false;
     }
 

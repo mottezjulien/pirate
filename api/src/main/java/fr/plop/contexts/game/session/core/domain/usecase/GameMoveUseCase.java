@@ -2,19 +2,19 @@ package fr.plop.contexts.game.session.core.domain.usecase;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
+import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
 import java.util.List;
 
 public class GameMoveUseCase {
 
-    public record Request(BoardSpace.Point position) {
+    public record Request(Point position) {
 
     }
 
@@ -38,7 +38,7 @@ public class GameMoveUseCase {
 
         BoardConfig board = outPort.boardBySessionId(sessionId);
 
-        List<BoardSpace.Id> currentIds = player.positions();
+        List<BoardSpace.Id> currentIds = player.spaceIds();
         List<BoardSpace> next = board.spacesByPoint(request.position()).toList();
         List<BoardSpace.Id> nextIds = next.stream().map(BoardSpace::id).toList();
         if(!currentIds.equals(nextIds)) {

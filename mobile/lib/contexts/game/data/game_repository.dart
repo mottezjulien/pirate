@@ -1,10 +1,11 @@
 
 import 'package:mobile/contexts/game/domain/model/game_session.dart';
-import 'package:mobile/contexts/geo/domain/model/coord.dart';
+import 'package:mobile/contexts/geo/domain/model/coordinate.dart';
 
 import '../../../generic/repository/generic_repository.dart';
 import '../domain/model/game_goal.dart';
 import '../game_current.dart';
+import '../views/map/game_map_view.dart';
 
 class GameSessionRepository {
 
@@ -45,7 +46,6 @@ class GameSessionRepository {
     response.forEach((goal) {
       goals.add(goalToModel(goal));
     });
-
     return goals;
   }
 
@@ -60,6 +60,27 @@ class GameSessionRepository {
       //state: GameGoalState.values.firstWhere((e) => e.name == goal['state']),
       state: GameGoalState.fromJson(goal['state']),
       targets: targets
+    );
+  }
+
+  Future<List<GameMap>> findMaps() async {
+    GenericRepository genericRepository = GenericRepository();
+    var response = await genericRepository.get(path: "$resourcePath/${GameSessionCurrent.sessionId}/maps/");
+
+    List<GameMap> maps = [];
+    response.forEach((map) {
+      maps.add(mapToModel(map));
+    });
+    return maps;
+  }
+
+  GameMap mapToModel(json) {
+    return GameMap(
+      id: json['id'],
+      label: json['label'],
+      definition: json['definition'],
+      bottomLeft: Coordinate(lat: json['bottomLeft']['lat'], lng: json['bottomLeft']['lng']),
+      topRight: Coordinate(lat: json['topRight']['lat'], lng: json['topRight']['lng']),
     );
   }
 

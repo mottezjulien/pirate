@@ -22,7 +22,7 @@ public sealed interface PossibilityConsequence permits
 
     }
 
-    record GameOver(Id id) implements PossibilityConsequence {
+    record GameOver(Id id, fr.plop.contexts.game.session.core.domain.model.GameOver gameOver) implements PossibilityConsequence {
 
     }
 

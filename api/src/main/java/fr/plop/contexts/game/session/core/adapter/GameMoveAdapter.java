@@ -42,8 +42,6 @@ public class GameMoveAdapter implements GameMoveUseCase.OutPort {
         this.positionRepository = positionRepository;
     }
 
-
-
     @Override
     public BoardConfig boardBySessionId(GameSession.Id gameId) throws GameException {
         BoardConfig.Id boardId = new BoardConfig.Id(sessionRepository.boardId(gameId.value())

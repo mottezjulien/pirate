@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.board.domain.model;
 
 
+import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public record BoardConfig(Id id, List<BoardSpace> spaces) {
         return id;
     }
 
-    public Stream<BoardSpace> spacesByPoint(BoardSpace.Point position) {
+    public Stream<BoardSpace> spacesByPoint(Point position) {
         return spaces.stream()
                 .filter(space -> space.in(position));
     }

@@ -1,5 +1,6 @@
 
 
+import '../geo/domain/model/coordinate.dart';
 import 'domain/model/game_session.dart';
 
 class GameSessionCurrent {
@@ -12,6 +13,10 @@ class GameSessionCurrent {
 
   static set session(GameSession session) => _instance._session = session;
 
+  static Coordinate get coordinate => _instance.coordinate;
+
+  static Stream<Coordinate> get streamCoordinate => _instance.streamCoordinate;
+
 }
 
 class _GameSessionCurrent {
@@ -19,5 +24,9 @@ class _GameSessionCurrent {
   GameSession? _session;
 
   bool get hasSession => _session != null;
+
+  Coordinate get coordinate => _session!.coordinate;
+
+  Stream<Coordinate> get streamCoordinate => _session!.streamCoordinate;
 
 }

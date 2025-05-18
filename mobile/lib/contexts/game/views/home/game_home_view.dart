@@ -35,7 +35,7 @@ class GameHomeView extends StatelessWidget {
                   iconSize: 80,
                   color: Colors.white,
                   onPressed: () {
-                    // Navigation vers la carte
+                    context.pushNamed(AppRouter.gameMapName);
                   },
                 ),
                 Text('Carte :)', style: TextStyle(color: Colors.white)),

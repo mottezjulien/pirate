@@ -4,12 +4,17 @@ import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardRectEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
-import fr.plop.contexts.game.config.board.persistence.repository.BoardRectRepository;
 import fr.plop.contexts.game.config.board.persistence.repository.BoardConfigRepository;
+import fr.plop.contexts.game.config.board.persistence.repository.BoardRectRepository;
 import fr.plop.contexts.game.config.board.persistence.repository.BoardSpaceRepository;
-import fr.plop.contexts.i18n.domain.I18n;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
-import fr.plop.contexts.i18n.persistence.I18nRepository;
+import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigItemAbstractEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigItemGlobalEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigItemRepository;
+import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
+import fr.plop.contexts.game.config.map.persistence.MapEntity;
+import fr.plop.contexts.game.config.map.persistence.MapRepository;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -31,6 +36,9 @@ import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
+import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.contexts.i18n.persistence.I18nRepository;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +61,11 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final ScenarioPossibilityConditionRepository conditionRepository;
     private final ScenarioPossibilityConsequenceRepository consequenceRepository;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository) {
+    private final MapConfigRepository mapConfigRepository;
+    private final MapConfigItemRepository mapConfigItemRepository;
+    private final MapRepository mapRepository;
+
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapConfigItemRepository mapConfigItemRepository, MapRepository mapRepository) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.boardRepository = boardRepository;
@@ -66,6 +78,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.triggerRepository = triggerRepository;
         this.conditionRepository = conditionRepository;
         this.consequenceRepository = consequenceRepository;
+        this.mapConfigRepository = mapConfigRepository;
+        this.mapConfigItemRepository = mapConfigItemRepository;
+        this.mapRepository = mapRepository;
     }
 
 
@@ -83,9 +98,11 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         templateEntity.setVersion(template.version());
         templateEntity.setBoard(createBoard(template.board()));
         templateEntity.setScenario(createScenario(template.scenario()));
+        templateEntity.setMap(createMap(template.map()));
         templateRepository.save(templateEntity);
-    }
 
+
+    }
 
     private BoardConfigEntity createBoard(BoardConfig board) {
         BoardConfigEntity boardEntity = new BoardConfigEntity();
@@ -169,6 +186,32 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         });
 
         possibilityRepository.save(possibilityEntity);
+    }
+
+    private MapConfigEntity createMap(MapConfig mapConfig) {
+        MapConfigEntity mapConfigEntity = new MapConfigEntity();
+        mapConfigEntity.setId(mapConfig.id().value());
+        mapConfigRepository.save(mapConfigEntity);
+
+        mapConfig.items().forEach(item -> {
+            MapEntity mapEntity = new MapEntity();
+            mapEntity.setId(item.map().id().value());
+            mapEntity.setLabel(createI18n(item.map().label()));
+            mapEntity.setDefinition(item.map().definition());
+            mapEntity.setBottomLeftLatitude(item.map().rect().bottomLeft().lat());
+            mapEntity.setBottomLeftLongitude(item.map().rect().bottomLeft().lng());
+            mapEntity.setTopRightLatitude(item.map().rect().topRight().lat());
+            mapEntity.setTopRightLongitude(item.map().rect().topRight().lng());
+            mapRepository.save(mapEntity);
+
+            MapConfigItemAbstractEntity itemEntity = new MapConfigItemGlobalEntity();
+            itemEntity.setId(StringTools.generate());
+            itemEntity.setConfig(mapConfigEntity);
+            itemEntity.setMap(mapEntity);
+            mapConfigItemRepository.save(itemEntity);
+        });
+
+        return mapConfigEntity;
     }
 
     private I18nEntity createI18n(I18n i18n) {

@@ -6,6 +6,9 @@ import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.map.domain.Map;
+import fr.plop.contexts.game.config.map.persistence.MapEntity;
+import fr.plop.contexts.game.config.map.persistence.MapRepository;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
@@ -14,10 +17,12 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
+import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.generic.position.Point;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,13 +43,16 @@ public class GameSessionController {
     private final GameCreateSessionUseCase createUseCase;
     private final GameMoveUseCase moveUseCase;
     private final ScenarioGoalRepository goalRepository;
+    private final GameSessionRepository gameSessionRepository;
 
-    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, ScenarioGoalRepository goalRepository) {
+    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, ScenarioGoalRepository goalRepository, GameSessionRepository gameSessionRepository) {
         this.connectUseCase = connectUseCase;
         this.createUseCase = createUseCase;
         this.moveUseCase = moveUseCase;
         this.goalRepository = goalRepository;
+        this.gameSessionRepository = gameSessionRepository;
     }
+
 
     @PostMapping({"", "/"})
     public GameSessionCreateResponse create(
@@ -77,7 +85,6 @@ public class GameSessionController {
     }
 
     //TODO Player token ??
-
     @PostMapping({"/{sessionId}/move", "/{sessionId}/move/"})
     public void move(
             @RequestHeader("Authorization") String rawToken,
@@ -99,7 +106,7 @@ public class GameSessionController {
 
     public record GameMoveRequestDTO(float lat, float lng) {
         public GameMoveUseCase.Request toModel() {
-            return new GameMoveUseCase.Request(new BoardSpace.Point(lat, lng));
+            return new GameMoveUseCase.Request(new Point(lat, lng));
         }
     }
 
@@ -140,6 +147,41 @@ public class GameSessionController {
             return new GameTargetSimpleResponseDTO(targetEntity.getId(), targetLabel.value(language));
         }
     }
+
+
+
+    @GetMapping({"/{sessionId}/maps", "/{sessionId}/maps/"})
+    public List<GameMapResponseDTO> maps(@RequestHeader("Authorization") String rawToken,
+                                                 @RequestHeader("Language") String languageStr,
+                                          @PathVariable("sessionId") String sessionIdStr) {
+        Language language = Language.valueOf(languageStr.toUpperCase());
+        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        //ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+        //GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+
+        List<MapEntity> mapEntities = gameSessionRepository.fullMap(sessionId.value());
+        return mapEntities.stream()
+                .map(entity -> GameMapResponseDTO.fromModel(entity.toModel(), language))
+                .toList();
+    }
+
+    public record GameMapResponseDTO(String id, String label, String definition, PointResponseDTO bottomLeft, PointResponseDTO topRight) {
+
+        public static GameMapResponseDTO fromModel(Map model, Language language) {
+            return new GameMapResponseDTO(model.id().value(), model.label().value(language),
+                    model.definition(),
+                    PointResponseDTO.fromModel(model.rect().bottomLeft()),
+                    PointResponseDTO.fromModel(model.rect().topRight()));
+        }
+    }
+
+    public record PointResponseDTO(double lat, double lng) {
+        public static PointResponseDTO fromModel(Point model) {
+            return new PointResponseDTO(model.lat(), model.lng());
+        }
+    }
+
+
 }
 
 

@@ -4,6 +4,7 @@ import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSession;
+import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -15,7 +16,9 @@ public record GameSession(Atom atom, State state, List<GamePlayer> players, Scen
     }
 
     public record Id(String value) {
-
+        public Id() {
+            this(StringTools.generate());
+        }
     }
 
     public record Atom(Id id, String label) {

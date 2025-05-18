@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.session.core.persistence;
 
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import jakarta.persistence.Column;
@@ -41,6 +42,10 @@ public class GameSessionEntity {
     @ManyToOne
     @JoinColumn(name = "board_config_id")
     private BoardConfigEntity board;
+
+    @ManyToOne
+    @JoinColumn(name = "map_config_id")
+    private MapConfigEntity map;
 
     @Enumerated(EnumType.STRING)
     private GameSession.State state;
@@ -99,6 +104,14 @@ public class GameSessionEntity {
 
     public void setBoard(BoardConfigEntity board) {
         this.board = board;
+    }
+
+    public MapConfigEntity getMap() {
+        return map;
+    }
+
+    public void setMap(MapConfigEntity map) {
+        this.map = map;
     }
 
     public GameSession.State getState() {

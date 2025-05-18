@@ -1,13 +1,18 @@
 package fr.plop.contexts.game.config.template.persistence;
 
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_TEMPLATE")
@@ -29,6 +34,10 @@ public class TemplateEntity {
     @ManyToOne
     @JoinColumn(name = "board_id")
     private BoardConfigEntity board;
+
+    @ManyToOne
+    @JoinColumn(name = "map_id")
+    private MapConfigEntity map;
 
     public String getId() {
         return id;
@@ -78,9 +87,17 @@ public class TemplateEntity {
         this.board = board;
     }
 
+    public MapConfigEntity getMap() {
+        return map;
+    }
+
+    public void setMap(MapConfigEntity map) {
+        this.map = map;
+    }
+
     public Template toModel() {
         Template.Id id = new Template.Id(this.id);
         Template.Atom atom = new Template.Atom(id, new Template.Code(code));
-        return new Template(atom, label, version, scenario.toModel(), board.toModel());
+        return new Template(atom, label, version, scenario.toModel(), board.toModel(), map.toModel());
     }
 }

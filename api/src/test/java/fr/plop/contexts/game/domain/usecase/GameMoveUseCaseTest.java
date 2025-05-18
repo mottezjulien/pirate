@@ -1,6 +1,5 @@
 package fr.plop.contexts.game.domain.usecase;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.session.core.domain.GameException;
@@ -9,6 +8,8 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.generic.position.Point;
+import fr.plop.generic.position.Rect;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -110,52 +111,52 @@ public class GameMoveUseCaseTest {
     private GamePlayer player(List<BoardSpace.Id> positions) {
         GamePlayer player = mock(GamePlayer.class);
         when(player.id()).thenReturn(new GamePlayer.Id("any"));
-        when(player.positions()).thenReturn(positions);
+        when(player.spaceIds()).thenReturn(positions);
         return player;
     }
 
     private static BoardSpace spaceA() {
-        BoardSpace.Rect rect = new BoardSpace.Rect(new BoardSpace.Point(1, 1), new BoardSpace.Point(10, 10));
+        Rect rect = new Rect(new Point(1, 1), new Point(10, 10));
         return new BoardSpace(List.of(rect));
     }
 
     private static GameMoveUseCase.Request inSpaceAPosition() {
-        BoardSpace.Point position = new BoardSpace.Point(5,4.6f);
+        Point position = new Point(5,4.6f);
         return new GameMoveUseCase.Request(position);
     }
 
     private static GameMoveUseCase.Request inSpaceABPosition() {
-        BoardSpace.Point position = new BoardSpace.Point(9,1.7f);
+        Point position = new Point(9,1.7f);
         return new GameMoveUseCase.Request(position);
     }
 
     private static BoardSpace spaceB() {
-        BoardSpace.Rect rect = new BoardSpace.Rect(new BoardSpace.Point(8, 1), new BoardSpace.Point(12, 2));
+        Rect rect = new Rect(new Point(8, 1), new Point(12, 2));
         return new BoardSpace(List.of(rect));
     }
 
     private static BoardSpace spaceC() {
-        BoardSpace.Rect rect = new BoardSpace.Rect(new BoardSpace.Point(8, 5), new BoardSpace.Point(14, 20));
+        Rect rect = new Rect(new Point(8, 5), new Point(14, 20));
         return new BoardSpace(List.of(rect));
     }
 
     private static BoardSpace spaceD() {
-        BoardSpace.Rect rect = new BoardSpace.Rect(new BoardSpace.Point(10, 0), new BoardSpace.Point(14, 8));
+        Rect rect = new Rect(new Point(10, 0), new Point(14, 8));
         return new BoardSpace(List.of(rect));
     }
 
     private static BoardSpace spaceE() {
-        BoardSpace.Rect rect = new BoardSpace.Rect(new BoardSpace.Point(9, 4), new BoardSpace.Point(16, 8));
+        Rect rect = new Rect(new Point(9, 4), new Point(16, 8));
         return new BoardSpace(List.of(rect));
     }
 
     private static GameMoveUseCase.Request inCDEPosition() {
-        BoardSpace.Point position = new BoardSpace.Point(12,6f);
+        Point position = new Point(12,6f);
         return new GameMoveUseCase.Request(position);
     }
 
     private static GameMoveUseCase.Request outPosition() {
-        BoardSpace.Point position = new BoardSpace.Point(99,6.6f);
+        Point position = new Point(99,6.6f);
         return new GameMoveUseCase.Request(position);
     }
 

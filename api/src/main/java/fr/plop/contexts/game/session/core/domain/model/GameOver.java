@@ -1,0 +1,12 @@
+package fr.plop.contexts.game.session.core.domain.model;
+
+import fr.plop.contexts.i18n.domain.I18n;
+
+public record GameOver(Type type, I18n.Id labelId) {
+
+    public enum Type {
+        SUCCESS_ALL_ENDED, SUCCESS_ONE_CONTINUE,
+    }
+
+
+}

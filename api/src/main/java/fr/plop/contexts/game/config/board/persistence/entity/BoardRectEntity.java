@@ -1,6 +1,8 @@
 package fr.plop.contexts.game.config.board.persistence.entity;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.generic.position.Point;
+import fr.plop.generic.position.Rect;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -80,7 +82,7 @@ public class BoardRectEntity {
         this.bottomLeftLongitude = bottomLeftLongitude;
     }
 
-    public BoardSpace.Rect toModel() {
-        return new BoardSpace.Rect(new BoardSpace.Point(bottomLeftLatitude, bottomLeftLongitude), new BoardSpace.Point(topRightLatitude, topRightLongitude));
+    public Rect toModel() {
+        return new Rect(new Point(bottomLeftLatitude, bottomLeftLongitude), new Point(topRightLatitude, topRightLongitude));
     }
 }
