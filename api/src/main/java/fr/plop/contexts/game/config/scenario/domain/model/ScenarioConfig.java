@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 public record ScenarioConfig(Id id, String label, List<Step> steps) {
 
 
-
     public record Id(String value) {
 
         public Id() {
@@ -18,6 +17,7 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
         }
 
     }
+
     public record Step(Id id, Optional<I18n> label, List<Target> targets, List<Possibility> possibilities) {
 
         public record Id(String value) {

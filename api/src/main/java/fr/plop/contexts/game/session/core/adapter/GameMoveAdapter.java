@@ -1,6 +1,5 @@
 package fr.plop.contexts.game.session.core.adapter;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
@@ -16,14 +15,14 @@ import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.generic.tools.StringTools;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
-@Configuration
+@Component
 public class GameMoveAdapter implements GameMoveUseCase.OutPort {
 
     //TODO Cache ??
@@ -54,7 +53,7 @@ public class GameMoveAdapter implements GameMoveUseCase.OutPort {
     @Override
     public void savePosition(GamePlayer.Id playerId, List<BoardSpace.Id> spaceIds) throws GameException {
 
-        GamePlayerEntity playerEntity =  playerRepository.findById(playerId.value())
+        GamePlayerEntity playerEntity = playerRepository.findById(playerId.value())
                 .orElseThrow(() -> new GameException(GameException.Type.PLAYER_NOT_FOUND));
 
         //TODO Insert Position

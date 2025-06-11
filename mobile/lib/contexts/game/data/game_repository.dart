@@ -75,14 +75,53 @@ class GameSessionRepository {
   }
 
   GameMap mapToModel(json) {
+    GameMapDefinition definition = GameMapDefinition(
+        type: json['definitionType'],
+        value: json['definitionValue']
+    );
+
+    /*List<GameMapPosition> positions = json['positions'].map((json) {
+      Coordinate point = Coordinate(lat: json['point']['lat'], lng: json['point']['lng']);
+      List<String> boardIds = json['boardIds'].toList();
+      return GameMapPosition(
+          priority: json['priority'],
+          point: point,
+          boardIds: boardIds);
+    }).toList();*/
+
+    GameMapPositionPourcent? position;
+    if(json['position'] != null) {
+      position = GameMapPositionPourcent(x: json['position']['x'], y: json['position']['y']);
+    }
+
     return GameMap(
       id: json['id'],
       label: json['label'],
-      definition: json['definition'],
-      bottomLeft: Coordinate(lat: json['bottomLeft']['lat'], lng: json['bottomLeft']['lng']),
-      topRight: Coordinate(lat: json['topRight']['lat'], lng: json['topRight']['lng']),
+      priority: json['priority'],
+      definition: definition,
+      position: position
     );
   }
+
+  /*
+      public record GameMapResponseDTO(String id, String label, int priority,
+                                     String definitionType, String definitionValue,
+                                     Pourcent pourcent) {
+
+        public record Pourcent(double x, double y) {
+            public static Pourcent toModel(Map.Position.Point model) {
+                return new Pourcent(model.x(), model.y());
+            }
+        }
+
+        public static GameMapResponseDTO fromModel(Map map, Optional<Map.Position> optPosition, Language language) {
+            return new GameMapResponseDTO(map.id().value(), map.label().value(language), map.priority().value(),
+                    map.definition().type().name(), map.definition().value(),
+                    optPosition.map(position -> Pourcent.toModel(position.point())).orElse(null));
+        }
+
+    }
+   */
 
 
 

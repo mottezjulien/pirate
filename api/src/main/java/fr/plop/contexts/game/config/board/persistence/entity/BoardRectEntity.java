@@ -1,6 +1,5 @@
 package fr.plop.contexts.game.config.board.persistence.entity;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import jakarta.persistence.Column;

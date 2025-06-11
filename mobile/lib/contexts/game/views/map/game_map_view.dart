@@ -4,15 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:mobile/contexts/game/data/game_repository.dart';
 import 'package:mobile/contexts/geo/domain/model/coordinate.dart';
 
+import '../../../../style/style.dart';
 import '../../game_current.dart';
 
 class GameMapView extends StatelessWidget {
 
   final GameSessionRepository _repository = GameSessionRepository();
-
-  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
-
-
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,77 +31,34 @@ class GameMapView extends StatelessWidget {
     );
   }
 
+  var max_height = 0.7;
+
 
   Widget _buildMap(BuildContext context, List<GameMap> maps) {
 
-    Stream<Coordinate> _streamCoordinate = GameSessionCurrent.streamCoordinate;
-
-    // Contrôleur pour suivre la page actuelle
-    PageController _pageController = PageController();
-    ValueNotifier<String> currentLabelNotifier = ValueNotifier<String>(maps[0].label);
+    final PageController _controller = PageController(viewportFraction: 1.0);
+    final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
 
     return Column(
       children: [
-        // Texte dynamique : affichage du label de la carte en cours
-        ValueListenableBuilder<String>(
-          valueListenable: currentLabelNotifier,
-          builder: (context, label, child) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                label,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            );
-          },
-        ),
-        // Slider des cartes
-        Expanded(
+        SizedBox(
+          height: MediaQuery.of(context).size.height * max_height,
           child: PageView.builder(
-            controller: _pageController,
-
+            controller: _controller,
             itemCount: maps.length,
             physics: const BouncingScrollPhysics(),
-            onPageChanged: (index) {
-              currentLabelNotifier.value = maps[index].label;
-              _currentIndex.value = index;
-            },
-            itemBuilder: (context, index) {
-              final map = maps[index];
-              return Stack(
-                children: [
-                  if(map.definition.startsWith("url:"))
-                    Positioned.fill(child: Image.network(map.definition.substring("url:".length), fit: BoxFit.contain)),
-                  if(map.definition.startsWith("asset:"))
-                    Positioned.fill(child: Image.asset(map.definition.substring("asset:".length), fit: BoxFit.contain)),
-                  // Pointeur : Superposé sur la carte
-                  StreamBuilder(stream: _streamCoordinate, builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      final userCoordinate = snapshot.data!;
-                      return Positioned(left: _calculatePointerX(
-                          userCoordinate, map.bottomLeft, map.topRight,
-                          context),
-                        top: _calculatePointerY(
-                            userCoordinate, map.bottomLeft, map.topRight,
-                            context),
-                        child: Image.asset('assets/generic/map/pointeur.png',
-                            width: 24, height: 24),
-                      );
-                    }
-                    return SizedBox.shrink();
-                  })
-                ],
-              );
+            onPageChanged: (index) => _currentIndex.value = index,
+            itemBuilder: (BuildContext context, int index) {
+              return slide(context, map: maps[index]);
             },
           ),
         ),
         const SizedBox(height: 16),
         ValueListenableBuilder<int>(
           valueListenable: _currentIndex,
-          builder: (context, currentIndex, _) {
+          builder: (BuildContext context, int currentIndex, Widget? _) {
             return CarouselDots(
-              totalItems: widget.items.length,
+              totalItems: maps.length,
               currentIndex: currentIndex,
             );
           },
@@ -113,46 +67,110 @@ class GameMapView extends StatelessWidget {
     );
   }
 
-  double _calculatePointerX(Coordinate userPosition, Coordinate bottomLeft, Coordinate topRight, BuildContext context) {
-    // Calculer l'offset horizontal du pointeur en fonction des coordonnées
-    double mapWidth = topRight.lng - bottomLeft.lng;
-    double relativeLng = userPosition.lng - bottomLeft.lng;
+  Widget slide(BuildContext context, {required GameMap map}) {
 
-    // Normaliser en fonction de la largeur de la carte (0 < x < 1)
-    double normalizedX = relativeLng / mapWidth;
-
-    // Calculer la position réelle en pixels
-    double screenWidth = MediaQuery.of(context).size.width;
-    return screenWidth * normalizedX;
-  }
-
-  double _calculatePointerY(
-      Coordinate userPosition, Coordinate bottomLeft, Coordinate topRight, BuildContext context) {
-    // Calculer l'offset vertical du pointeur en fonction des coordonnées
-    double mapHeight = topRight.lat - bottomLeft.lat;
-    double relativeLat = topRight.lat - userPosition.lat;
-
-    // Normaliser en fonction de la hauteur de la carte (0 < y < 1)
-    double normalizedY = relativeLat / mapHeight;
-
-    // Calculer la position réelle en pixels (hauteur de l'écran)
-    double screenHeight = MediaQuery.of(context).size.width; // Basé sur la largeur
-    return screenHeight * normalizedY;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Stack(
+              children: [
+                if(map.definition.type == 'ASSET')
+                  Positioned.fill(child: Image.asset(map.definition.value, fit: BoxFit.contain)),
+                if(map.definition.type == 'WEB')
+                  Positioned.fill(child: Image.network(map.definition.value, fit: BoxFit.contain)),
+                if(map.position != null)
+                  Positioned(
+                    left: (MediaQuery.of(context).size.width * map.position!.x) - 24,
+                    top: ((MediaQuery.of(context).size.height * max_height) * map.position!.y) - 24,
+                    child: Image.asset('assets/generic/map/pointeur.png', width: 48, height: 48),
+                  )
+              ],
+            ),
+          ),
+          /*Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.info_outline,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+          ),*/
+        ],
+      ),
+    );
   }
 
 }
+
+
+
+class CarouselDots extends StatelessWidget {
+  const CarouselDots({
+    super.key,
+    required this.totalItems,
+    required this.currentIndex,
+  });
+
+  final int totalItems;
+  final int currentIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        totalItems,
+            (index) => AnimatedContainer(
+          duration: Style.duration.default_,
+          height: 8,
+          margin: EdgeInsets.symmetric(horizontal: Style.dimension.small),
+          width: currentIndex == index ? 16 : 8,
+          decoration: BoxDecoration(
+            color: currentIndex == index
+                ? Style.color.oneFirstPurple
+                : Style.color.lightGrey,
+            borderRadius:
+            BorderRadius.circular(Style.dimension.extraLarge),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
 
 class GameMap {
 
   final String id;
-  final String definition;
   final String label;
-  final Coordinate bottomLeft;
-  final Coordinate topRight;
+  final GameMapDefinition definition;
+  final int priority;
+  final GameMapPositionPourcent? position;
 
-  GameMap({required this.id,
-    required this.definition, required this.label
-    , required this.bottomLeft, required this.topRight});
+  GameMap({required this.id, required this.label, required this.priority,
+    required this.definition, required this.position});
 
 }
 
+class GameMapDefinition {
+  final String type;
+  final String value;
+  GameMapDefinition({required this.type, required this.value });
+}
+
+class GameMapPositionPourcent {
+  final double x;
+  final double y;
+  GameMapPositionPourcent({required this.x, required this.y});
+}

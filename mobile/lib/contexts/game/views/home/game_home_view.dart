@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../generic/config/router.dart';
+import '../../../../style/style.dart';
 
 class GameHomeView extends StatelessWidget {
 
@@ -12,7 +13,7 @@ class GameHomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Aventure Pirate'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Style.color.background,
       ),
       body: Stack(
         children: [

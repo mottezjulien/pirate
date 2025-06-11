@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
-import fr.plop.contexts.i18n.persistence.I18nEntity;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.i18n.persistence.I18nEntity;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

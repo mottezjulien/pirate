@@ -1,4 +1,4 @@
-package fr.plop.contexts.connect.persistence;
+package fr.plop.contexts.connect.persistence.entity;
 
 import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectToken;
@@ -14,11 +14,8 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(
-    name = "TEST2_CONNECTION_AUTH",
-    indexes = {
-        @Index(columnList = "token", unique = true)
-    }
+@Table(name = "TEST2_CONNECTION_AUTH",
+        indexes = {@Index(columnList = "token", unique = true)}
 )
 public class ConnectionAuthEntity {
 
@@ -27,7 +24,7 @@ public class ConnectionAuthEntity {
 
     @ManyToOne
     @JoinColumn(name = "connection_id")
-    private DeviceConnectionEntity connection;
+    private ConnectionDeviceEntity connection;
 
     private Instant createdAt;
 
@@ -41,11 +38,11 @@ public class ConnectionAuthEntity {
         this.id = id;
     }
 
-    public DeviceConnectionEntity getConnection() {
+    public ConnectionDeviceEntity getConnection() {
         return connection;
     }
 
-    public void setConnection(DeviceConnectionEntity connection) {
+    public void setConnection(ConnectionDeviceEntity connection) {
         this.connection = connection;
     }
 

@@ -1,6 +1,5 @@
-package fr.plop.contexts.connect.persistence;
+package fr.plop.contexts.connect.persistence.entity;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.domain.DeviceConnect;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import jakarta.persistence.Column;
@@ -15,14 +14,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_DEVICE_CONNECTION")
-public class DeviceConnectionEntity {
+@Table(name = "TEST2_CONNECTION_DEVICE")
+public class ConnectionDeviceEntity {
 
     @Id
     private String id;
 
     @Column(name = "device_id")
     private String deviceId;
+
+    @Column(name = "firebase_token")
+    private String firebaseToken;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -55,14 +57,13 @@ public class DeviceConnectionEntity {
         this.deviceId = deviceId;
     }
 
-    public Set<ConnectionAuthEntity> getAuths() {
-        return auths;
+    public String getFirebaseToken() {
+        return firebaseToken;
     }
 
-    public void setAuths(Set<ConnectionAuthEntity> auths) {
-        this.auths = auths;
+    public void setFirebaseToken(String firebaseToken) {
+        this.firebaseToken = firebaseToken;
     }
-
 
     public DeviceConnect toModel(GamePlayer nullablePlayer) {
         return new DeviceConnect(new DeviceConnect.Id(id), user.toModel(nullablePlayer), deviceId);

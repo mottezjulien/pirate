@@ -14,6 +14,8 @@ import fr.plop.contexts.game.config.map.persistence.MapConfigItemGlobalEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigItemRepository;
 import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
 import fr.plop.contexts.game.config.map.persistence.MapEntity;
+import fr.plop.contexts.game.config.map.persistence.MapPositionEntity;
+import fr.plop.contexts.game.config.map.persistence.MapPositionRepository;
 import fr.plop.contexts.game.config.map.persistence.MapRepository;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
@@ -64,8 +66,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final MapConfigRepository mapConfigRepository;
     private final MapConfigItemRepository mapConfigItemRepository;
     private final MapRepository mapRepository;
+    private final MapPositionRepository mapPositionRepository;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapConfigItemRepository mapConfigItemRepository, MapRepository mapRepository) {
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapConfigItemRepository mapConfigItemRepository, MapRepository mapRepository, MapPositionRepository mapPositionRepository) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.boardRepository = boardRepository;
@@ -81,6 +84,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.mapConfigRepository = mapConfigRepository;
         this.mapConfigItemRepository = mapConfigItemRepository;
         this.mapRepository = mapRepository;
+        this.mapPositionRepository = mapPositionRepository;
     }
 
 
@@ -179,7 +183,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         possibility.consequences().forEach(consequence -> {
             ScenarioPossibilityConsequenceAbstractEntity consequenceEntity = ScenarioPossibilityConsequenceAbstractEntity.fromModel(consequence);
-            if(consequence instanceof PossibilityConsequence.Alert alert) {
+            if (consequence instanceof PossibilityConsequence.Alert alert) {
                 createI18n(alert.message());
             }
             possibilityEntity.getConsequences().add(consequenceRepository.save(consequenceEntity));
@@ -197,12 +201,27 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
             MapEntity mapEntity = new MapEntity();
             mapEntity.setId(item.map().id().value());
             mapEntity.setLabel(createI18n(item.map().label()));
-            mapEntity.setDefinition(item.map().definition());
-            mapEntity.setBottomLeftLatitude(item.map().rect().bottomLeft().lat());
-            mapEntity.setBottomLeftLongitude(item.map().rect().bottomLeft().lng());
-            mapEntity.setTopRightLatitude(item.map().rect().topRight().lat());
-            mapEntity.setTopRightLongitude(item.map().rect().topRight().lng());
+            mapEntity.setDefinitionType(item.map().definition().type());
+            mapEntity.setDefinitionValue(item.map().definition().value());
+            mapEntity.setPriority(item.map().priority());
             mapRepository.save(mapEntity);
+
+            item.map().positions().forEach(point -> {
+                MapPositionEntity entity = new MapPositionEntity();
+                entity.setId(StringTools.generate());
+                entity.setMap(mapEntity);
+                entity.setX(point.point().x());
+                entity.setY(point.point().y());
+                entity.setPriority(point.priority());
+                mapPositionRepository.save(entity);
+
+                point.spaceIds().forEach(boardId -> {
+                    BoardSpaceEntity space = new BoardSpaceEntity();
+                    space.setId(boardId.value());
+                    entity.getSpaces().add(space);
+                });
+                mapPositionRepository.save(entity);
+            });
 
             MapConfigItemAbstractEntity itemEntity = new MapConfigItemGlobalEntity();
             itemEntity.setId(StringTools.generate());

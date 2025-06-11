@@ -12,12 +12,16 @@ class ConnectionRepository {
 
   static const String path = '/connect';
 
-  Future<Auth> byDeviceId({required String deviceId}) async {
+  Future<Auth> byDeviceId({
+    required String deviceId,
+    required String firebaseToken
+  }) async {
 
     final http.Response response = await http.post(Server.uri(path),
         headers: Headers.noAuth(),
         body: jsonEncode({
-          'deviceId': deviceId
+          'deviceId': deviceId,
+          'firebaseToken': firebaseToken
         })
     );
     if(response.statusCode >= 400) {

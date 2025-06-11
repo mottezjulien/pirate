@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.core.adapter;
 
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
+import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
@@ -43,7 +43,7 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
     @Override
     public Optional<Template> findTemplateByCode(Template.Code code) {
         List<TemplateEntity> templates = templateRepository.findByCodeFetchAll(code.value());
-        if(templates.isEmpty()) {
+        if (templates.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(templates.getFirst().toModel());
@@ -88,6 +88,8 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
         ConnectionUserEntity user = new ConnectionUserEntity();
         user.setId(userId.value());
         playerEntity.setUser(user);
+
+        playerEntity.setState(GamePlayer.State.ACTIVE);
 
         playerRepository.save(playerEntity);
 

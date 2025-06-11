@@ -4,14 +4,14 @@ import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.map.domain.Map;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.i18n.domain.I18n;
-import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
+import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
@@ -44,20 +44,23 @@ public class TemplateInitUseCase {
     private Template firstTemplate() {
         BoardConfig board = firstBoard();
         ScenarioConfig scenario = firstScenario(board);
-        MapConfig mapConfig = new MapConfig(List.of(new MapConfig.Item(firstMap())));
+        BoardSpace.Id bureau = board.spaces().getFirst().id();
+        BoardSpace.Id cuisine = board.spaces().get(1).id();
+        MapConfig mapConfig = new MapConfig(List.of(new MapConfig.Item(firstMap(bureau, cuisine)), new MapConfig.Item(secondMap(bureau))));
         return new Template(new Template.Atom(new Template.Id(), new Template.Code("first")), "Chez Wam", "0.0.1",
                 scenario, board, mapConfig);
     }
 
     private BoardConfig firstBoard() {
+
         Rect bureau = new Rect(
-                new Point(45.77808f,  4.80353f),
-                new Point(45.77818f,  4.80363f));
+                new Point(45.77806f, 4.80351f),
+                new Point(45.77820f, 4.80367f));
         BoardSpace spaceBureau = new BoardSpace("Bureau", BoardSpace.Priority.HIGHEST, List.of(bureau));
 
         Rect cusine = new Rect(
-                new Point(45.7780f, 4.80372f),
-                new Point(45.7781f, 4.80382f));
+                new Point(45.77798f, 4.8037f),
+                new Point(45.77812f, 4.80384f));
         BoardSpace spaceCuisine = new BoardSpace("Cuisine", BoardSpace.Priority.HIGHEST, List.of(cusine));
 
         return new BoardConfig(List.of(spaceBureau, spaceCuisine));
@@ -84,10 +87,26 @@ public class TemplateInitUseCase {
         return new ScenarioConfig("Mon premier scénario", List.of(step1));
     }
 
-    private Map firstMap() {
-        Rect rect = new Rect(new Point(45.7780f,  4.80353f), new Point(45.77818f,  4.80382f));
-        return new Map(new Map.Id(), i18n("Chez moi"), "asset:assets/game/first/map/map0.png", rect);
+    private Map firstMap(BoardSpace.Id bureau, BoardSpace.Id cusine) {
+        Map.Position.Point bureauPoint = new Map.Position.Point(.75, .25);
+        Map.Position bureauPosition = new Map.Position(bureauPoint, Map.Priority.HIGH, List.of(bureau));
+        Map.Position.Point cusinePoint = new Map.Position.Point(.25, .75);
+        Map.Position cusinePosition = new Map.Position(cusinePoint, Map.Priority.HIGH, List.of(cusine));
+        List<Map.Position> points = List.of(bureauPosition, cusinePosition);
+        return new Map(new Map.Id(), i18n("Chez moi"),
+                new Map.Definition(Map.Definition.Type.ASSET, "assets/game/first/map/map0.png"),
+                Map.Priority.HIGH, points);
     }
+
+    private Map secondMap(BoardSpace.Id bureau) {
+        Map.Position.Point bureauPoint = new Map.Position.Point(.5, .5);
+        Map.Position bureauPosition = new Map.Position(bureauPoint, Map.Priority.HIGH, List.of(bureau));
+        List<Map.Position> points = List.of(bureauPosition);
+        return new Map(new Map.Id(), i18n("Bureau"),
+                new Map.Definition(Map.Definition.Type.ASSET, "assets/game/first/map/map_bureau.png"),
+                Map.Priority.HIGH, points);
+    }
+
 
     private static I18n i18n(String fr) {
         return new I18n(java.util.Map.of(Language.FR, fr, Language.EN, fr + " en anglais"));

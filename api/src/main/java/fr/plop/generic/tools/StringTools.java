@@ -21,7 +21,11 @@ public class StringTools {
     }
 
     public static Map<String, String> fromJson(String json) throws JsonProcessingException {
-        return  new ObjectMapper().readValue(json, Map.class);
+        return new ObjectMapper().readValue(json, Map.class);
+    }
+
+    public static boolean isEmpty(String str) {
+        return str == null || str.trim().isEmpty();
     }
 
 }

@@ -1,19 +1,24 @@
 package fr.plop.contexts.game.session.core.persistence;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
+import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
+import fr.plop.contexts.i18n.persistence.I18nEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_GAME_PLAYER")
@@ -30,9 +35,21 @@ public class GamePlayerEntity {
     @JoinColumn(name = "user_id")
     private ConnectionUserEntity user;
 
+    @Enumerated
+    private GamePlayer.State state;
+
+    //TODO: List Events ? Move from Player ?
+    @ManyToOne
+    @JoinColumn(name = "reason_i18n_id")
+    private I18nEntity reason;
+
     @OneToOne
     @JoinColumn(name = "last_position_id")
     private BoardPositionEntity position;
+
+    @OneToMany(mappedBy = "player")
+    private Set<ScenarioGoalEntity> goals = new HashSet<>();
+
 
     public String getId() {
         return id;
@@ -58,6 +75,22 @@ public class GamePlayerEntity {
         this.user = user;
     }
 
+    public GamePlayer.State getState() {
+        return state;
+    }
+
+    public void setState(GamePlayer.State state) {
+        this.state = state;
+    }
+
+    public void setReason(I18nEntity reason) {
+        this.reason = reason;
+    }
+
+    public I18nEntity getReason() {
+        return reason;
+    }
+
     public BoardPositionEntity getPosition() {
         return position;
     }
@@ -66,15 +99,24 @@ public class GamePlayerEntity {
         this.position = position;
     }
 
+    public Set<ScenarioGoalEntity> getGoals() {
+        return goals;
+    }
+
+    public void setGoals(Set<ScenarioGoalEntity> goals) {
+        this.goals = goals;
+    }
+
     public GamePlayer toModel() {
-        GameSession.Id sessionId = new GameSession.Id(session.getId());
-        ConnectUser.Id userId = new ConnectUser.Id(user.getId());
-        List<BoardSpace.Id> positions = List.of();
-        if(position != null) {
-            positions = position.getSpaces().stream()
+        List<BoardSpace.Id> spacesInIds = List.of();
+        if (position != null) {
+            spacesInIds = position.getSpaces().stream()
                     .map(spaceEntity -> new BoardSpace.Id(spaceEntity.getId()))
                     .toList();
         }
-        return new GamePlayer(new GamePlayer.Atom(new GamePlayer.Id(id), sessionId), userId, positions);
+        List<ScenarioConfig.Step.Id> stepActiveIds = goals.stream()
+                .map(entity -> new ScenarioConfig.Step.Id(entity.getStep().getId()))
+                .toList();
+        return new GamePlayer(new GamePlayer.Id(id), stepActiveIds, spacesInIds);
     }
 }

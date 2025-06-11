@@ -3,12 +3,12 @@ package fr.plop.contexts.connect.adapter;
 import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
 import fr.plop.contexts.connect.domain.DeviceConnect;
-import fr.plop.contexts.connect.persistence.ConnectionAuthEntity;
-import fr.plop.contexts.connect.persistence.ConnectionAuthRepository;
-import fr.plop.contexts.connect.persistence.ConnectionUserEntity;
-import fr.plop.contexts.connect.persistence.ConnectionUserRepository;
-import fr.plop.contexts.connect.persistence.DeviceConnectionEntity;
-import fr.plop.contexts.connect.persistence.DeviceConnectionRepository;
+import fr.plop.contexts.connect.persistence.entity.ConnectionAuthEntity;
+import fr.plop.contexts.connect.persistence.entity.ConnectionDeviceEntity;
+import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
+import fr.plop.contexts.connect.persistence.repository.ConnectionAuthRepository;
+import fr.plop.contexts.connect.persistence.repository.ConnectionDeviceRepository;
+import fr.plop.contexts.connect.persistence.repository.ConnectionUserRepository;
 import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.data.domain.Limit;
@@ -21,11 +21,11 @@ import java.util.Optional;
 @Component
 public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.DataOutPort {
 
-    private final DeviceConnectionRepository repository;
+    private final ConnectionDeviceRepository repository;
     private final ConnectionAuthRepository authRepository;
     private final ConnectionUserRepository userRepository;
 
-    public ConnectionCreateAuthAdapter(DeviceConnectionRepository repository, ConnectionAuthRepository authRepository, ConnectionUserRepository userRepository) {
+    public ConnectionCreateAuthAdapter(ConnectionDeviceRepository repository, ConnectionAuthRepository authRepository, ConnectionUserRepository userRepository) {
         this.repository = repository;
         this.authRepository = authRepository;
         this.userRepository = userRepository;
@@ -44,22 +44,22 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         entity.setId(StringTools.generate());
         entity.setToken(StringTools.generate());
         entity.setCreatedAt(Instant.now());
-        DeviceConnectionEntity connectionEntity = new DeviceConnectionEntity(); //TODO manage other type of connection
+        ConnectionDeviceEntity connectionEntity = new ConnectionDeviceEntity(); //TODO manage other type of connection
         connectionEntity.setId(connect.id().value());
         entity.setConnection(connectionEntity);
         return authRepository.save(entity).toModelWithConnect(connect);
     }
 
     @Override
-    public DeviceConnect createDeviceConnectWithUnknownUser(String deviceId) {
+    public DeviceConnect createDeviceConnectWithUnknownUser(String deviceId, String firebaseToken) {
         ConnectionUserEntity userEntity = new ConnectionUserEntity();
         userEntity.setId(StringTools.generate());
         userEntity.setLanguage(Language.byDefault());
-        userEntity.setSurname("");
 
-        DeviceConnectionEntity entity = new DeviceConnectionEntity();
+        ConnectionDeviceEntity entity = new ConnectionDeviceEntity();
         entity.setId(StringTools.generate());
         entity.setDeviceId(deviceId);
+        entity.setFirebaseToken(firebaseToken);
         entity.setUser(userRepository.save(userEntity));
         repository.save(entity);
         return entity.toModel(null);
@@ -70,7 +70,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         List<ConnectionAuthEntity> list = authRepository.findByConnectIdFetchsOrderByCreatedAtDesc(
                 id.value(),
                 Limit.of(1));
-        if(list.isEmpty()) {
+        if (list.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(list.getFirst().toModel(null));

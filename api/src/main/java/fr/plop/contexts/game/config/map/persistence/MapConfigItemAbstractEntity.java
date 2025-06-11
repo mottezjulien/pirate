@@ -1,6 +1,5 @@
 package fr.plop.contexts.game.config.map.persistence;
 
-
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -14,7 +13,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "TEST2_MAP_CONFIG_ITEM")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name="type")
+@DiscriminatorColumn(name = "type")
 public abstract class MapConfigItemAbstractEntity {
 
     @Id
@@ -27,7 +26,6 @@ public abstract class MapConfigItemAbstractEntity {
     @ManyToOne
     @JoinColumn(name = "map_id")
     private MapEntity map;
-
 
     public String getId() {
         return id;

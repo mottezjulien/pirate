@@ -5,10 +5,9 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.map.domain.Map;
-import fr.plop.contexts.game.config.map.persistence.MapEntity;
-import fr.plop.contexts.game.config.map.persistence.MapRepository;
+import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
@@ -34,6 +33,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/sessions")
@@ -43,13 +45,17 @@ public class GameSessionController {
     private final GameCreateSessionUseCase createUseCase;
     private final GameMoveUseCase moveUseCase;
     private final ScenarioGoalRepository goalRepository;
+
+    private final MapConfigRepository mapConfigRepository;
     private final GameSessionRepository gameSessionRepository;
 
-    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, ScenarioGoalRepository goalRepository, GameSessionRepository gameSessionRepository) {
+
+    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, ScenarioGoalRepository goalRepository, MapConfigRepository mapConfigRepository, GameSessionRepository gameSessionRepository) {
         this.connectUseCase = connectUseCase;
         this.createUseCase = createUseCase;
         this.moveUseCase = moveUseCase;
         this.goalRepository = goalRepository;
+        this.mapConfigRepository = mapConfigRepository;
         this.gameSessionRepository = gameSessionRepository;
     }
 
@@ -130,7 +136,8 @@ public class GameSessionController {
         }
     }
 
-    public record GameGoalSimpleResponseDTO(String id, String label, String state, List<GameTargetSimpleResponseDTO> targets) {
+    public record GameGoalSimpleResponseDTO(String id, String label, String state,
+                                            List<GameTargetSimpleResponseDTO> targets) {
         public static GameGoalSimpleResponseDTO fromEntity(ScenarioGoalEntity goalEntity, Language language) {
             ScenarioStepEntity stepEntity = goalEntity.getStep();
             I18n stepLabel = stepEntity.getLabel().toModel();
@@ -149,26 +156,85 @@ public class GameSessionController {
     }
 
 
-
     @GetMapping({"/{sessionId}/maps", "/{sessionId}/maps/"})
     public List<GameMapResponseDTO> maps(@RequestHeader("Authorization") String rawToken,
+                                         @RequestHeader("Language") String languageStr,
+                                         @PathVariable("sessionId") String sessionIdStr) {
+
+        //donner la position de l'utilisateur, le back sais tout (update systeme)
+
+        Language language = Language.valueOf(languageStr.toUpperCase());
+        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+
+        try {
+            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+
+            MapConfig.Id mapConfigId = new MapConfig.Id(gameSessionRepository.mapId(sessionId.value())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No map found", null)));
+
+            //TODO Cache
+            MapConfig mapConfig = mapConfigRepository.fullById(mapConfigId.value())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No map found", null))
+                    .toModel();
+            Stream<Map> maps = mapConfig.byStepIds(player.stepActiveIds());
+            java.util.Map<Map, Optional<Map.Position>> positionByMap = selectPositions(maps, player);
+
+            return positionByMap.entrySet().stream()
+                    .map(entry -> GameMapResponseDTO.fromModel(entry.getKey(), entry.getValue(), language))
+                    .toList();
+
+        } catch (ConnectException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+        }
+    }
+
+    private java.util.Map<Map, Optional<Map.Position>> selectPositions(Stream<Map> maps, GamePlayer player) {
+        return maps.collect(Collectors.toMap(map -> map, map -> selectPosition(map, player)));
+    }
+
+    private Optional<Map.Position> selectPosition(Map map, GamePlayer player) {
+        return map.selectPosition(player);
+    }
+
+    public record GameMapResponseDTO(String id, String label, int priority,
+                                     String definitionType, String definitionValue,
+                                     Position position) {
+
+        //Pourcent
+        public record Position(double x, double y) {
+            public static Position toModel(Map.Position.Point model) {
+                return new Position(model.x(), model.y());
+            }
+        }
+
+        public static GameMapResponseDTO fromModel(Map map, Optional<Map.Position> optPosition, Language language) {
+            return new GameMapResponseDTO(map.id().value(), map.label().value(language), map.priority().value(),
+                    map.definition().type().name(), map.definition().value(),
+                    optPosition.map(position -> Position.toModel(position.point())).orElse(null));
+        }
+
+    }
+
+
+    //TODO UTILE ???
+    /*@GetMapping({"/{sessionId}/maps-first", "/{sessionId}/maps-first/"})
+    public List<GameMapResponseFirstDTO> mapsFirst(@RequestHeader("Authorization") String rawToken,
                                                  @RequestHeader("Language") String languageStr,
                                           @PathVariable("sessionId") String sessionIdStr) {
         Language language = Language.valueOf(languageStr.toUpperCase());
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        //ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-        //GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
 
         List<MapEntity> mapEntities = gameSessionRepository.fullMap(sessionId.value());
         return mapEntities.stream()
-                .map(entity -> GameMapResponseDTO.fromModel(entity.toModel(), language))
+                .map(entity -> GameMapResponseFirstDTO.fromModel(entity.toModel(), language))
                 .toList();
     }
 
-    public record GameMapResponseDTO(String id, String label, String definition, PointResponseDTO bottomLeft, PointResponseDTO topRight) {
+    public record GameMapResponseFirstDTO(String id, String label, String definition, PointResponseDTO bottomLeft, PointResponseDTO topRight) {
 
-        public static GameMapResponseDTO fromModel(Map model, Language language) {
-            return new GameMapResponseDTO(model.id().value(), model.label().value(language),
+        public static GameMapResponseFirstDTO fromModel(Map model, Language language) {
+            return new GameMapResponseFirstDTO(model.id().value(), model.label().value(language),
                     model.definition(),
                     PointResponseDTO.fromModel(model.rect().bottomLeft()),
                     PointResponseDTO.fromModel(model.rect().topRight()));
@@ -179,7 +245,7 @@ public class GameSessionController {
         public static PointResponseDTO fromModel(Point model) {
             return new PointResponseDTO(model.lat(), model.lng());
         }
-    }
+    }*/
 
 
 }

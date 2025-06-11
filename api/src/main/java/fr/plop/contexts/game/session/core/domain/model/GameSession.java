@@ -9,7 +9,8 @@ import fr.plop.generic.tools.StringTools;
 import java.util.List;
 import java.util.stream.Stream;
 
-public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario, BoardConfig board) {
+public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
+                          BoardConfig board) {
 
     public static GameSession build(Atom atom, ScenarioConfig scenarioConfig, BoardConfig boardConfig) {
         return new GameSession(atom, GameSession.State.ACTIVE, List.of(), ScenarioSession.build(scenarioConfig), boardConfig);

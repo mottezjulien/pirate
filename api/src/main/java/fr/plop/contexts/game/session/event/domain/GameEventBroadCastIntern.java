@@ -1,9 +1,9 @@
 package fr.plop.contexts.game.session.event.domain;
 
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
+import fr.plop.contexts.game.session.core.domain.model.GameSession;
 
 import java.util.stream.Stream;
 
@@ -13,7 +13,9 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
 
         void doGoal(GamePlayer.Id id, PossibilityConsequence.Goal activeStep);
+
         void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.GameOver consequence);
+
         void doAlert(GamePlayer.Id id, PossibilityConsequence.Alert alert);
 
 
@@ -45,20 +47,22 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
     }
 
     private void _do(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence consequence) {
-       switch (consequence) {
-           case PossibilityConsequence.Goal goal -> outPort.doGoal(playerId, goal);
+        switch (consequence) {
+            case PossibilityConsequence.Goal goal -> outPort.doGoal(playerId, goal);
 
-           case PossibilityConsequence.AddObjet addObjet -> {}//TODO _doAddObjet(game, playerId, addObjet.objetId());
-           case PossibilityConsequence.Alert alert -> outPort.doAlert(playerId, alert);
+            case PossibilityConsequence.AddObjet addObjet -> {
+            }//TODO _doAddObjet(game, playerId, addObjet.objetId());
+            case PossibilityConsequence.Alert alert -> outPort.doAlert(playerId, alert);
 
-           case PossibilityConsequence.GameOver gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
-           case PossibilityConsequence.RemoveObjet removeObjet -> {}//TODO _doAddObjet(game, playerId, removeObjet.objetId());
+            case PossibilityConsequence.GameOver gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
+            case PossibilityConsequence.RemoveObjet removeObjet -> {
+            }//TODO _doAddObjet(game, playerId, removeObjet.objetId());
 
-           case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {} //TODO _doUpdatedMetadata(game, playerId, updatedMetadata.metadataId(), updatedMetadata.value());
-       }
+            case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
+            } //TODO _doUpdatedMetadata(game, playerId, updatedMetadata.metadataId(), updatedMetadata.value());
+        }
 
     }
-
 
 
 }

@@ -1,11 +1,9 @@
 package fr.plop.contexts.game.session.scenario.persistence;
 
 
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

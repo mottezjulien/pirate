@@ -12,10 +12,6 @@ public interface GameEvent {
 
     //TODO manage event unique, eachByPlayer or EVER
 
-    record UpdateStatus(GameSession.Id sessionId, GamePlayer.Id playerId) implements GameEvent {
-
-    }
-
     record GoIn(GameSession.Id sessionId, GamePlayer.Id playerId, BoardSpace.Id spaceId) implements GameEvent {
 
     }

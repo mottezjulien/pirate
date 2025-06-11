@@ -1,5 +1,5 @@
 package fr.plop.contexts.connect.presenter;
 
-public record ConnectionRequestDTO(String deviceId) {
+public record ConnectionRequestDTO(String deviceId, String firebaseToken) {
 
 }

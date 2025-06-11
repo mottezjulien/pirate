@@ -25,6 +25,7 @@ public class GameMoveUseCaseTest {
 
     private final GameMoveUseCase.OutPort outPort = mock(GameMoveUseCase.OutPort.class);
     private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
+    private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
     private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast);
 
     private final GameSession.Id gameId = new GameSession.Id("ABC");

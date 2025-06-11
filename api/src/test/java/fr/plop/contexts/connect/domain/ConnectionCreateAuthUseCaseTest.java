@@ -14,8 +14,8 @@ import static org.mockito.Mockito.when;
 
 public class ConnectionCreateAuthUseCaseTest {
 
-    private ConnectionCreateAuthUseCase.DataOutPort outPort = mock(ConnectionCreateAuthUseCase.DataOutPort.class);
-    private ConnectionCreateAuthUseCase useCase = new ConnectionCreateAuthUseCase(outPort);
+    private final ConnectionCreateAuthUseCase.DataOutPort outPort = mock(ConnectionCreateAuthUseCase.DataOutPort.class);
+    private final ConnectionCreateAuthUseCase useCase = new ConnectionCreateAuthUseCase(outPort);
 
 
     @BeforeEach
@@ -29,7 +29,7 @@ public class ConnectionCreateAuthUseCaseTest {
         DeviceConnect connect = findByDeviceId(deviceId);
         when(outPort.lastAuth(connect.id())).thenReturn(Optional.of(new ConnectAuth(new ConnectToken("tokenA"), connect, Instant.now())));
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuth(new ConnectToken("tokenB"), connect, Instant.now()));
-        ConnectAuth result = useCase.byDeviceId(deviceId);
+        ConnectAuth result = useCase.byDeviceId(deviceId, "anyFirebaseToken");
         assertThat(result.token().value()).isEqualTo("tokenA");
     }
 
@@ -39,7 +39,7 @@ public class ConnectionCreateAuthUseCaseTest {
         DeviceConnect connect = findByDeviceId(deviceId);
         when(outPort.lastAuth(connect.id())).thenReturn(Optional.of(new ConnectAuth(new ConnectToken("tokenA"), connect, Instant.now().minus(3, ChronoUnit.DAYS))));
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuth(new ConnectToken("tokenB"), connect, Instant.now()));
-        ConnectAuth result = useCase.byDeviceId(deviceId);
+        ConnectAuth result = useCase.byDeviceId(deviceId, "anyFirebaseToken");
         assertThat(result.token().value()).isEqualTo("tokenB");
     }
 
@@ -49,11 +49,11 @@ public class ConnectionCreateAuthUseCaseTest {
         when(outPort.findByDeviceId(deviceId)).thenReturn(Optional.empty());
 
         DeviceConnect connect = new DeviceConnect(new DeviceConnect.Id("any"), new ConnectUser(new ConnectUser.Id("userId")), deviceId);
-        when(outPort.createDeviceConnectWithUnknownUser(deviceId)).thenReturn(connect);
+        when(outPort.createDeviceConnectWithUnknownUser(deviceId, "anyFirebaseToken")).thenReturn(connect);
 
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuth(new ConnectToken("tokenC"), connect, Instant.now()));
 
-        ConnectAuth result = useCase.byDeviceId(deviceId);
+        ConnectAuth result = useCase.byDeviceId(deviceId, "anyFirebaseToken");
         assertThat(result.token().value()).isEqualTo("tokenC");
     }
 

@@ -1,17 +1,20 @@
 package fr.plop.contexts.game.config.map.persistence;
 
 
-import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
 import fr.plop.contexts.game.config.map.domain.Map;
 import fr.plop.contexts.i18n.persistence.I18nEntity;
-import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_MAP")
@@ -24,19 +27,19 @@ public class MapEntity {
     @JoinColumn(name = "label_i18n_id")
     private I18nEntity label;
 
-    private String definition;
+    @Column(name = "definition_type")
+    @Enumerated(EnumType.STRING)
+    private Map.Definition.Type definitionType;
 
-    @Column(name = "top_right_latitude")
-    private float topRightLatitude;
+    @Column(name = "definition_value")
+    private String definitionValue;
 
-    @Column(name = "top_right_longitude")
-    private float topRightLongitude;
+    @Enumerated(EnumType.STRING)
+    private Map.Priority priority;
 
-    @Column(name = "bottom_left_latitude")
-    private float bottomLeftLatitude;
 
-    @Column(name = "bottom_left_longitude")
-    private float bottomLeftLongitude;
+    @OneToMany(mappedBy = "map")
+    private Set<MapPositionEntity> positions = new HashSet<>();
 
 
     public String getId() {
@@ -55,47 +58,42 @@ public class MapEntity {
         this.label = label;
     }
 
-    public String getDefinition() {
-        return definition;
+    public Map.Definition.Type getDefinitionType() {
+        return definitionType;
     }
 
-    public void setDefinition(String definition) {
-        this.definition = definition;
+    public void setDefinitionType(Map.Definition.Type definitionType) {
+        this.definitionType = definitionType;
     }
 
-    public float getTopRightLatitude() {
-        return topRightLatitude;
+    public String getDefinitionValue() {
+        return definitionValue;
     }
 
-    public void setTopRightLatitude(float topRightLatitude) {
-        this.topRightLatitude = topRightLatitude;
+    public void setDefinitionValue(String definitionValue) {
+        this.definitionValue = definitionValue;
     }
 
-    public float getTopRightLongitude() {
-        return topRightLongitude;
+    public Map.Priority getPriority() {
+        return priority;
     }
 
-    public void setTopRightLongitude(float topRightLongitude) {
-        this.topRightLongitude = topRightLongitude;
+    public void setPriority(Map.Priority priority) {
+        this.priority = priority;
     }
 
-    public float getBottomLeftLatitude() {
-        return bottomLeftLatitude;
+    public Set<MapPositionEntity> getPositions() {
+        return positions;
     }
 
-    public void setBottomLeftLatitude(float bottomLeftLatitude) {
-        this.bottomLeftLatitude = bottomLeftLatitude;
-    }
-
-    public float getBottomLeftLongitude() {
-        return bottomLeftLongitude;
-    }
-
-    public void setBottomLeftLongitude(float bottomLeftLongitude) {
-        this.bottomLeftLongitude = bottomLeftLongitude;
+    public void setPositions(Set<MapPositionEntity> points) {
+        this.positions = points;
     }
 
     public Map toModel() {
-        return new Map(new Map.Id(id), label.toModel(), definition, new Rect(new Point(bottomLeftLatitude, bottomLeftLongitude), new Point(topRightLatitude, topRightLongitude)));
+        Map.Definition definition = new Map.Definition(definitionType, definitionValue);
+        return new Map(new Map.Id(id), label.toModel(), definition, priority, positions.stream()
+                .map(entity -> entity.toModel()).toList());
     }
+
 }

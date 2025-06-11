@@ -8,6 +8,7 @@ public class ConnectUseCase {
 
     public interface OutPort {
         Optional<ConnectAuth> findBySessionIdAndToken(GameSession.Id sessionId, ConnectToken token);
+
         Optional<ConnectAuth> findByToken(ConnectToken token);
     }
 
@@ -36,7 +37,6 @@ public class ConnectUseCase {
         DeviceConnect connect = auth.connect();
         return connect.user();
     }
-
 
 
 }
