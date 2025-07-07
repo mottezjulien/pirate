@@ -52,12 +52,16 @@ class GameSessionRepository {
   GameGoal goalToModel(goal) {
     List<GameTarget> targets = [];
     goal['targets'].forEach((target) {
-      targets.add(GameTarget(id: target['id'], label: target['label']));
+      targets.add(GameTarget(
+          id: target['id'],
+          label: target['label'],
+          done: target['done'] == true ? true : false,
+          optional: target['optional'] == true ? true : false
+      ));
     });
     return GameGoal(
       id: goal['id'],
       label: goal['label'],
-      //state: GameGoalState.values.firstWhere((e) => e.name == goal['state']),
       state: GameGoalState.fromJson(goal['state']),
       targets: targets
     );

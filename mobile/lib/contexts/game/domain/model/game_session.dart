@@ -1,12 +1,17 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../../generic/config/server.dart';
+import '../../../../generic/connect/connection_current.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
 
 class GameSession {
 
   final String _id, _label;
-  late GameLocation gameLocation;
+  final GameLocation gameLocation = GameLocation();
+  final GameEventListener eventListener = GameEventListener();
 
   GameSession({required String id, required String label})
       : _id = id, _label = label;
@@ -16,13 +21,19 @@ class GameSession {
   String get label => _label;
 
   void init() {
-    gameLocation = GameLocation();
     gameLocation.init();
+    eventListener.init(_id);
   }
 
   Coordinate get coordinate => gameLocation.coordinate;
 
-  Stream<Coordinate> get streamCoordinate => gameLocation.stream;
+  void addOnMoveListener(onMoveListener) => eventListener.addOnMoveListener(onMoveListener);
+
+  void removeOnMoveListener(onMoveListener) => eventListener.removeOnMoveListener(onMoveListener);
+
+  void addOnGoalListener(onGoalListener) => eventListener.addOnGoalListener(onGoalListener);
+
+  void removeOnGoalListener(onGoalListener) => eventListener.removeOnGoalListener(onGoalListener);
 
 }
 
@@ -59,3 +70,73 @@ class GameLocation {
       .map((position) => Coordinate(lat: position.latitude, lng: position.longitude));
 
 }
+
+class GameEventListener {
+
+  bool running = false;
+
+  WebSocketChannel? _channel;
+  List<OnMoveListener> onMoveListeners = [];
+  List<OnGoalListener> onGoalListeners = [];
+
+  void init(String sessionId) {
+    running = true;
+    connect(sessionId);
+  }
+
+  void connect(String sessionId) {
+    final String wsUrl = "${Server.wsAPI}/ws/games/sessions?token=${ConnectionCurrent.token}&sessionId=$sessionId";
+    _channel = IOWebSocketChannel.connect(wsUrl);
+    _channel!.stream.listen((message) {
+        print('message: ${message.toString()}');
+        _do(message.toString());
+      },
+      onDone: () => running ? connect(sessionId): () {}, // Reconnexion automatique
+      onError: (e) => print('Erreur WebSocket: $e'),
+    );
+  }
+
+  void _do(String message) {
+    if(message.toString().toUpperCase().contains('SYSTEM:MOVE')) {
+      fireOnMoveListeners();
+    }
+    if(message.toString().toUpperCase().contains('SYSTEM:GOAL')) {
+      fireOnGoalListeners();
+    }
+  }
+
+  void addOnMoveListener(OnMoveListener listener) {
+    onMoveListeners.add(listener);
+  }
+
+  void removeOnMoveListener(OnMoveListener listener) {
+    onMoveListeners.remove(listener);
+  }
+
+  void fireOnMoveListeners() {
+    onMoveListeners.forEach((listener) => listener.onMove());
+  }
+
+  void addOnGoalListener(OnGoalListener listener) {
+    onGoalListeners.add(listener);
+  }
+
+  void removeOnGoalListener(OnGoalListener listener) {
+    onGoalListeners.remove(listener);
+  }
+
+  void fireOnGoalListeners() {
+    onGoalListeners.forEach((listener) => listener.onUpdateGoal());
+  }
+
+}
+
+
+abstract class OnMoveListener {
+  void onMove();
+}
+
+abstract class OnGoalListener {
+  void onUpdateGoal();
+}
+

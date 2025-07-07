@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,6 +50,12 @@ public class GameSessionEntity {
 
     @Enumerated(EnumType.STRING)
     private GameSession.State state;
+
+    @Column(name = "start_at")
+    private Instant startAt;
+
+    @Column(name = "over_at")
+    private Instant overAt;
 
     public String getId() {
         return id;
@@ -122,10 +129,19 @@ public class GameSessionEntity {
         this.state = state;
     }
 
-    /*public Game toModel() {
-        return new Game(new Game.Id(id), label,
-                new Template.Id(templateId), templateVersion,
-                scenario.toModel(), board.toModel(), state);
-    }*/
+    public Instant getStartAt() {
+        return startAt;
+    }
 
+    public void setStartAt(Instant startAt) {
+        this.startAt = startAt;
+    }
+
+    public Instant getOverAt() {
+        return overAt;
+    }
+
+    public void setOverAt(Instant overAt) {
+        this.overAt = overAt;
+    }
 }

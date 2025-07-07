@@ -27,7 +27,7 @@ public record GameSession(Atom atom, State state, List<GamePlayer> players, Scen
     }
 
     public enum State {
-        ACTIVE, OVER //TODO FOR INIT AND PAUSED: CHECK WITH JPA REQUEST 'AND session.state == 'ACTIVE''
+        INIT, ACTIVE, PAUSE, OVER
     }
 
     public Id id() {

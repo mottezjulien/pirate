@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.core.persistence;
 
+import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,5 +18,12 @@ public interface GameSessionRepository extends JpaRepository<GameSessionEntity, 
             " LEFT JOIN session.map map" +
             " WHERE session.id = :sessionId")
     Optional<String> mapId(@Param("sessionId") String sessionId);
+
+    @Query("FROM GameSessionEntity session" +
+            " LEFT JOIN FETCH session.board board" +
+            " LEFT JOIN session.map map" +
+            " LEFT JOIN session.players player" +
+            " LEFT JOIN player.user user WHERE session.id = :sessionId")
+    Optional<GameSessionEntity> allById(@Param("sessionId") String sessionId);
 
 }

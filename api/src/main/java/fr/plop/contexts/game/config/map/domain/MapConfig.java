@@ -23,6 +23,7 @@ public record MapConfig(Id id, List<Item> items) {
     }
 
     public Stream<Map> byStepIds(List<ScenarioConfig.Step.Id> ids) {
+        //TODO: ??? Filter ??
         return items.stream().map(item -> item.map);
     }
 

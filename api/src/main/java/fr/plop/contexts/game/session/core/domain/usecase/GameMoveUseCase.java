@@ -8,7 +8,6 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.push.PushEvent;
-import fr.plop.contexts.game.session.push.PushException;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
@@ -56,11 +55,7 @@ public class GameMoveUseCase {
 
             List<BoardSpace.Id> added = ListTools.added(spaceInIds, nextIds);
             added.forEach(space -> broadCast.fire(new GameEvent.GoIn(sessionId, player.id(), space)));
-            try {
-                pushPort.push(new PushEvent.GameMove(player.id(), nextIds));
-            } catch (PushException e) {
-                //TODO log error
-            }
+            pushPort.push(new PushEvent.GameMove(sessionId, player.id()));
         }
 
     }

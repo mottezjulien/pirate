@@ -13,9 +13,13 @@ class GameSessionCurrent {
 
   static set session(GameSession session) => _instance._session = session;
 
-  static Coordinate get coordinate => _instance.coordinate;
+  static void addOnMoveListener(onMoveListener) => _instance.addOnMoveListener(onMoveListener);
 
-  static Stream<Coordinate> get streamCoordinate => _instance.streamCoordinate;
+  static void removeOnMoveListener(onMoveListener) => _instance.removeOnMoveListener(onMoveListener);
+
+  static void addOnGoalListener(onGoalListener) => _instance.addOnGoalListener(onGoalListener);
+
+  static void removeOnGoalListener(onGoalListener) => _instance.removeOnGoalListener(onGoalListener);
 
 }
 
@@ -27,6 +31,12 @@ class _GameSessionCurrent {
 
   Coordinate get coordinate => _session!.coordinate;
 
-  Stream<Coordinate> get streamCoordinate => _session!.streamCoordinate;
+  void addOnMoveListener(onMoveListener) => _session!.addOnMoveListener(onMoveListener);
+
+  void removeOnMoveListener(onMoveListener) => _session!.removeOnMoveListener(onMoveListener);
+
+  void addOnGoalListener(onGoalListener) => _session!.addOnGoalListener(onGoalListener);
+
+  void removeOnGoalListener(onGoalListener) => _session!.removeOnGoalListener(onGoalListener);
 
 }

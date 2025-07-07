@@ -1,30 +1,51 @@
 import 'package:flutter/material.dart';
 import '../../data/game_repository.dart';
 import '../../domain/model/game_goal.dart';
+import '../../domain/model/game_session.dart';
+import '../../game_current.dart';
 
-class GameGoalView extends StatelessWidget {
+class GameGoalView extends StatefulWidget {
+
+  const GameGoalView({super.key});
+
+  @override
+  State<GameGoalView> createState() => _GameGoalViewState();
+
+}
+
+class _GameGoalViewState extends State<GameGoalView> implements OnGoalListener {
   final _GameGoalViewModel _viewModel = _GameGoalViewModel();
 
-  GameGoalView({super.key});
+  @override
+  initState() {
+    super.initState();
+    _viewModel.setGoals();
+    GameSessionCurrent.addOnGoalListener(this);
+  }
+
+  @override
+  dispose() {
+    super.dispose();
+    GameSessionCurrent.removeOnGoalListener(this);
+  }
+
+  @override
+  void onUpdateGoal() => _viewModel.setGoals();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Objectifs :)'),
-      ),
-      body: FutureBuilder<List<GameGoal>>(
-        future: _viewModel.findGoals(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return _buildGoalList(context, snapshot.data!);
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error : ${snapshot.error}'));
+      appBar: AppBar(title: Text('Objectifs :)')),
+      body: ValueListenableBuilder<List<GameGoal>>(
+        valueListenable: _viewModel.valueNotifier,
+        builder: (BuildContext context, List<GameGoal> goals, Widget? _) {
+          if (goals.isNotEmpty) {
+            return _buildGoalList(context, goals);
           } else {
             return const Center(child: CircularProgressIndicator());
           }
-        },
-      ),
+        }
+      )
     );
   }
 
@@ -115,9 +136,12 @@ class GameGoalView extends StatelessWidget {
 }
 
 class _GameGoalViewModel {
+
+  ValueNotifier<List<GameGoal>> valueNotifier = ValueNotifier([]);
+
   final GameSessionRepository repository = GameSessionRepository();
 
-  Future<List<GameGoal>> findGoals() async {
-    return repository.findGoals();
+  Future<void> setGoals() async {
+    valueNotifier.value = await repository.findGoals();
   }
 }

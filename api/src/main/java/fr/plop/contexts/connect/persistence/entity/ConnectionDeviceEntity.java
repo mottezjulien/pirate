@@ -23,9 +23,6 @@ public class ConnectionDeviceEntity {
     @Column(name = "device_id")
     private String deviceId;
 
-    @Column(name = "firebase_token")
-    private String firebaseToken;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private ConnectionUserEntity user;
@@ -55,14 +52,6 @@ public class ConnectionDeviceEntity {
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
-    }
-
-    public String getFirebaseToken() {
-        return firebaseToken;
-    }
-
-    public void setFirebaseToken(String firebaseToken) {
-        this.firebaseToken = firebaseToken;
     }
 
     public DeviceConnect toModel(GamePlayer nullablePlayer) {

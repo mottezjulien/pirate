@@ -8,6 +8,7 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import org.junit.jupiter.api.Test;
@@ -25,8 +26,8 @@ public class GameMoveUseCaseTest {
 
     private final GameMoveUseCase.OutPort outPort = mock(GameMoveUseCase.OutPort.class);
     private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
-    private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
-    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast);
+    private final PushPort pushPort = mock(PushPort.class);
+    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast, pushPort);
 
     private final GameSession.Id gameId = new GameSession.Id("ABC");
     //private final ConnectUser.Id userId = new ConnectUser.Id("1234");

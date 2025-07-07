@@ -10,6 +10,7 @@ import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.contexts.i18n.persistence.I18nEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.stream.Stream;
 
 @Component
@@ -48,6 +49,7 @@ public class GameOverAdapter implements GameOverUseCase.OutputPort {
         sessionRepository.findById(sessionId.value())
                 .ifPresent(session -> {
                     session.setState(GameSession.State.OVER);
+                    session.setOverAt(Instant.now());
                     sessionRepository.save(session);
                 });
     }

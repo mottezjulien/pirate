@@ -8,7 +8,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8 #Need ??
 
   #Default - HTTP client
   http: ^1.2.2
@@ -20,12 +19,11 @@ dependencies:
   #Default - Get Device Id
   device_info_plus: ^11.2.2
 
-  #Push message
-  firebase_core: ^3.13.1
-  firebase_messaging: ^15.2.6
-
   #Geolocation
   geolocator: ^13.0.2
+
+  #WebSocket
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:

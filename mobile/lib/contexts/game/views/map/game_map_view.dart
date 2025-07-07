@@ -1,23 +1,41 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:mobile/contexts/game/data/game_repository.dart';
-import 'package:mobile/contexts/geo/domain/model/coordinate.dart';
 
 import '../../../../style/style.dart';
+import '../../domain/model/game_session.dart';
 import '../../game_current.dart';
 
-class GameMapView extends StatelessWidget {
+class GameMapView extends StatefulWidget {
+  @override
+  State<GameMapView> createState() => _GameMapViewState();
+}
 
-  final GameSessionRepository _repository = GameSessionRepository();
+class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
+  static const double max_height = 0.7;
+  final GameMapViewModel _viewModel = GameMapViewModel();
+
+  @override
+  initState() {
+    super.initState();
+    GameSessionCurrent.addOnMoveListener(this);
+  }
+
+  @override
+  dispose() {
+    super.dispose();
+    GameSessionCurrent.removeOnMoveListener(this);
+  }
+
+  @override
+  void onMove() {
+    _viewModel.refresh();
+  }
 
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Carte :)'),
-      ),
+      appBar: AppBar(title: Text('Carte :)')),
       body: FutureBuilder<List<GameMap>>(
-        future: _repository.findMaps(),
+        future: _viewModel.maps,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return _buildMap(context, snapshot.data!);
@@ -31,23 +49,17 @@ class GameMapView extends StatelessWidget {
     );
   }
 
-  var max_height = 0.7;
-
-
   Widget _buildMap(BuildContext context, List<GameMap> maps) {
-
-    final PageController _controller = PageController(viewportFraction: 1.0);
-    final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
-
     return Column(
       children: [
         SizedBox(
           height: MediaQuery.of(context).size.height * max_height,
           child: PageView.builder(
-            controller: _controller,
+            controller: PageController(viewportFraction: 1.0),
             itemCount: maps.length,
             physics: const BouncingScrollPhysics(),
-            onPageChanged: (index) => _currentIndex.value = index,
+            onPageChanged: (index) =>
+                _viewModel.currentIndex(index), //_currentIndex.value = index,
             itemBuilder: (BuildContext context, int index) {
               return slide(context, map: maps[index]);
             },
@@ -55,7 +67,7 @@ class GameMapView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ValueListenableBuilder<int>(
-          valueListenable: _currentIndex,
+          valueListenable: _viewModel.currentIndexValueListenable(),
           builder: (BuildContext context, int currentIndex, Widget? _) {
             return CarouselDots(
               totalItems: maps.length,
@@ -68,50 +80,78 @@ class GameMapView extends StatelessWidget {
   }
 
   Widget slide(BuildContext context, {required GameMap map}) {
-
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: Stack(
-        children: [
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: Stack(children: [
           Positioned.fill(
-            child: Stack(
-              children: [
-                if(map.definition.type == 'ASSET')
-                  Positioned.fill(child: Image.asset(map.definition.value, fit: BoxFit.contain)),
-                if(map.definition.type == 'WEB')
-                  Positioned.fill(child: Image.network(map.definition.value, fit: BoxFit.contain)),
-                if(map.position != null)
-                  Positioned(
-                    left: (MediaQuery.of(context).size.width * map.position!.x) - 24,
-                    top: ((MediaQuery.of(context).size.height * max_height) * map.position!.y) - 24,
-                    child: Image.asset('assets/generic/map/pointeur.png', width: 48, height: 48),
-                  )
-              ],
-            ),
-          ),
-          /*Positioned(
-            top: 12,
-            left: 12,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.info_outline,
-                color: Colors.white,
-                size: 32,
-              ),
-            ),
-          ),*/
-        ],
-      ),
-    );
+              child: Stack(children: [
+            if (map.definition.type == 'ASSET')
+              Positioned.fill(
+                  child:
+                      Image.asset(map.definition.value, fit: BoxFit.contain)),
+            if (map.definition.type == 'WEB')
+              Positioned.fill(
+                  child:
+                      Image.network(map.definition.value, fit: BoxFit.contain)),
+            ValueListenableBuilder(
+                valueListenable: _viewModel.positionValueListener(map),
+                builder: (BuildContext context,
+                    GameMapPositionPourcent? position, Widget? _) {
+                  if (position != null) {
+                    Positioned(
+                      left:
+                          (MediaQuery.of(context).size.width * position.x) - 24,
+                      top: ((MediaQuery.of(context).size.height * max_height) *
+                              position.y) -
+                          24,
+                      child: Image.asset('assets/generic/map/pointeur.png',
+                          width: 48, height: 48),
+                    );
+                  }
+                  return SizedBox.shrink();
+                })
+          ]))
+        ]));
   }
-
 }
 
+class GameMapViewModel {
+  final GameSessionRepository _repository = GameSessionRepository();
+  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
+  final Map<String, ValueNotifier<GameMapPositionPourcent?>> positions = Map();
 
+  Future<List<GameMap>> get maps => _repository.findMaps();
+
+  ValueNotifier<int> currentIndexValueListenable() {
+    return _currentIndex;
+  }
+
+  void currentIndex(int index) {
+    _currentIndex.value = index;
+  }
+
+  ValueNotifier<GameMapPositionPourcent?> positionValueListener(GameMap map) {
+    ValueNotifier<GameMapPositionPourcent?>? position = positions[map.id];
+    if (position != null) {
+      return position;
+    }
+    position = ValueNotifier<GameMapPositionPourcent?>(map.position);
+    positions[map.id] = position;
+    return position;
+  }
+
+  void refresh() {
+    _repository.findMaps().then((maps) {
+      for (var map in maps) {
+        ValueNotifier<GameMapPositionPourcent?>? valueNotifier =
+            positions[map.id];
+        if (valueNotifier != null) {
+          valueNotifier.value = map.position;
+        }
+      }
+    });
+  }
+}
 
 class CarouselDots extends StatelessWidget {
   const CarouselDots({
@@ -129,7 +169,7 @@ class CarouselDots extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         totalItems,
-            (index) => AnimatedContainer(
+        (index) => AnimatedContainer(
           duration: Style.duration.default_,
           height: 8,
           margin: EdgeInsets.symmetric(horizontal: Style.dimension.small),
@@ -138,8 +178,7 @@ class CarouselDots extends StatelessWidget {
             color: currentIndex == index
                 ? Style.color.oneFirstPurple
                 : Style.color.lightGrey,
-            borderRadius:
-            BorderRadius.circular(Style.dimension.extraLarge),
+            borderRadius: BorderRadius.circular(Style.dimension.extraLarge),
           ),
         ),
       ),
@@ -147,26 +186,25 @@ class CarouselDots extends StatelessWidget {
   }
 }
 
-
-
-
 class GameMap {
-
   final String id;
   final String label;
   final GameMapDefinition definition;
   final int priority;
   final GameMapPositionPourcent? position;
 
-  GameMap({required this.id, required this.label, required this.priority,
-    required this.definition, required this.position});
-
+  GameMap(
+      {required this.id,
+      required this.label,
+      required this.priority,
+      required this.definition,
+      required this.position});
 }
 
 class GameMapDefinition {
   final String type;
   final String value;
-  GameMapDefinition({required this.type, required this.value });
+  GameMapDefinition({required this.type, required this.value});
 }
 
 class GameMapPositionPourcent {

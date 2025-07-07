@@ -3,11 +3,8 @@ package fr.plop.contexts.game.session.event.adapter.action;
 import fr.plop.contexts.game.session.core.domain.model.GameOver;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.push.PushEvent;
-import fr.plop.contexts.game.session.push.PushException;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.i18n.domain.I18n;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +39,7 @@ public class GameEventActionGameTest {
     }
 
     @Test
-    public void allSuccess() throws PushException {
+    public void allSuccess() {
 
         I18n.Id i18nId = new I18n.Id();
         GameOver gameOver = new GameOver(GameOver.Type.SUCCESS_ALL_ENDED, i18nId);
@@ -70,7 +67,7 @@ public class GameEventActionGameTest {
     }
 
     @Test
-    public void oneSuccess() throws PushException {
+    public void oneSuccess() {
         I18n.Id i18nId = new I18n.Id();
         GameOver gameOver = new GameOver(GameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
         event.apply(sessionId, playerId, gameOver);
@@ -89,7 +86,7 @@ public class GameEventActionGameTest {
 
 
     @Test
-    public void oneSuccessEndedGame() throws PushException {
+    public void oneSuccessEndedGame() {
         when(outputPort.findActivePlayerIds(sessionId))
                 .thenReturn(Stream.of(playerId));
 

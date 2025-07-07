@@ -22,6 +22,7 @@ import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,6 +58,7 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
         entity.setTemplateId(template.id().value());
         entity.setTemplateVersion(template.version());
         entity.setLabel(template.label());
+        entity.setStartAt(Instant.now());
 
         ScenarioConfigEntity scenarioEntity = new ScenarioConfigEntity();
         scenarioEntity.setId(template.scenario().id().value());

@@ -8,18 +8,17 @@ import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.map.domain.Map;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
+import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
+import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.contexts.game.session.push.PushEvent;
+import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.position.Point;
 import org.springframework.http.HttpStatus;
@@ -32,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,19 +44,20 @@ public class GameSessionController {
     private final ConnectUseCase connectUseCase;
     private final GameCreateSessionUseCase createUseCase;
     private final GameMoveUseCase moveUseCase;
-    private final ScenarioGoalRepository goalRepository;
 
     private final MapConfigRepository mapConfigRepository;
     private final GameSessionRepository gameSessionRepository;
 
+    private final PushPort pushPort;
 
-    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, ScenarioGoalRepository goalRepository, MapConfigRepository mapConfigRepository, GameSessionRepository gameSessionRepository) {
+
+    public GameSessionController(ConnectUseCase connectUseCase, GameCreateSessionUseCase createUseCase, GameMoveUseCase moveUseCase, MapConfigRepository mapConfigRepository, GameSessionRepository gameSessionRepository, PushPort pushPort) {
         this.connectUseCase = connectUseCase;
         this.createUseCase = createUseCase;
         this.moveUseCase = moveUseCase;
-        this.goalRepository = goalRepository;
         this.mapConfigRepository = mapConfigRepository;
         this.gameSessionRepository = gameSessionRepository;
+        this.pushPort = pushPort;
     }
 
 
@@ -117,51 +118,12 @@ public class GameSessionController {
     }
 
 
-    //TODO TO MOVE TO SCENARIO CONTROLLER ??
-    @GetMapping({"/{sessionId}/goals", "/{sessionId}/goals/"})
-    public List<GameGoalSimpleResponseDTO> goals(@RequestHeader("Authorization") String rawToken,
-                                                 @RequestHeader("Language") String languageStr, @PathVariable("sessionId") String sessionIdStr) {
-        try {
-            GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-
-            Language language = Language.valueOf(languageStr.toUpperCase());
-            List<ScenarioGoalEntity> goalEntities = goalRepository.fullByPlayerId(player.id().value());
-            return goalEntities.stream()
-                    .map(goalEntity -> GameGoalSimpleResponseDTO.fromEntity(goalEntity, language))
-                    .toList();
-        } catch (ConnectException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
-        }
-    }
-
-    public record GameGoalSimpleResponseDTO(String id, String label, String state,
-                                            List<GameTargetSimpleResponseDTO> targets) {
-        public static GameGoalSimpleResponseDTO fromEntity(ScenarioGoalEntity goalEntity, Language language) {
-            ScenarioStepEntity stepEntity = goalEntity.getStep();
-            I18n stepLabel = stepEntity.getLabel().toModel();
-            List<GameTargetSimpleResponseDTO> targets = stepEntity.getTargets().stream()
-                    .map(targetEntity -> GameTargetSimpleResponseDTO.fromEntity(targetEntity, language))
-                    .toList();
-            return new GameGoalSimpleResponseDTO(goalEntity.getId(), stepLabel.value(language), goalEntity.getState().name(), targets);
-        }
-    }
-
-    public record GameTargetSimpleResponseDTO(String id, String label) {
-        public static GameTargetSimpleResponseDTO fromEntity(ScenarioTargetEntity targetEntity, Language language) {
-            I18n targetLabel = targetEntity.getLabel().toModel();
-            return new GameTargetSimpleResponseDTO(targetEntity.getId(), targetLabel.value(language));
-        }
-    }
-
-
     @GetMapping({"/{sessionId}/maps", "/{sessionId}/maps/"})
     public List<GameMapResponseDTO> maps(@RequestHeader("Authorization") String rawToken,
                                          @RequestHeader("Language") String languageStr,
                                          @PathVariable("sessionId") String sessionIdStr) {
 
-        //donner la position de l'utilisateur, le back sais tout (update systeme)
+        //donner la position de l'utilisateur, le back sait tout (update systeme)
 
         Language language = Language.valueOf(languageStr.toUpperCase());
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
@@ -247,6 +209,75 @@ public class GameSessionController {
         }
     }*/
 
+
+    //ADMIN
+
+    @GetMapping({"","/"})
+    public List<GameSessionResponseDTO> sessions() {
+        return gameSessionRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(GameSessionEntity::getStartAt))
+                .map(GameSessionResponseDTO::fromEntity)
+                .toList();
+    }
+
+    @GetMapping({"/{sessionId}", "/{sessionId}/"})
+    public GameSessionDetailsResponseDTO oneSession(@PathVariable("sessionId") String sessionIdStr) {
+        return gameSessionRepository.allById(sessionIdStr)
+                .map(entity -> GameSessionDetailsResponseDTO.fromEntity(entity))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    public record GameSessionResponseDTO(String id, String label, String state, String startAt, String overAt) {
+        public static GameSessionResponseDTO fromEntity(GameSessionEntity entity) {
+            String startAt = null;
+            if(entity.getStartAt() != null) {
+                startAt = entity.getStartAt().toString();
+            }
+            String overAt = null;
+            if(entity.getOverAt() != null) {
+                overAt = entity.getOverAt().toString();
+            }
+            return new GameSessionResponseDTO(entity.getId(),
+                    entity.getLabel(),
+                    entity.getState().name(), startAt, overAt);
+        }
+    }
+
+    public record GameSessionDetailsResponseDTO(String id, String label, String state, String startAt, String overAt, List<Player> players) {
+        public record Player(String id, String state, String userId) {
+            public static Player fromEntity(GamePlayerEntity entity) {
+                return new Player(entity.getId(), entity.getState().name(), entity.getUser().getId());
+            }
+        }
+
+        public static GameSessionDetailsResponseDTO fromEntity(GameSessionEntity entity) {
+            String startAt = entity.getStartAt().toString();
+            String overAt = null;
+            if(entity.getOverAt() != null) {
+                overAt = entity.getOverAt().toString();
+            }
+            List<Player> players =  entity.getPlayers().stream()
+                    .map(Player::fromEntity).toList();
+            return new GameSessionDetailsResponseDTO(entity.getId(),
+                    entity.getLabel(),
+                    entity.getState().name(), startAt, overAt, players);
+        }
+    }
+
+
+    @PostMapping({"/{sessionId}/players/{playerId}/message"})
+    public void sendMessage(@PathVariable("sessionId") String sessionIdStr,
+                            @PathVariable("playerId") String playerIdStr,
+                            @RequestBody SendMessageRequest request) {
+        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        GamePlayer.Id playerId = new GamePlayer.Id(playerIdStr);
+        pushPort.push(new PushEvent.Message(sessionId, playerId, request.value()));
+    }
+
+    public record SendMessageRequest(String value) {
+
+    }
 
 }
 

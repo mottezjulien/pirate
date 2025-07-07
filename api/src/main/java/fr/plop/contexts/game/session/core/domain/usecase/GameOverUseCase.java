@@ -36,7 +36,7 @@ public class GameOverUseCase {
                 output.ended(sessionId);
                 playerIds.forEach(each -> {
                     try {
-                        pushPort.push(new PushEvent.GameStatus(each));
+                        pushPort.push(new PushEvent.GameStatus(sessionId, each));
                     } catch (Exception ignored) {
                         //TODO
                     }
@@ -49,7 +49,7 @@ public class GameOverUseCase {
                     output.ended(sessionId);
                 }
                 try {
-                    pushPort.push(new PushEvent.GameStatus(playerId));
+                    pushPort.push(new PushEvent.GameStatus(sessionId, playerId));
                 } catch (Exception ignored) {
                     //TODO
                 }

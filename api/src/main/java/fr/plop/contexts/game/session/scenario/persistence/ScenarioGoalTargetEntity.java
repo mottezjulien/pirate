@@ -1,6 +1,5 @@
 package fr.plop.contexts.game.session.scenario.persistence;
 
-
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
@@ -11,32 +10,25 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity
-@Table(name = "TEST2_SCENARIO_GOAL")
-public class ScenarioGoalEntity {
+@Table(name = "TEST2_SCENARIO_GOAL_TARGET")
+public class ScenarioGoalTargetEntity {
 
     @Id
     private String id;
 
     @ManyToOne
-    @JoinColumn(name = "player_id")
-    private GamePlayerEntity player;
+    @JoinColumn(name = "goal_id")
+    private ScenarioGoalEntity goal;
 
     @ManyToOne
-    @JoinColumn(name = "step_id")
-    private ScenarioStepEntity step;
+    @JoinColumn(name = "target_id")
+    private ScenarioTargetEntity target;
 
     @Enumerated(EnumType.STRING)
     private ScenarioGoal.State state;
-
-    @OneToMany(mappedBy = "goal")
-    private Set<ScenarioGoalTargetEntity> targets = new HashSet<>();
 
     public String getId() {
         return id;
@@ -46,35 +38,28 @@ public class ScenarioGoalEntity {
         this.id = id;
     }
 
-    public GamePlayerEntity getPlayer() {
-        return player;
+    public ScenarioGoalEntity getGoal() {
+        return goal;
     }
 
-    public void setPlayer(GamePlayerEntity player) {
-        this.player = player;
+    public void setGoal(ScenarioGoalEntity goal) {
+        this.goal = goal;
     }
 
-    public ScenarioStepEntity getStep() {
-        return step;
+    public ScenarioTargetEntity getTarget() {
+        return target;
     }
 
-    public void setStep(ScenarioStepEntity step) {
-        this.step = step;
-    }
-
-    public void setState(ScenarioGoal.State state) {
-        this.state = state;
+    public void setTarget(ScenarioTargetEntity target) {
+        this.target = target;
     }
 
     public ScenarioGoal.State getState() {
         return state;
     }
 
-    public Set<ScenarioGoalTargetEntity> getTargets() {
-        return targets;
+    public void setState(ScenarioGoal.State state) {
+        this.state = state;
     }
 
-    public void setTargets(Set<ScenarioGoalTargetEntity> targets) {
-        this.targets = targets;
-    }
 }

@@ -16,7 +16,7 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
             " LEFT JOIN FETCH goal.step step" +
             " WHERE player.user.id = :userId" +
             " AND player.session.id = :sessionId" +
-            " AND goal.state = 'ACTIVE'")
+            " AND player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE")
     Optional<GamePlayerEntity> fullBySessionIdAndUserId(@Param("sessionId") String sessionId, @Param("userId") String userId);
 
     @Query("SELECT player.id FROM GamePlayerEntity player" +

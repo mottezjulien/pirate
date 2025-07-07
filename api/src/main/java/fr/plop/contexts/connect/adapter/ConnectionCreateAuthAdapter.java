@@ -51,7 +51,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
     }
 
     @Override
-    public DeviceConnect createDeviceConnectWithUnknownUser(String deviceId, String firebaseToken) {
+    public DeviceConnect createDeviceConnectWithUnknownUser(String deviceId) {
         ConnectionUserEntity userEntity = new ConnectionUserEntity();
         userEntity.setId(StringTools.generate());
         userEntity.setLanguage(Language.byDefault());
@@ -59,7 +59,6 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         ConnectionDeviceEntity entity = new ConnectionDeviceEntity();
         entity.setId(StringTools.generate());
         entity.setDeviceId(deviceId);
-        entity.setFirebaseToken(firebaseToken);
         entity.setUser(userRepository.save(userEntity));
         repository.save(entity);
         return entity.toModel(null);

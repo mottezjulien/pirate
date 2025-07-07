@@ -9,7 +9,7 @@ public class ConnectionCreateAuthUseCase {
 
         ConnectAuth createAuth(DeviceConnect connect);
 
-        DeviceConnect createDeviceConnectWithUnknownUser(String deviceId, String firebaseToken);
+        DeviceConnect createDeviceConnectWithUnknownUser(String deviceId);
 
         Optional<ConnectAuth> lastAuth(DeviceConnect.Id id);
     }
@@ -20,7 +20,7 @@ public class ConnectionCreateAuthUseCase {
         this.dataOutPort = dataOutPort;
     }
 
-    public ConnectAuth byDeviceId(String deviceId, String firebaseToken) {
+    public ConnectAuth byDeviceId(String deviceId) {
         Optional<DeviceConnect> optDevice = dataOutPort.findByDeviceId(deviceId);
         if (optDevice.isPresent()) {
             DeviceConnect deviceConnect = optDevice.orElseThrow();
@@ -34,7 +34,7 @@ public class ConnectionCreateAuthUseCase {
             return dataOutPort.createAuth(deviceConnect);
         }
 
-        DeviceConnect deviceConnect = dataOutPort.createDeviceConnectWithUnknownUser(deviceId, firebaseToken);
+        DeviceConnect deviceConnect = dataOutPort.createDeviceConnectWithUnknownUser(deviceId);
         return dataOutPort.createAuth(deviceConnect);
 
     }
