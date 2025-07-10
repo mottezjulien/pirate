@@ -40,6 +40,16 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
         this.scenarioGoalRepository = scenarioGoalRepository;
     }
 
+    @Override
+    public Optional<GameSession> findExistedSession(Template template, ConnectUser.Id userId) {
+        //TODO BETTER ??
+        List<GameSessionEntity> optEntity = sessionRepository.allByTemplateIdAndUserId(template.id().value(), userId.value());
+        return optEntity.stream().sorted((o1, o2) -> o2.getStartAt().compareTo(o1.getStartAt()))
+                .map(entity -> {
+            GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
+            return GameSession.build(atom, template.scenario(), template.board());
+        }).findFirst();
+    }
 
     @Override
     public Optional<Template> findTemplateByCode(Template.Code code) {

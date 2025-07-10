@@ -26,23 +26,23 @@ public sealed interface PossibilityTrigger permits
     record GoInSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event) {
-            return event instanceof GameEvent.GoIn;
+            return event instanceof GameEvent.GoIn goInEvent && goInEvent.spaceId().equals(spaceId);
         }
     }
 
     record GoOutSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event) {
-            return event instanceof GameEvent.GoOut;
+            return event instanceof GameEvent.GoOut goOutEvent && goOutEvent.spaceId().equals(spaceId);
         }
     }
 
     record AbsoluteTime(Id id, Duration duration) implements PossibilityTrigger {
-
+        //TODO Accept
     }
 
     record RelativeTimeAfterOtherTrigger(Id id, Id otherTriggerId, Duration duration) implements PossibilityTrigger {
-
+        //TODO Accept
     }
 
 }

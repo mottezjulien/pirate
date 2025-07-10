@@ -61,7 +61,7 @@ class _GameGoalViewState extends State<GameGoalView> implements OnGoalListener {
     return ListView(
       padding: const EdgeInsets.all(8.0),
       children: [
-        ...activeGoals.map((goal) => _buildGoalItem(context, goal)).toList(),
+        ...activeGoals.map((goal) => _buildGoalItem(context, goal)),
         if (completedGoals.isNotEmpty) _buildCompletedSection(context, completedGoals),
       ],
     );
@@ -79,7 +79,7 @@ class _GameGoalViewState extends State<GameGoalView> implements OnGoalListener {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
         ),
-        ...completedGoals.map((goal) => _buildGoalItem(context, goal)).toList(),
+        ...completedGoals.map((goal) => _buildGoalItem(context, goal)),
       ],
     );
   }

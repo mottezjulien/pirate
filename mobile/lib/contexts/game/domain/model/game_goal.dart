@@ -13,8 +13,7 @@ enum GameGoalState {
   active, success, failure;
   factory GameGoalState.fromJson(String json) {
     String value = json.toLowerCase();
-    return GameGoalState.values
-        .where((e) => e.name == value).firstOrNull ?? GameGoalState.active;
+    return GameGoalState.values.where((e) => e.name == value).firstOrNull ?? GameGoalState.active;
   }
 }
 

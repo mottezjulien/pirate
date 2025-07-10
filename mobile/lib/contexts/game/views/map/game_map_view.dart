@@ -6,8 +6,12 @@ import '../../domain/model/game_session.dart';
 import '../../game_current.dart';
 
 class GameMapView extends StatefulWidget {
+
+  const GameMapView({super.key});
+
   @override
   State<GameMapView> createState() => _GameMapViewState();
+
 }
 
 class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
@@ -31,6 +35,7 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
     _viewModel.refresh();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Carte :)')),
@@ -118,7 +123,7 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
 class GameMapViewModel {
   final GameSessionRepository _repository = GameSessionRepository();
   final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
-  final Map<String, ValueNotifier<GameMapPositionPourcent?>> positions = Map();
+  final Map<String, ValueNotifier<GameMapPositionPourcent?>> positions = {};
 
   Future<List<GameMap>> get maps => _repository.findMaps();
 

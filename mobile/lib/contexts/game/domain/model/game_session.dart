@@ -114,7 +114,9 @@ class GameEventListener {
   }
 
   void fireOnMoveListeners() {
-    onMoveListeners.forEach((listener) => listener.onMove());
+    for (var listener in onMoveListeners) {
+      listener.onMove();
+    }
   }
 
   void addOnGoalListener(OnGoalListener listener) {
@@ -126,7 +128,9 @@ class GameEventListener {
   }
 
   void fireOnGoalListeners() {
-    onGoalListeners.forEach((listener) => listener.onUpdateGoal());
+    for (var listener in onGoalListeners) {
+      listener.onUpdateGoal();
+    }
   }
 
 }

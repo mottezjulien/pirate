@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 class Style {
   //static const String fontFamily = 'Roboto';
 
-  BuildContext _context;
-
-  Style({required BuildContext context}): _context = context;
+  Style({required BuildContext context});
 
   static _Color color = _Color();
 
