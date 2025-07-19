@@ -43,13 +43,18 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
+    public void doGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget consequence) {
+        goalAction.updateStateOrCreateGoalTarget(playerId, consequence);
+    }
+
+    @Override
     public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.GameOver consequence) {
         gameOverUseCase.apply(sessionId, playerId, consequence.gameOver());
     }
 
     @Override
-    public void doAlert(GamePlayer.Id id, PossibilityConsequence.Alert consequence) {
-        messageAction.alert(id, consequence);
+    public void doAlert(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.Alert consequence) {
+        messageAction.alert(sessionId, playerId, consequence);
     }
 
 }

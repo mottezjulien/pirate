@@ -37,8 +37,20 @@ public class ConnectionUserEntity {
         this.id = id;
     }
 
+    public Language getLanguage() {
+        return language;
+    }
+
     public void setLanguage(Language language) {
         this.language = language;
+    }
+
+    public Set<GamePlayerEntity> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(Set<GamePlayerEntity> players) {
+        this.players = players;
     }
 
     public ConnectUser toModel(GamePlayer nullablePlayer) {

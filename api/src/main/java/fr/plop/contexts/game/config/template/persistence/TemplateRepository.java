@@ -15,6 +15,7 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
             " LEFT JOIN FETCH target.label label" +
             " LEFT JOIN FETCH target.description description" +
             " LEFT JOIN FETCH step.possibilities possibility" +
+            " LEFT JOIN FETCH possibility.recurrence recurrence" +
             " LEFT JOIN FETCH possibility.trigger trigger" +
             " LEFT JOIN FETCH possibility.conditions condition" +
             " LEFT JOIN FETCH possibility.consequences consequence" +

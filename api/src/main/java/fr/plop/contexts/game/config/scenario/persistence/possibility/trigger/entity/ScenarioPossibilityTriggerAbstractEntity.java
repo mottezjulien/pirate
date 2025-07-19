@@ -27,7 +27,7 @@ public abstract class ScenarioPossibilityTriggerAbstractEntity {
         this.id = id;
     }
 
-    public PossibilityTrigger abstractToModel() {
+    public PossibilityTrigger toModel() {
         return switch (this) {
             case ScenarioPossibilityTriggerAbsoluteTimeEntity absoluteTime -> absoluteTime.toModel();
             case ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity relativeTime -> relativeTime.toModel();

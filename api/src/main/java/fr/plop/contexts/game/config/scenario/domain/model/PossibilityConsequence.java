@@ -6,6 +6,7 @@ import fr.plop.generic.tools.StringTools;
 
 public sealed interface PossibilityConsequence permits
         PossibilityConsequence.Goal,
+        PossibilityConsequence.GoalTarget,
         PossibilityConsequence.GameOver,
         PossibilityConsequence.Alert,
         PossibilityConsequence.UpdatedMetadata,
@@ -19,6 +20,10 @@ public sealed interface PossibilityConsequence permits
     }
 
     record Goal(Id id, ScenarioConfig.Step.Id stepId, ScenarioGoal.State state) implements PossibilityConsequence {
+
+    }
+
+    record GoalTarget(Id id, ScenarioConfig.Step.Id stepId, ScenarioConfig.Target.Id targetId, ScenarioGoal.State state) implements PossibilityConsequence {
 
     }
 

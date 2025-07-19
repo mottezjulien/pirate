@@ -154,7 +154,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
     private void createTarget(ScenarioConfig.Target target, ScenarioStepEntity stepEntity) {
         ScenarioTargetEntity targetEntity = new ScenarioTargetEntity();
-        targetEntity.setId(StringTools.generate());
+        targetEntity.setId(target.id().value());
         target.label().ifPresent(label ->
                 targetEntity.setLabel(createI18n(label)));
         target.desc().ifPresent(desc ->

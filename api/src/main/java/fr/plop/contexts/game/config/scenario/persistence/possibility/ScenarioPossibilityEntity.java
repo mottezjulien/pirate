@@ -5,6 +5,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.entity.ScenarioPossibilityConditionAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity.ScenarioPossibilityTriggerAbstractEntity;
 import fr.plop.generic.enumerate.AndOrOr;
 import jakarta.persistence.Column;
@@ -31,6 +32,10 @@ public class ScenarioPossibilityEntity {
     @ManyToOne
     @JoinColumn(name = "step_id")
     private ScenarioStepEntity step;
+
+    @ManyToOne
+    @JoinColumn(name = "recurrence_id")
+    private ScenarioPossibilityRecurrenceAbstractEntity recurrence;
 
     @ManyToOne
     @JoinColumn(name = "trigger_id")
@@ -69,6 +74,14 @@ public class ScenarioPossibilityEntity {
         this.step = step;
     }
 
+    public ScenarioPossibilityRecurrenceAbstractEntity getRecurrence() {
+        return recurrence;
+    }
+
+    public void setRecurrence(ScenarioPossibilityRecurrenceAbstractEntity recurrence) {
+        this.recurrence = recurrence;
+    }
+
     public ScenarioPossibilityTriggerAbstractEntity getTrigger() {
         return trigger;
     }
@@ -102,9 +115,11 @@ public class ScenarioPossibilityEntity {
     }
 
     public Possibility toModel() {
-        return new Possibility(new Possibility.Id(id), trigger.abstractToModel(),
+        return new Possibility(new Possibility.Id(id),
+                recurrence.toModel(),
+                trigger.toModel(),
                 conditions.stream().map(ScenarioPossibilityConditionAbstractEntity::abstractToModel).toList(),
                 conditionType,
-                consequences.stream().map(ScenarioPossibilityConsequenceAbstractEntity::abstractToModel).toList());
+                consequences.stream().map(ScenarioPossibilityConsequenceAbstractEntity::toModel).toList());
     }
 }

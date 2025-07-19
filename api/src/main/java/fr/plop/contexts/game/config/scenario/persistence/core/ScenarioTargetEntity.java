@@ -73,6 +73,7 @@ public class ScenarioTargetEntity {
 
     public ScenarioConfig.Target toModel() {
         return new ScenarioConfig.Target(
+                new ScenarioConfig.Target.Id(id),
                 Optional.ofNullable(label).map(l -> label.toModel()),
                 Optional.ofNullable(description).map(I18nEntity::toModel),
                 optional

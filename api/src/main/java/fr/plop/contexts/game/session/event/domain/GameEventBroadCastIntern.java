@@ -12,11 +12,13 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
     public interface OutPort {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
 
-        void doGoal(GamePlayer.Id id, PossibilityConsequence.Goal activeStep);
+        void doGoal(GamePlayer.Id playerId, PossibilityConsequence.Goal goal);
+
+        void doGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget goalTarget);
 
         void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.GameOver consequence);
 
-        void doAlert(GamePlayer.Id id, PossibilityConsequence.Alert alert);
+        void doAlert(GameSession.Id sessionId, GamePlayer.Id id, PossibilityConsequence.Alert alert);
 
 
     }
@@ -50,16 +52,22 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
         switch (consequence) {
             case PossibilityConsequence.Goal goal -> outPort.doGoal(playerId, goal);
 
-            case PossibilityConsequence.AddObjet addObjet -> {
-            }//TODO _doAddObjet(game, playerId, addObjet.objetId());
-            case PossibilityConsequence.Alert alert -> outPort.doAlert(playerId, alert);
+            case PossibilityConsequence.GoalTarget goalTarget -> outPort.doGoalTarget(playerId, goalTarget);
+
+            case PossibilityConsequence.Alert alert -> outPort.doAlert(sessionId, playerId, alert);
 
             case PossibilityConsequence.GameOver gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
-            case PossibilityConsequence.RemoveObjet removeObjet -> {
-            }//TODO _doAddObjet(game, playerId, removeObjet.objetId());
 
+            //TODO
+            case PossibilityConsequence.AddObjet addObjet -> {
+
+            }
+            case PossibilityConsequence.RemoveObjet removeObjet -> {
+
+            }
             case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
-            } //TODO _doUpdatedMetadata(game, playerId, updatedMetadata.metadataId(), updatedMetadata.value());
+
+            }
         }
 
     }

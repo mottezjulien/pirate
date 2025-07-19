@@ -26,13 +26,14 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
         this.id = id;
     }
 
-    public PossibilityConsequence abstractToModel() {
+    public PossibilityConsequence toModel() {
         return switch (this) {
             case ScenarioPossibilityConsequenceAddObjectEntity addObject -> addObject.toModel();
             case ScenarioPossibilityConsequenceRemoveObjectEntity removeObject -> removeObject.toModel();
             case ScenarioPossibilityConsequenceUpdatedMetadataEntity metadataUpdate -> metadataUpdate.toModel();
             case ScenarioPossibilityConsequenceGameOverEntity gameOver -> gameOver.toModel();
             case ScenarioPossibilityConsequenceGoalEntity goal -> goal.toModel();
+            case ScenarioPossibilityConsequenceGoalTargetEntity goalTarget -> goalTarget.toModel();
             case ScenarioPossibilityConsequenceAlertEntity alert -> alert.toModel();
             default -> throw new IllegalStateException("Unknown type");
         };
@@ -53,13 +54,22 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setObjetId(removeObjet.objetId());
                 yield entity;
             }
-            case PossibilityConsequence.Goal startedStep -> {
+            case PossibilityConsequence.Goal goal -> {
                 ScenarioPossibilityConsequenceGoalEntity entity = new ScenarioPossibilityConsequenceGoalEntity();
-                entity.setId(startedStep.id().value());
-                entity.setStepId(startedStep.stepId().value());
-                entity.setState(startedStep.state());
+                entity.setId(goal.id().value());
+                entity.setStepId(goal.stepId().value());
+                entity.setState(goal.state());
                 yield entity;
             }
+            case PossibilityConsequence.GoalTarget goalTarget -> {
+                ScenarioPossibilityConsequenceGoalTargetEntity entity = new ScenarioPossibilityConsequenceGoalTargetEntity();
+                entity.setId(goalTarget.id().value());
+                entity.setStepId(goalTarget.stepId().value());
+                entity.setTargetId(goalTarget.targetId().value());
+                entity.setState(goalTarget.state());
+                yield entity;
+            }
+
             case PossibilityConsequence.GameOver ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
             case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
                 ScenarioPossibilityConsequenceUpdatedMetadataEntity entity = new ScenarioPossibilityConsequenceUpdatedMetadataEntity();

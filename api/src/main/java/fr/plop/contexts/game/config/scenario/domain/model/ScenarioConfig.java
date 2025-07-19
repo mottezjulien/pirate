@@ -32,7 +32,13 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
 
     }
 
-    public record Target(Optional<I18n> label, Optional<I18n> desc, boolean optional) {
+    public record Target(Id id, Optional<I18n> label, Optional<I18n> desc, boolean optional) {
+
+        public record Id(String value) {
+            public Id() {
+                this(StringTools.generate());
+            }
+        }
 
     }
 

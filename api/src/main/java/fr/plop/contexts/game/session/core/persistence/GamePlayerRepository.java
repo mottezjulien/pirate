@@ -24,4 +24,9 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
             " AND player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE")
     List<String> activeIdsBySessionId(@Param("sessionId") String sessionId);
 
+    @Query("FROM GamePlayerEntity player" +
+            " LEFT JOIN FETCH player.user user" +
+            " WHERE player.id = :id")
+    Optional<GamePlayerEntity> findByIdFetchUser(@Param("id") String id);
+
 }

@@ -103,6 +103,9 @@ class GameEventListener {
     if(message.toString().toUpperCase().contains('SYSTEM:GOAL')) {
       fireOnGoalListeners();
     }
+    if(message.toString().toUpperCase().contains('SYSTEM:MESSAGE')) {
+      String bodyMessage = message.toString().substring('SYSTEM:MESSAGE:'.length);
+    }
   }
 
   void addOnMoveListener(OnMoveListener listener) {

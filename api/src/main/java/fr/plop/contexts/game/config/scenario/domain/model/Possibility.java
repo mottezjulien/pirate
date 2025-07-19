@@ -7,6 +7,7 @@ import java.util.List;
 
 public record Possibility(
         Id id,
+        PossibilityRecurrence recurrence,
         PossibilityTrigger trigger,
         List<PossibilityCondition> conditions,
         AndOrOr conditionType,
@@ -22,8 +23,8 @@ public record Possibility(
         }
     }
 
-    public Possibility(PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
-        this(new Id(), trigger, conditions, conditionType, consequences);
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
+        this(new Id(), recurrence, trigger, conditions, conditionType, consequences);
     }
 
 }

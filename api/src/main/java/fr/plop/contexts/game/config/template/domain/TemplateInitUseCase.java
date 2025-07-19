@@ -6,6 +6,7 @@ import fr.plop.contexts.game.config.map.domain.Map;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
@@ -68,21 +69,24 @@ public class TemplateInitUseCase {
 
     private ScenarioConfig firstScenario(BoardConfig board) {
         ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
-        ScenarioConfig.Target target1 = new ScenarioConfig.Target(Optional.of(i18n("Va au salon")), Optional.empty(), false);
-        ScenarioConfig.Target target2 = new ScenarioConfig.Target(Optional.of(i18n("Va à la cuisine")), Optional.of(i18n("là où on fait la cuisine")), true);
+        ScenarioConfig.Target target1 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va au salon")), Optional.empty(), false);
+        ScenarioConfig.Target target2 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va à la cuisine")), Optional.of(i18n("là où on fait la cuisine")), true);
 
-        PossibilityTrigger trigger1 = new PossibilityTrigger.GoOutSpace(new PossibilityTrigger.Id(), board.spaces().getFirst().id());
-        PossibilityConsequence consequence1 = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes sorti du bureau"));
-        List<PossibilityConsequence> consequences1 = List.of(consequence1);
-        Possibility possibility1 = new Possibility(trigger1, List.of(), AndOrOr.AND, consequences1);
+        PossibilityTrigger triggerGoOut = new PossibilityTrigger.GoOutSpace(new PossibilityTrigger.Id(), board.spaces().getFirst().id());
+
+        PossibilityConsequence consequenceGoalTarget = new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(), stepId, target1.id(), ScenarioGoal.State.SUCCESS);
+        Possibility possibilityThree = new Possibility(new PossibilityRecurrence.Times(3), triggerGoOut, List.of(), AndOrOr.AND, List.of(consequenceGoalTarget));
+
+        PossibilityConsequence consequenceAlert = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes sorti du bureau"));
+        Possibility possibilityAlways = new Possibility(new PossibilityRecurrence.Always(), triggerGoOut, List.of(), AndOrOr.AND, List.of(consequenceAlert));
 
         PossibilityTrigger trigger2 = new PossibilityTrigger.GoInSpace(new PossibilityTrigger.Id(), board.spaces().get(1).id());
         PossibilityConsequence consequence2 = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes dans la cuisine"));
         PossibilityConsequence consequence2bis = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), stepId, ScenarioGoal.State.SUCCESS);
         List<PossibilityConsequence> consequences2 = List.of(consequence2, consequence2bis);
-        Possibility possibility2 = new Possibility(trigger2, List.of(), AndOrOr.AND, consequences2);
+        Possibility possibility2 = new Possibility(PossibilityRecurrence.once(), trigger2, List.of(), AndOrOr.AND, consequences2);
 
-        ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId, Optional.of(i18n("Chapitre 1")), List.of(target1, target2), List.of(possibility1, possibility2));
+        ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId, Optional.of(i18n("Chapitre 1")), List.of(target1, target2), List.of(possibilityThree, possibilityAlways, possibility2));
 
         return new ScenarioConfig("Mon premier scénario", List.of(step1));
     }

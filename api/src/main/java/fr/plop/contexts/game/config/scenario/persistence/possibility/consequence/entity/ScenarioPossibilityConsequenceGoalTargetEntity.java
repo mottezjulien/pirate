@@ -11,12 +11,15 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
 @Entity
-@DiscriminatorValue("GOAL")
-public final class ScenarioPossibilityConsequenceGoalEntity extends
+@DiscriminatorValue("GOAL_TARGET")
+public final class ScenarioPossibilityConsequenceGoalTargetEntity extends
         ScenarioPossibilityConsequenceAbstractEntity {
 
     @Column(name = "step_id")
     private String stepId;
+
+    @Column(name = "target_id")
+    private String targetId;
 
     @Enumerated(EnumType.STRING)
     private ScenarioGoal.State state;
@@ -29,6 +32,14 @@ public final class ScenarioPossibilityConsequenceGoalEntity extends
         this.stepId = stepId;
     }
 
+    public String getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(String targetId) {
+        this.targetId = targetId;
+    }
+
     public ScenarioGoal.State getState() {
         return state;
     }
@@ -38,7 +49,8 @@ public final class ScenarioPossibilityConsequenceGoalEntity extends
     }
 
     public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.Goal(new PossibilityConsequence.Id(id), new ScenarioConfig.Step.Id(stepId), state);
+        return new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(id), new ScenarioConfig.Step.Id(stepId),
+                new ScenarioConfig.Target.Id(targetId), state);
     }
 
 }
