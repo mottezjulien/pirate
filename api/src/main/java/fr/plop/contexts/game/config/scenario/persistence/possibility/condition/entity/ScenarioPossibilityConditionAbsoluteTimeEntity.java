@@ -6,8 +6,6 @@ import fr.plop.generic.enumerate.BeforeOrAfter;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 
 import java.time.Duration;
 
@@ -19,9 +17,8 @@ public final class ScenarioPossibilityConditionAbsoluteTimeEntity
     @Column(name = "absolute_time_in_minutes")
     private int minutes;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "absolute_time_type")
-    private BeforeOrAfter type;
+    @Column(name = "before_or_after")
+    private BeforeOrAfter beforeOrAfter;
 
     public int getMinutes() {
         return minutes;
@@ -31,15 +28,15 @@ public final class ScenarioPossibilityConditionAbsoluteTimeEntity
         this.minutes = minutes;
     }
 
-    public BeforeOrAfter getType() {
-        return type;
+    public BeforeOrAfter getBeforeOrAfter() {
+        return beforeOrAfter;
     }
 
-    public void setType(BeforeOrAfter type) {
-        this.type = type;
+    public void setBeforeOrAfter(BeforeOrAfter beforeOrAfter) {
+        this.beforeOrAfter = beforeOrAfter;
     }
 
     public PossibilityCondition toModel() {
-        return new PossibilityCondition.AbsoluteTime(new PossibilityCondition.Id(id), Duration.ofMinutes(minutes), type);
+        return new PossibilityCondition.AbsoluteTime(new PossibilityCondition.Id(id), Duration.ofMinutes(minutes), beforeOrAfter);
     }
 }

@@ -3,6 +3,7 @@ package fr.plop.contexts.game.session.core.persistence;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
+import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,11 +26,9 @@ public class GameSessionEntity {
     @Id
     private String id;
 
-    @Column(name = "template_id")
-    private String templateId;
-
-    @Column(name = "template_version")
-    private String templateVersion;
+    @ManyToOne
+    @JoinColumn(name = "template_id")
+    private TemplateEntity template;
 
     private String label;
 
@@ -65,20 +64,12 @@ public class GameSessionEntity {
         this.id = id;
     }
 
-    public String getTemplateId() {
-        return templateId;
+    public TemplateEntity getTemplate() {
+        return template;
     }
 
-    public void setTemplateId(String templateId) {
-        this.templateId = templateId;
-    }
-
-    public String getTemplateVersion() {
-        return templateVersion;
-    }
-
-    public void setTemplateVersion(String templateVersion) {
-        this.templateVersion = templateVersion;
+    public void setTemplate(TemplateEntity template) {
+        this.template = template;
     }
 
     public Set<GamePlayerEntity> getPlayers() {

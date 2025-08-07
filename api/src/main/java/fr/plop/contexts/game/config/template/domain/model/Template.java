@@ -5,11 +5,13 @@ import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.generic.tools.StringTools;
 
-public record Template(Atom atom, String label, String version, ScenarioConfig scenario, BoardConfig board,
+import java.time.Duration;
+
+public record Template(Atom atom, String label, String version, Duration maxDuration, ScenarioConfig scenario,
+                       BoardConfig board,
                        MapConfig map) {
 
     public record Id(String value) {
-
         public Id() {
             this(StringTools.generate());
         }

@@ -1,21 +1,21 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity;
 
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.session.time.TimeClick;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import java.time.Duration;
-
 @Entity
-@DiscriminatorValue(value = "RELATIVE_TIME_AFTER_OTHER_TRIGGER")
+@DiscriminatorValue(value = "RELATIVE_TIME_AFTER_OTHER_POSSIBILITY")
 public final class ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity extends ScenarioPossibilityTriggerAbstractEntity {
 
-    @Column(name = "relative_time_after_other_trigger_in_minutes")
+    @Column(name = "relative_time_after_other_possibility_in_minutes")
     private int minutes;
 
-    @Column(name = "relative_time_after_other_trigger_id")
-    private String otherTriggerId;
+    @Column(name = "relative_time_after_other_possibility_id")
+    private String otherPossibilityId;
 
     public int getMinutes() {
         return minutes;
@@ -25,17 +25,17 @@ public final class ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity
         this.minutes = absoluteTimeInMinute;
     }
 
-    public String getOtherTriggerId() {
-        return otherTriggerId;
+    public String getOtherPossibilityId() {
+        return otherPossibilityId;
     }
 
-    public void setOtherTriggerId(String otherTriggerId) {
-        this.otherTriggerId = otherTriggerId;
+    public void setOtherPossibilityId(String otherTriggerId) {
+        this.otherPossibilityId = otherTriggerId;
     }
 
     public PossibilityTrigger toModel() {
-        return new PossibilityTrigger.RelativeTimeAfterOtherTrigger(new PossibilityTrigger.Id(id),
-                new PossibilityTrigger.Id(otherTriggerId),
-                Duration.ofMinutes(minutes));
+        return new PossibilityTrigger.RelativeTimeAfterOtherPossibility(new PossibilityTrigger.Id(id),
+                new Possibility.Id(otherPossibilityId),
+                TimeClick.ofMinutes(minutes));
     }
 }

@@ -32,6 +32,8 @@ import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.S
 import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.entity.ScenarioPossibilityConditionAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.ScenarioPossibilityConsequenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity.ScenarioPossibilityTriggerAbstractEntity;
 import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
@@ -59,6 +61,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final ScenarioStepRepository scenarioStepRepository;
     private final ScenarioTargetRepository scenarioTargetRepository;
     private final ScenarioPossibilityRepository possibilityRepository;
+    private final ScenarioPossibilityRecurrenceRepository recurrenceRepository;
     private final ScenarioPossibilityTriggerRepository triggerRepository;
     private final ScenarioPossibilityConditionRepository conditionRepository;
     private final ScenarioPossibilityConsequenceRepository consequenceRepository;
@@ -68,7 +71,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final MapRepository mapRepository;
     private final MapPositionRepository mapPositionRepository;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapConfigItemRepository mapConfigItemRepository, MapRepository mapRepository, MapPositionRepository mapPositionRepository) {
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapConfigItemRepository mapConfigItemRepository, MapRepository mapRepository, MapPositionRepository mapPositionRepository) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.boardRepository = boardRepository;
@@ -78,6 +81,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.scenarioStepRepository = scenarioStepRepository;
         this.scenarioTargetRepository = scenarioTargetRepository;
         this.possibilityRepository = possibilityRepository;
+        this.recurrenceRepository = recurrenceRepository;
         this.triggerRepository = triggerRepository;
         this.conditionRepository = conditionRepository;
         this.consequenceRepository = consequenceRepository;
@@ -94,19 +98,46 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     }
 
     @Override
-    public void createAll(Template template) {
+    public void deleteAll() {
+
+        templateRepository.deleteAll();
+
+        mapConfigItemRepository.deleteAll();
+        mapPositionRepository.deleteAll();
+        mapRepository.deleteAll();
+        mapConfigRepository.deleteAll();
+
+        possibilityRepository.deleteAll();
+        conditionRepository.deleteAll();
+        consequenceRepository.deleteAll();
+        triggerRepository.deleteAll();
+        recurrenceRepository.deleteAll();
+
+        scenarioTargetRepository.deleteAll();
+        scenarioStepRepository.deleteAll();
+        scenarioRepository.deleteAll();
+
+        boardRectRepository.deleteAll();
+        boardSpaceRepository.deleteAll();
+        boardRepository.deleteAll();
+
+        //i18nRepository.deleteAll();
+    }
+
+    @Override
+    public void create(Template template) {
         TemplateEntity templateEntity = new TemplateEntity();
         templateEntity.setId(template.id().value());
         templateEntity.setCode(template.code().value());
         templateEntity.setLabel(template.label());
         templateEntity.setVersion(template.version());
+        templateEntity.setDurationInMinute(template.maxDuration().toMinutes());
         templateEntity.setBoard(createBoard(template.board()));
         templateEntity.setScenario(createScenario(template.scenario()));
         templateEntity.setMap(createMap(template.map()));
         templateRepository.save(templateEntity);
-
-
     }
+
 
     private BoardConfigEntity createBoard(BoardConfig board) {
         BoardConfigEntity boardEntity = new BoardConfigEntity();
@@ -171,6 +202,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         possibilityEntity.setConditionType(possibility.conditionType());
         possibilityEntity.setStep(stepEntity);
         possibilityRepository.save(possibilityEntity);
+
+        ScenarioPossibilityRecurrenceAbstractEntity recurrenceEntity = ScenarioPossibilityRecurrenceAbstractEntity.fromModel(possibility.recurrence());
+        possibilityEntity.setRecurrence(recurrenceRepository.save(recurrenceEntity));
 
         ScenarioPossibilityTriggerAbstractEntity triggerEntity = ScenarioPossibilityTriggerAbstractEntity.fromModel(possibility.trigger());
         possibilityEntity.setTrigger(triggerRepository.save(triggerEntity));

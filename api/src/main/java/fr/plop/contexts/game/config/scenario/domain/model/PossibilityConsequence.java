@@ -23,7 +23,8 @@ public sealed interface PossibilityConsequence permits
 
     }
 
-    record GoalTarget(Id id, ScenarioConfig.Step.Id stepId, ScenarioConfig.Target.Id targetId, ScenarioGoal.State state) implements PossibilityConsequence {
+    record GoalTarget(Id id, ScenarioConfig.Step.Id stepId, ScenarioConfig.Target.Id targetId,
+                      ScenarioGoal.State state) implements PossibilityConsequence {
 
     }
 

@@ -38,17 +38,19 @@ public class GamePlayerEntity {
     @Enumerated
     private GamePlayer.State state;
 
-    //TODO: List Events ? Move from Player ?
-    @ManyToOne
-    @JoinColumn(name = "reason_i18n_id")
-    private I18nEntity reason;
-
     @OneToOne
     @JoinColumn(name = "last_position_id")
-    private BoardPositionEntity position;
+    private BoardPositionEntity lastPosition;
 
     @OneToMany(mappedBy = "player")
     private Set<ScenarioGoalEntity> goals = new HashSet<>();
+
+    @OneToMany(mappedBy = "player")
+    private Set<GamePlayerActionEntity> actions = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "end_game_reason_i18n_id")
+    private I18nEntity endGameReason;
 
 
     public String getId() {
@@ -63,8 +65,8 @@ public class GamePlayerEntity {
         return session;
     }
 
-    public void setSession(GameSessionEntity game) {
-        this.session = game;
+    public void setSession(GameSessionEntity session) {
+        this.session = session;
     }
 
     public ConnectionUserEntity getUser() {
@@ -83,20 +85,12 @@ public class GamePlayerEntity {
         this.state = state;
     }
 
-    public void setReason(I18nEntity reason) {
-        this.reason = reason;
+    public BoardPositionEntity getLastPosition() {
+        return lastPosition;
     }
 
-    public I18nEntity getReason() {
-        return reason;
-    }
-
-    public BoardPositionEntity getPosition() {
-        return position;
-    }
-
-    public void setPosition(BoardPositionEntity position) {
-        this.position = position;
+    public void setLastPosition(BoardPositionEntity lastPosition) {
+        this.lastPosition = lastPosition;
     }
 
     public Set<ScenarioGoalEntity> getGoals() {
@@ -107,10 +101,26 @@ public class GamePlayerEntity {
         this.goals = goals;
     }
 
+    public Set<GamePlayerActionEntity> getActions() {
+        return actions;
+    }
+
+    public void setActions(Set<GamePlayerActionEntity> actions) {
+        this.actions = actions;
+    }
+
+    public I18nEntity getEndGameReason() {
+        return endGameReason;
+    }
+
+    public void setEndGameReason(I18nEntity endGameReason) {
+        this.endGameReason = endGameReason;
+    }
+
     public GamePlayer toModel() {
         List<BoardSpace.Id> spacesInIds = List.of();
-        if (position != null) {
-            spacesInIds = position.getSpaces().stream()
+        if (lastPosition != null) {
+            spacesInIds = lastPosition.getSpaces().stream()
                     .map(spaceEntity -> new BoardSpace.Id(spaceEntity.getId()))
                     .toList();
         }

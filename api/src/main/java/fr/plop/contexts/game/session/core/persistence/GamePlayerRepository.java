@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, String> {
 
     @Query("FROM GamePlayerEntity player" +
-            " LEFT JOIN FETCH player.position position" +
+            " LEFT JOIN FETCH player.lastPosition position" +
             " LEFT JOIN FETCH position.spaces spaces" +
             " LEFT JOIN FETCH player.goals goal" +
             " LEFT JOIN FETCH goal.step step" +

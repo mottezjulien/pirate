@@ -9,6 +9,8 @@ import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.session.time.GameSessionTimer;
+import fr.plop.contexts.game.session.time.TimeClick;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
@@ -34,10 +36,13 @@ public class GameMoveUseCase {
 
     private final PushPort pushPort;
 
-    public GameMoveUseCase(OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort) {
+    private final GameSessionTimer timer;
+
+    public GameMoveUseCase(OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort, GameSessionTimer timer) {
         this.outPort = outPort;
         this.broadCast = broadCast;
         this.pushPort = pushPort;
+        this.timer = timer;
     }
 
     public void apply(GameSession.Id sessionId, GamePlayer player, Request request) throws GameException {
@@ -50,11 +55,13 @@ public class GameMoveUseCase {
         if (!spaceInIds.equals(nextIds)) {
             outPort.savePosition(player.id(), nextIds);
 
+            TimeClick timeClick = timer.currentClick(sessionId);
+
             List<BoardSpace.Id> removed = ListTools.removed(spaceInIds, nextIds);
-            removed.forEach(space -> broadCast.fire(new GameEvent.GoOut(sessionId, player.id(), space)));
+            removed.forEach(space -> broadCast.fire(new GameEvent.GoOut(sessionId, player.id(), timeClick, space)));
 
             List<BoardSpace.Id> added = ListTools.added(spaceInIds, nextIds);
-            added.forEach(space -> broadCast.fire(new GameEvent.GoIn(sessionId, player.id(), space)));
+            added.forEach(space -> broadCast.fire(new GameEvent.GoIn(sessionId, player.id(), timeClick, space)));
             pushPort.push(new PushEvent.GameMove(sessionId, player.id()));
         }
 

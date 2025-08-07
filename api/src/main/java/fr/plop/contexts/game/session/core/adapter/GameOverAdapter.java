@@ -39,7 +39,7 @@ public class GameOverAdapter implements GameOverUseCase.OutputPort {
                     player.setState(GamePlayer.State.WIN);
                     I18nEntity reasonEntity = new I18nEntity();
                     reasonEntity.setId(reasonId.value());
-                    player.setReason(reasonEntity);
+                    player.setEndGameReason(reasonEntity);
                     playerRepository.save(player);
                 });
     }

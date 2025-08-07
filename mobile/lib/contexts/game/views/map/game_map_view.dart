@@ -103,17 +103,13 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
                 builder: (BuildContext context,
                     GameMapPositionPourcent? position, Widget? _) {
                   if (position != null) {
-                    Positioned(
-                      left:
-                          (MediaQuery.of(context).size.width * position.x) - 24,
-                      top: ((MediaQuery.of(context).size.height * max_height) *
-                              position.y) -
-                          24,
-                      child: Image.asset('assets/generic/map/pointeur.png',
-                          width: 48, height: 48),
+                    return Positioned(
+                      left: (MediaQuery.of(context).size.width * position.x) - 24,
+                      top: ((MediaQuery.of(context).size.height * max_height) * position.y) - 24,
+                      child: Image.asset('assets/generic/map/pointeur.png', width: 48, height: 48),
                     );
                   }
-                  return SizedBox.shrink();
+                  return const SizedBox.shrink();
                 })
           ]))
         ]));

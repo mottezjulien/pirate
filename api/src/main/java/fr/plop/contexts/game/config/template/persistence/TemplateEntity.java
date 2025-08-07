@@ -4,11 +4,14 @@ import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import java.time.Duration;
 
 @Entity
 @Table(name = "TEST2_TEMPLATE")
@@ -34,6 +37,9 @@ public class TemplateEntity {
     @ManyToOne
     @JoinColumn(name = "map_id")
     private MapConfigEntity map;
+
+    @Column(name = "duration_in_minute")
+    private long durationInMinute;
 
     public String getId() {
         return id;
@@ -91,9 +97,18 @@ public class TemplateEntity {
         this.map = map;
     }
 
+    public long getDurationInMinute() {
+        return durationInMinute;
+    }
+
+    public void setDurationInMinute(long durationInMinute) {
+        this.durationInMinute = durationInMinute;
+    }
+
     public Template toModel() {
         Template.Id id = new Template.Id(this.id);
         Template.Atom atom = new Template.Atom(id, new Template.Code(code));
-        return new Template(atom, label, version, scenario.toModel(), board.toModel(), map.toModel());
+        Duration duration = Duration.ofMinutes(durationInMinute);
+        return new Template(atom, label, version, duration, scenario.toModel(), board.toModel(), map.toModel());
     }
 }

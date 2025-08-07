@@ -17,6 +17,7 @@ import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,8 +27,9 @@ public class TemplateInitUseCase {
 
         boolean isEmpty();
 
-        void createAll(Template template);
+        void create(Template template);
 
+        void deleteAll();
     }
 
     private final OutPort outPort;
@@ -37,22 +39,33 @@ public class TemplateInitUseCase {
     }
 
     public void apply() {
-        if (outPort.isEmpty()) {
-            outPort.createAll(firstTemplate());
-        }
+        /*if (outPort.isEmpty()) {
+            outPort.create(firstTemplate());
+        }*/
+        outPort.deleteAll();
+        outPort.create(testFirstTemplate());
+        outPort.create(chezWam1Template());
     }
 
-    private Template firstTemplate() {
-        BoardConfig board = firstBoard();
-        ScenarioConfig scenario = firstScenario(board);
+    private Template testFirstTemplate() {
+        ScenarioConfig scenario = new ScenarioConfig();
+        BoardConfig board = new BoardConfig(List.of());
+        MapConfig mapConfig = new MapConfig(List.of());
+        return new Template(new Template.Atom(new Template.Id(), new Template.Code("TEST_FIRST")), "Test 1", "0.0.1",
+                Duration.ofMinutes(3), scenario, board, mapConfig);
+    }
+
+    private Template chezWam1Template() {
+        BoardConfig board = chezWamBoard();
+        ScenarioConfig scenario = chezWamScenario(board);
         BoardSpace.Id bureau = board.spaces().getFirst().id();
         BoardSpace.Id cuisine = board.spaces().get(1).id();
-        MapConfig mapConfig = new MapConfig(List.of(new MapConfig.Item(firstMap(bureau, cuisine)), new MapConfig.Item(secondMap(bureau))));
-        return new Template(new Template.Atom(new Template.Id(), new Template.Code("first")), "Chez Wam", "0.0.1",
-                scenario, board, mapConfig);
+        MapConfig mapConfig = new MapConfig(List.of(new MapConfig.Item(chezWamFirstMap(bureau, cuisine)), new MapConfig.Item(chezWamSecondMap(bureau))));
+        return new Template(new Template.Atom(new Template.Id(), new Template.Code("CHEZWAM1")), "Chez Wam", "0.0.1",
+                Duration.ofMinutes(30), scenario, board, mapConfig);
     }
 
-    private BoardConfig firstBoard() {
+    private BoardConfig chezWamBoard() {
 
         Rect bureau = new Rect(
                 new Point(45.77806f, 4.80351f),
@@ -67,7 +80,7 @@ public class TemplateInitUseCase {
         return new BoardConfig(List.of(spaceBureau, spaceCuisine));
     }
 
-    private ScenarioConfig firstScenario(BoardConfig board) {
+    private ScenarioConfig chezWamScenario(BoardConfig board) {
         ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
         ScenarioConfig.Target target1 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va au salon")), Optional.empty(), false);
         ScenarioConfig.Target target2 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va à la cuisine")), Optional.of(i18n("là où on fait la cuisine")), true);
@@ -84,14 +97,14 @@ public class TemplateInitUseCase {
         PossibilityConsequence consequence2 = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), i18n("Vous êtes dans la cuisine"));
         PossibilityConsequence consequence2bis = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), stepId, ScenarioGoal.State.SUCCESS);
         List<PossibilityConsequence> consequences2 = List.of(consequence2, consequence2bis);
-        Possibility possibility2 = new Possibility(PossibilityRecurrence.once(), trigger2, List.of(), AndOrOr.AND, consequences2);
+        Possibility possibility2 = new Possibility(new PossibilityRecurrence.Times(1), trigger2, List.of(), AndOrOr.AND, consequences2);
 
         ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId, Optional.of(i18n("Chapitre 1")), List.of(target1, target2), List.of(possibilityThree, possibilityAlways, possibility2));
 
         return new ScenarioConfig("Mon premier scénario", List.of(step1));
     }
 
-    private Map firstMap(BoardSpace.Id bureau, BoardSpace.Id cusine) {
+    private Map chezWamFirstMap(BoardSpace.Id bureau, BoardSpace.Id cusine) {
         Map.Position.Point bureauPoint = new Map.Position.Point(.75, .25);
         Map.Position bureauPosition = new Map.Position(bureauPoint, Map.Priority.HIGH, List.of(bureau));
         Map.Position.Point cusinePoint = new Map.Position.Point(.25, .75);
@@ -102,7 +115,7 @@ public class TemplateInitUseCase {
                 Map.Priority.HIGH, points);
     }
 
-    private Map secondMap(BoardSpace.Id bureau) {
+    private Map chezWamSecondMap(BoardSpace.Id bureau) {
         Map.Position.Point bureauPoint = new Map.Position.Point(.5, .5);
         Map.Position bureauPosition = new Map.Position(bureauPoint, Map.Priority.HIGH, List.of(bureau));
         List<Map.Position> points = List.of(bureauPosition);

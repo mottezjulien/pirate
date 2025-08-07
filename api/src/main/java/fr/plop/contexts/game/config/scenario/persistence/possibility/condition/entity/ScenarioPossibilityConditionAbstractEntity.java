@@ -32,7 +32,6 @@ public abstract class ScenarioPossibilityConditionAbstractEntity {
             case ScenarioPossibilityConditionAbsoluteTimeEntity absoluteTime -> absoluteTime.toModel();
             case ScenarioPossibilityConditionRelativeTimeAfterOtherTriggerEntity relativeTime -> relativeTime.toModel();
             case ScenarioPossibilityConditionInStepEntity inStep -> inStep.toModel();
-            case ScenarioPossibilityConditionOtherConditionEntity otherCondition -> otherCondition.toModel();
             default -> throw new IllegalStateException("Unknown type");
         };
     }
@@ -43,6 +42,7 @@ public abstract class ScenarioPossibilityConditionAbstractEntity {
                 ScenarioPossibilityConditionAbsoluteTimeEntity entity = new ScenarioPossibilityConditionAbsoluteTimeEntity();
                 entity.setId(absoluteTime.id().value());
                 entity.setMinutes((int) absoluteTime.duration().toMinutes());
+                entity.setBeforeOrAfter(absoluteTime.beforeOrAfter());
                 yield entity;
             }
             case PossibilityCondition.RelativeTimeAfterOtherTrigger relativeTimeAfterOtherTrigger -> {
@@ -68,12 +68,6 @@ public abstract class ScenarioPossibilityConditionAbstractEntity {
                 ScenarioPossibilityConditionOutsideSpaceEntity entity = new ScenarioPossibilityConditionOutsideSpaceEntity();
                 entity.setId(outsideSpace.id().value());
                 entity.setSpaceId(outsideSpace.spaceId().value());
-                yield entity;
-            }
-            case PossibilityCondition.OtherCondition otherCondition -> {
-                ScenarioPossibilityConditionOtherConditionEntity entity = new ScenarioPossibilityConditionOtherConditionEntity();
-                entity.setId(otherCondition.id().value());
-                entity.setOtherConditionId(otherCondition.otherConditionId().value());
                 yield entity;
             }
         };

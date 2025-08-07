@@ -58,7 +58,8 @@ public class GameSessionScenarioController {
     }
 
 
-    public record GameGoalResponseDTO(String id, String label, String state, List<GameTargetSimpleResponseDTO> targets) {
+    public record GameGoalResponseDTO(String id, String label, String state,
+                                      List<GameTargetSimpleResponseDTO> targets) {
         public static GameGoalResponseDTO fromEntity(ScenarioGoalEntity goalEntity, Language language) {
             ScenarioStepEntity stepEntity = goalEntity.getStep();
             I18n stepLabel = stepEntity.getLabel().toModel();

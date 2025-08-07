@@ -1,11 +1,10 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity;
 
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.session.time.TimeClick;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-
-import java.time.Duration;
 
 @Entity
 @DiscriminatorValue(value = "ABSOLUTE_TIME")
@@ -23,7 +22,7 @@ public final class ScenarioPossibilityTriggerAbsoluteTimeEntity extends Scenario
     }
 
     public PossibilityTrigger toModel() {
-        return new PossibilityTrigger.AbsoluteTime(new PossibilityTrigger.Id(id), Duration.ofMinutes(minutes));
+        return new PossibilityTrigger.AbsoluteTime(new PossibilityTrigger.Id(id), TimeClick.ofMinutes(minutes));
     }
 
 }

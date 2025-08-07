@@ -9,8 +9,11 @@ import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.session.time.GameSessionTimer;
+import fr.plop.contexts.game.session.time.TimeClick;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -27,25 +30,28 @@ public class GameMoveUseCaseTest {
     private final GameMoveUseCase.OutPort outPort = mock(GameMoveUseCase.OutPort.class);
     private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
     private final PushPort pushPort = mock(PushPort.class);
-    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast, pushPort);
+    private final GameSessionTimer timer = mock(GameSessionTimer.class);
+    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast, pushPort, timer);
 
-    private final GameSession.Id gameId = new GameSession.Id("ABC");
-    //private final ConnectUser.Id userId = new ConnectUser.Id("1234");
-
+    private final GameSession.Id sessionId = new GameSession.Id("ABC");
 
     private final BoardSpace spaceA = spaceA();
     private final BoardSpace spaceB = spaceB();
     private final BoardSpace spaceC = spaceC();
     private final BoardSpace spaceD = spaceD();
     private final BoardSpace spaceE = spaceE();
+    private final TimeClick currentClick = new TimeClick(25);
 
-
+    @BeforeEach
+    void setUp() {
+        when(timer.currentClick(sessionId)).thenReturn(currentClick);
+    }
 
     @Test
     public void whenBoardNotFound() throws GameException {
         GamePlayer player = player(List.of(spaceA.id(), spaceB.id()));
-        when(outPort.boardBySessionId(gameId)).thenThrow(new GameException(GameException.Type.SESSION_NOT_FOUND));
-        assertThatThrownBy(() -> useCase.apply(gameId, player, inSpaceAPosition()))
+        when(outPort.boardBySessionId(sessionId)).thenThrow(new GameException(GameException.Type.SESSION_NOT_FOUND));
+        assertThatThrownBy(() -> useCase.apply(sessionId, player, inSpaceAPosition()))
                 .isInstanceOf(GameException.class)
                 .hasFieldOrPropertyWithValue("type", GameException.Type.SESSION_NOT_FOUND);
 
@@ -58,9 +64,9 @@ public class GameMoveUseCaseTest {
         GamePlayer player = player(List.of(spaceA.id(), spaceB.id()));
 
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
-        when(outPort.boardBySessionId(gameId)).thenReturn(board);
+        when(outPort.boardBySessionId(sessionId)).thenReturn(board);
 
-        useCase.apply(gameId, player, inSpaceABPosition());
+        useCase.apply(sessionId, player, inSpaceABPosition());
 
         verify(browCast, never()).fire(any());
         verify(outPort, never()).savePosition(any(), any());
@@ -71,11 +77,11 @@ public class GameMoveUseCaseTest {
         GamePlayer player = player(List.of());
 
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
-        when(outPort.boardBySessionId(gameId)).thenReturn(board);
+        when(outPort.boardBySessionId(sessionId)).thenReturn(board);
 
-        useCase.apply(gameId, player, inSpaceAPosition());
+        useCase.apply(sessionId, player, inSpaceAPosition());
 
-        verify(browCast).fire(new GameEvent.GoIn(gameId, player.id(), spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of(spaceA.id()));
     }
 
@@ -85,11 +91,11 @@ public class GameMoveUseCaseTest {
         GamePlayer player = player(List.of(spaceA.id()));
 
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB));
-        when(outPort.boardBySessionId(gameId)).thenReturn(board);
+        when(outPort.boardBySessionId(sessionId)).thenReturn(board);
 
-        useCase.apply(gameId, player, outPosition());
+        useCase.apply(sessionId, player, outPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of());
     }
 
@@ -98,14 +104,14 @@ public class GameMoveUseCaseTest {
         GamePlayer player = player(List.of(spaceA.id(), spaceB.id(), spaceC.id()));
 
         BoardConfig board = new BoardConfig(List.of(spaceA, spaceB, spaceC, spaceD, spaceE));
-        when(outPort.boardBySessionId(gameId)).thenReturn(board);
+        when(outPort.boardBySessionId(sessionId)).thenReturn(board);
 
-        useCase.apply(gameId, player, inCDEPosition());
+        useCase.apply(sessionId, player, inCDEPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceA.id()));
-        verify(browCast).fire(new GameEvent.GoOut(gameId, player.id(), spaceB.id()));
-        verify(browCast).fire(new GameEvent.GoIn(gameId, player.id(), spaceD.id()));
-        verify(browCast).fire(new GameEvent.GoIn(gameId, player.id(), spaceE.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceB.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceD.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceE.id()));
 
         verify(outPort).savePosition(player.id(), List.of(spaceC.id(), spaceD.id(), spaceE.id()));
     }
@@ -123,12 +129,12 @@ public class GameMoveUseCaseTest {
     }
 
     private static GameMoveUseCase.Request inSpaceAPosition() {
-        Point position = new Point(5,4.6f);
+        Point position = new Point(5, 4.6f);
         return new GameMoveUseCase.Request(position);
     }
 
     private static GameMoveUseCase.Request inSpaceABPosition() {
-        Point position = new Point(9,1.7f);
+        Point position = new Point(9, 1.7f);
         return new GameMoveUseCase.Request(position);
     }
 
@@ -153,12 +159,12 @@ public class GameMoveUseCaseTest {
     }
 
     private static GameMoveUseCase.Request inCDEPosition() {
-        Point position = new Point(12,6f);
+        Point position = new Point(12, 6f);
         return new GameMoveUseCase.Request(position);
     }
 
     private static GameMoveUseCase.Request outPosition() {
-        Point position = new Point(99,6.6f);
+        Point position = new Point(99, 6.6f);
         return new GameMoveUseCase.Request(position);
     }
 

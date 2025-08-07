@@ -17,11 +17,11 @@ import java.util.Optional;
 
 
 @Component
-public class ScenarioGoalAdapter {
+public class GameEventScenarioAdapter {
     private final ScenarioGoalRepository goalRepository;
     private final ScenarioGoalTargetRepository goalTargetRepository;
 
-    public ScenarioGoalAdapter(ScenarioGoalRepository goalRepository, ScenarioGoalTargetRepository goalTargetRepository) {
+    public GameEventScenarioAdapter(ScenarioGoalRepository goalRepository, ScenarioGoalTargetRepository goalTargetRepository) {
         this.goalRepository = goalRepository;
         this.goalTargetRepository = goalTargetRepository;
     }

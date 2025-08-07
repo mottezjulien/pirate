@@ -17,11 +17,18 @@ public class ConnectionController {
         this.createAuthUseCase = createAuthUseCase;
     }
 
-
     @PostMapping({"", "/"})
-    public AuthResponseDTO auth(@RequestBody ConnectionRequestDTO request) {
+    public ResponseDTO auth(@RequestBody RequestDTO request) {
         ConnectAuth auth = createAuthUseCase.byDeviceId(request.deviceId());
-        return new AuthResponseDTO(auth.token().value());
+        return new ResponseDTO(auth.token().value());
+    }
+
+    public record RequestDTO(String deviceId) {
+
+    }
+
+    public record ResponseDTO(String token) {
+
     }
 
 }

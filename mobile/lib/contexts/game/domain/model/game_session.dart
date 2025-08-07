@@ -4,6 +4,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../../generic/config/server.dart';
 import '../../../../generic/connect/connection_current.dart';
+import '../../../../generic/services/global_dialog_service.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
 
@@ -34,6 +35,10 @@ class GameSession {
   void addOnGoalListener(onGoalListener) => eventListener.addOnGoalListener(onGoalListener);
 
   void removeOnGoalListener(onGoalListener) => eventListener.removeOnGoalListener(onGoalListener);
+
+  void dispose() {
+    eventListener.dispose();
+  }
 
 }
 
@@ -105,6 +110,8 @@ class GameEventListener {
     }
     if(message.toString().toUpperCase().contains('SYSTEM:MESSAGE')) {
       String bodyMessage = message.toString().substring('SYSTEM:MESSAGE:'.length);
+      // Afficher la popup avec le message reçu
+      GlobalDialogService.showCustomMessageDialog(message: bodyMessage);
     }
   }
 
@@ -134,6 +141,13 @@ class GameEventListener {
     for (var listener in onGoalListeners) {
       listener.onUpdateGoal();
     }
+  }
+
+  void dispose() {
+    running = false;
+    _channel?.sink.close();
+    onMoveListeners.clear();
+    onGoalListeners.clear();
   }
 
 }

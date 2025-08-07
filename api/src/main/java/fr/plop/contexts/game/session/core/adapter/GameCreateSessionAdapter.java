@@ -11,7 +11,7 @@ import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.usecase.GameCreateSessionUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionPostUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOutput {
+public class GameCreateSessionAdapter implements GameSessionPostUseCase.DataOutput {
     private final TemplateRepository templateRepository;
     private final GameSessionRepository sessionRepository;
     private final GamePlayerRepository playerRepository;
@@ -41,14 +41,11 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
     }
 
     @Override
-    public Optional<GameSession> findExistedSession(Template template, ConnectUser.Id userId) {
-        //TODO BETTER ??
-        List<GameSessionEntity> optEntity = sessionRepository.allByTemplateIdAndUserId(template.id().value(), userId.value());
-        return optEntity.stream().sorted((o1, o2) -> o2.getStartAt().compareTo(o1.getStartAt()))
-                .map(entity -> {
-            GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-            return GameSession.build(atom, template.scenario(), template.board());
-        }).findFirst();
+    public Optional<GameSession.Atom> findActiveGameSession(ConnectUser.Id userId) {
+        return sessionRepository.findByUserId(userId.value()).stream()
+                .filter(session -> session.getState() == GameSession.State.ACTIVE)
+                .map(entity -> new GameSession.Atom(new GameSession.Id(entity.getId()), entity.getLabel()))
+                .findFirst();
     }
 
     @Override
@@ -65,8 +62,9 @@ public class GameCreateSessionAdapter implements GameCreateSessionUseCase.DataOu
         GameSessionEntity entity = new GameSessionEntity();
         entity.setState(GameSession.State.ACTIVE);
         entity.setId(StringTools.generate());
-        entity.setTemplateId(template.id().value());
-        entity.setTemplateVersion(template.version());
+        TemplateEntity templateEntity = new TemplateEntity();
+        templateEntity.setId(template.id().value());
+        entity.setTemplate(templateEntity);
         entity.setLabel(template.label());
         entity.setStartAt(Instant.now());
 

@@ -64,11 +64,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 }
             }
         }
-        if(sessionIdStr != null && tokenStr != null) {
+        if (sessionIdStr != null && tokenStr != null) {
             GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
             try {
                 ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(tokenStr));
-                if(user.player().isPresent()) {
+                if (user.player().isPresent()) {
                     return Optional.of(new Key(sessionId, user.player().get().id()));
                 }
             } catch (ConnectException e) {
@@ -80,7 +80,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     public void broadcastMessage(GameSession.Id sessionId, GamePlayer.Id playerId, String message) {
         WebSocketSession session = playerIdsWithSession.get(new Key(sessionId, playerId));
-        if(session != null && session.isOpen()) {
+        if (session != null && session.isOpen()) {
             try {
                 session.sendMessage(new TextMessage(message));
             } catch (IOException e) {

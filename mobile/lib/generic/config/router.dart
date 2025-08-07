@@ -1,4 +1,5 @@
 
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../contexts/game/views/goal/game_goal_view.dart';
@@ -7,6 +8,8 @@ import '../../contexts/game/views/map/game_map_view.dart';
 import '../../contexts/game/views/menu/game_menu_view.dart';
 
 class AppRouter {
+
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   static const homeName = "home";
   static const homePath = "/";
@@ -25,6 +28,7 @@ class AppRouter {
 
   static GoRouter create() {
     return GoRouter(
+      navigatorKey: navigatorKey,
       redirect: (context, state) {
         return null;
       },

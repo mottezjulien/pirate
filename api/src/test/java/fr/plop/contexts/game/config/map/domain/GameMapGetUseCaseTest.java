@@ -1,18 +1,5 @@
 package fr.plop.contexts.game.config.map.domain;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
 /*
 public class GameMapGetUseCaseTest {
 

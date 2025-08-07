@@ -69,7 +69,7 @@ public class GameMoveAdapter implements GameMoveUseCase.OutPort {
         positionRepository.save(positionEntity);
 
         //UPDATE LAST POSITION
-        playerEntity.setPosition(positionEntity);
+        playerEntity.setLastPosition(positionEntity);
         playerRepository.save(playerEntity);
 
     }
