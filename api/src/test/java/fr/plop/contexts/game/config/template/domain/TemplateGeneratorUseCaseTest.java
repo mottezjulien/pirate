@@ -101,7 +101,7 @@ public class TemplateGeneratorUseCaseTest {
                 --------- C'est une belle chambre.
                 --------- EN:This is my room.
                 --------- It's a beautiful room.
-                ------ Target Un autre espace
+                ------ Target
                 --------- EN:This is another space.
                 --------- It's an other space.
                 --------- It's an other space.
@@ -176,7 +176,6 @@ public class TemplateGeneratorUseCaseTest {
                 ------ Target(Opt):EN:Office:FR:Bureau
                 ------ Possibility:ALWAYS
                 --------- Condition:outsidespace:SpaceId:ABCD
-                
                 --------- consequence:Alert
                 ------------ EN:Alarm !!!
                 ------------ FR: C'est la vie
@@ -450,14 +449,12 @@ public class TemplateGeneratorUseCaseTest {
                 });
     }
 
-
     private Consumer<I18n> withoutId(I18n compareTo) {
         return value -> {
             assertThat(value.description()).isEqualTo(compareTo.description());
             assertThat(value.values()).isEqualTo(compareTo.values());
         };
     }
-
 
     private static I18n i18n(String fr, String en) {
         return new I18n(Map.of(Language.FR, fr, Language.EN, en));
