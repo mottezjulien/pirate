@@ -14,7 +14,7 @@ import fr.plop.contexts.game.session.event.adapter.action.GameEventActionMessage
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
@@ -59,7 +59,7 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.GameOver consequence) {
+    public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.End consequence) {
         gameOverUseCase.apply(sessionId, playerId, consequence.gameOver());
     }
 
@@ -69,7 +69,7 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeClick timeClick) {
+    public void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeUnit timeClick) {
         GamePlayerActionEntity entity = new GamePlayerActionEntity();
         entity.setId(StringTools.generate());
         GamePlayerEntity playerEntity = new GamePlayerEntity();
@@ -79,7 +79,7 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
         possibilityEntity.setId(possibilityId.value());
         entity.setPossibility(possibilityEntity);
         entity.setDate(Instant.now());
-        entity.setTimeClickMinute(timeClick.minutes());
+        entity.setTimeInMinutes(timeClick.toMinutes());
         actionRepository.save(entity);
     }
 

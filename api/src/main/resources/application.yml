@@ -9,3 +9,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+game:
+  session:
+    timer:
+      cron: "0 */1 * * * *"  # Toutes les toMinutes par défaut

@@ -15,6 +15,14 @@ public record Possibility(
         AndOrOr conditionType,
         List<PossibilityConsequence> consequences) {
 
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, List<PossibilityConsequence> consequences) {
+        this(recurrence, trigger, conditions, AndOrOr.AND, consequences);
+    }
+
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
+        this(new Id(), recurrence, trigger, conditions, conditionType, consequences);
+    }
+
     public boolean isFirst() {
         return conditions.isEmpty();
     }
@@ -32,8 +40,5 @@ public record Possibility(
         }
     }
 
-    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
-        this(new Id(), recurrence, trigger, conditions, conditionType, consequences);
-    }
 
 }

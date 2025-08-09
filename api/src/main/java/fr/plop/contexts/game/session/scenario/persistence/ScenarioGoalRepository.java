@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.scenario.persistence;
 
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,9 +17,7 @@ public interface ScenarioGoalRepository extends JpaRepository<ScenarioGoalEntity
 
     @Query("FROM ScenarioGoalEntity goal" +
             " LEFT JOIN FETCH goal.step step" +
-            " LEFT JOIN FETCH step.label" +
-            " LEFT JOIN FETCH step.targets step_target" +
-            " LEFT JOIN FETCH step_target.label" +
+            ScenarioStepRepository.FETCH_ALL +
             " LEFT JOIN FETCH goal.targets goal_target" +
             " LEFT JOIN FETCH goal_target.target goal_target_target" +
             " WHERE goal.player.id = :playerId")

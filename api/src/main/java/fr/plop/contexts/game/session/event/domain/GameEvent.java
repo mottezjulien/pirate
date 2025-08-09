@@ -3,7 +3,7 @@ package fr.plop.contexts.game.session.event.domain;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 
 public interface GameEvent {
 
@@ -11,25 +11,22 @@ public interface GameEvent {
 
     GamePlayer.Id playerId();
 
-    TimeClick timeClick();
+    TimeUnit timeUnit();
 
-    record GoIn(GameSession.Id sessionId, GamePlayer.Id playerId, TimeClick timeClick,
+    record GoIn(GameSession.Id sessionId, GamePlayer.Id playerId, TimeUnit timeUnit,
                 BoardSpace.Id spaceId) implements GameEvent {
 
     }
 
-    record GoOut(GameSession.Id sessionId, GamePlayer.Id playerId, TimeClick timeClick,
+    record GoOut(GameSession.Id sessionId, GamePlayer.Id playerId, TimeUnit timeUnit,
                  BoardSpace.Id spaceId) implements GameEvent {
 
     }
 
-    record EachTimeClick(GameSession.Id sessionId, GamePlayer.Id playerId, TimeClick timeClick) implements GameEvent {
-
-        public boolean is(TimeClick timeClick) {
-            return this.timeClick.equals(timeClick);
+    record TimeClick(GameSession.Id sessionId, GamePlayer.Id playerId, TimeUnit timeUnit) implements GameEvent {
+        public boolean is(TimeUnit timeUnit) {
+            return this.timeUnit.equals(timeUnit);
         }
-
     }
-
 
 }

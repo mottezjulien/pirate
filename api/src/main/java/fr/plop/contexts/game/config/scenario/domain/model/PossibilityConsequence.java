@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
+import fr.plop.contexts.game.session.core.domain.model.GameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
@@ -7,7 +8,7 @@ import fr.plop.generic.tools.StringTools;
 public sealed interface PossibilityConsequence permits
         PossibilityConsequence.Goal,
         PossibilityConsequence.GoalTarget,
-        PossibilityConsequence.GameOver,
+        PossibilityConsequence.End,
         PossibilityConsequence.Alert,
         PossibilityConsequence.UpdatedMetadata,
         PossibilityConsequence.AddObjet,
@@ -28,8 +29,7 @@ public sealed interface PossibilityConsequence permits
 
     }
 
-    record GameOver(Id id,
-                    fr.plop.contexts.game.session.core.domain.model.GameOver gameOver) implements PossibilityConsequence {
+    record End(Id id, GameOver gameOver) implements PossibilityConsequence {
 
     }
 

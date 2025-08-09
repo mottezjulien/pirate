@@ -10,7 +10,7 @@ import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,11 +40,11 @@ public class GameMoveUseCaseTest {
     private final BoardSpace spaceC = spaceC();
     private final BoardSpace spaceD = spaceD();
     private final BoardSpace spaceE = spaceE();
-    private final TimeClick currentClick = new TimeClick(25);
+    private final TimeUnit current = new TimeUnit(25);
 
     @BeforeEach
     void setUp() {
-        when(timer.currentClick(sessionId)).thenReturn(currentClick);
+        when(timer.current(sessionId)).thenReturn(current);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, inSpaceAPosition());
 
-        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), current, spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of(spaceA.id()));
     }
 
@@ -95,7 +95,7 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, outPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), current, spaceA.id()));
         verify(outPort).savePosition(player.id(), List.of());
     }
 
@@ -108,10 +108,10 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, inCDEPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceA.id()));
-        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), currentClick, spaceB.id()));
-        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceD.id()));
-        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), currentClick, spaceE.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), current, spaceA.id()));
+        verify(browCast).fire(new GameEvent.GoOut(sessionId, player.id(), current, spaceB.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), current, spaceD.id()));
+        verify(browCast).fire(new GameEvent.GoIn(sessionId, player.id(), current, spaceE.id()));
 
         verify(outPort).savePosition(player.id(), List.of(spaceC.id(), spaceD.id(), spaceE.id()));
     }

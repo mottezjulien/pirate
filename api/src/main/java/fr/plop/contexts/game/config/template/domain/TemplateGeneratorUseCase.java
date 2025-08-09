@@ -11,7 +11,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.enumerate.AndOrOr;
@@ -421,8 +421,8 @@ public class TemplateGeneratorUseCase {
         // Extraire l'info après "condition:" (case insensitive)
         String conditionInfo;
         if (conditionLine.toLowerCase().contains("condition:")) {
-            int index = conditionLine.toLowerCase().indexOf("condition:");
-            conditionInfo = conditionLine.substring(index + "condition:".length());
+            int minute = conditionLine.toLowerCase().indexOf("condition:");
+            conditionInfo = conditionLine.substring(minute + "condition:".length());
         } else {
             return null;
         }
@@ -543,7 +543,7 @@ public class TemplateGeneratorUseCase {
                 return new PossibilityConsequence.AddObjet(new PossibilityConsequence.Id(), objetId);
             }
             case "updatedmetadata" -> {
-                // Format: "UpdatedMetadata:metadataId:value:25.5"
+                // Format: "UpdatedMetadata:metadataId:toMinutes:25.5"
                 String metadataId = split[2];
                 float value = Float.parseFloat(split[4]);
                 return new PossibilityConsequence.UpdatedMetadata(new PossibilityConsequence.Id(), metadataId, value);
@@ -621,7 +621,7 @@ public class TemplateGeneratorUseCase {
             case "absolutetime" -> {
                 return new PossibilityTrigger.AbsoluteTime(
                         new PossibilityTrigger.Id(),
-                        TimeClick.ofMinutes(Integer.parseInt(split[2]))
+                        TimeUnit.ofMinutes(Integer.parseInt(split[2]))
                 );
             }
         }

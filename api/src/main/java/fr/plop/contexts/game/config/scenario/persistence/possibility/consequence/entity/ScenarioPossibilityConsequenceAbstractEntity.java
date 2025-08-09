@@ -70,7 +70,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 yield entity;
             }
 
-            case PossibilityConsequence.GameOver ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
+            case PossibilityConsequence.End ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
             case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
                 ScenarioPossibilityConsequenceUpdatedMetadataEntity entity = new ScenarioPossibilityConsequenceUpdatedMetadataEntity();
                 entity.setId(updatedMetadata.id().value());

@@ -3,7 +3,7 @@ package fr.plop.contexts.game.config.scenario.domain.model;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.Comparator;
@@ -43,23 +43,23 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record AbsoluteTime(Id id, TimeClick timeClick) implements PossibilityTrigger {
+    record AbsoluteTime(Id id, TimeUnit value) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
-            if (event instanceof GameEvent.EachTimeClick timeClick) {
-                return timeClick.is(this.timeClick);
+            if (event instanceof GameEvent.TimeClick timeClickEvent) {
+                return timeClickEvent.is(this.value);
             }
             return false;
         }
     }
 
     record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId,
-                                             TimeClick timeClick) implements PossibilityTrigger {
+                                             TimeUnit value) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
-            if (event instanceof GameEvent.EachTimeClick eachTimeClick) {
+            if (event instanceof GameEvent.TimeClick timeClickEvent) {
                 Optional<GameAction> optFirst = optFirst(actions, otherPossibilityId);
-                return optFirst.map(first -> first.timeClick().add(timeClick).equals(eachTimeClick.timeClick()))
+                return optFirst.map(first -> first.timeClick().add(value).equals(timeClickEvent.timeUnit()))
                         .orElse(false);
             }
             return false;

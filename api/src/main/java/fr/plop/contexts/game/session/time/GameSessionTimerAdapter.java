@@ -1,63 +1,55 @@
 package fr.plop.contexts.game.session.time;
 
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
+import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
+import fr.plop.contexts.game.session.event.domain.GameEvent;
+import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
 @Component
 public class GameSessionTimerAdapter implements GameSessionTimer {
 
-    private Map<GameSession.Id, TimerBySession> bySession = new HashMap<>();
+    private final Map<GameSession.Id, TimeUnit> bySession = new HashMap<>();
+
+    private final GameEventBroadCast eventBroadCast;
+    private final GamePlayerRepository gamePlayerRepository;
+
+    public GameSessionTimerAdapter(GameEventBroadCast eventBroadCast, GamePlayerRepository gamePlayerRepository) {
+        this.eventBroadCast = eventBroadCast;
+        this.gamePlayerRepository = gamePlayerRepository;
+    }
+
+    @Scheduled(cron = "${game.session.timer.cron:0 */1 * * * *}")
+    public void run() {
+        incAll();
+        fireAll();
+    }
 
     @Override
     public void start(GameSession.Id id) {
-        TimerBySession timer = bySession.get(id);
-        if (timer != null) {
-            timer.restart();
-        } else {
-            timer = new TimerBySession();
-            timer.start();
-            bySession.put(id, timer);
-        }
+        bySession.put(id, new TimeUnit());
     }
 
     @Override
-    public TimeClick currentClick(GameSession.Id id) {
-        TimerBySession timer = bySession.get(id);
-        if (timer != null) {
-            return timer.currentClick();
-        }
-        throw new RuntimeException("Timer not implemented by session " + id);
+    public TimeUnit current(GameSession.Id sessionId) {
+        return bySession.get(sessionId);
     }
 
-    static class TimerBySession {
+    private void incAll() {
+        bySession.keySet()
+                .forEach(sessionId -> bySession.put(sessionId, bySession.get(sessionId).inc()));
+    }
 
-        private final TaskScheduler taskScheduler = new ConcurrentTaskScheduler(Executors.newSingleThreadScheduledExecutor());
-
-        private TimeClick currentClick = new TimeClick(0);
-
-        public void start() {
-            currentClick = new TimeClick(0);
-            taskScheduler.scheduleAtFixedRate(() -> currentClick = currentClick.inc(), TimeClick.ONE_CLICK);
-        }
-
-        public void restart() {
-            currentClick = new TimeClick(0);
-        }
-
-        public void stop() {
-            //TODO : taskScheduler.
-        }
-
-        public TimeClick currentClick() {
-            return currentClick;
-        }
-
+    private void fireAll() {
+        bySession.keySet()
+                .forEach(sessionId -> gamePlayerRepository.activeIdsBySessionId(sessionId.value()).stream()
+                        .map(GamePlayer.Id::new)
+                        .forEach(playerId -> eventBroadCast.fire(new GameEvent.TimeClick(sessionId, playerId, bySession.get(sessionId)))));
     }
 
 }

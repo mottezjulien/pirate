@@ -28,6 +28,8 @@ public class GameFirstStartIntegrationTest {
     @LocalServerPort
     int randomServerPort;
 
+    //TODO Create Template à la volée
+
     @Test
     public void createSession() throws URISyntaxException {
 

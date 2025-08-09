@@ -5,7 +5,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -19,11 +19,11 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
         void doGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget goalTarget);
 
-        void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.GameOver consequence);
+        void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.End consequence);
 
         void doAlert(GameSession.Id sessionId, GamePlayer.Id id, PossibilityConsequence.Alert alert);
 
-        void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeClick timeClick);
+        void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeUnit timeClick);
 
         List<GameAction> findActions(GamePlayer.Id id);
     }
@@ -51,10 +51,8 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
     private void doAction(GameEvent event, Possibility possibility) {
         possibility.consequences()
-                .forEach(consequence -> {
-                    _do(event.sessionId(), event.playerId(), consequence);
-                });
-        outPort.saveAction(event.playerId(), possibility.id(), event.timeClick());
+                .forEach(consequence -> _do(event.sessionId(), event.playerId(), consequence));
+        outPort.saveAction(event.playerId(), possibility.id(), event.timeUnit());
     }
 
     private void _do(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence consequence) {
@@ -65,7 +63,7 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
             case PossibilityConsequence.Alert alert -> outPort.doAlert(sessionId, playerId, alert);
 
-            case PossibilityConsequence.GameOver gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
+            case PossibilityConsequence.End gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
 
             //TODO
             case PossibilityConsequence.AddObjet addObjet -> {

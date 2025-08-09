@@ -42,13 +42,13 @@ public abstract class ScenarioPossibilityTriggerAbstractEntity {
             case PossibilityTrigger.AbsoluteTime absoluteTime -> {
                 ScenarioPossibilityTriggerAbsoluteTimeEntity entity = new ScenarioPossibilityTriggerAbsoluteTimeEntity();
                 entity.setId(absoluteTime.id().value());
-                entity.setMinutes(absoluteTime.timeClick().minutes());
+                entity.setMinutes(absoluteTime.value().toMinutes());
                 yield entity;
             }
             case PossibilityTrigger.RelativeTimeAfterOtherPossibility relativeTimeAfterOther -> {
                 ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity entity = new ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity();
                 entity.setId(relativeTimeAfterOther.id().value());
-                entity.setMinutes((int) relativeTimeAfterOther.timeClick().minutes());
+                entity.setMinutes(relativeTimeAfterOther.value().toMinutes());
                 entity.setOtherPossibilityId(relativeTimeAfterOther.otherPossibilityId().value());
                 yield entity;
             }

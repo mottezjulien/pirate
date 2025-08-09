@@ -10,12 +10,11 @@ import fr.plop.contexts.game.session.time.GameSessionTimer;
 
 import java.util.Optional;
 
-public class GameSessionPostUseCase {
+public class GameSessionCreateUseCase {
 
     public interface DataOutput {
 
         Optional<GameSession.Atom> findActiveGameSession(ConnectUser.Id userId);
-        //Optional<GameSession> findExistedSession(Template template, ConnectUser.Id userId);
 
         Optional<Template> findTemplateByCode(Template.Code code);
 
@@ -32,7 +31,7 @@ public class GameSessionPostUseCase {
 
     private final GameSessionTimer gameSessionTimer;
 
-    public GameSessionPostUseCase(DataOutput dataOutput, GameSessionTimer gameSessionTimer) {
+    public GameSessionCreateUseCase(DataOutput dataOutput, GameSessionTimer gameSessionTimer) {
         this.dataOutput = dataOutput;
         this.gameSessionTimer = gameSessionTimer;
     }

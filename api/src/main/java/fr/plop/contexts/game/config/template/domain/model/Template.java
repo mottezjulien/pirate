@@ -6,10 +6,19 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.generic.tools.StringTools;
 
 import java.time.Duration;
+import java.util.List;
 
 public record Template(Atom atom, String label, String version, Duration maxDuration, ScenarioConfig scenario,
                        BoardConfig board,
                        MapConfig map) {
+
+    public Template(Code code, ScenarioConfig scenario) {
+        this(code, scenario, new BoardConfig(List.of()), new MapConfig(List.of()));
+    }
+
+    public Template(Code code, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
+        this(new Atom(new Id(), code), "", "", Duration.ofMinutes(30), scenario, board, map);
+    }
 
     public record Id(String value) {
         public Id() {

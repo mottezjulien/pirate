@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.persistence;
 
+import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -15,10 +16,7 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
             " LEFT JOIN FETCH target.label label" +
             " LEFT JOIN FETCH target.description description" +
             " LEFT JOIN FETCH step.possibilities possibility" +
-            " LEFT JOIN FETCH possibility.recurrence recurrence" +
-            " LEFT JOIN FETCH possibility.trigger trigger" +
-            " LEFT JOIN FETCH possibility.conditions condition" +
-            " LEFT JOIN FETCH possibility.consequences consequence" +
+            ScenarioPossibilityRepository.FETCH_ALL +
 
             " LEFT JOIN FETCH template.board board" +
             " LEFT JOIN FETCH board.spaces space" +

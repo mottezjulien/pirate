@@ -12,7 +12,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionPostUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
@@ -31,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,7 +41,7 @@ import java.util.stream.Stream;
 public class GameSessionController {
 
     private final ConnectUseCase connectUseCase;
-    private final GameSessionPostUseCase postUseCase;
+    private final GameSessionCreateUseCase createUseCase;
 
     private final MapConfigRepository mapConfigRepository;
     private final GameSessionRepository gameSessionRepository;
@@ -48,9 +49,9 @@ public class GameSessionController {
     private final PushPort pushPort;
 
 
-    public GameSessionController(ConnectUseCase connectUseCase, GameSessionPostUseCase postUseCase, MapConfigRepository mapConfigRepository, GameSessionRepository gameSessionRepository, PushPort pushPort) {
+    public GameSessionController(ConnectUseCase connectUseCase, GameSessionCreateUseCase createUseCase, MapConfigRepository mapConfigRepository, GameSessionRepository gameSessionRepository, PushPort pushPort) {
         this.connectUseCase = connectUseCase;
-        this.postUseCase = postUseCase;
+        this.createUseCase = createUseCase;
         this.mapConfigRepository = mapConfigRepository;
         this.gameSessionRepository = gameSessionRepository;
         this.pushPort = pushPort;
@@ -64,17 +65,15 @@ public class GameSessionController {
         try {
             ConnectUser user = connectUseCase.findUserIdByRawToken(new ConnectToken(rawToken));
             Template.Code templateCode = new Template.Code(request.templateCode());
-            GameSession.Atom session = postUseCase.apply(templateCode, user.id());
+            GameSession.Atom session = createUseCase.apply(templateCode, user.id());
             return new GameSessionCreateResponse(session.id().value(), session.label());
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
-            switch (e.type()) {
-                case TEMPLATE_NOT_FOUND:
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The template is not found", e);
-                default:
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+            if (Objects.requireNonNull(e.type()) == GameException.Type.TEMPLATE_NOT_FOUND) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The template is not found", e);
             }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
 

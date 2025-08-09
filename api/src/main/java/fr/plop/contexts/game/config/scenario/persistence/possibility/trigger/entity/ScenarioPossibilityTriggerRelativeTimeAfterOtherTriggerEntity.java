@@ -2,7 +2,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.en
 
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -36,6 +36,6 @@ public final class ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity
     public PossibilityTrigger toModel() {
         return new PossibilityTrigger.RelativeTimeAfterOtherPossibility(new PossibilityTrigger.Id(id),
                 new Possibility.Id(otherPossibilityId),
-                TimeClick.ofMinutes(minutes));
+                TimeUnit.ofMinutes(minutes));
     }
 }

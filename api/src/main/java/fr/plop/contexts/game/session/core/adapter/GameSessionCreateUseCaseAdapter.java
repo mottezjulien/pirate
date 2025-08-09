@@ -11,7 +11,7 @@ import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionPostUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
@@ -27,13 +27,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class GameCreateSessionAdapter implements GameSessionPostUseCase.DataOutput {
+public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase.DataOutput {
     private final TemplateRepository templateRepository;
     private final GameSessionRepository sessionRepository;
     private final GamePlayerRepository playerRepository;
     private final ScenarioGoalRepository scenarioGoalRepository;
 
-    public GameCreateSessionAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository, ScenarioGoalRepository scenarioGoalRepository) {
+    public GameSessionCreateUseCaseAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository, ScenarioGoalRepository scenarioGoalRepository) {
         this.templateRepository = templateRepository;
         this.sessionRepository = sessionRepository;
         this.playerRepository = playerRepository;

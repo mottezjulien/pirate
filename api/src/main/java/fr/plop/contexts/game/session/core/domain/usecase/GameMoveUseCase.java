@@ -10,7 +10,7 @@ import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
@@ -55,7 +55,8 @@ public class GameMoveUseCase {
         if (!spaceInIds.equals(nextIds)) {
             outPort.savePosition(player.id(), nextIds);
 
-            TimeClick timeClick = timer.currentClick(sessionId);
+            // TODO : BOF, c'est pas au use case de setter la date ??
+            TimeUnit timeClick = timer.current(sessionId);
 
             List<BoardSpace.Id> removed = ListTools.removed(spaceInIds, nextIds);
             removed.forEach(space -> broadCast.fire(new GameEvent.GoOut(sessionId, player.id(), timeClick, space)));

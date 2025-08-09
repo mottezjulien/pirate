@@ -9,7 +9,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.enumerate.AndOrOr;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,7 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
     }
 
     private GameEvent.GoIn goInEvent() {
-        return new GameEvent.GoIn(sessionId, playerId, TimeClick.ofMinutes(0), spaceId);
+        return new GameEvent.GoIn(sessionId, playerId, TimeUnit.ofMinutes(0), spaceId);
     }
 
     private PossibilityTrigger.GoInSpace triggerGoIn(BoardSpace.Id spaceId) {

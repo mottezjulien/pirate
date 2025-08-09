@@ -37,7 +37,7 @@ public final class ScenarioPossibilityConsequenceGameOverEntity extends
 
     public PossibilityConsequence toModel() {
         GameOver gameOver = new GameOver(gameOverType, new I18n.Id(labelId));
-        return new PossibilityConsequence.GameOver(new PossibilityConsequence.Id(id), gameOver);
+        return new PossibilityConsequence.End(new PossibilityConsequence.Id(id), gameOver);
     }
 
 }

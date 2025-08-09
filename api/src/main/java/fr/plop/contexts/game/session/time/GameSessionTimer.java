@@ -6,6 +6,5 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 public interface GameSessionTimer {
     void start(GameSession.Id id);
 
-    TimeClick currentClick(GameSession.Id id);
-
+    TimeUnit current(GameSession.Id sessionId);
 }

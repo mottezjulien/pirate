@@ -5,7 +5,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -63,7 +63,7 @@ public class GamePlayerActionEntity {
         return timeClickMinute;
     }
 
-    public void setTimeClickMinute(int timeClickMinute) {
+    public void setTimeInMinutes(int timeClickMinute) {
         this.timeClickMinute = timeClickMinute;
     }
 
@@ -78,6 +78,6 @@ public class GamePlayerActionEntity {
     public GameAction toModel() {
         GamePlayer.Id playerId = new GamePlayer.Id(player.getId());
         Possibility.Id possibilityId = new Possibility.Id(possibility.getId());
-        return new GameAction(playerId, possibilityId, TimeClick.ofMinutes(timeClickMinute));
+        return new GameAction(playerId, possibilityId, TimeUnit.ofMinutes(timeClickMinute));
     }
 }

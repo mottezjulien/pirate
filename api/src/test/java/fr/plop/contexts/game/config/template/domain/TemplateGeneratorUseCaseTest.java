@@ -8,7 +8,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeClick;
+import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.contexts.i18n.domain.Language;
 import fr.plop.generic.enumerate.AndOrOr;
@@ -262,7 +262,7 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.OR);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.timeClick()).isEqualTo(TimeClick.ofMinutes(42));
+                                assertThat(trigger.value()).isEqualTo(TimeUnit.ofMinutes(42));
                                 assertThat(possibility.conditions())
                                         .hasSize(2)
                                         .anySatisfy(condition -> {
@@ -355,7 +355,7 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.timeClick()).isEqualTo(TimeClick.ofMinutes(51));
+                                assertThat(trigger.value()).isEqualTo(TimeUnit.ofMinutes(51));
                                 assertThat(possibility.conditions()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });

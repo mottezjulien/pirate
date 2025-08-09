@@ -26,6 +26,10 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
             }
         }
 
+        public Step(List<Target> targets, List<Possibility> possibilities) {
+            this(new Id(), Optional.empty(), targets, possibilities);
+        }
+
         public boolean isFirst() {
             return possibilities.stream().allMatch(Possibility::isFirst);
         }
