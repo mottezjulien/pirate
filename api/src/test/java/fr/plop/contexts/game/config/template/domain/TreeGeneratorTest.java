@@ -57,8 +57,10 @@ public class TreeGeneratorTest {
     public void oneRootsWithChildOfChild() {
         String str = """
                 abc:def:   ghi
+                
                 ---test1 
                 ------  test3 : test4
+                
                 """;
         TreeGenerator treeGenerator = new TreeGenerator();
         List<Tree> roots = treeGenerator.generate(str);
@@ -73,6 +75,7 @@ public class TreeGeneratorTest {
                 Bonjour : Pouet:   Pouet2
                --- Hello
                ------ Test:Other
+               
                 ------Test2:Other2
                --- Alors:ça:va 
                --- Alors2:oui ça va !!

@@ -19,16 +19,18 @@ public class TreeGenerator {
         List<Tree> roots = new ArrayList<>();
         List<String> children = new ArrayList<>();
         Optional<String> currentRoot = Optional.empty();
-        for(int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
-            if(line.startsWith(SEPARATOR_CHILDREN)) {
-                children.add(line.substring(SEPARATOR_CHILDREN.length()));
-            } else {
-                if(currentRoot.isPresent()) {
-                    roots.add(generateOneLine(currentRoot.orElseThrow(), children));
-                    children.clear();
+        for (String s : lines) {
+            String line = s.trim();
+            if (!line.isBlank()) {
+                if (line.startsWith(SEPARATOR_CHILDREN)) {
+                    children.add(line.substring(SEPARATOR_CHILDREN.length()));
+                } else {
+                    if (currentRoot.isPresent()) {
+                        roots.add(generateOneLine(currentRoot.orElseThrow(), children));
+                        children.clear();
+                    }
+                    currentRoot = Optional.of(line);
                 }
-                currentRoot = Optional.of(line);
             }
         }
         if(currentRoot.isPresent()) {

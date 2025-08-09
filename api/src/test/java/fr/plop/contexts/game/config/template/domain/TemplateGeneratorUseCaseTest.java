@@ -298,12 +298,15 @@ public class TemplateGeneratorUseCaseTest {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 Two Step:4:Hello:50
                 --- Step
+                
                 ------ Target
                 ------ Possibility
                 --------- Trigger:goinSPACE:EFG
                 --- Step
                 ------ Possibility
+                
                 --------- RECURRENCE:tiMes:5
+                
                 --------- Trigger:AbsoluteTime:51
                 
                 """);
