@@ -1,7 +1,10 @@
 package fr.plop.integration;
 
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,7 +31,16 @@ public class GameFirstStartIntegrationTest {
     @LocalServerPort
     int randomServerPort;
 
-    //TODO Create Template à la volée
+    @Autowired
+    private TemplateInitUseCase.OutPort templateInitUseCase;
+
+    @BeforeEach
+    void setUp() {
+        templateInitUseCase.deleteAll();
+        Template.Code code = new Template.Code("TEST_FIRST");
+        Template template = new Template(code, "Mon premier jeu");
+        templateInitUseCase.create(template);
+    }
 
     @Test
     public void createSession() throws URISyntaxException {
@@ -38,12 +50,11 @@ public class GameFirstStartIntegrationTest {
         GameSessionController.GameSessionCreateResponse session = createGameSession(connection.token());
 
         assertThat(session.id()).isNotNull();
-        assertThat(session.label()).isEqualTo("Test 1");
+        assertThat(session.label()).isEqualTo("Mon premier jeu");
 
         //TODO -> Get Session ? Get User one ??
 
     }
-
 
     private ConnectionController.ResponseDTO createAuth() throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/connect/";

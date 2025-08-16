@@ -18,6 +18,10 @@ public record MapConfig(Id id, List<Item> items) {
 
     }
 
+    public MapConfig() {
+        this(List.of());
+    }
+
     public MapConfig(List<Item> items) {
         this(new Id(), items);
     }

@@ -12,13 +12,29 @@ public record Template(Atom atom, String label, String version, Duration maxDura
                        BoardConfig board,
                        MapConfig map) {
 
+    private static final Duration DEFAULT_DURATION = Duration.ofMinutes(30);
+
     public Template(Code code, ScenarioConfig scenario) {
         this(code, scenario, new BoardConfig(List.of()), new MapConfig(List.of()));
     }
 
-    public Template(Code code, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
-        this(new Atom(new Id(), code), "", "", Duration.ofMinutes(30), scenario, board, map);
+    public Template(Code code) {
+        this(code, "");
     }
+
+    public Template(Code code, String label) {
+        this(code, label, new ScenarioConfig(), new BoardConfig(), new MapConfig());
+    }
+
+    public Template(Code code, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
+        this(code, "", scenario, board, map);
+    }
+
+    public Template(Code code, String label, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
+        this(new Atom(new Id(), code), label, "", DEFAULT_DURATION, scenario, board, map);
+    }
+
+
 
     public record Id(String value) {
         public Id() {

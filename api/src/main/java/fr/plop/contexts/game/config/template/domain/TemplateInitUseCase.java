@@ -43,16 +43,7 @@ public class TemplateInitUseCase {
             outPort.create(firstTemplate());
         }*/
         outPort.deleteAll();
-        outPort.create(testFirstTemplate());
         outPort.create(chezWam1Template());
-    }
-
-    private Template testFirstTemplate() {
-        ScenarioConfig scenario = new ScenarioConfig();
-        BoardConfig board = new BoardConfig(List.of());
-        MapConfig mapConfig = new MapConfig(List.of());
-        return new Template(new Template.Atom(new Template.Id(), new Template.Code("TEST_FIRST")), "Test 1", "0.0.1",
-                Duration.ofMinutes(3), scenario, board, mapConfig);
     }
 
     private Template chezWam1Template() {
