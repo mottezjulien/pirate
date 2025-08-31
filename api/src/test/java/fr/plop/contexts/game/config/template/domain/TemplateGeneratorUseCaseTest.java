@@ -1,8 +1,10 @@
 package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.map.domain.MapItem;
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -16,6 +18,7 @@ import fr.plop.generic.position.Point;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -240,17 +243,17 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(PossibilityConsequence.Alert.class);
-                                            assertThat(((PossibilityConsequence.Alert) consequence).message()).satisfies(withoutId(i18n("""
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
+                                            assertThat(((Consequence.DisplayTalkAlert) consequence).value()).satisfies(withoutId(i18n("""
                                                     C'est la vie
                                                     Cuicui""", "Alarm !!!")));
                                         })
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(PossibilityConsequence.GoalTarget.class);
-                                            PossibilityConsequence.GoalTarget goalTarget = (PossibilityConsequence.GoalTarget) consequence;
+                                            assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
+                                            Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
                                             assertThat(goalTarget.stepId()).isEqualTo(new ScenarioConfig.Step.Id("EFG"));
                                             assertThat(goalTarget.targetId()).isEqualTo(new ScenarioConfig.Target.Id("9876"));
-                                            assertThat(goalTarget.state()).isEqualTo(ScenarioGoal.State.FAILURE);
+                                            assertThat(goalTarget.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE);
                                         });
 
                             })
@@ -275,17 +278,17 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(PossibilityConsequence.Goal.class);
-                                            PossibilityConsequence.Goal goal = (PossibilityConsequence.Goal) consequence;
+                                            assertThat(consequence).isInstanceOf(Consequence.ScenarioStep.class);
+                                            Consequence.ScenarioStep goal = (Consequence.ScenarioStep) consequence;
                                             assertThat(goal.stepId()).isEqualTo(new ScenarioConfig.Step.Id("KLM"));
-                                            assertThat(goal.state()).isEqualTo(ScenarioGoal.State.SUCCESS);
+                                            assertThat(goal.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS);
                                         })
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(PossibilityConsequence.GoalTarget.class);
-                                            PossibilityConsequence.GoalTarget goalTarget = (PossibilityConsequence.GoalTarget) consequence;
-                                            assertThat(goalTarget.stepId()).isEqualTo(new ScenarioConfig.Step.Id("9876"));
-                                            assertThat(goalTarget.targetId()).isEqualTo(new ScenarioConfig.Target.Id("active"));
-                                            assertThat(goalTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
+                                            assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
+                                            Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
+                                            assertThat(goalTarget.stepId()).isEqualTo(new ScenarioConfig.Step.Id("EFG123"));
+                                            assertThat(goalTarget.targetId()).isEqualTo(new ScenarioConfig.Target.Id("9876"));
+                                            assertThat(goalTarget.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE);
                                         });
 
                             });
@@ -406,7 +409,7 @@ public class TemplateGeneratorUseCaseTest {
     @Test
     public void secondBoard() {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
-                firstBoard:5.2:Mon deuxième plateau
+                secondBoard:5.2:Mon deuxième plateau
                 --- Board
                 ------ Space:Mon deuxième espace:MEDIUM
                 --------- bottomLeft:5.798:10.894:topRight:45.98:50.4338
@@ -417,7 +420,7 @@ public class TemplateGeneratorUseCaseTest {
         Template template = generator.apply(script);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("firstBoard"));
+        assertThat(template.code()).isEqualTo(new Template.Code("secondBoard"));
         assertThat(template.version()).isEqualTo("5.2");
         assertThat(template.label()).isEqualTo("Mon deuxième plateau");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
@@ -452,6 +455,284 @@ public class TemplateGeneratorUseCaseTest {
                 });
     }
 
+
+    @Test
+    public void firstMap() {
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                firstMap:2.0.0:Ma première carte
+                
+                --- Map:Asset:imgs/first/map.png
+                ------ Priority:HIGH
+                
+                ------ position:89.09:10.064
+                --------- Priority:HIGHest
+                
+                ------ POSITION:78.865:23.9887
+                --------- Priority:LOW
+                --------- Space:Id1
+                --------- Space:Id3
+                """);
+        Template template = generator.apply(script);
+        assertThat(template).isNotNull();
+        assertThat(template.id()).isNotNull();
+        assertThat(template.code()).isEqualTo(new Template.Code("firstMap"));
+        assertThat(template.version()).isEqualTo("2.0.0");
+        assertThat(template.label()).isEqualTo("Ma première carte");
+        assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
+        assertThat(template.map().id()).isNotNull();
+        assertThat(template.map().items())
+                .hasSize(1)
+                .anySatisfy(item -> {
+                    assertThat(item.id()).isNotNull();
+                    assertThat(item.isImageAssert()).isEqualTo(true);
+                    assertThat(item.imagePath()).isEqualTo("imgs/first/map.png");
+                    assertThat(item.priority()).isEqualTo(MapItem.Priority.HIGH);
+                    assertThat(item.positions())
+                            .hasSize(2)
+                            .anySatisfy(position -> {
+                                assertThat(position.id()).isNotNull();
+                                assertThat(position.priority()).isEqualTo(MapItem.Priority.HIGHEST);
+
+                                assertThat(position).isInstanceOf(MapItem.Position.Point.class);
+                                MapItem.Position.Point point = (MapItem.Position.Point) position;
+                                assertThat(point.x()).isEqualTo(89.09F);
+                                assertThat(point.y()).isEqualTo(10.064F);
+                            })
+                            .anySatisfy(position -> {
+                                assertThat(position.id()).isNotNull();
+                                assertThat(position.priority()).isEqualTo(MapItem.Priority.LOW);
+
+                                assertThat(position).isInstanceOf(MapItem.Position.Point.class);
+                                MapItem.Position.Point point = (MapItem.Position.Point) position;
+                                assertThat(point.x()).isEqualTo(78.865F);
+                                assertThat(point.y()).isEqualTo(23.9887F);
+                            });
+                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id1"))).isTrue();
+                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id2"))).isFalse();
+                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id3"))).isTrue();
+                });
+    }
+
+    @Test
+    public void prepareFirstMap_ManageLinkBoardScenario() {
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                linkBoardScenario:0.0.0:Link Board Scenario
+                --- Board
+                ------ Space:La lune:HIGH
+                --------- 1:2:3:4
+                ------ Space:Mars:HIGH
+                --------- 5:6:7:8
+                --- Step
+                ------ Possibility
+                --------- Trigger:GoInSpace:SpaceId:La lune
+                ------ Possibility
+                --------- Trigger:GoOutSpace:SpaceId:Mars
+                """);
+        Template template = generator.apply(script);
+        assertThat(template.id()).isNotNull();
+        assertThat(template.code()).isEqualTo(new Template.Code("linkBoardScenario"));
+        assertThat(template.version()).isEqualTo("0.0.0");
+        assertThat(template.label()).isEqualTo("Link Board Scenario");
+
+        List<BoardSpace> spaces = template.board().spaces();
+        assertThat(spaces.getFirst().id()).isNotNull();
+        assertThat(spaces.getFirst().label()).isEqualTo("La lune");
+        assertThat(spaces.get(1).id()).isNotNull();
+        assertThat(spaces.get(1).label()).isEqualTo("Mars");
+
+        List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
+        assertThat(possibilities.getFirst().trigger())
+                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
+        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilities.getFirst().trigger();
+        assertThat(goInSpace.spaceId()).isEqualTo(spaces.getFirst().id());
+        assertThat(possibilities.get(1).trigger())
+                .isInstanceOf(PossibilityTrigger.GoOutSpace.class);
+        PossibilityTrigger.GoOutSpace goOutSpace = (PossibilityTrigger.GoOutSpace) possibilities.get(1).trigger();
+        assertThat(goOutSpace.spaceId()).isEqualTo(spaces.get(1).id());
+
+    }
+
+
+    @Test
+    public void prepareFirstMap_TalkOptions() {
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                linkBoardScenario:0.0.0:Link Board Scenario
+                --- Board
+                ------ Space:La lune:HIGH
+                --------- 1:2:3:4
+                --- Step
+                ------ Possibility
+                --------- Trigger:GoInSpace:SpaceId:La lune
+                --------- consequence:TalkOptions
+                ------------ Option
+                --------------- FR: Le choix A
+                --------------- EN: Le choix A en anglais ?
+                ------------ Label
+                --------------- FR: C'est quoi ton choix ?
+                --------------- EN: C'est quoi ton choix en anglais ?
+                ------------ Option
+                --------------- EN: Le choix B en anglais
+                --------------- FR: Le choix B
+                """);
+        Template template = generator.apply(script);
+        assertThat(template.id()).isNotNull();
+        assertThat(template.code()).isEqualTo(new Template.Code("linkBoardScenario"));
+        assertThat(template.version()).isEqualTo("0.0.0");
+        assertThat(template.label()).isEqualTo("Link Board Scenario");
+
+        List<BoardSpace> spaces = template.board().spaces();
+        assertThat(spaces.getFirst().id()).isNotNull();
+        assertThat(spaces.getFirst().label()).isEqualTo("La lune");
+
+        List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
+        assertThat(possibilities.getFirst().trigger())
+                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
+        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilities.getFirst().trigger();
+        assertThat(goInSpace.spaceId()).isEqualTo(spaces.getFirst().id());
+
+        assertThat(possibilities.getFirst().consequences().getFirst()).isInstanceOf(Consequence.DisplayTalkOptions.class);
+        Consequence.DisplayTalkOptions displayTalkOptions = (Consequence.DisplayTalkOptions) possibilities.getFirst().consequences().getFirst();
+        assertThat(displayTalkOptions.value().id()).isNotNull();
+        assertThat(displayTalkOptions.value().label().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+        assertThat(displayTalkOptions.value().label().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+        assertThat(displayTalkOptions.value().options()).hasSize(2)
+                .anySatisfy(option -> {
+                    assertThat(option.id()).isNotNull();
+                    assertThat(option.value().value(Language.FR)).isEqualTo("Le choix A");
+                    assertThat(option.value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
+                })
+                .anySatisfy(option -> {
+                    assertThat(option.id()).isNotNull();
+                    assertThat(option.value().value(Language.FR)).isEqualTo("Le choix B");
+                    assertThat(option.value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+                });
+    }
+
+
+    @Test
+    public void prepareFirstMap_add_refs() {
+
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                addRef:0.0.0:Ajout de la notion de Reférénce
+                --- Step(ref STEP_A)
+                ------ Target (ref TARGET_ATTERRIR):FR:Atterrir sur la lune:EN:Atterrir sur la lune en anglais
+                ------ Possibility
+                --------- Trigger:GoInSpace:SpaceId:abcd
+                --------- consequence:TalkOptions
+                ------------ Option(ref CHOIX_A)
+                --------------- FR: Le choix A
+                --------------- EN: Le choix A en anglais ?
+                ------------ Option
+                --------------- EN: Le choix B en anglais
+                --------------- FR: Le choix B
+                ------------ Label
+                --------------- FR: C'est quoi ton choix ?
+                --------------- EN: C'est quoi ton choix en anglais ?
+                ------ Possibility
+                --------- Trigger:SelectTalkOption:CHOIX_A
+                --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
+                --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
+                --- Step(ref REF_STEP_B)
+                ------ Target:FR:Réparer la station:EN:Réparer la station en anglais
+                
+                """);
+        Template template = generator.apply(script);
+
+        List<ScenarioConfig.Step> steps = template.scenario().steps();
+        assertThat(steps.size()).isEqualTo(2);
+
+        ScenarioConfig.Step step = steps.getFirst();
+
+        assertThat(step.targets().getFirst().id()).isNotNull();
+        assertThat(step.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Atterrir sur la lune");
+        assertThat(step.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Atterrir sur la lune en anglais");
+
+        Possibility possibilityFirst = step.possibilities().getFirst();
+
+        assertThat(possibilityFirst.trigger())
+                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
+        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilityFirst.trigger();
+        assertThat(goInSpace.id()).isNotNull();
+        assertThat(goInSpace.spaceId()).isEqualTo(new BoardSpace.Id("abcd"));
+
+        assertThat(possibilityFirst.consequences().getFirst()).isInstanceOf(Consequence.DisplayTalkOptions.class);
+        Consequence.DisplayTalkOptions displayTalkOptions = (Consequence.DisplayTalkOptions) possibilityFirst.consequences().getFirst();
+        assertThat(displayTalkOptions.value().id()).isNotNull();
+        assertThat(displayTalkOptions.value().label().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+        assertThat(displayTalkOptions.value().label().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+        assertThat(displayTalkOptions.value().options()).hasSize(2);
+        assertThat(displayTalkOptions.value().options().getFirst().id()).isNotNull();
+        assertThat(displayTalkOptions.value().options().getFirst().value().value(Language.FR)).isEqualTo("Le choix A");
+        assertThat(displayTalkOptions.value().options().getFirst().value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
+        assertThat(displayTalkOptions.value().options().get(1).id()).isNotNull();
+        assertThat(displayTalkOptions.value().options().get(1).value().value(Language.FR)).isEqualTo("Le choix B");
+        assertThat(displayTalkOptions.value().options().get(1).value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+
+        Possibility possibilitySecond = step.possibilities().get(1);
+
+        assertThat(possibilitySecond.trigger())
+                .isInstanceOf(PossibilityTrigger.SelectTalkOption.class);
+        PossibilityTrigger.SelectTalkOption selectTalkOption = (PossibilityTrigger.SelectTalkOption) possibilitySecond.trigger();
+        assertThat(selectTalkOption.id()).isNotNull();
+        assertThat(selectTalkOption.optionId()).isEqualTo(displayTalkOptions.value().options().getFirst().id());
+
+
+        assertThat(possibilitySecond.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
+        Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibilitySecond.consequences().getFirst();
+        assertThat(scenarioTarget.id()).isNotNull();
+        assertThat(scenarioTarget.stepId()).isEqualTo(step.id());
+        assertThat(scenarioTarget.targetId()).isEqualTo(step.targets().getFirst().id());
+        assertThat(scenarioTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
+
+    }
+
+    @Test
+    public void prepareFirstMap_add_refs_withoutStepId() {
+
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                addRef:0.0.0:Ajout de la notion de Reférénce - optimisation step id
+                --- Step
+                ------ Target:FR:Réparer la station:EN:Réparer la station en anglais
+                --- Step
+                ------ Target (ref TARGET_ATTERRIR):FR:Atterrir sur la lune:EN:Atterrir sur la lune en anglais
+                ------ Possibility
+                --------- Trigger:ABSOLUTETIME:51
+                --------- Consequence:GoalTarget:targetId:TARGET_ATTERRIR:state:active
+                """);
+        Template template = generator.apply(script);
+
+        List<ScenarioConfig.Step> steps = template.scenario().steps();
+        assertThat(steps.size()).isEqualTo(2);
+
+        ScenarioConfig.Step stepFirst = steps.getFirst();
+        assertThat(stepFirst.targets().getFirst().id()).isNotNull();
+        assertThat(stepFirst.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Réparer la station");
+        assertThat(stepFirst.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Réparer la station en anglais");
+
+        ScenarioConfig.Step stepSecond = steps.get(1);
+        assertThat(stepSecond.targets().getFirst().id()).isNotNull();
+        assertThat(stepSecond.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Atterrir sur la lune");
+        assertThat(stepSecond.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Atterrir sur la lune en anglais");
+
+
+        Possibility possibility = stepSecond.possibilities().getFirst();
+
+        assertThat(possibility.trigger())
+                .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+        PossibilityTrigger.AbsoluteTime goInSpace = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+        assertThat(goInSpace.id()).isNotNull();
+        assertThat(goInSpace.value()).isEqualTo(new TimeUnit(51));
+
+        assertThat(possibility.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
+        Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibility.consequences().getFirst();
+        assertThat(scenarioTarget.id()).isNotNull();
+        assertThat(scenarioTarget.stepId()).isEqualTo(stepSecond.id());
+        assertThat(scenarioTarget.targetId()).isEqualTo(stepSecond.targets().getFirst().id());
+        assertThat(scenarioTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
+
+    }
+
+
     private Consumer<I18n> withoutId(I18n compareTo) {
         return value -> {
             assertThat(value.description()).isEqualTo(compareTo.description());
@@ -462,6 +743,30 @@ public class TemplateGeneratorUseCaseTest {
     private static I18n i18n(String fr, String en) {
         return new I18n(Map.of(Language.FR, fr, Language.EN, en));
     }
+
+
+
+    /*
+    chezWamBisBis:0.2.0:Chez Wam from Generator:10
+                --- Board
+                ------ Space:Bureau:HIGH
+                --------- 45.77806:4.80351:45.77820:4.80367
+                ------ Space:Cuisine:HIGH
+                --------- 45.77798:4.8037:45.77812:4.80384
+                --- Step
+                ------ Target:FR:Sortir du bureau:EN:Sortir du bureau en anglais
+                ------ Target(Opt):FR:Suivre le tutorial:EN:Suivre le tutorial en anglais
+
+                ------ Possibility
+                --------- Trigger:GoInSpace:SpaceId:Bureau
+                --------- consequence:TalkOptions
+                ------------ EN:Alarm !!!
+                ------------ FR: C'est la vie
+                ------------ Cuicui
+                --------- consequence:GoalTarget:stepId:EFG:targetId:9876:state:FAILURE
+                --------- condition:ABSOLUTETIME:Duration:27
+
+     */
 
     /*
     - Template
@@ -478,12 +783,13 @@ public class TemplateGeneratorUseCaseTest {
                     - Trigger -> AbsoluteTime, GoInSpace, TODO -> GoOutSpace, RelativeTimeAfterOtherTrigger
                     - Condition -> OutsideSpace, InStep, AbsoluteTime, TODO InsideSpace,RelativeTimeAfterOtherTrigger
                     - Consequence -> GoalTarget, Goal, Alert, TODO GameOver
-        - MapConfig -> Todo
+        - MapConfig -> Todo, gestion des step ???
             - Item
                 - Map
                     - PositionS
                     - Definition
                     - Priority
+                    - TODO : Steps
      */
 
 }

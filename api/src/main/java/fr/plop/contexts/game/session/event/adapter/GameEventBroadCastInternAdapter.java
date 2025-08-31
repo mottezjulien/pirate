@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.event.adapter;
 
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
@@ -49,22 +49,22 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void doGoal(GamePlayer.Id playerId, PossibilityConsequence.Goal consequence) {
+    public void doGoal(GamePlayer.Id playerId, Consequence.ScenarioStep consequence) {
         scenarioAdapter.updateStateOrCreateGoal(playerId, consequence);
     }
 
     @Override
-    public void doGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget consequence) {
+    public void doGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget consequence) {
         scenarioAdapter.updateStateOrCreateGoalTarget(playerId, consequence);
     }
 
     @Override
-    public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.End consequence) {
+    public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence) {
         gameOverUseCase.apply(sessionId, playerId, consequence.gameOver());
     }
 
     @Override
-    public void doAlert(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.Alert consequence) {
+    public void doAlert(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayTalkAlert consequence) {
         messageAction.alert(sessionId, playerId, consequence);
     }
 

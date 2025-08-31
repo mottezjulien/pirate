@@ -15,6 +15,7 @@ import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GameMoveUseCase {
 
@@ -51,6 +52,7 @@ public class GameMoveUseCase {
 
         List<BoardSpace.Id> spaceInIds = player.spaceIds();
         List<BoardSpace> next = board.spacesByPoint(request.position()).toList();
+        System.out.println("MOVE: BoardSpace next: " + next.stream().map(boardSpace -> boardSpace.id().value()).collect(Collectors.joining()));
         List<BoardSpace.Id> nextIds = next.stream().map(BoardSpace::id).toList();
         if (!spaceInIds.equals(nextIds)) {
             outPort.savePosition(player.id(), nextIds);

@@ -18,7 +18,7 @@ public class MapConfigEntity {
     private String id;
 
     @OneToMany(mappedBy = "config")
-    private Set<MapConfigItemAbstractEntity> items = new HashSet<>();
+    private Set<MapItemEntity> items = new HashSet<>();
 
     public String getId() {
         return id;
@@ -28,11 +28,11 @@ public class MapConfigEntity {
         this.id = id;
     }
 
-    public Set<MapConfigItemAbstractEntity> getItems() {
+    public Set<MapItemEntity> getItems() {
         return items;
     }
 
-    public void setItems(Set<MapConfigItemAbstractEntity> items) {
+    public void setItems(Set<MapItemEntity> items) {
         this.items = items;
     }
 

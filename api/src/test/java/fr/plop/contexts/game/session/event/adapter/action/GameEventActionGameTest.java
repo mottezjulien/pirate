@@ -1,8 +1,8 @@
 package fr.plop.contexts.game.session.event.adapter.action;
 
-import fr.plop.contexts.game.session.core.domain.model.GameOver;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
@@ -42,7 +42,7 @@ public class GameEventActionGameTest {
     public void allSuccess() {
 
         I18n.Id i18nId = new I18n.Id();
-        GameOver gameOver = new GameOver(GameOver.Type.SUCCESS_ALL_ENDED, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ALL_ENDED, i18nId);
         event.apply(sessionId, playerId, gameOver);
 
         verify(outputPort).win(playerId, i18nId);
@@ -69,7 +69,7 @@ public class GameEventActionGameTest {
     @Test
     public void oneSuccess() {
         I18n.Id i18nId = new I18n.Id();
-        GameOver gameOver = new GameOver(GameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
         event.apply(sessionId, playerId, gameOver);
 
         verify(outputPort).win(playerId, i18nId);
@@ -91,7 +91,7 @@ public class GameEventActionGameTest {
                 .thenReturn(Stream.of(playerId));
 
         I18n.Id i18nId = new I18n.Id();
-        GameOver gameOver = new GameOver(GameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
         event.apply(sessionId, playerId, gameOver);
 
         verify(outputPort).win(playerId, i18nId);

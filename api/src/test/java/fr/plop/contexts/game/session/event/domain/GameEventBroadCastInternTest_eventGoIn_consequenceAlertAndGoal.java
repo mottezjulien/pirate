@@ -1,14 +1,13 @@
 package fr.plop.contexts.game.session.event.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.contexts.i18n.domain.I18n;
 import fr.plop.generic.enumerate.AndOrOr;
@@ -42,13 +41,13 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
 
     @Test
     public void fireEvent_ifSameSpace() {
-        List<PossibilityConsequence> consequences = consequences();
+        List<Consequence> consequences = consequences();
         when(outputPort.findPossibilities(sessionId, playerId))
                 .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), triggerGoIn(spaceId), List.of(), AndOrOr.AND, consequences)));
         broadCast.fire(goInEvent());
 
-        verify(outputPort).doAlert(sessionId, playerId, ((PossibilityConsequence.Alert) consequences.getFirst()));
-        verify(outputPort).doGoal(playerId, ((PossibilityConsequence.Goal) consequences.get(1)));
+        verify(outputPort).doAlert(sessionId, playerId, ((Consequence.DisplayTalkAlert) consequences.getFirst()));
+        verify(outputPort).doGoal(playerId, ((Consequence.ScenarioStep) consequences.get(1)));
     }
 
     @Test
@@ -62,9 +61,9 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         verify(outputPort, never()).doGoal(any(), any());
     }
 
-    private List<PossibilityConsequence> consequences() {
-        PossibilityConsequence.Alert alert = new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), mock(I18n.class));
-        PossibilityConsequence.Goal goal = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), new ScenarioConfig.Step.Id(), ScenarioGoal.State.FAILURE);
+    private List<Consequence> consequences() {
+        Consequence.DisplayTalkAlert alert = new Consequence.DisplayTalkAlert(new Consequence.Id(), mock(I18n.class));
+        Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE);
         return List.of(alert, goal);
     }
 

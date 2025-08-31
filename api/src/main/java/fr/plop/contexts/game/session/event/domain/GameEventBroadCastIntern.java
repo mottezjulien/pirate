@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.event.domain;
 
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
@@ -15,13 +15,13 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
     public interface OutPort {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
 
-        void doGoal(GamePlayer.Id playerId, PossibilityConsequence.Goal goal);
+        void doGoal(GamePlayer.Id playerId, Consequence.ScenarioStep goal);
 
-        void doGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget goalTarget);
+        void doGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget goalTarget);
 
-        void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.End consequence);
+        void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence);
 
-        void doAlert(GameSession.Id sessionId, GamePlayer.Id id, PossibilityConsequence.Alert alert);
+        void doAlert(GameSession.Id sessionId, GamePlayer.Id id, Consequence.DisplayTalkAlert alert);
 
         void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeUnit timeClick);
 
@@ -55,26 +55,31 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
         outPort.saveAction(event.playerId(), possibility.id(), event.timeUnit());
     }
 
-    private void _do(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence consequence) {
+    private void _do(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence consequence) {
         switch (consequence) {
-            case PossibilityConsequence.Goal goal -> outPort.doGoal(playerId, goal);
+            case Consequence.ScenarioStep goal -> outPort.doGoal(playerId, goal);
 
-            case PossibilityConsequence.GoalTarget goalTarget -> outPort.doGoalTarget(playerId, goalTarget);
+            case Consequence.ScenarioTarget goalTarget -> outPort.doGoalTarget(playerId, goalTarget);
 
-            case PossibilityConsequence.Alert alert -> outPort.doAlert(sessionId, playerId, alert);
+            case Consequence.DisplayTalkAlert alert -> outPort.doAlert(sessionId, playerId, alert);
 
-            case PossibilityConsequence.End gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
+            case Consequence.SessionEnd gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
 
             //TODO
-            case PossibilityConsequence.AddObjet addObjet -> {
+            case Consequence.DisplayTalkOptions messageConfirm -> {
 
             }
-            case PossibilityConsequence.RemoveObjet removeObjet -> {
+
+            case Consequence.ObjetAdd addObjet -> {
 
             }
-            case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
+            case Consequence.ObjetRemove removeObjet -> {
 
             }
+            case Consequence.UpdatedMetadata updatedMetadata -> {
+
+            }
+
         }
 
     }

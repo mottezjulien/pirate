@@ -10,9 +10,8 @@ public interface MapConfigRepository extends JpaRepository<MapConfigEntity, Stri
 
     @Query("FROM MapConfigEntity config" +
             " LEFT JOIN FETCH config.items item" +
-            " LEFT JOIN FETCH item.map map" +
-            " LEFT JOIN FETCH map.label" +
-            " LEFT JOIN FETCH map.positions position" +
+            " LEFT JOIN FETCH item.label" +
+            " LEFT JOIN FETCH item.positions position" +
             " WHERE config.id = :id")
     Optional<MapConfigEntity> fullById(@Param("id") String id);
 

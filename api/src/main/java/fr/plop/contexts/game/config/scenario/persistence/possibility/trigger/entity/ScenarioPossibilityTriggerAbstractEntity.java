@@ -16,7 +16,6 @@ import jakarta.persistence.Table;
 public abstract class ScenarioPossibilityTriggerAbstractEntity {
 
     @Id
-    //@UuidGenerator
     protected String id;
 
     public String getId() {
@@ -62,6 +61,12 @@ public abstract class ScenarioPossibilityTriggerAbstractEntity {
                 ScenarioPossibilityTriggerGoInSpaceEntity entity = new ScenarioPossibilityTriggerGoInSpaceEntity();
                 entity.setId(goOutSpace.id().value());
                 entity.setSpaceId(goOutSpace.spaceId().value());
+                yield entity;
+            }
+            case PossibilityTrigger.SelectTalkOption talkOption -> {
+                ScenarioPossibilityTalkOptionsEntity entity = new ScenarioPossibilityTalkOptionsEntity();
+                entity.setId(talkOption.id().value());
+                entity.setTalkOptionsId(talkOption.optionId().value());
                 yield entity;
             }
         };

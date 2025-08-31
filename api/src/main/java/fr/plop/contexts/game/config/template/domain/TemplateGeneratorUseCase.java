@@ -2,13 +2,15 @@ package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.talk.TalkOptions;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.TimeUnit;
@@ -22,9 +24,11 @@ import fr.plop.generic.position.Rect;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TemplateGeneratorUseCase {
@@ -73,22 +77,33 @@ public class TemplateGeneratorUseCase {
     public Template apply(Script script) {
         // Parse avec TreeGenerator pour avoir une structure d'arbre
         List<Tree> trees = treeGenerator.generate(script.getValue());
-        
+
         if (trees.isEmpty()) {
             throw new TemplateException("Script is empty or invalid");
         }
-        
+
         Tree rootTree = trees.getFirst();
         List<String> params = rootTree.params();
-        
+
         String version = !params.isEmpty() ? params.get(0) : DEFAULT_VERSION;
         String label = params.size() > 1 ? params.get(1) : "";
 
-        ScenarioConfig scenario = new ScenarioConfig("", parseSteps(rootTree));
-        BoardConfig board = new BoardConfig(parseBoardSpacesFromTrees(rootTree.children()));
-        MapConfig map = new MapConfig(List.of());
+        // Créer le context de parsing pour gérer les références
+        ParsingContext context = new ParsingContext();
 
+        // 1. Parse d'abord les BoardSpaces pour créer la map label -> BoardSpace.Id
+        List<BoardSpace> boardSpaces = parseBoardSpacesFromTrees(rootTree.children());
+        Map<String, BoardSpace.Id> labelToSpaceIdMap = createLabelToSpaceIdMap(boardSpaces);
 
+        // 2. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
+        ScenarioConfig scenario = new ScenarioConfig("", parseSteps(rootTree, labelToSpaceIdMap, context));
+        BoardConfig board = new BoardConfig(boardSpaces);
+        MapConfig map = new MapConfig(parseMapItemsFromTrees(rootTree.children()));
+
+        // 3. Vérifier qu'il n'y a pas de références non résolues
+        if (context.hasUnresolvedReferences()) {
+            throw new TemplateException("Unresolved references: " + context.getUnresolvedReferences());
+        }
 
         return new Template(templateAtom(rootTree), label, version, maxDurationFromParams(params), scenario, board, map);
     }
@@ -105,10 +120,30 @@ public class TemplateGeneratorUseCase {
     }
 
     // ============ NOUVELLES METHODES BASEES SUR TREEGENERATOR ============
-    
+
+    private Map<String, BoardSpace.Id> createLabelToSpaceIdMap(List<BoardSpace> boardSpaces) {
+        Map<String, BoardSpace.Id> map = new HashMap<>();
+        for (BoardSpace space : boardSpaces) {
+            map.put(space.label(), space.id());
+        }
+        return map;
+    }
+
+    private BoardSpace.Id resolveSpaceId(String spaceLabel, Map<String, BoardSpace.Id> labelToSpaceIdMap) {
+        BoardSpace.Id resolvedId = labelToSpaceIdMap.get(spaceLabel);
+        if (resolvedId != null) {
+            // Le label correspond à un BoardSpace existant, on utilise son ID
+            return resolvedId;
+        } else {
+            // Le label ne correspond à aucun BoardSpace, on crée un nouvel ID
+            // (comportement de fallback pour rétrocompatibilité)
+            return new BoardSpace.Id(spaceLabel);
+        }
+    }
+
     private List<BoardSpace> parseBoardSpacesFromTrees(List<Tree> trees) {
         List<BoardSpace> spaces = new ArrayList<>();
-        
+
         for (Tree tree : trees) {
             if (BOARD_KEY.equalsIgnoreCase(tree.header())) {
                 // Un Board peut contenir plusieurs Spaces
@@ -120,29 +155,109 @@ public class TemplateGeneratorUseCase {
                 }
             }
         }
-        
+
         return spaces;
     }
-    
 
-    
+    private List<MapItem> parseMapItemsFromTrees(List<Tree> trees) {
+        List<MapItem> mapItems = new ArrayList<>();
+
+        for (Tree tree : trees) {
+            if ("MAP".equalsIgnoreCase(tree.header())) {
+                MapItem item = parseMapItemFromTree(tree);
+                mapItems.add(item);
+            }
+        }
+
+        return mapItems;
+    }
+
+    private MapItem parseMapItemFromTree(Tree mapTree) {
+        List<String> params = mapTree.params();
+        if (params.size() < 2) {
+            throw new TemplateException("Invalid map format in tree: " + mapTree);
+        }
+
+        // Format: "Map:Asset:imgs/first/map.png"
+        String type = params.get(0); // "Asset"
+        String imagePath = params.get(1); // "imgs/first/map.png"
+
+        // Parse priority and positions from children
+        MapItem.Priority priority = MapItem.Priority.LOW; // default
+        List<MapItem.Position> positions = new ArrayList<>();
+        Set<ScenarioConfig.Step.Id> stepIds = new HashSet<>();
+
+        for (Tree child : mapTree.children()) {
+            if ("PRIORITY".equalsIgnoreCase(child.header()) && !child.params().isEmpty()) {
+                priority = parseMapPriority(child.params().get(0));
+            } else if ("POSITION".equalsIgnoreCase(child.header()) && child.params().size() >= 2) {
+                // Format: "position:89.09:10.064"
+                float x = Float.parseFloat(child.params().get(0));
+                float y = Float.parseFloat(child.params().get(1));
+
+                // Parse priority and step IDs from position children
+                MapItem.Priority positionPriority = MapItem.Priority.LOW; // default
+                for (Tree posChild : child.children()) {
+                    if ("PRIORITY".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
+                        positionPriority = parseMapPriority(posChild.params().get(0));
+                    } else if ("SPACE".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
+                        stepIds.add(new ScenarioConfig.Step.Id(posChild.params().get(0)));
+                    }
+                }
+
+                MapItem.Position.Atom atom = new MapItem.Position.Atom(
+                        new MapItem.Position.Id(),
+                        "", // label vide pour l'instant
+                        positionPriority,
+                        List.of() // spaceIds vides pour l'instant
+                );
+
+                MapItem.Position position = new MapItem.Position.Point(atom, x, y);
+                positions.add(position);
+            }
+        }
+
+        // Convertir Set<ScenarioConfig.Step.Id> en List<ScenarioConfig.Step.Id>
+        List<ScenarioConfig.Step.Id> stepIdsList = new ArrayList<>(stepIds);
+
+        return new MapItem(
+                new MapItem.Id(),
+                new I18n(Map.of()), // label I18n vide
+                new MapItem.Image(MapItem.Image.Type.ASSET, imagePath, new MapItem.Image.Size(0, 0)),
+                priority,
+                positions,
+                stepIdsList
+        );
+    }
+
+    private MapItem.Priority parseMapPriority(String priorityStr) {
+        return switch (priorityStr.toUpperCase()) {
+            case "HIGHEST" -> MapItem.Priority.HIGHEST;
+            case "HIGH" -> MapItem.Priority.HIGH;
+            case "MEDIUM" -> MapItem.Priority.MEDIUM;
+            case "LOW" -> MapItem.Priority.LOW;
+            case "LOWEST" -> MapItem.Priority.LOWEST;
+            default -> MapItem.Priority.LOW;
+        };
+    }
+
     private BoardSpace parseBoardSpaceFromTree(Tree spaceTree) {
         List<String> params = spaceTree.params();
         if (params.size() < 2) {
             throw new TemplateException("Invalid space format in tree: " + spaceTree);
         }
-        
+
         String label = params.get(0);
         BoardSpace.Priority priority = parsePriority(params.get(1));
-        
+
         List<Rect> rects = parseRectsFromTrees(spaceTree.children());
-        
+
         return new BoardSpace(label, priority, rects);
     }
-    
+
     private List<Rect> parseRectsFromTrees(List<Tree> trees) {
         List<Rect> rects = new ArrayList<>();
-        
+
         for (Tree tree : trees) {
             // Les rectangles sont des arbres avec header et params
             Rect rect = parseRectFromTree(tree);
@@ -150,20 +265,20 @@ public class TemplateGeneratorUseCase {
                 rects.add(rect);
             }
         }
-        
+
         return rects;
     }
-    
+
     private Rect parseRectFromTreeParams(List<String> params) {
         // Note: Avec TreeGenerator, le format est différent. 
         // Le header contient bottomLeft/topRight, et les params contiennent les coordonnées
         return null; // Sera géré dans parseRectFromTree
     }
-    
+
     private Rect parseRectFromTree(Tree tree) {
         String header = tree.header().toUpperCase();
         List<String> params = tree.params();
-        
+
         // Format court: header numérique avec 4 params numériques [1, 2, 4, 3]
         if (params.size() == 3 && isAllNumeric(new String[]{header, params.get(0), params.get(1), params.get(2)})) {
             try {
@@ -174,17 +289,17 @@ public class TemplateGeneratorUseCase {
                 // Continue to long format
             }
         }
-        
+
         // Format long: header="bottomLeft", params=[5.7, 10, topRight, 8.097, 50.43]
         Point bottomLeft = null;
         Point topRight = null;
-        
+
         if (BOTTOM_LEFT.equalsIgnoreCase(header) && params.size() >= 2) {
             try {
                 float x = Float.parseFloat(params.get(0));
                 float y = Float.parseFloat(params.get(1));
                 bottomLeft = new Point(x, y);
-                
+
                 // Chercher topRight dans la suite des params
                 for (int i = 2; i < params.size(); i++) {
                     if (TOP_RIGHT.equalsIgnoreCase(params.get(i)) && i + 2 < params.size()) {
@@ -202,7 +317,7 @@ public class TemplateGeneratorUseCase {
                 float x = Float.parseFloat(params.get(0));
                 float y = Float.parseFloat(params.get(1));
                 topRight = new Point(x, y);
-                
+
                 // Chercher bottomLeft dans la suite des params
                 for (int i = 2; i < params.size(); i++) {
                     if (BOTTOM_LEFT.equalsIgnoreCase(params.get(i)) && i + 2 < params.size()) {
@@ -216,22 +331,22 @@ public class TemplateGeneratorUseCase {
                 // Continue
             }
         }
-        
+
         if (bottomLeft != null && topRight != null) {
             return new Rect(bottomLeft, topRight);
         }
-        
+
         return null;
     }
 
 
     // ============ ANCIENNES METHODES (à conserver pour le moment) ============
 
-    private List<ScenarioConfig.Step> parseSteps(Tree root) {
+    private List<ScenarioConfig.Step> parseSteps(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
         List<ScenarioConfig.Step> steps = new ArrayList<>();
         root.children().forEach(child -> {
             if (child.header().toUpperCase().startsWith(STEP_KEY)) {
-                ScenarioConfig.Step step = parseStep(child);  // Fix: passer child au lieu de root
+                ScenarioConfig.Step step = parseStep(child, labelToSpaceIdMap, context);
                 steps.add(step);
             }
         });
@@ -263,7 +378,10 @@ public class TemplateGeneratorUseCase {
         return spaces;
     }
 
-    private ScenarioConfig.Step parseStep(Tree root) {
+    private ScenarioConfig.Step parseStep(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
+        // Extraire la référence du header si elle existe : "Step(ref REF_STEP_A)"
+        String referenceName = extractReferenceFromHeader(root.header());
+
         // Format: "---" + " Step:FR:Chez Moi:EN:At Home" ou "---" + " Step"
         Optional<I18n> stepLabel = Optional.empty();
 
@@ -275,40 +393,73 @@ public class TemplateGeneratorUseCase {
         // Parse les targets et possibilities qui suivent
         List<ScenarioConfig.Target> targets = new ArrayList<>();
         List<Possibility> possibilities = new ArrayList<>();
+        List<Tree> possibilityTrees = new ArrayList<>();
 
         root.children().forEach(child -> {
             switch (child.header().toUpperCase()) {
                 case TARGET_KEY:
-                    ScenarioConfig.Target target = parseTarget(child);
+                    ScenarioConfig.Target target = parseTarget(child, context);
                     targets.add(target);
                     break;
                 case POSSIBILITY_KEY:
-                    Possibility possibility = parsePossibility(child);
-                    possibilities.add(possibility);
+                    possibilityTrees.add(child);
                     break;
                 default:
                     // Vérifions si c'est un Target qui commence par TARGET mais avec du texte après
                     if (child.header().toUpperCase().startsWith(TARGET_KEY)) {
-                        ScenarioConfig.Target extendedTarget = parseTarget(child);
+                        ScenarioConfig.Target extendedTarget = parseTarget(child, context);
                         targets.add(extendedTarget);
                     }
                     break;
             }
         });
 
-
-        return new ScenarioConfig.Step(
+        // Créer le step d'abord (sans les possibilités)
+        ScenarioConfig.Step step = new ScenarioConfig.Step(
                 new ScenarioConfig.Step.Id(),
+                stepLabel,
+                targets,
+                new ArrayList<>() // possibilités vides pour l'instant
+        );
+
+        // Enregistrer la référence immédiatement si elle existe
+        if (referenceName != null) {
+            context.registerReference(referenceName, step);
+        }
+
+        // Enregistrer le step actuel comme "CURRENT_STEP" AVANT de parser les possibilités
+        context.registerReference("CURRENT_STEP", step);
+
+        // Parse toutes les possibilités maintenant que CURRENT_STEP est disponible
+        for (Tree possibilityTree : possibilityTrees) {
+            Possibility possibility = parsePossibility(possibilityTree, labelToSpaceIdMap, context);
+            possibilities.add(possibility);
+        }
+
+        // Mettre à jour le step avec les possibilités
+        ScenarioConfig.Step finalStep = new ScenarioConfig.Step(
+                step.id(),
                 stepLabel,
                 targets,
                 possibilities
         );
+
+        // Mettre à jour les références avec le step final
+        if (referenceName != null) {
+            context.registerReference(referenceName, finalStep);
+        }
+        context.registerReference("CURRENT_STEP", finalStep);
+
+        return finalStep;
     }
 
-    private ScenarioConfig.Target parseTarget(Tree tree) {
+    private ScenarioConfig.Target parseTarget(Tree tree, ParsingContext context) {
+        // Extraire la référence du header si elle existe : "Target (ref TARGET_ATTERRIR):FR:..."
+        String referenceName = extractReferenceFromHeader(tree.header());
+
         // 1. Détecter si c'est optionnel
         boolean optional = tree.header().toUpperCase().contains("(OPT)");
-        
+
         // 2. Parser le label I18n depuis les paramètres OU depuis le header
         Optional<I18n> targetLabel = Optional.empty();
         if (!tree.params().isEmpty()) {
@@ -322,6 +473,10 @@ public class TemplateGeneratorUseCase {
                 // Enlever "(Opt)" si présent
                 labelText = labelText.replace("(Opt)", "").trim();
                 labelText = labelText.replace("(OPT)", "").trim();
+                // Enlever la référence si présente
+                if (referenceName != null) {
+                    labelText = labelText.replace("(ref " + referenceName + ")", "").trim();
+                }
                 if (!labelText.isEmpty()) {
                     // Pour l'instant, pas de traduction donc même texte en FR et EN
                     Map<Language, String> values = new HashMap<>();
@@ -331,28 +486,35 @@ public class TemplateGeneratorUseCase {
                 }
             }
         }
-        
+
         // 3. Parser la description depuis les children (lignes de description)
         Optional<I18n> description = parseDescriptionFromChildren(tree.children());
 
-        return new ScenarioConfig.Target(
+        ScenarioConfig.Target target = new ScenarioConfig.Target(
                 new ScenarioConfig.Target.Id(),
                 targetLabel,
                 description,
                 optional
         );
+
+        // Enregistrer la référence si elle existe
+        if (referenceName != null) {
+            context.registerReference(referenceName, target);
+        }
+
+        return target;
     }
-    
+
     private Optional<I18n> parseDescriptionFromChildren(List<Tree> children) {
         List<String> frenchLines = new ArrayList<>();
         List<String> englishLines = new ArrayList<>();
         String currentLang = null;
-        
+
         for (Tree child : children) {
             String originalHeader = child.header();
             String headerUpper = originalHeader.toUpperCase();
             List<String> params = child.params();
-            
+
             // TreeGenerator sépare différemment : header="FR", params=["Ceci est ma chambre."]
             if (FR_KEY.equals(headerUpper) && !params.isEmpty()) {
                 currentLang = FR_KEY;
@@ -368,7 +530,7 @@ public class TemplateGeneratorUseCase {
                 }
             }
         }
-        
+
         if (!frenchLines.isEmpty() || !englishLines.isEmpty()) {
             Map<Language, String> values = new HashMap<>();
             if (!frenchLines.isEmpty()) {
@@ -379,20 +541,20 @@ public class TemplateGeneratorUseCase {
             }
             return Optional.of(new I18n(values));
         }
-        
+
         return Optional.empty();
     }
-    
+
     private Optional<I18n> parseI18nFromChildrenWithoutNewline(List<Tree> children) {
         List<String> frenchLines = new ArrayList<>();
         List<String> englishLines = new ArrayList<>();
         String currentLang = null;
-        
+
         for (Tree child : children) {
             String originalHeader = child.header();
             String headerUpper = originalHeader.toUpperCase();
             List<String> params = child.params();
-            
+
             // TreeGenerator sépare différemment : header="FR", params=["Ceci est ma chambre."]
             if (FR_KEY.equals(headerUpper) && !params.isEmpty()) {
                 currentLang = FR_KEY;
@@ -408,7 +570,7 @@ public class TemplateGeneratorUseCase {
                 }
             }
         }
-        
+
         if (!frenchLines.isEmpty() || !englishLines.isEmpty()) {
             Map<Language, String> values = new HashMap<>();
             if (!frenchLines.isEmpty()) {
@@ -419,10 +581,9 @@ public class TemplateGeneratorUseCase {
             }
             return Optional.of(new I18n(values));
         }
-        
+
         return Optional.empty();
     }
-
 
 
     private Optional<I18n> parseI18nFromLine(String line) {
@@ -451,7 +612,7 @@ public class TemplateGeneratorUseCase {
         return Optional.empty();
     }
 
-    private Possibility parsePossibility(Tree tree) {
+    private Possibility parsePossibility(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
         // Format: "------" + " Possibility:ALWAYS" ou "------" + " Possibility:times:4:OR" ou "------" + " Possibility"
         AtomicReference<PossibilityRecurrence> recurrence = new AtomicReference<>(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id())); // Par défaut
 
@@ -481,26 +642,36 @@ public class TemplateGeneratorUseCase {
 
         // Parse les conditions, conséquences et trigger qui suivent
         List<PossibilityCondition> conditions = new ArrayList<>();
-        List<PossibilityConsequence> consequences = new ArrayList<>();
+        List<Consequence> consequences = new ArrayList<>();
         AtomicReference<PossibilityTrigger> trigger = new AtomicReference<>();
 
+        // Parse en deux passes : d'abord les conséquences pour enregistrer les références, puis les triggers
+        // Première passe : conséquences et conditions
         tree.children().forEach(child -> {
             String actionStr = child.header().toUpperCase().trim();
             switch (actionStr) {
                 case POSSIBILITY_CONDITION_KEY:
-                    conditions.add(parseCondition(child));
+                    conditions.add(parseCondition(child, labelToSpaceIdMap));
                     break;
                 case POSSIBILITY_CONSEQUENCE_KEY:
-                    consequences.add(parseConsequence(child));
-                    break;
-                case POSSIBILITY_TRIGGER_KEY:
-                    trigger.set(parseTrigger(child));
+                    consequences.add(parseConsequence(child, context));
                     break;
                 case POSSIBILITY_RECURRENCE_KEY:
                     recurrence.set(parseRecurrence(child));
                     break;
+                case POSSIBILITY_TRIGGER_KEY:
+                    // Ignorer pour l'instant, sera traité dans la deuxième passe
+                    break;
                 default:
                     throw new TemplateException("Invalid format: " + child.header() + ":" + String.join(":", child.params()));
+            }
+        });
+
+        // Deuxième passe : triggers (après que les références des conséquences soient enregistrées)
+        tree.children().forEach(child -> {
+            String actionStr = child.header().toUpperCase().trim();
+            if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
+                trigger.set(parseTrigger(child, labelToSpaceIdMap, context));
             }
         });
 
@@ -511,20 +682,24 @@ public class TemplateGeneratorUseCase {
         return new Possibility(recurrence.get(), trigger.get(), conditions, conditionType, consequences);
     }
 
-    private PossibilityCondition parseCondition(Tree tree) {
+    private PossibilityCondition parseCondition(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
             case "outsidespace" -> {
-                if(tree.params().size() == 2) {
+                if (tree.params().size() == 2) {
+                    String spaceLabel = tree.params().get(1);
+                    BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
                     return new PossibilityCondition.OutsideSpace(
                             new PossibilityCondition.Id(),
-                            new BoardSpace.Id(tree.params().get(1))
+                            spaceId
                     );
                 }
+                String spaceLabel = tree.params().get(2);
+                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
                 return new PossibilityCondition.OutsideSpace(
                         new PossibilityCondition.Id(),
-                        new BoardSpace.Id(tree.params().get(2))
+                        spaceId
                 );
 
                 /*if (split.length >= 4 && "SpaceId".equals(split[2])) {
@@ -556,28 +731,41 @@ public class TemplateGeneratorUseCase {
                 }
             }
             case "instep" -> {
-                // Format: "CONDITION:InStep:0987" -> params=[InStep, 0987]
+                // Format: "CONDITION:InStep:stepId:0987" ou "CONDITION:InStep:0987" (legacy)
+                String stepIdStr;
+                if (tree.params().size() >= 3 && "stepId".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: InStep:stepId:0987
+                    stepIdStr = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: InStep:0987
+                    stepIdStr = tree.params().get(1);
+                } else {
+                    throw new TemplateException("InStep missing required parameter: stepId");
+                }
+
                 return new PossibilityCondition.InStep(
                         new PossibilityCondition.Id(),
-                        new ScenarioConfig.Step.Id(tree.params().get(1))
+                        new ScenarioConfig.Step.Id(stepIdStr)
                 );
             }
             case "insidespace" -> {
-                if(tree.params().size() == 2) {
-                    return new PossibilityCondition.InsideSpace(
-                            new PossibilityCondition.Id(),
-                            new BoardSpace.Id(tree.params().get(1))
-                    );
+                // Format: "CONDITION:InsideSpace:spaceId:LABEL" ou "CONDITION:InsideSpace:LABEL" (legacy)
+                String spaceLabel;
+                if (tree.params().size() >= 3 && "spaceId".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: InsideSpace:spaceId:LABEL
+                    spaceLabel = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: InsideSpace:LABEL
+                    spaceLabel = tree.params().get(1);
+                } else {
+                    throw new TemplateException("InsideSpace missing required parameter: spaceId");
                 }
+
+                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
                 return new PossibilityCondition.InsideSpace(
                         new PossibilityCondition.Id(),
-                        new BoardSpace.Id(tree.params().get(2))
+                        spaceId
                 );
-                /*if (split.length >= 3 && "SpaceId".equalsIgnoreCase(split[2])) {
-
-                } else {
-
-                }*/
             }
         }
 
@@ -602,9 +790,9 @@ public class TemplateGeneratorUseCase {
         throw new TemplateException("Invalid recurrence format: " + String.join(":", tree.params()));
     }
 
-    private PossibilityConsequence parseConsequence(Tree tree) {
+    private Consequence parseConsequence(Tree tree, ParsingContext context) {
         // Format: "---------" + " consequence:Alert" ou "---------" + " consequence:GoalTarget:stepId:EFG:targetId:9876:state:FAILURE"
-        
+
         if (tree.params().isEmpty()) {
             throw new TemplateException("Invalid consequence format: no type specified");
         }
@@ -612,64 +800,70 @@ public class TemplateGeneratorUseCase {
         String type = tree.params().get(0).toLowerCase();
         switch (type) {
             case "alert" -> {
-                // Parse le message I18n qui suit depuis les enfants (sans \n final pour les Alert)
+                // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
                 Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(tree.children());
-                I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de message
-                return new PossibilityConsequence.Alert(new PossibilityConsequence.Id(), message);
+                I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
+                return new Consequence.DisplayTalkAlert(new Consequence.Id(), message);
             }
             case "goaltarget" -> {
-                ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(tree.params().get(2));
-                ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(tree.params().get(4));
-                ScenarioGoal.State state = parseState(tree.params().get(6));
-                return new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(), stepId, targetId, state);
-
-                /*if (split.length >= 7) {
-                    // Format: "GoalTarget:stepId:EFG:targetId:9876:state:FAILURE"
-                    ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(split[3]);
-                    ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(split[5]);
-                    ScenarioGoal.State state = parseState(split[7]);
-                    return new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(), stepId, targetId, state);
-                } else {
-                    // Format alternatif: "GoalTarget:targetId:9876:state:active:stepId:EFG"
-                    ScenarioConfig.Step.Id stepId = null;
-                    ScenarioConfig.Target.Id targetId = null;
-                    ScenarioGoal.State state = null;
-
-                    for (int i = 2; i < split.length - 1; i += 2) {
-                        String key = split[i];
-                        String value = split[i + 1];
-
-                        switch (key.toLowerCase()) {
-                            case "stepid" -> stepId = new ScenarioConfig.Step.Id(value);
-                            case "targetid" -> targetId = new ScenarioConfig.Target.Id(value);
-                            case "state" -> state = parseState(value);
-                        }
-                    }
-
-                    if (stepId != null && targetId != null && state != null) {
-                        return new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(), stepId, targetId, state);
-                    }
-                }*/
+                return parseGoalTargetConsequence(tree, context);
             }
             case "goal" -> {
-                /*if (split.length >= 5) {
+                // Format: "Goal:state:SUCCESS:stepId:KLM" ou autre ordre
+                Map<String, String> paramMap = parseKeyValueParams(tree.params());
 
-                }*/
-                // Format: "Goal:state:SUCCESS:stepId:KLM"
-                ScenarioGoal.State state = parseState(tree.params().get(2));
-                ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(tree.params().get(4));
-                return new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), stepId, state);
+                String stateParam = paramMap.get("state");
+                String stepIdParam = paramMap.get("stepid");
+
+                if (stateParam == null || stepIdParam == null) {
+                    throw new TemplateException("Goal missing required parameters: state, stepId");
+                }
+
+                ScenarioGoal.State state = parseState(stateParam);
+                ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(stepIdParam);
+                return new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
             case "addobjet" -> {
-                // Format: "AddObjet:SWORD123"
-                String objetId = tree.params().get(2);
-                return new PossibilityConsequence.AddObjet(new PossibilityConsequence.Id(), objetId);
+                // Format: "AddObjet:objetId:SWORD123"
+                if (tree.params().size() < 3) {
+                    throw new TemplateException("AddObjet missing required parameters: objetId");
+                }
+
+                // Support legacy format directement ou nouveau format key:value
+                String objetId;
+                if (tree.params().size() == 2) {
+                    // Legacy: "AddObjet:SWORD123"
+                    objetId = tree.params().get(1);
+                } else {
+                    // Nouveau: "AddObjet:objetId:SWORD123"
+                    Map<String, String> paramMap = parseKeyValueParams(tree.params());
+                    objetId = paramMap.get("objetid");
+                    if (objetId == null) {
+                        throw new TemplateException("AddObjet missing required parameter: objetId");
+                    }
+                }
+
+                return new Consequence.ObjetAdd(new Consequence.Id(), objetId);
             }
             case "updatedmetadata" -> {
-                // Format: "UpdatedMetadata:metadataId:toMinutes:25.5"
-                String metadataId = tree.params().get(2);
-                float value = Float.parseFloat(tree.params().get(4));
-                return new PossibilityConsequence.UpdatedMetadata(new PossibilityConsequence.Id(), metadataId, value);
+                // Format: "UpdatedMetadata:metadataId:META123:value:25.5" ou "UpdatedMetadata:metadataId:META123:toMinutes:25.5"
+                Map<String, String> paramMap = parseKeyValueParams(tree.params());
+
+                String metadataId = paramMap.get("metadataid");
+                String valueStr = paramMap.get("value");
+                if (valueStr == null) {
+                    valueStr = paramMap.get("tominutes"); // Support legacy format
+                }
+
+                if (metadataId == null || valueStr == null) {
+                    throw new TemplateException("UpdatedMetadata missing required parameters: metadataId, value");
+                }
+
+                float value = Float.parseFloat(valueStr);
+                return new Consequence.UpdatedMetadata(new Consequence.Id(), metadataId, value);
+            }
+            case "talkoptions" -> {
+                return parseTalkOptionsConsequence(tree, context);
             }
         }
 
@@ -685,28 +879,28 @@ public class TemplateGeneratorUseCase {
             String line = allLines[i].trim();
 
             if (line.startsWith(SPACE_3 + " EN:")) {
-                // Sauvegarder le message précédent
+                // Sauvegarder le value précédent
                 if (currentLang != null && !currentMessage.isEmpty()) {
                     messages.put(currentLang, currentMessage.toString().trim());
                 }
                 currentLang = Language.EN;
                 currentMessage = new StringBuilder(line.substring((SPACE_3 + " EN:").length()).trim());
             } else if (line.startsWith(SPACE_3 + " FR:")) {
-                // Sauvegarder le message précédent
+                // Sauvegarder le value précédent
                 if (currentLang != null && !currentMessage.isEmpty()) {
                     messages.put(currentLang, currentMessage.toString().trim());
                 }
                 currentLang = Language.FR;
                 currentMessage = new StringBuilder(line.substring((SPACE_3 + " FR:").length()).trim());
             } else if (line.startsWith(SPACE_3 + " ") && currentLang != null) {
-                // Suite du message
+                // Suite du value
                 String content = line.substring((SPACE_3 + " ").length()).trim();
                 if (!currentMessage.isEmpty()) {
                     currentMessage.append("\n");
                 }
                 currentMessage.append(content);
             } else if (line.startsWith(SPACE_2)) {
-                // Sauvegarder le dernier message et arrêter
+                // Sauvegarder le dernier value et arrêter
                 if (currentLang != null && !currentMessage.isEmpty()) {
                     messages.put(currentLang, currentMessage.toString().trim());
                 }
@@ -714,7 +908,7 @@ public class TemplateGeneratorUseCase {
             }
         }
 
-        // Sauvegarder le dernier message si on arrive à la fin
+        // Sauvegarder le dernier value si on arrive à la fin
         if (currentLang != null && !currentMessage.isEmpty()) {
             messages.put(currentLang, currentMessage.toString().trim());
         }
@@ -722,29 +916,98 @@ public class TemplateGeneratorUseCase {
         return new I18n(messages);
     }
 
-    private PossibilityTrigger parseTrigger(Tree tree) {
+    private PossibilityTrigger parseTrigger(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
             case "goinspace" -> {
-                // Format: "Trigger:GoInSpace:SpaceId:ABCD" -> params=[GoInSpace, SpaceId, ABCD] 
-                // ou "Trigger:goinSPACE:EFG" -> params=[goinSPACE, EFG]
+                // Format: "Trigger:GoInSpace:SpaceId:ABCD" ou "Trigger:GoInSpace:EFG" (legacy)
+                String spaceLabel;
                 if (tree.params().size() >= 3 && "SpaceId".equalsIgnoreCase(tree.params().get(1))) {
-                    return new PossibilityTrigger.GoInSpace(
-                            new PossibilityTrigger.Id(),
-                            new BoardSpace.Id(tree.params().get(2))  // Utiliser index 2 pour "ABCD"
-                    );
+                    // Nouveau format key:value: GoInSpace:SpaceId:ABCD
+                    spaceLabel = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: GoInSpace:EFG
+                    spaceLabel = tree.params().get(1);
                 } else {
-                    return new PossibilityTrigger.GoInSpace(
-                            new PossibilityTrigger.Id(),
-                            new BoardSpace.Id(tree.params().get(1))  // Utiliser index 1 pour "EFG"
-                    );
+                    throw new TemplateException("GoInSpace missing required parameter: SpaceId");
                 }
+
+                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
+                return new PossibilityTrigger.GoInSpace(
+                        new PossibilityTrigger.Id(),
+                        spaceId
+                );
+            }
+            case "gooutspace" -> {
+                // Format: "Trigger:GoOutSpace:SpaceId:ABCD" ou "Trigger:GoOutSpace:EFG" (legacy)
+                String spaceLabel;
+                if (tree.params().size() >= 3 && "SpaceId".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: GoOutSpace:SpaceId:ABCD
+                    spaceLabel = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: GoOutSpace:EFG
+                    spaceLabel = tree.params().get(1);
+                } else {
+                    throw new TemplateException("GoOutSpace missing required parameter: SpaceId");
+                }
+
+                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
+                return new PossibilityTrigger.GoOutSpace(
+                        new PossibilityTrigger.Id(),
+                        spaceId
+                );
             }
             case "absolutetime" -> {
+                // Format: "Trigger:AbsoluteTime:value:42" ou "Trigger:AbsoluteTime:42" (legacy)
+                String valueStr;
+                if (tree.params().size() >= 3 && "value".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: AbsoluteTime:value:42
+                    valueStr = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: AbsoluteTime:42
+                    valueStr = tree.params().get(1);
+                } else {
+                    throw new TemplateException("AbsoluteTime missing required parameter: value");
+                }
+
                 return new PossibilityTrigger.AbsoluteTime(
                         new PossibilityTrigger.Id(),
-                        TimeUnit.ofMinutes(Integer.parseInt(tree.params().get(1)))
+                        TimeUnit.ofMinutes(Integer.parseInt(valueStr))
+                );
+            }
+            case "selecttalkoption" -> {
+                // Format: "Trigger:SelectTalkOption:option:REF_CHOIX_A" ou "Trigger:SelectTalkOption:REF_CHOIX_A" (legacy)
+                String optionReference;
+                if (tree.params().size() >= 3 && "option".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: SelectTalkOption:option:REF_CHOIX_A
+                    optionReference = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: SelectTalkOption:REF_CHOIX_A
+                    optionReference = tree.params().get(1);
+                } else {
+                    throw new TemplateException("SelectTalkOption missing required parameter: option");
+                }
+
+                // Créer un trigger avec une référence à résoudre
+                AtomicReference<TalkOptions.Option.Id> resolvedOptionId = new AtomicReference<>();
+
+                // Demander la résolution de la référence
+                context.requestReference(optionReference, optionObj -> {
+                    if (optionObj instanceof TalkOptions.Option option) {
+                        resolvedOptionId.set(option.id());
+                    }
+                });
+
+                // Si la référence n'est pas encore résolue, créer un ID temporaire
+                if (resolvedOptionId.get() == null) {
+                    // Cela sera résolu plus tard par le context
+                    resolvedOptionId.set(new TalkOptions.Option.Id(optionReference));
+                }
+
+                return new PossibilityTrigger.SelectTalkOption(
+                        new PossibilityTrigger.Id(),
+                        resolvedOptionId.get()
                 );
             }
         }
@@ -754,10 +1017,10 @@ public class TemplateGeneratorUseCase {
 
     private ScenarioGoal.State parseState(String state) {
         return switch (state.toLowerCase()) {
-            case "success" -> ScenarioGoal.State.SUCCESS;
-            case "failure" -> ScenarioGoal.State.FAILURE;
-            case "active" -> ScenarioGoal.State.ACTIVE;
-            default -> ScenarioGoal.State.ACTIVE;
+            case "success" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS;
+            case "failure" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE;
+            case "active" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE;
+            default -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE;
         };
     }
 
@@ -873,5 +1136,224 @@ public class TemplateGeneratorUseCase {
             }
         }
         return true;
+    }
+
+    /**
+     * Parse des paramètres par paires clé:valeur depuis une liste de strings.
+     *
+     * @param params Liste des paramètres à partir du type (exclut le premier paramètre qui est le type)
+     * @return Map des paramètres clé -> valeur
+     */
+    private Map<String, String> parseKeyValueParams(List<String> params) {
+        Map<String, String> paramMap = new HashMap<>();
+
+        if (params.size() % 2 == 1) { // Doit être impair car le premier est le type + paires clé:valeur
+            // Format par paires : type:key1:value1:key2:value2
+            for (int i = 1; i < params.size(); i += 2) {
+                if (i + 1 < params.size()) {
+                    String key = params.get(i);
+                    String value = params.get(i + 1);
+                    paramMap.put(key.toLowerCase(), value);
+                }
+            }
+        } else {
+            // Format legacy ou spéciaux à gérer manuellement
+            throw new TemplateException("Invalid parameter format - expected key:value pairs (total count should be odd: type + key:value pairs)");
+        }
+
+        return paramMap;
+    }
+
+    /**
+     * Parse une conséquence GoalTarget en gérant les références.
+     * Format: "GoalTarget:stepId:EFG123:targetId:TARGET_ATTERRIR:state:active" ou ordre différent
+     * Format simplifié: "GoalTarget:targetId:TARGET_ATTERRIR:state:active" (stepId déduit automatiquement)
+     */
+    private Consequence parseGoalTargetConsequence(Tree tree, ParsingContext context) {
+        // Paramètres attendus: ["goaltarget", puis des paires clé:valeur]
+        // Minimum: targetId + state (stepId optionnel)
+        if (tree.params().size() < 5) {
+            throw new TemplateException("Invalid GoalTarget format: missing parameters (at least targetId and state required)");
+        }
+
+        // Parser les paramètres par paires clé:valeur
+        Map<String, String> paramMap = parseKeyValueParams(tree.params());
+
+        String stepIdParam = paramMap.get("stepid");
+        String targetIdParam = paramMap.get("targetid");
+        String stateParam = paramMap.get("state");
+
+        if (targetIdParam == null || stateParam == null) {
+            throw new TemplateException("GoalTarget missing required parameters: targetId, state (stepId is optional and will be deduced if not provided)");
+        }
+
+        ScenarioGoal.State state = parseState(stateParam);
+
+        // Créer les placeholders pour les IDs résolus
+        final AtomicReference<ScenarioConfig.Step.Id> resolvedStepId = new AtomicReference<>();
+        final AtomicReference<ScenarioConfig.Target.Id> resolvedTargetId = new AtomicReference<>();
+
+        // Résoudre le stepId
+        if (stepIdParam != null) {
+            // stepId explicitement fourni
+            if (stepIdParam.equals("CURRENT_STEP")) {
+                // Cas particulier du test : utiliser le step actuel
+                Optional<ScenarioConfig.Step> currentStep = context.getReference("CURRENT_STEP", ScenarioConfig.Step.class);
+                if (currentStep.isPresent()) {
+                    resolvedStepId.set(currentStep.get().id());
+                } else {
+                    // Si pas disponible immédiatement, utiliser la logique asynchrone
+                    context.requestReference("CURRENT_STEP", stepObj -> {
+                        if (stepObj instanceof ScenarioConfig.Step step) {
+                            resolvedStepId.set(step.id());
+                        }
+                    });
+                }
+            } else {
+                // Essayer d'abord de résoudre de manière synchrone comme référence
+                Optional<ScenarioConfig.Step> referencedStep = context.getReference(stepIdParam, ScenarioConfig.Step.class);
+                if (referencedStep.isPresent()) {
+                    resolvedStepId.set(referencedStep.get().id());
+                } else {
+                    // Si pas trouvé, essayer la résolution asynchrone sans marquer comme "non résolue"
+                    context.tryRequestReference(stepIdParam, stepObj -> {
+                        if (stepObj instanceof ScenarioConfig.Step step) {
+                            resolvedStepId.set(step.id());
+                        }
+                    });
+                }
+            }
+            // Si toujours pas résolu, utiliser comme ID direct
+            if (resolvedStepId.get() == null) {
+                resolvedStepId.set(new ScenarioConfig.Step.Id(stepIdParam));
+            }
+        }
+        // Si stepId n'est pas fourni, on le déduira après avoir résolu le targetId
+
+        // Résoudre le targetId (peut être une référence ou un ID direct)
+        Optional<ScenarioConfig.Target> referencedTarget = context.getReference(targetIdParam, ScenarioConfig.Target.class);
+        if (referencedTarget.isPresent()) {
+            resolvedTargetId.set(referencedTarget.get().id());
+        } else {
+            // Si pas trouvé, essayer la résolution asynchrone sans marquer comme "non résolue"
+            context.tryRequestReference(targetIdParam, targetObj -> {
+                if (targetObj instanceof ScenarioConfig.Target target) {
+                    resolvedTargetId.set(target.id());
+                }
+            });
+        }
+        // Si toujours pas résolu, utiliser comme ID direct
+        if (resolvedTargetId.get() == null) {
+            resolvedTargetId.set(new ScenarioConfig.Target.Id(targetIdParam));
+        }
+
+        // Si stepId n'est pas fourni, le déduire à partir du target
+        if (stepIdParam == null && resolvedStepId.get() == null) {
+            // Trouver le step qui contient ce target
+            Optional<ScenarioConfig.Step.Id> deducedStepId = findStepContainingTarget(targetIdParam, context);
+            if (deducedStepId.isPresent()) {
+                resolvedStepId.set(deducedStepId.get());
+            } else {
+                throw new TemplateException("Cannot deduce stepId for target '" + targetIdParam + "': no step found containing this target");
+            }
+        }
+
+        return new Consequence.ScenarioTarget(new Consequence.Id(), resolvedStepId.get(), resolvedTargetId.get(), state);
+    }
+
+    private Consequence parseTalkOptionsConsequence(Tree tree, ParsingContext context) {
+        // Parse les enfants pour extraire Label et Options
+        I18n label = null;
+        List<TalkOptions.Option> options = new ArrayList<>();
+
+        for (Tree child : tree.children()) {
+            String header = child.header().toLowerCase();
+            if (header.startsWith("label")) {
+                // Parse l'I18n pour le label
+                Optional<I18n> labelOpt = parseI18nFromChildrenWithoutNewline(child.children());
+                label = labelOpt.orElse(new I18n(Map.of()));
+            } else if (header.startsWith("option")) {
+                // Extraire la référence du header : "Option(ref REF_CHOIX_A)"
+                String referenceName = extractReferenceFromHeader(child.header());
+
+                // Parse l'I18n pour chaque option
+                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(child.children());
+                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
+                TalkOptions.Option option = new TalkOptions.Option(optionMessage);
+                options.add(option);
+
+                // Enregistrer la référence si elle existe
+                if (referenceName != null) {
+                    context.registerReference(referenceName, option);
+                }
+            }
+        }
+
+        // Valeurs par défaut si nécessaire
+        if (label == null) {
+            label = new I18n(Map.of());
+        }
+
+        TalkOptions talkOptions = new TalkOptions(label, options);
+        return new Consequence.DisplayTalkOptions(new Consequence.Id(), talkOptions);
+    }
+
+    /**
+     * Extrait une référence du header au format "(ref REFERENCE_NAME)".
+     * Exemple: "Step(ref REF_STEP_A)" -> "REF_STEP_A"
+     */
+    private String extractReferenceFromHeader(String header) {
+        if (header == null) {
+            return null;
+        }
+
+        // Chercher le pattern "(ref XXXX)"
+        int refStart = header.indexOf("(ref ");
+        if (refStart == -1) {
+            return null;
+        }
+
+        int refNameStart = refStart + 5; // longueur de "(ref "
+        int refEnd = header.indexOf(")", refNameStart);
+        if (refEnd == -1) {
+            return null;
+        }
+
+        return header.substring(refNameStart, refEnd).trim();
+    }
+
+    /**
+     * Trouve le step qui contient un target donné (par référence ou par ID).
+     *
+     * @param targetParam Le nom de la référence ou l'ID du target à chercher
+     * @param context     Le contexte de parsing contenant les références
+     * @return L'ID du step qui contient ce target, ou Optional.empty() si non trouvé
+     */
+    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, ParsingContext context) {
+        // D'abord essayer de résoudre le target comme une référence
+        Optional<ScenarioConfig.Target> referencedTarget = context.getReference(targetParam, ScenarioConfig.Target.class);
+
+        if (referencedTarget.isPresent()) {
+            // Si on a trouvé le target par référence, chercher dans quel step il se trouve
+            ScenarioConfig.Target target = referencedTarget.get();
+
+            // Parcourir tous les steps enregistrés pour trouver celui qui contient ce target
+            return context.getAllReferences(ScenarioConfig.Step.class)
+                    .stream()
+                    .filter(step -> step.targets().stream()
+                            .anyMatch(stepTarget -> stepTarget.id().equals(target.id())))
+                    .map(ScenarioConfig.Step::id)
+                    .findFirst();
+        }
+
+        // Si pas trouvé par référence, chercher par ID dans tous les steps
+        ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetParam);
+
+        return context.getAllReferences(ScenarioConfig.Step.class)
+                .stream()
+                .filter(step -> step.targets().stream()
+                        .anyMatch(stepTarget -> stepTarget.id().equals(targetId)))
+                .map(ScenarioConfig.Step::id)
+                .findFirst();
     }
 }

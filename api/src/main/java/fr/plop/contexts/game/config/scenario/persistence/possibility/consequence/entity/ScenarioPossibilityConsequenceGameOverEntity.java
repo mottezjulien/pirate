@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
-import fr.plop.contexts.game.session.core.domain.model.GameOver;
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.i18n.domain.I18n;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -15,15 +15,15 @@ public final class ScenarioPossibilityConsequenceGameOverEntity extends
         ScenarioPossibilityConsequenceAbstractEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "gameover_type")
-    private GameOver.Type gameOverType;
+    private SessionGameOver.Type gameOverType;
     @Column(name = "label_id")
     private String labelId;
 
-    public GameOver.Type getGameOverType() {
+    public SessionGameOver.Type getGameOverType() {
         return gameOverType;
     }
 
-    public void setGameOverType(GameOver.Type gameOverType) {
+    public void setGameOverType(SessionGameOver.Type gameOverType) {
         this.gameOverType = gameOverType;
     }
 
@@ -35,9 +35,9 @@ public final class ScenarioPossibilityConsequenceGameOverEntity extends
         this.labelId = labelId;
     }
 
-    public PossibilityConsequence toModel() {
-        GameOver gameOver = new GameOver(gameOverType, new I18n.Id(labelId));
-        return new PossibilityConsequence.End(new PossibilityConsequence.Id(id), gameOver);
+    public Consequence toModel() {
+        SessionGameOver gameOver = new SessionGameOver(gameOverType, new I18n.Id(labelId));
+        return new Consequence.SessionEnd(new Consequence.Id(id), gameOver);
     }
 
 }

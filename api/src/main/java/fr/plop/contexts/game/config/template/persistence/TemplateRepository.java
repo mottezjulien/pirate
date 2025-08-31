@@ -23,9 +23,8 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
             " LEFT JOIN FETCH space.rects rect" +
 
             " LEFT JOIN FETCH template.map map_config" +
-            " LEFT JOIN FETCH map_config.items map_config_item" +
-            " LEFT JOIN FETCH map_config_item.map map" +
-            " LEFT JOIN FETCH map.label map_label" +
+            " LEFT JOIN FETCH map_config.items map_item" +
+            " LEFT JOIN FETCH map_item.label map_label" +
 
             " WHERE template.code = :code")
     List<TemplateEntity> findByCodeFetchAll(String code);

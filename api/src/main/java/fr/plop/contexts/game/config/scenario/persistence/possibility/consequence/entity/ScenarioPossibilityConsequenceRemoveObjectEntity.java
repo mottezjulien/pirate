@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -21,8 +21,7 @@ public final class ScenarioPossibilityConsequenceRemoveObjectEntity
         this.objetId = objetId;
     }
 
-    public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.
-                RemoveObjet(new PossibilityConsequence.Id(id), objetId);
+    public Consequence toModel() {
+        return new Consequence.ObjetRemove(new Consequence.Id(id), objetId);
     }
 }

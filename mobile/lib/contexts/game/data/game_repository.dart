@@ -5,7 +5,6 @@ import 'package:mobile/contexts/geo/domain/model/coordinate.dart';
 import '../../../generic/repository/generic_repository.dart';
 import '../domain/model/game_goal.dart';
 import '../game_current.dart';
-import '../views/map/game_map_view.dart';
 
 class GameSessionRepository {
 
@@ -16,7 +15,7 @@ class GameSessionRepository {
     return sessionToModel(await genericRepository.post(
         path: resourcePath,
         body: {
-      'templateCode': 'first' //'templateCode': 'pirate_lyon'
+      'templateCode': 'CHEZWAM1' //'templateCode': 'pirate_lyon'
     }));
   }
 
@@ -67,6 +66,7 @@ class GameSessionRepository {
     );
   }
 
+  /*
   Future<List<GameMap>> findMaps() async {
     GenericRepository genericRepository = GenericRepository();
     var response = await genericRepository.get(path: "$resourcePath/${GameSessionCurrent.sessionId}/maps/");
@@ -105,7 +105,7 @@ class GameSessionRepository {
       definition: definition,
       position: position
     );
-  }
+  }*/
 
   /*
       public record GameMapResponseDTO(String id, String label, int priority,

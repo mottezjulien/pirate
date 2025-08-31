@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import jakarta.persistence.Column;
@@ -48,8 +48,8 @@ public final class ScenarioPossibilityConsequenceGoalTargetEntity extends
         this.state = state;
     }
 
-    public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.GoalTarget(new PossibilityConsequence.Id(id), new ScenarioConfig.Step.Id(stepId),
+    public Consequence toModel() {
+        return new Consequence.ScenarioTarget(new Consequence.Id(id), new ScenarioConfig.Step.Id(stepId),
                 new ScenarioConfig.Target.Id(targetId), state);
     }
 

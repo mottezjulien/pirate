@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import jakarta.persistence.Column;
 
 public final class ScenarioPossibilityConsequenceUpdatedMetadataEntity
@@ -28,8 +28,8 @@ public final class ScenarioPossibilityConsequenceUpdatedMetadataEntity
         this.value = value;
     }
 
-    public PossibilityConsequence toModel() {
-        return new PossibilityConsequence.
-                UpdatedMetadata(new PossibilityConsequence.Id(id), metadataId, value);
+    public Consequence toModel() {
+        return new Consequence.
+                UpdatedMetadata(new Consequence.Id(id), metadataId, value);
     }
 }

@@ -37,6 +37,7 @@ public class GameSessionMoveController {
             @PathVariable("sessionId") String sessionIdStr,
             @RequestBody GameMoveRequestDTO request) {
         try {
+            System.out.println("MOVE: " + request.lat() + " " + request.lng());
             GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));

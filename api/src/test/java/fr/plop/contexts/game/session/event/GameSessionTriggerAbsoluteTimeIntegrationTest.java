@@ -5,8 +5,8 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -17,7 +17,6 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,11 +54,11 @@ public class GameSessionTriggerAbsoluteTimeIntegrationTest {
         Template.Code code = new Template.Code("absolute-time");
 
         PossibilityTrigger.AbsoluteTime trigger1 = new PossibilityTrigger.AbsoluteTime(new PossibilityTrigger.Id(), new TimeUnit(1));
-        PossibilityConsequence.Goal consequence1 = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), new ScenarioConfig.Step.Id(), ScenarioGoal.State.ACTIVE);
+        Consequence.ScenarioStep consequence1 = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE);
         Possibility possibility1 = new Possibility(new PossibilityRecurrence.Always(), trigger1, List.of(), List.of(consequence1));
 
         PossibilityTrigger.AbsoluteTime trigger2 = new PossibilityTrigger.AbsoluteTime(new PossibilityTrigger.Id(), new TimeUnit(3));
-        PossibilityConsequence.Goal consequence2 = new PossibilityConsequence.Goal(new PossibilityConsequence.Id(), new ScenarioConfig.Step.Id(), ScenarioGoal.State.ACTIVE);
+        Consequence.ScenarioStep consequence2 = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE);
         Possibility possibility2 = new Possibility(new PossibilityRecurrence.Always(), trigger2, List.of(), List.of(consequence2));
 
         ScenarioConfig.Step step1 = new ScenarioConfig.Step(List.of(), List.of(possibility1, possibility2));

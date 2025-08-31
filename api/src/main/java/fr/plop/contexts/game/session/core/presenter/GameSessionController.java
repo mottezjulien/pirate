@@ -5,8 +5,8 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.config.map.domain.Map;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
@@ -32,8 +32,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
@@ -90,8 +88,6 @@ public class GameSessionController {
                                          @RequestHeader("Language") String languageStr,
                                          @PathVariable("sessionId") String sessionIdStr) {
 
-        //donner la position de l'utilisateur, le back sait tout (update systeme)
-
         Language language = Language.valueOf(languageStr.toUpperCase());
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
 
@@ -106,11 +102,8 @@ public class GameSessionController {
             MapConfig mapConfig = mapConfigRepository.fullById(mapConfigId.value())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No map found", null))
                     .toModel();
-            Stream<Map> maps = mapConfig.byStepIds(player.stepActiveIds());
-            java.util.Map<Map, Optional<Map.Position>> positionByMap = selectPositions(maps, player);
-
-            return positionByMap.entrySet().stream()
-                    .map(entry -> GameMapResponseDTO.fromModel(entry.getKey(), entry.getValue(), language))
+            Stream<MapItem> maps = mapConfig.byStepIds(player.stepActiveIds());
+            return maps.map(model -> GameMapResponseDTO.fromModel(model, language))
                     .toList();
 
         } catch (ConnectException e) {
@@ -118,29 +111,52 @@ public class GameSessionController {
         }
     }
 
-    private java.util.Map<Map, Optional<Map.Position>> selectPositions(Stream<Map> maps, GamePlayer player) {
-        return maps.collect(Collectors.toMap(map -> map, map -> selectPosition(map, player)));
-    }
+    public record GameMapResponseDTO(String id, String label, int priority, Image image, List<Position> positions) {
 
-    private Optional<Map.Position> selectPosition(Map map, GamePlayer player) {
-        return map.selectPosition(player);
-    }
+        public record Image(String type, String value, Size size) {
+            public static Image toModel(MapItem.Image image) {
+                return new Image(image.type().name(), image.value(), Size.toModel(image.size()));
+            }
 
-    public record GameMapResponseDTO(String id, String label, int priority,
-                                     String definitionType, String definitionValue,
-                                     Position position) {
-
-        //Pourcent
-        public record Position(double x, double y) {
-            public static Position toModel(Map.Position.Point model) {
-                return new Position(model.x(), model.y());
+            public record Size(int width, int height) {
+                public static Size toModel(MapItem.Image.Size size) {
+                    return new Size(size.width(), size.height());
+                }
             }
         }
 
-        public static GameMapResponseDTO fromModel(Map map, Optional<Map.Position> optPosition, Language language) {
-            return new GameMapResponseDTO(map.id().value(), map.label().value(language), map.priority().value(),
-                    map.definition().type().name(), map.definition().value(),
-                    optPosition.map(position -> Position.toModel(position.point())).orElse(null));
+        public record Position(String type, String id, String label, Bounds bounds, Point point) {
+
+            static Position fromModel(MapItem.Position model) {
+                return switch (model) {
+                    case MapItem.Position.Point point ->
+                            new Position("POINT", model.id().value(), model.label(), null, Point.fromModel(point));
+                    case MapItem.Position.Zone zone ->
+                            new Position("ZONE", model.id().value(), model.label(), Bounds.fromModel(zone), null);
+                };
+            }
+
+            public record Bounds(double left, double top, double right, double bottom) {
+                public static Bounds fromModel(MapItem.Position.Zone zone) {
+                    return new Bounds(zone.left(), zone.top(), zone.right(), zone.bottom());
+                }
+            }
+
+            public record Point(double x, double y) {
+                public static Point fromModel(MapItem.Position.Point model) {
+                    return new Point(model.x(), model.y());
+                }
+            }
+
+        }
+
+        public static GameMapResponseDTO fromModel(MapItem map, Language language) {
+            return new GameMapResponseDTO(
+                    map.id().value(),
+                    map.label().value(language),
+                    map.priority().value(),
+                    Image.toModel(map.image()),
+                    map.positions().stream().map(Position::fromModel).toList());
         }
 
     }
@@ -214,6 +230,58 @@ public class GameSessionController {
     public record SendMessageRequest(String value) {
 
     }
+
+/*
+    //Talk
+    @GetMapping("{sessionId}/talks/{talkId}")
+    public TalkItemResponseDTO talkGet(
+            @RequestHeader("Language") String languageStr,
+            //token
+            @PathVariable("talkId") String talkIdStr
+            //@PathVariable("itemId") String itemIdStr
+    ) {
+        Talk talk = talkItemGetUseCase.apply(talkIdStr)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return TalkItemResponseDTO.fromModel(talk, Language.valueOfSafe(languageStr));
+    }
+
+    public record TalkItemResponseDTO(String id, String label, String nextItemId, List<Option> qcm) {
+
+        public record Option(String id, String label, String nextItemId) {
+
+        }
+
+        public static TalkItemResponseDTO fromModel(Talk talk, Language language) {
+            Talk.Item root = talk.root();
+            String nextItemId = nextItemId(root.next());
+            List<Option> qcmResponse = qcmResponse(root.next(), language);
+            return new TalkItemResponseDTO(talk.id().value(), root.value().value(language), nextItemId, qcmResponse);
+        }
+
+        private static String nextItemId(Talk.Next next) {
+            if(next instanceof Talk.Next.Continue(Talk.Item.Id itemId)) {
+                return itemId.value();
+            }
+            return null;
+        }
+
+        private static List<Option> qcmResponse(Talk.Next next, Language language) {
+            if(next instanceof Talk.Next.QCM(List<Talk.Next.QCM.Option> options)) {
+                return options.stream()
+                        .map(option -> toResponseOption(option, language))
+                        .toList();
+            }
+            return null;
+        }
+
+        private static Option toResponseOption(Talk.Next.QCM.Option model, Language language) {
+            String optionNextItemId = null;
+            if(model.next() instanceof Talk.Next.Continue(Talk.Item.Id itemId)) {
+                optionNextItemId = itemId.value();
+            }
+            return new Option(model.id().value(), model.label().value(language), optionNextItemId);
+        }
+    }*/
 
 }
 

@@ -1,0 +1,70 @@
+[
+  {
+    "label": "Zone du Port",
+    "image": {
+      "type": "ASSET",
+      "path": "assets/game/tres/map/port.png",
+      "size": {
+        "width": 800.0,
+        "height": 600.0
+      }
+    },
+    "positions": [
+      {
+        "id": "point_1755792712110",
+        "label": "Point 1",
+        "type": "POINT",
+        "position": {
+          "x": 31.333328247070312,
+          "y": 34.83332824707031
+        }
+      },
+      {
+        "id": "point_1755792718759",
+        "label": "Point 2",
+        "type": "POINT",
+        "position": {
+          "x": 115.33332824707031,
+          "y": 77.16665649414062
+        }
+      }
+    ]
+  },
+  {
+    "label": "Île au Trésor",
+    "image": {
+      "type": "ASSET",
+      "path": "assets/game/tres/map/ile.png",
+      "size": {
+        "width": 800.0,
+        "height": 600.0
+      }
+    },
+    "positions": [
+      {
+        "id": "point_1756052321324",
+        "label": "Point 1",
+        "position": {
+          "x": 110.47619047619048,
+          "y": 60.55064935064928
+        }
+      },
+      {
+        "id": "point_1756052323024",
+        "label": "Point 2",
+        "position": {
+          "x": 344.3809523809524,
+          "y": 49.88398268398265
+        }
+      },
+      {
+        "id": "point_1756052324723",
+        "label": "Point 3",
+        "position": {
+          "x": 114.66666666666667,
+          "y": 172.93160173160163
+        }
+      }
+    ]
+  }
+]

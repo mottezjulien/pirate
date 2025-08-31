@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.session.event.adapter.action;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
@@ -20,9 +20,9 @@ public class GameEventActionMessage {
         this.playerRepository = playerRepository;
     }
 
-    public void alert(GameSession.Id sessionId, GamePlayer.Id playerId, PossibilityConsequence.Alert alert) {
+    public void alert(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayTalkAlert alert) {
         GamePlayerEntity player = playerRepository.findByIdFetchUser(playerId.value()).orElseThrow();
-        PushEvent event = new PushEvent.Message(sessionId, playerId, alert.message().value(player.getUser().getLanguage()));
+        PushEvent event = new PushEvent.Message(sessionId, playerId, alert.value().value(player.getUser().getLanguage()));
         pushPort.push(event);
     }
 }

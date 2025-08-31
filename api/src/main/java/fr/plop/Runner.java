@@ -31,5 +31,4 @@ public class Runner {
         templateInitUseCase.apply();
     }
 
-
 }

@@ -3,7 +3,8 @@ package fr.plop.contexts.game.config.map.persistence;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
-import fr.plop.contexts.game.config.map.domain.Map;
+import fr.plop.contexts.game.config.map.domain.MapItem;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,25 +16,44 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_MAP_POSITION")
 public class MapPositionEntity {
 
+    public enum Type {
+        ZONE, POINT
+    }
+
+
     @Id
     private String id;
 
+    private String label;
+
     @ManyToOne
     @JoinColumn(name = "map_id")
-    private MapEntity map;
+    private MapItemEntity map;
+
+    private Type type;
+
+    private double top;
+
+
+    @Column(name = "_left")
+    private double left;
+    private double bottom;
+    @Column(name = "_right")
+    private double right;
 
     private double x;
 
     private double y;
 
     @Enumerated(EnumType.STRING)
-    private Map.Priority priority;
+    private MapItem.Priority priority;
 
     @ManyToMany
     @JoinTable(name = "TEST2_MAP_POSITION_SPACE",
@@ -49,12 +69,60 @@ public class MapPositionEntity {
         this.id = id;
     }
 
-    public MapEntity getMap() {
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public MapItemEntity getMap() {
         return map;
     }
 
-    public void setMap(MapEntity map) {
+    public void setMap(MapItemEntity map) {
         this.map = map;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public double getTop() {
+        return top;
+    }
+
+    public void setTop(double top) {
+        this.top = top;
+    }
+
+    public double getLeft() {
+        return left;
+    }
+
+    public void setLeft(double left) {
+        this.left = left;
+    }
+
+    public double getBottom() {
+        return bottom;
+    }
+
+    public void setBottom(double bottom) {
+        this.bottom = bottom;
+    }
+
+    public double getRight() {
+        return right;
+    }
+
+    public void setRight(double right) {
+        this.right = right;
     }
 
     public double getX() {
@@ -73,11 +141,11 @@ public class MapPositionEntity {
         this.y = y;
     }
 
-    public Map.Priority getPriority() {
+    public MapItem.Priority getPriority() {
         return priority;
     }
 
-    public void setPriority(Map.Priority priority) {
+    public void setPriority(MapItem.Priority priority) {
         this.priority = priority;
     }
 
@@ -89,9 +157,14 @@ public class MapPositionEntity {
         this.spaces = spaces;
     }
 
-    public Map.Position toModel() {
-        return new Map.Position(new Map.Position.Point(x, y), priority, spaces.stream()
+    public MapItem.Position toModel() {
+        List<BoardSpace.Id> spaceIds = spaces.stream()
                 .map(entity -> new BoardSpace.Id(entity.getId()))
-                .toList());
+                .toList();
+        MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(id), label, priority, spaceIds);
+        return switch (type) {
+            case ZONE -> new MapItem.Position.Zone(atom, top, left, bottom, right);
+            case POINT -> new MapItem.Position.Point(atom, x, y);
+        };
     }
 }

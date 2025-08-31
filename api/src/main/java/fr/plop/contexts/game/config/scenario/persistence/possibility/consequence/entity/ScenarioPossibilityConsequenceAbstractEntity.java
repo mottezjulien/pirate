@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.talk.TalkOptionsEntity;
 import fr.plop.contexts.i18n.persistence.I18nEntity;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -26,7 +27,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
         this.id = id;
     }
 
-    public PossibilityConsequence toModel() {
+    public Consequence toModel() {
         return switch (this) {
             case ScenarioPossibilityConsequenceAddObjectEntity addObject -> addObject.toModel();
             case ScenarioPossibilityConsequenceRemoveObjectEntity removeObject -> removeObject.toModel();
@@ -34,34 +35,34 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case ScenarioPossibilityConsequenceGameOverEntity gameOver -> gameOver.toModel();
             case ScenarioPossibilityConsequenceGoalEntity goal -> goal.toModel();
             case ScenarioPossibilityConsequenceGoalTargetEntity goalTarget -> goalTarget.toModel();
-            case ScenarioPossibilityConsequenceAlertEntity alert -> alert.toModel();
+            case ScenarioPossibilityConsequenceTalkAlertEntity alert -> alert.toModel();
             default -> throw new IllegalStateException("Unknown type");
         };
     }
 
 
-    public static ScenarioPossibilityConsequenceAbstractEntity fromModel(PossibilityConsequence consequence) {
+    public static ScenarioPossibilityConsequenceAbstractEntity fromModel(Consequence consequence) {
         return switch (consequence) {
-            case PossibilityConsequence.AddObjet addObjet -> {
+            case Consequence.ObjetAdd addObjet -> {
                 ScenarioPossibilityConsequenceAddObjectEntity entity = new ScenarioPossibilityConsequenceAddObjectEntity();
                 entity.setId(addObjet.id().value());
                 entity.setObjetId(addObjet.objetId());
                 yield entity;
             }
-            case PossibilityConsequence.RemoveObjet removeObjet -> {
+            case Consequence.ObjetRemove removeObjet -> {
                 ScenarioPossibilityConsequenceRemoveObjectEntity entity = new ScenarioPossibilityConsequenceRemoveObjectEntity();
                 entity.setId(removeObjet.id().value());
                 entity.setObjetId(removeObjet.objetId());
                 yield entity;
             }
-            case PossibilityConsequence.Goal goal -> {
+            case Consequence.ScenarioStep goal -> {
                 ScenarioPossibilityConsequenceGoalEntity entity = new ScenarioPossibilityConsequenceGoalEntity();
                 entity.setId(goal.id().value());
                 entity.setStepId(goal.stepId().value());
                 entity.setState(goal.state());
                 yield entity;
             }
-            case PossibilityConsequence.GoalTarget goalTarget -> {
+            case Consequence.ScenarioTarget goalTarget -> {
                 ScenarioPossibilityConsequenceGoalTargetEntity entity = new ScenarioPossibilityConsequenceGoalTargetEntity();
                 entity.setId(goalTarget.id().value());
                 entity.setStepId(goalTarget.stepId().value());
@@ -70,20 +71,28 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 yield entity;
             }
 
-            case PossibilityConsequence.End ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
-            case PossibilityConsequence.UpdatedMetadata updatedMetadata -> {
+            case Consequence.SessionEnd ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
+            case Consequence.UpdatedMetadata updatedMetadata -> {
                 ScenarioPossibilityConsequenceUpdatedMetadataEntity entity = new ScenarioPossibilityConsequenceUpdatedMetadataEntity();
                 entity.setId(updatedMetadata.id().value());
                 entity.setMetadataId(updatedMetadata.metadataId());
                 entity.setValue(updatedMetadata.value());
                 yield entity;
             }
-            case PossibilityConsequence.Alert alert -> {
-                ScenarioPossibilityConsequenceAlertEntity entity = new ScenarioPossibilityConsequenceAlertEntity();
+            case Consequence.DisplayTalkAlert alert -> {
+                ScenarioPossibilityConsequenceTalkAlertEntity entity = new ScenarioPossibilityConsequenceTalkAlertEntity();
                 entity.setId(alert.id().value());
                 I18nEntity message = new I18nEntity();
-                message.setId(alert.message().id().value());
-                entity.setMessage(message);
+                message.setId(alert.value().id().value());
+                entity.setValue(message);
+                yield entity;
+            }
+            case Consequence.DisplayTalkOptions option -> {
+                ScenarioPossibilityConsequenceTalkOptionsEntity entity = new ScenarioPossibilityConsequenceTalkOptionsEntity();
+                entity.setId(option.id().value());
+                TalkOptionsEntity talkOptionEntity = new TalkOptionsEntity();
+                talkOptionEntity.setId(option.value().id().value());
+                entity.setValue(talkOptionEntity);
                 yield entity;
             }
         };

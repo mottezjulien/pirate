@@ -18,8 +18,8 @@ public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> stepActiveIds, List
         INIT, ACTIVE, WIN
     }
 
-    public boolean inSpace(BoardSpace.Id spaceId) {
+    /*public boolean inSpace(BoardSpace.Id spaceId) {
         return spaceIds.contains(spaceId);
-    }
+    }*/
 
 }

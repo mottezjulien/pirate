@@ -1,8 +1,8 @@
 package fr.plop.contexts.game.session.core.domain.usecase;
 
-import fr.plop.contexts.game.session.core.domain.model.GameOver;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.i18n.domain.I18n;
@@ -28,7 +28,7 @@ public class GameOverUseCase {
         this.pushPort = pushPort;
     }
 
-    public void apply(GameSession.Id sessionId, GamePlayer.Id playerId, GameOver gameOver) {
+    public void apply(GameSession.Id sessionId, GamePlayer.Id playerId, SessionGameOver gameOver) {
         switch (gameOver.type()) {
             case SUCCESS_ALL_ENDED -> {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();

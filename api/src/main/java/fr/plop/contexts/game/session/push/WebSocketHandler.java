@@ -84,7 +84,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             try {
                 session.sendMessage(new TextMessage(message));
             } catch (IOException e) {
-                logger.error("Erreur lors de l'envoi du message à la session {}", session.getId(), e);
+                logger.error("Erreur lors de l'envoi du value à la session {}", session.getId(), e);
             }
         }
     }

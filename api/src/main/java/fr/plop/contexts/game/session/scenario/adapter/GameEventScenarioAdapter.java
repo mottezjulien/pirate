@@ -1,11 +1,10 @@
 package fr.plop.contexts.game.session.scenario.adapter;
 
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityConsequence;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetEntity;
@@ -26,7 +25,7 @@ public class GameEventScenarioAdapter {
         this.goalTargetRepository = goalTargetRepository;
     }
 
-    public void updateStateOrCreateGoal(GamePlayer.Id playerId, PossibilityConsequence.Goal consequence) {
+    public void updateStateOrCreateGoal(GamePlayer.Id playerId, Consequence.ScenarioStep consequence) {
         Optional<ScenarioGoalEntity> optEntity = goalRepository.byPlayerIdAndStepId(playerId.value(), consequence.stepId().value());
         optEntity.ifPresentOrElse(entity -> {
             entity.setState(consequence.state());
@@ -34,7 +33,7 @@ public class GameEventScenarioAdapter {
         }, () -> createGoal(playerId, consequence));
     }
 
-    public void updateStateOrCreateGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget consequence) {
+    public void updateStateOrCreateGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget consequence) {
         Optional<ScenarioGoalTargetEntity> optEntity = goalTargetRepository.byPlayerIdAndTargetId(playerId.value(), consequence.targetId().value());
         optEntity.ifPresentOrElse(entity -> {
             entity.setState(consequence.state());
@@ -42,9 +41,9 @@ public class GameEventScenarioAdapter {
         }, () -> createGoalTarget(playerId, consequence));
     }
 
-    private void createGoalTarget(GamePlayer.Id playerId, PossibilityConsequence.GoalTarget goalTarget) {
+    private void createGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget goalTarget) {
         ScenarioGoalEntity goalEntity = goalRepository.byPlayerIdAndStepId(playerId.value(), goalTarget.stepId().value())
-                .orElseGet(() -> createGoal(playerId, new PossibilityConsequence.Goal(null, goalTarget.stepId(), ScenarioGoal.State.ACTIVE)));
+                .orElseGet(() -> createGoal(playerId, new Consequence.ScenarioStep(null, goalTarget.stepId(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE)));
 
         ScenarioGoalTargetEntity goalTargetEntity = new ScenarioGoalTargetEntity();
         goalTargetEntity.setId(StringTools.generate());
@@ -59,7 +58,7 @@ public class GameEventScenarioAdapter {
     }
 
 
-    private ScenarioGoalEntity createGoal(GamePlayer.Id playerId, PossibilityConsequence.Goal goal) {
+    private ScenarioGoalEntity createGoal(GamePlayer.Id playerId, Consequence.ScenarioStep goal) {
         ScenarioGoalEntity entity = new ScenarioGoalEntity();
         entity.setId(StringTools.generate());
         entity.setState(goal.state());

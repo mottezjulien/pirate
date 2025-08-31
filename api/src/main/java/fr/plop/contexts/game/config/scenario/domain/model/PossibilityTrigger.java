@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.talk.TalkOptions;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.time.TimeUnit;
@@ -14,7 +15,8 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.GoInSpace,
         PossibilityTrigger.GoOutSpace,
         PossibilityTrigger.AbsoluteTime,
-        PossibilityTrigger.RelativeTimeAfterOtherPossibility {
+        PossibilityTrigger.RelativeTimeAfterOtherPossibility,
+        PossibilityTrigger.SelectTalkOption {
 
 
     record Id(String value) {
@@ -30,6 +32,11 @@ public sealed interface PossibilityTrigger permits
     }
 
     record GoInSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
+
+        public GoInSpace(BoardSpace.Id spaceId) {
+            this(new Id(), spaceId);
+        }
+
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.GoIn goInEvent && goInEvent.spaceId().equals(spaceId);
@@ -37,6 +44,11 @@ public sealed interface PossibilityTrigger permits
     }
 
     record GoOutSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
+
+        public GoOutSpace(BoardSpace.Id spaceId) {
+            this(new Id(), spaceId);
+        }
+
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.GoOut goOutEvent && goOutEvent.spaceId().equals(spaceId);
@@ -69,6 +81,12 @@ public sealed interface PossibilityTrigger permits
             return actions.stream()
                     .filter(action -> action.possibilityId().equals(possibilityId))
                     .min(Comparator.comparing(GameAction::timeClick));
+        }
+    }
+
+    record SelectTalkOption(Id id, TalkOptions.Option.Id optionId) implements PossibilityTrigger {
+        public SelectTalkOption(TalkOptions.Option.Id optionId) {
+            this(new Id(), optionId);
         }
     }
 

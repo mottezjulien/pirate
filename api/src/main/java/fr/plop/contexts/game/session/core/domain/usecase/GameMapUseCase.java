@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.core.domain.usecase;
 
 
-import fr.plop.contexts.game.config.map.domain.Map;
+import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
@@ -12,10 +12,10 @@ import java.util.List;
 public class GameMapUseCase {
 
     public interface OutputPort {
-        List<Map> findMaps(GameSession.Id sessionId, List<ScenarioConfig.Step.Id> ids);
+        List<MapItem> findMaps(GameSession.Id sessionId, List<ScenarioConfig.Step.Id> ids);
     }
 
-    public record Response(List<Map> maps) {
+    public record Response(List<MapItem> maps) {
 
     }
 
@@ -28,7 +28,7 @@ public class GameMapUseCase {
 
 
     public Response apply(GameSession.Id sessionId, GamePlayer player) {
-        List<Map> maps = output.findMaps(sessionId, player.stepActiveIds());
+        List<MapItem> maps = output.findMaps(sessionId, player.stepActiveIds());
         return new Response(maps);
     }
 

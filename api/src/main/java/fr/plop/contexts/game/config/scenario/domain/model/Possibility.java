@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.generic.enumerate.AndOrOr;
@@ -13,14 +14,22 @@ public record Possibility(
         PossibilityTrigger trigger,
         List<PossibilityCondition> conditions,
         AndOrOr conditionType,
-        List<PossibilityConsequence> consequences) {
+        List<Consequence> consequences) {
 
-    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, List<PossibilityConsequence> consequences) {
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, List<Consequence> consequences) {
         this(recurrence, trigger, conditions, AndOrOr.AND, consequences);
     }
 
-    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<PossibilityConsequence> consequences) {
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<Consequence> consequences) {
         this(new Id(), recurrence, trigger, conditions, conditionType, consequences);
+    }
+
+    public Possibility(PossibilityTrigger trigger, PossibilityCondition condition, Consequence consequence) {
+        this(new Id(), new PossibilityRecurrence.Always(), trigger, List.of(condition), AndOrOr.AND, List.of(consequence));
+    }
+
+    public Possibility(PossibilityTrigger trigger, Consequence consequence) {
+        this(new Id(), new PossibilityRecurrence.Always(), trigger, List.of(), AndOrOr.AND, List.of(consequence));
     }
 
     public boolean isFirst() {
