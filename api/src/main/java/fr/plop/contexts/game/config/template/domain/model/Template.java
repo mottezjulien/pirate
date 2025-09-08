@@ -35,7 +35,6 @@ public record Template(Atom atom, String label, String version, Duration maxDura
     }
 
 
-
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());

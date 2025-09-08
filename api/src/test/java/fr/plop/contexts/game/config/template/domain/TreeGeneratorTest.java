@@ -72,13 +72,13 @@ public class TreeGeneratorTest {
     @Test
     public void multiples() {
         String str = """
-                Bonjour : Pouet:   Pouet2
-               --- Hello
-               ------ Test:Other
-               
-                ------Test2:Other2
-               --- Alors:ça:va 
-               --- Alors2:oui ça va !!
+                 Bonjour : Pouet:   Pouet2
+                --- Hello
+                ------ Test:Other
+                
+                 ------Test2:Other2
+                --- Alors:ça:va 
+                --- Alors2:oui ça va !!
                 """;
 
         TreeGenerator treeGenerator = new TreeGenerator();
@@ -100,8 +100,6 @@ public class TreeGeneratorTest {
                 )));
 
     }
-
-
 
 
 }

@@ -13,7 +13,7 @@ public class TreeGenerator {
 
     public List<Tree> generate(String str) {
         String[] lines = str.split(LINE_BREAK);
-        if(lines.length == 0 || lines[0].isEmpty()) {
+        if (lines.length == 0 || lines[0].isEmpty()) {
             return List.of();
         }
         List<Tree> roots = new ArrayList<>();
@@ -33,7 +33,7 @@ public class TreeGenerator {
                 }
             }
         }
-        if(currentRoot.isPresent()) {
+        if (currentRoot.isPresent()) {
             roots.add(generateOneLine(currentRoot.orElseThrow(), children));
         }
         return roots;

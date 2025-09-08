@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 public record BoardConfig(Id id, List<BoardSpace> spaces) {
 
 
-
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());
