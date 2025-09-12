@@ -1,20 +1,18 @@
 package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.contexts.i18n.domain.Language;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ChezWamGeneScriptTest {
+class TemplateGeneratorUseCaseComplexeTest {
 
     private final TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
 
@@ -159,7 +157,8 @@ class ChezWamGeneScriptTest {
                 ------------ EN:You searched the desk successfully!
                 
                 --- Map:Asset:assets/office.png
-                ------ Position (ref DESK_POSITION):0.5:0.5
+                ------ Priority:LOWEST
+                ------ Position:0.2:0.8
                 --------- Priority:HIGH
                 """;
 
@@ -200,12 +199,22 @@ class ChezWamGeneScriptTest {
         assertThat(template.map()).satisfies(mapConfig -> {
             // TODO: Compléter les assertions selon la structure réelle de MapConfig
             assertThat(mapConfig).isNotNull();
+            assertThat(mapConfig.items())
+                    .hasSize(1)
+                    .anySatisfy(item -> {
+                        assertThat(item.priority()).isEqualTo(MapItem.Priority.LOWEST);
+                        assertThat(item.positions())
+                                .hasSize(1)
+                                .anySatisfy(position -> {
+                                    assertThat(position.priority()).isEqualTo(MapItem.Priority.HIGH);
+                                    assertThat(position).isInstanceOf(MapItem.Position.Point.class);
+                                    MapItem.Position.Point point = (MapItem.Position.Point) position;
+                                    assertThat(point.x()).isCloseTo(0.2, Offset.offset(0.01));
+                                    assertThat(point.y()).isCloseTo(0.8, Offset.offset(0.01));
+                                });
+                    });
         });
     }
-
-
-
-
 
 
 
