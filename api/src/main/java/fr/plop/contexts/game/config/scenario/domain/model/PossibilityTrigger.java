@@ -34,11 +34,6 @@ public sealed interface PossibilityTrigger permits
     }
 
     record SpaceGoIn(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
-
-        public SpaceGoIn(BoardSpace.Id spaceId) {
-            this(new Id(), spaceId);
-        }
-
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.GoIn goInEvent && goInEvent.spaceId().equals(spaceId);

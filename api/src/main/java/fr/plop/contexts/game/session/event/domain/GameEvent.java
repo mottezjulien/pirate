@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.session.event.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.time.TimeUnit;
@@ -27,6 +28,11 @@ public interface GameEvent {
         public boolean is(TimeUnit timeUnit) {
             return this.timeUnit.equals(timeUnit);
         }
+    }
+
+
+    record GoalActive(GameSession.Id sessionId, GamePlayer.Id playerId, TimeUnit timeUnit, ScenarioConfig.Step.Id stepId) implements GameEvent {
+
     }
 
 }

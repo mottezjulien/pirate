@@ -5,6 +5,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.TimeUnit;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
     public interface OutPort {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
 
-        void doGoal(GamePlayer.Id playerId, Consequence.ScenarioStep goal);
+        void doGoal(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.ScenarioStep goal);
 
         void doGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget goalTarget);
 
@@ -51,35 +52,27 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
     private void doAction(GameEvent event, Possibility possibility) {
         possibility.consequences()
-                .forEach(consequence -> _do(event.sessionId(), event.playerId(), consequence));
+                .forEach(consequence -> _do(event, consequence));
         outPort.saveAction(event.playerId(), possibility.id(), event.timeUnit());
     }
 
-    private void _do(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence consequence) {
+    private void _do(GameEvent event, Consequence consequence) {
         switch (consequence) {
-            case Consequence.ScenarioStep goal -> outPort.doGoal(playerId, goal);
-
-            case Consequence.ScenarioTarget goalTarget -> outPort.doGoalTarget(playerId, goalTarget);
-
-            case Consequence.DisplayTalkAlert alert -> outPort.doAlert(sessionId, playerId, alert);
-
-            case Consequence.SessionEnd gameOver -> outPort.doGameOver(sessionId, playerId, gameOver);
+            case Consequence.ScenarioStep goal -> {
+                outPort.doGoal(event.sessionId(), event.playerId(), goal);
+                if (goal.state() == ScenarioGoal.State.ACTIVE) {
+                    this.fire(new GameEvent.GoalActive(event.sessionId(), event.playerId(), event.timeUnit(), goal.stepId()));
+                }
+            }
+            case Consequence.ScenarioTarget goalTarget -> outPort.doGoalTarget(event.playerId(), goalTarget);
+            case Consequence.DisplayTalkAlert alert -> outPort.doAlert(event.sessionId(), event.playerId(), alert);
+            case Consequence.SessionEnd gameOver -> outPort.doGameOver(event.sessionId(), event.playerId(), gameOver);
 
             //TODO
-            case Consequence.DisplayTalkOptions messageConfirm -> {
-
-            }
-
-            case Consequence.ObjetAdd addObjet -> {
-
-            }
-            case Consequence.ObjetRemove removeObjet -> {
-
-            }
-            case Consequence.UpdatedMetadata updatedMetadata -> {
-
-            }
-
+            case Consequence.DisplayTalkOptions messageConfirm -> { }
+            case Consequence.ObjetAdd addObjet -> { }
+            case Consequence.ObjetRemove removeObjet -> { }
+            case Consequence.UpdatedMetadata updatedMetadata -> { }
         }
 
     }

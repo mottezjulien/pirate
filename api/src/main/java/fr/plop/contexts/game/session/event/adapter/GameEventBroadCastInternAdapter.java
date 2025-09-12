@@ -42,14 +42,15 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
 
     //TODO Cache ??
     @Override
-    public Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId) {
+    public Stream<Possibility> findPossibilities(GameSession.Id sessionId, GamePlayer.Id playerId) {
         return goalRepository.fullByPlayerId(playerId.value())
                 .stream()
                 .flatMap(goalEntity -> goalEntity.getStep().toModel().possibilities().stream());
     }
 
     @Override
-    public void doGoal(GamePlayer.Id playerId, Consequence.ScenarioStep consequence) {
+    public void doGoal(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.ScenarioStep consequence) {
+        // Only persist/update state here; domain will orchestrate follow-up events
         scenarioAdapter.updateStateOrCreateGoal(playerId, consequence);
     }
 
@@ -88,5 +89,4 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
         return actionRepository.fullByPlayerId(id.value())
                 .stream().map(GamePlayerActionEntity::toModel).toList();
     }
-
 }

@@ -36,7 +36,7 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         when(outputPort.findPossibilities(sessionId, playerId)).thenReturn(Stream.empty());
         broadCast.fire(goInEvent());
         verify(outputPort, never()).doAlert(any(), any(), any());
-        verify(outputPort, never()).doGoal(any(), any());
+        verify(outputPort, never()).doGoal(any(), any(), any());
     }
 
     @Test
@@ -47,7 +47,7 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         broadCast.fire(goInEvent());
 
         verify(outputPort).doAlert(sessionId, playerId, ((Consequence.DisplayTalkAlert) consequences.getFirst()));
-        verify(outputPort).doGoal(playerId, ((Consequence.ScenarioStep) consequences.get(1)));
+        verify(outputPort).doGoal(sessionId, playerId, ((Consequence.ScenarioStep) consequences.get(1)));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         broadCast.fire(goInEvent());
 
         verify(outputPort, never()).doAlert(any(), any(), any());
-        verify(outputPort, never()).doGoal(any(), any());
+        verify(outputPort, never()).doGoal(any(), any(), any());
     }
 
     private List<Consequence> consequences() {
