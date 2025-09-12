@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.tools.StringTools;
 
@@ -11,14 +12,16 @@ public sealed interface PossibilityCondition permits
         PossibilityCondition.OutsideSpace,
         PossibilityCondition.AbsoluteTime,
         PossibilityCondition.RelativeTimeAfterOtherTrigger,
-        PossibilityCondition.InStep {
+        PossibilityCondition.StepIn,
+        PossibilityCondition.StepTarget {
 
     record Id(String value) {
-
         public Id() {
             this(StringTools.generate());
         }
     }
+
+    Id id();
 
     record InsideSpace(Id id, BoardSpace.Id spaceId) implements PossibilityCondition {
 
@@ -36,7 +39,11 @@ public sealed interface PossibilityCondition permits
 
     }
 
-    record InStep(Id id, ScenarioConfig.Step.Id stepId) implements PossibilityCondition {
+    record StepIn(Id id, ScenarioConfig.Step.Id stepId) implements PossibilityCondition {
+
+    }
+
+    record StepTarget(Id id, ScenarioConfig.Target.Id targetId) implements PossibilityCondition {
 
     }
 

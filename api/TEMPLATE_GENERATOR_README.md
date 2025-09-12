@@ -179,7 +179,7 @@ Les **possibilities** définissent quand et comment les événements se déclenc
 
 **6. Clic sur élément de carte**
 ```
---------- Trigger:MAPCLICK:REFERENCE_ELEMENT
+--------- Trigger:CLMAPOBJECTICKMAPOBJECT:REFERENCE_ELEMENT
 ```
 *Se déclenche quand le joueur clique sur un élément référencé sur la carte*
 
@@ -213,7 +213,13 @@ Les **possibilities** définissent quand et comment les événements se déclenc
 --------- Condition:OUTSIDESPACE:ID_ZONE
 ```
 
-**4. Logique ET/OU**
+**4. Objectif dans un état spécifique**
+```
+--------- Condition:STEPTARGET:ID_TARGET
+```
+*Se déclenche seulement si l'objectif spécifié est déjà accompli (state: success)*
+
+**5. Logique ET/OU**
 ```
 --------- ConditionType:AND
 --------- ConditionType:OR
@@ -350,6 +356,167 @@ Les références permettent de lier les éléments entre eux et de simplifier l'
 ```
 --------- Consequence:GoalTarget:targetId:MON_TARGET:state:active
 ```
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
+
+### 💡 Exemples pratiques
+
+#### Exemple : Système séquentiel avec conditions
+```
+--- Step:FR:Étape tutorial:EN:Tutorial step
+------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office  
+------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+
+------ Possibility
+--------- Trigger:GOINSPACE:Office
+--------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+
+------ Possibility  
+--------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+--------- Condition:StepTarget:ENTER_OFFICE
+--------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+--------- Consequence:Alert
+------------ FR:Vous avez fouillé le bureau avec succès !
+------------ EN:You searched the desk successfully!
+```
+
+**Principe :** Le joueur doit d'abord entrer dans le bureau (premier objectif), puis cliquer sur le bureau sur la carte (second objectif). La condition `StepTarget:ENTER_OFFICE` s'assure que le clic n'est actif que si le premier objectif est déjà accompli.
 
 ---
 

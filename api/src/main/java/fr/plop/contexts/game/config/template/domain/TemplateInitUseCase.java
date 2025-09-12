@@ -79,7 +79,7 @@ public class TemplateInitUseCase {
         ScenarioConfig.Target target1 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va au salon")), Optional.empty(), false);
         ScenarioConfig.Target target2 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Va à la cuisine")), Optional.of(i18n("là où on fait la cuisine")), true);
 
-        PossibilityTrigger triggerGoOut = new PossibilityTrigger.GoOutSpace(new PossibilityTrigger.Id(), board.spaces().getFirst().id());
+        PossibilityTrigger triggerGoOut = new PossibilityTrigger.SpaceGoOut(new PossibilityTrigger.Id(), board.spaces().getFirst().id());
 
         Consequence consequenceGoalTarget = new Consequence.ScenarioTarget(new Consequence.Id(), stepId, target1.id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS);
         Possibility possibilityThree = new Possibility(new PossibilityRecurrence.Times(3), triggerGoOut, List.of(), AndOrOr.AND, List.of(consequenceGoalTarget));
@@ -87,7 +87,7 @@ public class TemplateInitUseCase {
         Consequence consequenceAlert = new Consequence.DisplayTalkAlert(new Consequence.Id(), i18n("Vous êtes sorti du bureau"));
         Possibility possibilityAlways = new Possibility(new PossibilityRecurrence.Always(), triggerGoOut, List.of(), AndOrOr.AND, List.of(consequenceAlert));
 
-        PossibilityTrigger trigger2 = new PossibilityTrigger.GoInSpace(new PossibilityTrigger.Id(), board.spaces().get(1).id());
+        PossibilityTrigger trigger2 = new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), board.spaces().get(1).id());
         Consequence consequence2 = new Consequence.DisplayTalkAlert(new Consequence.Id(), i18n("Vous êtes dans la cuisine"));
         Consequence consequence2bis = new Consequence.ScenarioStep(new Consequence.Id(), stepId, fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS);
         List<Consequence> consequences2 = List.of(consequence2, consequence2bis);
@@ -171,8 +171,8 @@ public class TemplateInitUseCase {
         ScenarioConfig.Target target1 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Récupérer une clef")), Optional.of(i18n("Il va falloir cliquer sur le picto main sur la carte du bureau et saisir le clef à l'intérieur")), true);
         ScenarioConfig.Target target2 = new ScenarioConfig.Target(new ScenarioConfig.Target.Id(), Optional.of(i18n("Sortir du bureau")), Optional.empty(), false);
 
-        PossibilityTrigger triggerGoIn = new PossibilityTrigger.GoInSpace(bureauBoardId);
-        PossibilityTrigger triggerGoOut = new PossibilityTrigger.GoOutSpace(bureauBoardId);
+        PossibilityTrigger triggerGoIn = new PossibilityTrigger.SpaceGoIn(bureauBoardId);
+        PossibilityTrigger triggerGoOut = new PossibilityTrigger.SpaceGoOut(bureauBoardId);
 
         I18n oui = i18n("Oui");
         I18n no = i18n("No");
@@ -189,7 +189,7 @@ public class TemplateInitUseCase {
         Possibility welcomePossibility = new Possibility(triggerGoIn, welcomeConsequence);
 
         //After value bienvenue
-        PossibilityTrigger welcomeNoTrigger = new PossibilityTrigger.SelectTalkOption(welcomeNo.id());
+        PossibilityTrigger welcomeNoTrigger = new PossibilityTrigger.TalkSelectOption(welcomeNo.id());
         Possibility welcomeNoPossibility = new Possibility(welcomeNoTrigger, outConsequence);
         //TODO Yes
 

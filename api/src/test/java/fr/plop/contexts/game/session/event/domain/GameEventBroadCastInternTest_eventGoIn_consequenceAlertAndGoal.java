@@ -71,8 +71,8 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         return new GameEvent.GoIn(sessionId, playerId, TimeUnit.ofMinutes(0), spaceId);
     }
 
-    private PossibilityTrigger.GoInSpace triggerGoIn(BoardSpace.Id spaceId) {
-        return new PossibilityTrigger.GoInSpace(new PossibilityTrigger.Id(), spaceId);
+    private PossibilityTrigger.SpaceGoIn triggerGoIn(BoardSpace.Id spaceId) {
+        return new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), spaceId);
     }
 
 }

@@ -12,11 +12,13 @@ import java.util.List;
 import java.util.Optional;
 
 public sealed interface PossibilityTrigger permits
-        PossibilityTrigger.GoInSpace,
-        PossibilityTrigger.GoOutSpace,
+        PossibilityTrigger.SpaceGoIn,
+        PossibilityTrigger.SpaceGoOut,
+        PossibilityTrigger.StepActive,
         PossibilityTrigger.AbsoluteTime,
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
-        PossibilityTrigger.SelectTalkOption {
+        PossibilityTrigger.TalkSelectOption,
+        PossibilityTrigger.ClickMapObject {
 
 
     record Id(String value) {
@@ -31,9 +33,9 @@ public sealed interface PossibilityTrigger permits
         return false;
     }
 
-    record GoInSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
+    record SpaceGoIn(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
 
-        public GoInSpace(BoardSpace.Id spaceId) {
+        public SpaceGoIn(BoardSpace.Id spaceId) {
             this(new Id(), spaceId);
         }
 
@@ -43,9 +45,9 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record GoOutSpace(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
+    record SpaceGoOut(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
 
-        public GoOutSpace(BoardSpace.Id spaceId) {
+        public SpaceGoOut(BoardSpace.Id spaceId) {
             this(new Id(), spaceId);
         }
 
@@ -53,6 +55,10 @@ public sealed interface PossibilityTrigger permits
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.GoOut goOutEvent && goOutEvent.spaceId().equals(spaceId);
         }
+    }
+
+    record StepActive(Id id) implements PossibilityTrigger {
+
     }
 
     record AbsoluteTime(Id id, TimeUnit value) implements PossibilityTrigger {
@@ -84,9 +90,21 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record SelectTalkOption(Id id, TalkOptions.Option.Id optionId) implements PossibilityTrigger {
-        public SelectTalkOption(TalkOptions.Option.Id optionId) {
+    record TalkSelectOption(Id id, TalkOptions.Option.Id optionId) implements PossibilityTrigger {
+        public TalkSelectOption(TalkOptions.Option.Id optionId) {
             this(new Id(), optionId);
+        }
+    }
+
+    record ClickMapObject(Id id, String objectReference) implements PossibilityTrigger {
+        public ClickMapObject(String objectReference) {
+            this(new Id(), objectReference);
+        }
+        
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> actions) {
+            // TODO: Implement when MapClick GameEvent is added
+            return false;
         }
     }
 

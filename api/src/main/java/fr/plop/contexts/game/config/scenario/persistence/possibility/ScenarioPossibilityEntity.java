@@ -3,10 +3,10 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility;
 
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.entity.ScenarioPossibilityConditionAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity.ScenarioPossibilityTriggerAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerEntity;
 import fr.plop.generic.enumerate.AndOrOr;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,13 +39,13 @@ public class ScenarioPossibilityEntity {
 
     @ManyToOne
     @JoinColumn(name = "trigger_id")
-    private ScenarioPossibilityTriggerAbstractEntity trigger;
+    private ScenarioPossibilityTriggerEntity trigger;
 
     @ManyToMany
     @JoinTable(name = "TEST2_RELATION_SCENARIO_POSSIBILITY_CONDITION",
             joinColumns = @JoinColumn(name = "possibility_id"),
             inverseJoinColumns = @JoinColumn(name = "condition_id"))
-    private Set<ScenarioPossibilityConditionAbstractEntity> conditions = new HashSet<>();
+    private Set<ScenarioPossibilityConditionEntity> conditions = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "condition_type")
@@ -82,19 +82,19 @@ public class ScenarioPossibilityEntity {
         this.recurrence = recurrence;
     }
 
-    public ScenarioPossibilityTriggerAbstractEntity getTrigger() {
+    public ScenarioPossibilityTriggerEntity getTrigger() {
         return trigger;
     }
 
-    public void setTrigger(ScenarioPossibilityTriggerAbstractEntity trigger) {
+    public void setTrigger(ScenarioPossibilityTriggerEntity trigger) {
         this.trigger = trigger;
     }
 
-    public Set<ScenarioPossibilityConditionAbstractEntity> getConditions() {
+    public Set<ScenarioPossibilityConditionEntity> getConditions() {
         return conditions;
     }
 
-    public void setConditions(Set<ScenarioPossibilityConditionAbstractEntity> conditions) {
+    public void setConditions(Set<ScenarioPossibilityConditionEntity> conditions) {
         this.conditions = conditions;
     }
 
@@ -118,7 +118,7 @@ public class ScenarioPossibilityEntity {
         return new Possibility(new Possibility.Id(id),
                 recurrence.toModel(),
                 trigger.toModel(),
-                conditions.stream().map(ScenarioPossibilityConditionAbstractEntity::abstractToModel).toList(),
+                conditions.stream().map(ScenarioPossibilityConditionEntity::toModel).toList(),
                 conditionType,
                 consequences.stream().map(ScenarioPossibilityConsequenceAbstractEntity::toModel).toList());
     }

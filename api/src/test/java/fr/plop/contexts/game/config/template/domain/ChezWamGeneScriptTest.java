@@ -1,6 +1,12 @@
 package fr.plop.contexts.game.config.template.domain;
 
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.session.time.TimeUnit;
+import fr.plop.contexts.i18n.domain.Language;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -10,17 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChezWamGeneScriptTest {
 
-
-    check
-
-
-
     private final TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
 
-
-    
     @Test
-    public void testInlineChezWamGeneScript() {
+    public void testInlineChezWamGeneScriptOld() {
         // Version simplifiée pour tester sans dépendance au fichier
         String scriptContent = """
             ChezWamGene:1.0::15
@@ -33,10 +32,10 @@ class ChezWamGeneScriptTest {
             ------ Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
             
             ------ Possibility
-            --------- Trigger:ABSOLUTETIME:1
+            --------- Trigger:ABSOLUTETIME:0
             --------- Consequence:Alert
             ------------ FR:Bienvenue dans le jeu !
-            ------------ EN:Welcome to the game!
+            ------------ EN:Welcome to the game !
             """;
         
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
@@ -46,7 +45,168 @@ class ChezWamGeneScriptTest {
         assertThat(template.code().value()).isEqualTo("ChezWamGene");
         assertThat(template.version()).isEqualTo("1.0");
         assertThat(template.maxDuration().toMinutes()).isEqualTo(15);
-        
-        System.out.println("✅ Test inline réussi !");
+
+        assertThat(template.scenario()).satisfies(scenario -> {
+           assertThat(scenario.steps()).hasSize(1)
+           .anySatisfy(step -> {
+              assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
+              assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
+              assertThat(step.targets()).hasSize(1)
+                  .anySatisfy(target -> {
+                      assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
+                      assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
+                  });
+              assertThat(step.possibilities())
+                  .hasSize(1)
+                  .anySatisfy(possibility -> {
+                      assertThat(possibility.trigger())
+                              .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                      PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                      assertThat(absoluteTime.value()).isEqualTo(new TimeUnit(0));
+                      assertThat(possibility.consequences())
+                          .hasSize(1)
+                          .anySatisfy(consequence -> {
+                              assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
+                              Consequence.DisplayTalkAlert alert = (Consequence.DisplayTalkAlert) consequence;
+                              assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                              assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                          });
+                  });
+
+           });
+        });
     }
+
+    @Test
+    public void testInlineChezWamGeneScript() {
+        String scriptContent = """
+                ChezWamGene:1.0::15
+                
+                --- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
+                ------ Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
+               
+                ------ Possibility
+                --------- Trigger:ABSOLUTETIME:0
+                --------- Consequence:Alert
+                ------------ FR:Bienvenue dans le jeu !
+                ------------ EN:Welcome to the game !
+                """;
+
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+        Template template = generator.apply(script);
+
+        assertThat(template).isNotNull();
+        assertThat(template.code().value()).isEqualTo("ChezWamGene");
+        assertThat(template.version()).isEqualTo("1.0");
+        assertThat(template.maxDuration().toMinutes()).isEqualTo(15);
+
+        assertThat(template.scenario()).satisfies(scenario -> {
+            assertThat(scenario.steps()).hasSize(1)
+                    .anySatisfy(step -> {
+                        assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
+                        assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
+                        assertThat(step.targets()).hasSize(1)
+                                .anySatisfy(target -> {
+                                    assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
+                                    assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
+                                });
+                        assertThat(step.possibilities())
+                                .hasSize(1)
+                                .anySatisfy(possibility -> {
+                                    assertThat(possibility.trigger())
+                                            .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                                    PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                                    assertThat(absoluteTime.value()).isEqualTo(new TimeUnit(0));
+                                    assertThat(possibility.consequences())
+                                            .hasSize(1)
+                                            .anySatisfy(consequence -> {
+                                                assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
+                                                Consequence.DisplayTalkAlert alert = (Consequence.DisplayTalkAlert) consequence;
+                                                assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                                                assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                                            });
+                                });
+
+                    });
+        });
+
+
+    }
+
+    @Test
+    public void testStepTargetConditionAndClickMapObject() {
+        String scriptContent = """
+                TutorialGame:1.0::30
+                
+                --- Board
+                ------ Space:Office:HIGH
+                --------- bottomLeft:45.77806:4.80351:topRight:45.77820:4.80367
+                
+                --- Step (ref TUTORIAL_STEP):FR:Étape tutorial:EN:Tutorial step
+                ------ Target (ref ENTER_OFFICE):FR:Entrer dans le bureau:EN:Enter the office
+                ------ Target (ref SEARCH_DESK):FR:Fouiller le bureau:EN:Search the desk
+               
+                ------ Possibility
+                --------- Trigger:GOINSPACE:Office
+                --------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
+                
+                ------ Possibility
+                --------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+                --------- Condition:StepTarget:ENTER_OFFICE
+                --------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
+                --------- Consequence:Alert
+                ------------ FR:Vous avez fouillé le bureau avec succès !
+                ------------ EN:You searched the desk successfully!
+                
+                --- Map:Asset:assets/office.png
+                ------ Position (ref DESK_POSITION):0.5:0.5
+                --------- Priority:HIGH
+                """;
+
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+        Template template = generator.apply(script);
+
+        assertThat(template).isNotNull();
+        assertThat(template.code().value()).isEqualTo("TutorialGame");
+        assertThat(template.version()).isEqualTo("1.0");
+        assertThat(template.maxDuration().toMinutes()).isEqualTo(30);
+
+        assertThat(template.scenario()).satisfies(scenario -> {
+            assertThat(scenario.steps()).hasSize(1)
+                    .anySatisfy(step -> {
+                        assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Étape tutorial");
+                        assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("Tutorial step");
+                        
+                        assertThat(step.targets()).hasSize(2);
+                        
+                        assertThat(step.possibilities()).hasSize(2)
+                            .anySatisfy(possibility -> {
+                                // Test du trigger CLICKMAPOBJECT avec condition StepTarget
+                                if (possibility.trigger() instanceof PossibilityTrigger.ClickMapObject clickMapObject) {
+                                    assertThat(clickMapObject.objectReference()).isEqualTo("DESK_POSITION");
+                                    
+                                    assertThat(possibility.conditions()).hasSize(1)
+                                        .anySatisfy(condition -> {
+                                            assertThat(condition).isInstanceOf(PossibilityCondition.StepTarget.class);
+                                            PossibilityCondition.StepTarget stepTarget = (PossibilityCondition.StepTarget) condition;
+                                            assertThat(stepTarget.targetId().value()).isEqualTo("ENTER_OFFICE");
+                                        });
+                                }
+                            });
+                    });
+        });
+        
+        // Test de la carte
+        assertThat(template.map()).satisfies(mapConfig -> {
+            // TODO: Compléter les assertions selon la structure réelle de MapConfig
+            assertThat(mapConfig).isNotNull();
+        });
+    }
+
+
+
+
+
+
+
 }

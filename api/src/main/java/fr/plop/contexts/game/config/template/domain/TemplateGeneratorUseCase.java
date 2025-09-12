@@ -743,7 +743,7 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("InStep missing required parameter: stepId");
                 }
 
-                return new PossibilityCondition.InStep(
+                return new PossibilityCondition.StepIn(
                         new PossibilityCondition.Id(),
                         new ScenarioConfig.Step.Id(stepIdStr)
                 );
@@ -765,6 +765,24 @@ public class TemplateGeneratorUseCase {
                 return new PossibilityCondition.InsideSpace(
                         new PossibilityCondition.Id(),
                         spaceId
+                );
+            }
+            case "steptarget" -> {
+                // Format: "CONDITION:StepTarget:targetId:TARGET_REF" ou "CONDITION:StepTarget:TARGET_REF" (legacy)
+                String targetIdStr;
+                if (tree.params().size() >= 3 && "targetId".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: StepTarget:targetId:TARGET_REF
+                    targetIdStr = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: StepTarget:TARGET_REF
+                    targetIdStr = tree.params().get(1);
+                } else {
+                    throw new TemplateException("StepTarget missing required parameter: targetId");
+                }
+
+                return new PossibilityCondition.StepTarget(
+                        new PossibilityCondition.Id(),
+                        new ScenarioConfig.Target.Id(targetIdStr)
                 );
             }
         }
@@ -934,7 +952,7 @@ public class TemplateGeneratorUseCase {
                 }
 
                 BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
-                return new PossibilityTrigger.GoInSpace(
+                return new PossibilityTrigger.SpaceGoIn(
                         new PossibilityTrigger.Id(),
                         spaceId
                 );
@@ -953,7 +971,7 @@ public class TemplateGeneratorUseCase {
                 }
 
                 BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
-                return new PossibilityTrigger.GoOutSpace(
+                return new PossibilityTrigger.SpaceGoOut(
                         new PossibilityTrigger.Id(),
                         spaceId
                 );
@@ -1005,9 +1023,27 @@ public class TemplateGeneratorUseCase {
                     resolvedOptionId.set(new TalkOptions.Option.Id(optionReference));
                 }
 
-                return new PossibilityTrigger.SelectTalkOption(
+                return new PossibilityTrigger.TalkSelectOption(
                         new PossibilityTrigger.Id(),
                         resolvedOptionId.get()
+                );
+            }
+            case "clickmapobject" -> {
+                // Format: "Trigger:ClickMapObject:objectReference:REF_OBJECT" ou "Trigger:ClickMapObject:REF_OBJECT" (legacy)
+                String objectReference;
+                if (tree.params().size() >= 3 && "objectReference".equalsIgnoreCase(tree.params().get(1))) {
+                    // Nouveau format key:value: ClickMapObject:objectReference:REF_OBJECT
+                    objectReference = tree.params().get(2);
+                } else if (tree.params().size() == 2) {
+                    // Legacy format: ClickMapObject:REF_OBJECT
+                    objectReference = tree.params().get(1);
+                } else {
+                    throw new TemplateException("ClickMapObject missing required parameter: objectReference");
+                }
+
+                return new PossibilityTrigger.ClickMapObject(
+                        new PossibilityTrigger.Id(),
+                        objectReference
                 );
             }
         }

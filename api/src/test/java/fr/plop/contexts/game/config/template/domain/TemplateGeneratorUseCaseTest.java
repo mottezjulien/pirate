@@ -227,8 +227,8 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
-                                assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.GoInSpace.class);
-                                PossibilityTrigger.GoInSpace trigger = (PossibilityTrigger.GoInSpace) possibility.trigger();
+                                assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
+                                PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
                                 assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
                                 assertThat(possibility.conditions())
                                         .hasSize(2)
@@ -268,8 +268,8 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.conditions())
                                         .hasSize(2)
                                         .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.InStep.class);
-                                            assertThat(((PossibilityCondition.InStep) condition).stepId()).isEqualTo(new ScenarioConfig.Step.Id("0987"));
+                                            assertThat(condition).isInstanceOf(PossibilityCondition.StepIn.class);
+                                            assertThat(((PossibilityCondition.StepIn) condition).stepId()).isEqualTo(new ScenarioConfig.Step.Id("0987"));
                                         })
                                         .anySatisfy(condition -> {
                                             assertThat(condition).isInstanceOf(PossibilityCondition.OutsideSpace.class);
@@ -340,8 +340,8 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
-                                assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.GoInSpace.class);
-                                PossibilityTrigger.GoInSpace trigger = (PossibilityTrigger.GoInSpace) possibility.trigger();
+                                assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
+                                PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
                                 assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("EFG"));
                                 assertThat(possibility.conditions()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
@@ -542,12 +542,12 @@ public class TemplateGeneratorUseCaseTest {
 
         List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
         assertThat(possibilities.getFirst().trigger())
-                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
-        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilities.getFirst().trigger();
+                .isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
+        PossibilityTrigger.SpaceGoIn goInSpace = (PossibilityTrigger.SpaceGoIn) possibilities.getFirst().trigger();
         assertThat(goInSpace.spaceId()).isEqualTo(spaces.getFirst().id());
         assertThat(possibilities.get(1).trigger())
-                .isInstanceOf(PossibilityTrigger.GoOutSpace.class);
-        PossibilityTrigger.GoOutSpace goOutSpace = (PossibilityTrigger.GoOutSpace) possibilities.get(1).trigger();
+                .isInstanceOf(PossibilityTrigger.SpaceGoOut.class);
+        PossibilityTrigger.SpaceGoOut goOutSpace = (PossibilityTrigger.SpaceGoOut) possibilities.get(1).trigger();
         assertThat(goOutSpace.spaceId()).isEqualTo(spaces.get(1).id());
 
     }
@@ -586,8 +586,8 @@ public class TemplateGeneratorUseCaseTest {
 
         List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
         assertThat(possibilities.getFirst().trigger())
-                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
-        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilities.getFirst().trigger();
+                .isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
+        PossibilityTrigger.SpaceGoIn goInSpace = (PossibilityTrigger.SpaceGoIn) possibilities.getFirst().trigger();
         assertThat(goInSpace.spaceId()).isEqualTo(spaces.getFirst().id());
 
         assertThat(possibilities.getFirst().consequences().getFirst()).isInstanceOf(Consequence.DisplayTalkOptions.class);
@@ -650,8 +650,8 @@ public class TemplateGeneratorUseCaseTest {
         Possibility possibilityFirst = step.possibilities().getFirst();
 
         assertThat(possibilityFirst.trigger())
-                .isInstanceOf(PossibilityTrigger.GoInSpace.class);
-        PossibilityTrigger.GoInSpace goInSpace = (PossibilityTrigger.GoInSpace) possibilityFirst.trigger();
+                .isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
+        PossibilityTrigger.SpaceGoIn goInSpace = (PossibilityTrigger.SpaceGoIn) possibilityFirst.trigger();
         assertThat(goInSpace.id()).isNotNull();
         assertThat(goInSpace.spaceId()).isEqualTo(new BoardSpace.Id("abcd"));
 
@@ -671,8 +671,8 @@ public class TemplateGeneratorUseCaseTest {
         Possibility possibilitySecond = step.possibilities().get(1);
 
         assertThat(possibilitySecond.trigger())
-                .isInstanceOf(PossibilityTrigger.SelectTalkOption.class);
-        PossibilityTrigger.SelectTalkOption selectTalkOption = (PossibilityTrigger.SelectTalkOption) possibilitySecond.trigger();
+                .isInstanceOf(PossibilityTrigger.TalkSelectOption.class);
+        PossibilityTrigger.TalkSelectOption selectTalkOption = (PossibilityTrigger.TalkSelectOption) possibilitySecond.trigger();
         assertThat(selectTalkOption.id()).isNotNull();
         assertThat(selectTalkOption.optionId()).isEqualTo(displayTalkOptions.value().options().getFirst().id());
 

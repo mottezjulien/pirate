@@ -26,14 +26,14 @@ import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEnti
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityRepository;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionRepository;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.entity.ScenarioPossibilityConditionAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.ScenarioPossibilityConsequenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceRepository;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerRepository;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.entity.ScenarioPossibilityTriggerAbstractEntity;
 import fr.plop.contexts.game.config.talk.TalkOptionItemEntity;
 import fr.plop.contexts.game.config.talk.TalkOptionItemRepository;
 import fr.plop.contexts.game.config.talk.TalkOptions;
@@ -211,11 +211,11 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         ScenarioPossibilityRecurrenceAbstractEntity recurrenceEntity = ScenarioPossibilityRecurrenceAbstractEntity.fromModel(possibility.recurrence());
         possibilityEntity.setRecurrence(recurrenceRepository.save(recurrenceEntity));
 
-        ScenarioPossibilityTriggerAbstractEntity triggerEntity = ScenarioPossibilityTriggerAbstractEntity.fromModel(possibility.trigger());
+        ScenarioPossibilityTriggerEntity triggerEntity = ScenarioPossibilityTriggerEntity.fromModel(possibility.trigger());
         possibilityEntity.setTrigger(triggerRepository.save(triggerEntity));
 
         possibility.conditions().forEach(condition -> {
-            ScenarioPossibilityConditionAbstractEntity conditionEntity = ScenarioPossibilityConditionAbstractEntity
+            ScenarioPossibilityConditionEntity conditionEntity = ScenarioPossibilityConditionEntity
                     .fromModel(condition);
             possibilityEntity.getConditions().add(conditionRepository.save(conditionEntity));
         });
