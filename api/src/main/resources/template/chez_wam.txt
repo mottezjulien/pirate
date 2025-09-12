@@ -1,5 +1,4 @@
 ChezWamGene:1.0::15
-
 --- Board
 ------ Space:Bureau:HIGH
 --------- bottomLeft:45.77806:4.80351:topRight:45.77820:4.80367
