@@ -50,7 +50,7 @@ class GameMenuViewModel {
 
   final GameSessionUseCase sessionUseCase = GameSessionUseCase();
 
-  bool get hasGame => GameSessionCurrent.hasSession;
+  bool get hasGame => GameCurrent.hasSession;
 
   Future<void> start() async {
     await sessionUseCase.start();

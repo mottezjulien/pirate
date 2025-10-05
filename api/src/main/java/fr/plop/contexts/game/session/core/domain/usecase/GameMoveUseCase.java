@@ -7,10 +7,10 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventContext;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
-import fr.plop.contexts.game.session.time.TimeUnit;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
@@ -47,7 +47,7 @@ public class GameMoveUseCase {
     }
 
     public void apply(GameSession.Id sessionId, GamePlayer player, Request request) throws GameException {
-
+        GameEventContext context = new GameEventContext(sessionId, player.id());
         BoardConfig board = outPort.boardBySessionId(sessionId);
 
         List<BoardSpace.Id> spaceInIds = player.spaceIds();
@@ -57,14 +57,11 @@ public class GameMoveUseCase {
         if (!spaceInIds.equals(nextIds)) {
             outPort.savePosition(player.id(), nextIds);
 
-            // TODO : BOF, c'est pas au use case de setter la date ??
-            TimeUnit timeClick = timer.current(sessionId);
-
             List<BoardSpace.Id> removed = ListTools.removed(spaceInIds, nextIds);
-            removed.forEach(space -> broadCast.fire(new GameEvent.GoOut(sessionId, player.id(), timeClick, space)));
+            removed.forEach(space -> broadCast.fire(new GameEvent.GoOut(space), context));
 
             List<BoardSpace.Id> added = ListTools.added(spaceInIds, nextIds);
-            added.forEach(space -> broadCast.fire(new GameEvent.GoIn(sessionId, player.id(), timeClick, space)));
+            added.forEach(space -> broadCast.fire(new GameEvent.GoIn(space), context));
             pushPort.push(new PushEvent.GameMove(sessionId, player.id()));
         }
 

@@ -14,8 +14,7 @@ public record ScenarioSession(ScenarioConfig config, List<ScenarioGoal> goals) {
     }
 
     public void init(GamePlayer.Id playerId) {
-        config.firstSteps()
-                .forEach(step -> goals.add(new ScenarioGoal(playerId, step.id(), ScenarioGoal.State.ACTIVE)));
+        goals.add(new ScenarioGoal(playerId, config.firstStep().id(), ScenarioGoal.State.ACTIVE));
     }
 
     public Stream<ScenarioGoal> goals(GamePlayer.Id playerId) {

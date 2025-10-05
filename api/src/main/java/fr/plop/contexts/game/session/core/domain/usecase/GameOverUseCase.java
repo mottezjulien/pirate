@@ -5,7 +5,7 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 
 import java.util.List;
 import java.util.stream.Stream;

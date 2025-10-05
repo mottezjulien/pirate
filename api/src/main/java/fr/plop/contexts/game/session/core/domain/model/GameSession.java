@@ -2,6 +2,7 @@ package fr.plop.contexts.game.session.core.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSession;
 import fr.plop.generic.tools.StringTools;
@@ -10,10 +11,10 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
-                          BoardConfig board) {
+                          BoardConfig board, TalkConfig talk) {
 
-    public static GameSession build(Atom atom, ScenarioConfig scenarioConfig, BoardConfig boardConfig) {
-        return new GameSession(atom, GameSession.State.ACTIVE, List.of(), ScenarioSession.build(scenarioConfig), boardConfig);
+    public static GameSession build(Atom atom, ScenarioConfig scenarioConfig, BoardConfig boardConfig, TalkConfig talkConfig) {
+        return new GameSession(atom, GameSession.State.ACTIVE, List.of(), ScenarioSession.build(scenarioConfig), boardConfig, talkConfig);
     }
 
     public record Id(String value) {

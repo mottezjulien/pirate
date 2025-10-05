@@ -28,9 +28,9 @@ class GameSessionUseCase {
 
   startSession() async {
     final GameSessionRepository repository = GameSessionRepository();
-    final GameSession session = await repository.createLyonPirate();
+    final GameSession session = await repository.create();
     session.init();
-    GameSessionCurrent.session = session;
+    GameCurrent.session = session;
   }
 
 }

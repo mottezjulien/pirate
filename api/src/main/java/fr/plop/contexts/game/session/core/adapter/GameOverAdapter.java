@@ -6,8 +6,8 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
-import fr.plop.contexts.i18n.domain.I18n;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.persistence.I18nEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;

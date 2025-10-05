@@ -5,8 +5,8 @@ import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.session.time.TimeUnit;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.subs.i18n.domain.Language;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
@@ -60,14 +60,14 @@ class TemplateGeneratorUseCaseComplexeTest {
                       assertThat(possibility.trigger())
                               .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                       PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                      assertThat(absoluteTime.value()).isEqualTo(new TimeUnit(0));
+                      assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
                       assertThat(possibility.consequences())
                           .hasSize(1)
                           .anySatisfy(consequence -> {
-                              assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
-                              Consequence.DisplayTalkAlert alert = (Consequence.DisplayTalkAlert) consequence;
-                              assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
-                              assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                              assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
+                              Consequence.DisplayMessage displayMessage = (Consequence.DisplayMessage) consequence;
+                              assertThat(displayMessage.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                              assertThat(displayMessage.value().value(Language.EN)).isEqualTo("Welcome to the game !");
                           });
                   });
 
@@ -114,12 +114,12 @@ class TemplateGeneratorUseCaseComplexeTest {
                                     assertThat(possibility.trigger())
                                             .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                     PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                    assertThat(absoluteTime.value()).isEqualTo(new TimeUnit(0));
+                                    assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
                                     assertThat(possibility.consequences())
                                             .hasSize(1)
                                             .anySatisfy(consequence -> {
-                                                assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
-                                                Consequence.DisplayTalkAlert alert = (Consequence.DisplayTalkAlert) consequence;
+                                                assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
+                                                Consequence.DisplayMessage alert = (Consequence.DisplayMessage) consequence;
                                                 assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
                                                 assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
                                             });

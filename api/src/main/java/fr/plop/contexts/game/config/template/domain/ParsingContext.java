@@ -18,6 +18,8 @@ public class ParsingContext {
     private final Map<String, Object> references = new HashMap<>();
     private final Map<String, List<Consumer<Object>>> pendingResolvers = new HashMap<>();
     private final Set<String> unresolvedReferences = new HashSet<>();
+    // Relation option ID → TalkItem ID
+    private final Map<Object, Object> optionToTalkItemMapping = new HashMap<>();
 
     /**
      * Enregistre une référence avec son objet associé.
@@ -117,5 +119,22 @@ public class ParsingContext {
                 .filter(type::isInstance)
                 .map(type::cast)
                 .toList();
+    }
+
+    /**
+     * Enregistre la relation entre une option et son TalkItem parent.
+     */
+    public void registerOptionToTalkItemMapping(Object optionId, Object talkItemId) {
+        if (optionId != null && talkItemId != null) {
+            optionToTalkItemMapping.put(optionId, talkItemId);
+        }
+    }
+
+    /**
+     * Obtient l'ID du TalkItem qui contient une option donnée.
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T getOptionToTalkItemMapping(Object optionId) {
+        return (T) optionToTalkItemMapping.get(optionId);
     }
 }

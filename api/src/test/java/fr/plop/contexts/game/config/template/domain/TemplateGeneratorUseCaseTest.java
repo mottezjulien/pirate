@@ -8,11 +8,12 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeUnit;
-import fr.plop.contexts.i18n.domain.I18n;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.Language;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.position.Point;
 import org.junit.jupiter.api.Test;
@@ -243,8 +244,8 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(Consequence.DisplayTalkAlert.class);
-                                            assertThat(((Consequence.DisplayTalkAlert) consequence).value()).satisfies(withoutId(i18n("""
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
+                                            assertThat(((Consequence.DisplayMessage) consequence).value()).satisfies(withoutId(i18n("""
                                                     C'est la vie
                                                     Cuicui""", "Alarm !!!")));
                                         })
@@ -264,7 +265,7 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.OR);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.value()).isEqualTo(TimeUnit.ofMinutes(42));
+                                assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(42));
                                 assertThat(possibility.conditions())
                                         .hasSize(2)
                                         .anySatisfy(condition -> {
@@ -360,7 +361,7 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.value()).isEqualTo(TimeUnit.ofMinutes(51));
+                                assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(51));
                                 assertThat(possibility.conditions()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });
@@ -563,16 +564,19 @@ public class TemplateGeneratorUseCaseTest {
                 --- Step
                 ------ Possibility
                 --------- Trigger:GoInSpace:SpaceId:La lune
-                --------- consequence:TalkOptions
-                ------------ Option
-                --------------- FR: Le choix A
-                --------------- EN: Le choix A en anglais ?
-                ------------ Label
-                --------------- FR: C'est quoi ton choix ?
-                --------------- EN: C'est quoi ton choix en anglais ?
-                ------------ Option
-                --------------- EN: Le choix B en anglais
-                --------------- FR: Le choix B
+                --------- consequence:TalkOptions:OPTIONS_ABCD
+                --- Talk
+                ------ Options(ref OPTIONS_ABCD)
+                --------- Option
+                ------------ FR: Le choix A
+                ------------ EN: Le choix A en anglais ?
+                --------- Label
+                ------------ FR: C'est quoi ton choix ?
+                ------------ EN: C'est quoi ton choix en anglais ?
+                --------- Option
+                ------------ EN: Le choix B en anglais
+                ------------ FR: Le choix B
+                
                 """);
         Template template = generator.apply(script);
         assertThat(template.id()).isNotNull();
@@ -590,21 +594,30 @@ public class TemplateGeneratorUseCaseTest {
         PossibilityTrigger.SpaceGoIn goInSpace = (PossibilityTrigger.SpaceGoIn) possibilities.getFirst().trigger();
         assertThat(goInSpace.spaceId()).isEqualTo(spaces.getFirst().id());
 
-        assertThat(possibilities.getFirst().consequences().getFirst()).isInstanceOf(Consequence.DisplayTalkOptions.class);
-        Consequence.DisplayTalkOptions displayTalkOptions = (Consequence.DisplayTalkOptions) possibilities.getFirst().consequences().getFirst();
-        assertThat(displayTalkOptions.value().id()).isNotNull();
-        assertThat(displayTalkOptions.value().label().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
-        assertThat(displayTalkOptions.value().label().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
-        assertThat(displayTalkOptions.value().options()).hasSize(2)
-                .anySatisfy(option -> {
-                    assertThat(option.id()).isNotNull();
-                    assertThat(option.value().value(Language.FR)).isEqualTo("Le choix A");
-                    assertThat(option.value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
-                })
-                .anySatisfy(option -> {
-                    assertThat(option.id()).isNotNull();
-                    assertThat(option.value().value(Language.FR)).isEqualTo("Le choix B");
-                    assertThat(option.value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+        assertThat(possibilities.getFirst().consequences().getFirst()).isInstanceOf(Consequence.DisplayTalk.class);
+        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) possibilities.getFirst().consequences().getFirst();
+        TalkItem.Id talkId = displayTalk.talkId();
+        assertThat(talkId).isNotNull();
+
+        assertThat(template.talk().items())
+                .hasSize(1)
+                .anySatisfy(talk -> {
+                    assertThat(talk).isInstanceOf(TalkItem.MultipleOptions.class);
+                    TalkItem.MultipleOptions talkOptions = (TalkItem.MultipleOptions) talk;
+                    assertThat(talkOptions.id()).isEqualTo(talkId);
+                    assertThat(talkOptions.value().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+                    assertThat(talkOptions.value().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+                    assertThat(talkOptions.options()).hasSize(2)
+                            .anySatisfy(option -> {
+                                assertThat(option.id()).isNotNull();
+                                assertThat(option.value().value(Language.FR)).isEqualTo("Le choix A");
+                                assertThat(option.value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
+                            })
+                            .anySatisfy(option -> {
+                                assertThat(option.id()).isNotNull();
+                                assertThat(option.value().value(Language.FR)).isEqualTo("Le choix B");
+                                assertThat(option.value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+                            });
                 });
     }
 
@@ -618,25 +631,46 @@ public class TemplateGeneratorUseCaseTest {
                 ------ Target (ref TARGET_ATTERRIR):FR:Atterrir sur la lune:EN:Atterrir sur la lune en anglais
                 ------ Possibility
                 --------- Trigger:GoInSpace:SpaceId:abcd
-                --------- consequence:TalkOptions
-                ------------ Option(ref CHOIX_A)
-                --------------- FR: Le choix A
-                --------------- EN: Le choix A en anglais ?
-                ------------ Option
-                --------------- EN: Le choix B en anglais
-                --------------- FR: Le choix B
-                ------------ Label
-                --------------- FR: C'est quoi ton choix ?
-                --------------- EN: C'est quoi ton choix en anglais ?
+                --------- consequence:TalkOptions:OPTIONS_ABCD
                 ------ Possibility
                 --------- Trigger:SelectTalkOption:CHOIX_A
                 --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
                 --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
                 --- Step(ref REF_STEP_B)
                 ------ Target:FR:Réparer la station:EN:Réparer la station en anglais
+                --- Talk
+                ------ Options(ref OPTIONS_ABCD)
+                --------- Option (REF CHOIX_A)
+                ------------ FR: Le choix A
+                ------------ EN: Le choix A en anglais ?
+                --------- Label
+                ------------ FR: C'est quoi ton choix ?
+                ------------ EN: C'est quoi ton choix en anglais ?
+                --------- Option
+                ------------ EN: Le choix B en anglais
+                ------------ FR: Le choix B
                 
                 """);
         Template template = generator.apply(script);
+
+
+        assertThat(template.talk().items())
+                .hasSize(1)
+                .anySatisfy(talk -> {
+                    assertThat(talk).isInstanceOf(TalkItem.MultipleOptions.class);
+                    TalkItem.MultipleOptions talkOptions = (TalkItem.MultipleOptions) talk;
+                    assertThat(talkOptions.id()).isNotNull();
+                    assertThat(talkOptions.value().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+                    assertThat(talkOptions.value().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+                    assertThat(talkOptions.options()).hasSize(2);
+                    assertThat(talkOptions.options().getFirst().id()).isNotNull();
+                    assertThat(talkOptions.options().getFirst().value().value(Language.FR)).isEqualTo("Le choix A");
+                    assertThat(talkOptions.options().getFirst().value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
+                    assertThat(talkOptions.options().get(1).id()).isNotNull();
+                    assertThat(talkOptions.options().get(1).value().value(Language.FR)).isEqualTo("Le choix B");
+                    assertThat(talkOptions.options().get(1).value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+                });
+        TalkItem.MultipleOptions.Option.Id optionIdChoixA = ((TalkItem.MultipleOptions) template.talk().items().getFirst()).options().getFirst().id();
 
         List<ScenarioConfig.Step> steps = template.scenario().steps();
         assertThat(steps.size()).isEqualTo(2);
@@ -655,26 +689,17 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(goInSpace.id()).isNotNull();
         assertThat(goInSpace.spaceId()).isEqualTo(new BoardSpace.Id("abcd"));
 
-        assertThat(possibilityFirst.consequences().getFirst()).isInstanceOf(Consequence.DisplayTalkOptions.class);
-        Consequence.DisplayTalkOptions displayTalkOptions = (Consequence.DisplayTalkOptions) possibilityFirst.consequences().getFirst();
-        assertThat(displayTalkOptions.value().id()).isNotNull();
-        assertThat(displayTalkOptions.value().label().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
-        assertThat(displayTalkOptions.value().label().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
-        assertThat(displayTalkOptions.value().options()).hasSize(2);
-        assertThat(displayTalkOptions.value().options().getFirst().id()).isNotNull();
-        assertThat(displayTalkOptions.value().options().getFirst().value().value(Language.FR)).isEqualTo("Le choix A");
-        assertThat(displayTalkOptions.value().options().getFirst().value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
-        assertThat(displayTalkOptions.value().options().get(1).id()).isNotNull();
-        assertThat(displayTalkOptions.value().options().get(1).value().value(Language.FR)).isEqualTo("Le choix B");
-        assertThat(displayTalkOptions.value().options().get(1).value().value(Language.EN)).isEqualTo("Le choix B en anglais");
+        assertThat(possibilityFirst.consequences().getFirst()).isInstanceOf(Consequence.DisplayTalk.class);
+        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) possibilityFirst.consequences().getFirst();
+
 
         Possibility possibilitySecond = step.possibilities().get(1);
 
-        assertThat(possibilitySecond.trigger())
-                .isInstanceOf(PossibilityTrigger.TalkSelectOption.class);
-        PossibilityTrigger.TalkSelectOption selectTalkOption = (PossibilityTrigger.TalkSelectOption) possibilitySecond.trigger();
-        assertThat(selectTalkOption.id()).isNotNull();
-        assertThat(selectTalkOption.optionId()).isEqualTo(displayTalkOptions.value().options().getFirst().id());
+        assertThat(possibilitySecond.trigger()).isInstanceOf(PossibilityTrigger.TalkNext.class);
+        PossibilityTrigger.TalkNext talkNext = (PossibilityTrigger.TalkNext) possibilitySecond.trigger();
+        assertThat(talkNext.id()).isNotNull();
+        assertThat(talkNext.talkItemId()).isEqualTo(displayTalk.talkId());
+        assertThat(talkNext.optionId()).contains(optionIdChoixA);
 
 
         assertThat(possibilitySecond.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
@@ -721,7 +746,7 @@ public class TemplateGeneratorUseCaseTest {
                 .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
         PossibilityTrigger.AbsoluteTime goInSpace = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
         assertThat(goInSpace.id()).isNotNull();
-        assertThat(goInSpace.value()).isEqualTo(new TimeUnit(51));
+        assertThat(goInSpace.value()).isEqualTo(new GameSessionTimeUnit(51));
 
         assertThat(possibility.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
         Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibility.consequences().getFirst();
@@ -729,9 +754,7 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(scenarioTarget.stepId()).isEqualTo(stepSecond.id());
         assertThat(scenarioTarget.targetId()).isEqualTo(stepSecond.targets().getFirst().id());
         assertThat(scenarioTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
-
     }
-
 
     private Consumer<I18n> withoutId(I18n compareTo) {
         return value -> {
@@ -743,53 +766,5 @@ public class TemplateGeneratorUseCaseTest {
     private static I18n i18n(String fr, String en) {
         return new I18n(Map.of(Language.FR, fr, Language.EN, en));
     }
-
-
-
-    /*
-    chezWamBisBis:0.2.0:Chez Wam from Generator:10
-                --- Board
-                ------ Space:Bureau:HIGH
-                --------- 45.77806:4.80351:45.77820:4.80367
-                ------ Space:Cuisine:HIGH
-                --------- 45.77798:4.8037:45.77812:4.80384
-                --- Step
-                ------ Target:FR:Sortir du bureau:EN:Sortir du bureau en anglais
-                ------ Target(Opt):FR:Suivre le tutorial:EN:Suivre le tutorial en anglais
-
-                ------ Possibility
-                --------- Trigger:GoInSpace:SpaceId:Bureau
-                --------- consequence:TalkOptions
-                ------------ EN:Alarm !!!
-                ------------ FR: C'est la vie
-                ------------ Cuicui
-                --------- consequence:GoalTarget:stepId:EFG:targetId:9876:state:FAILURE
-                --------- condition:ABSOLUTETIME:Duration:27
-
-     */
-
-    /*
-    - Template
-        - Board -> DONE On va dire ok
-            - BoardSpace
-                Priority -> Done
-                Rect -> Done ?
-        - ScenarioConfig -> DONE On va dire ok
-            - Step
-                - Target -> Done
-                - Possibility
-                    - conditionType -> Done
-                    - Recurrency -> Done
-                    - Trigger -> AbsoluteTime, GoInSpace, TODO -> GoOutSpace, RelativeTimeAfterOtherTrigger
-                    - Condition -> OutsideSpace, InStep, AbsoluteTime, TODO InsideSpace,RelativeTimeAfterOtherTrigger
-                    - Consequence -> GoalTarget, Goal, Alert, TODO GameOver
-        - MapConfig -> Todo, gestion des step ???
-            - Item
-                - Map
-                    - PositionS
-                    - Definition
-                    - Priority
-                    - TODO : Steps
-     */
 
 }

@@ -9,7 +9,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeUnit;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.enumerate.AndOrOr;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,7 +33,7 @@ public class GameEventBroadCastInternTest_goalActive {
     @Test
     public void goalActive_should_emit_GoalActive_event_with_same_time_and_step() {
         // Given
-        TimeUnit time = TimeUnit.ofMinutes(7);
+        GameSessionTimeUnit time = GameSessionTimeUnit.ofMinutes(7);
         ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
         Consequence.ScenarioStep activeGoal = new Consequence.ScenarioStep(new Consequence.Id(), stepId, ScenarioGoal.State.ACTIVE);
 
@@ -46,24 +46,25 @@ public class GameEventBroadCastInternTest_goalActive {
                 .thenReturn(Stream.empty());         // second fire (GoalActive)
 
         // When
-        GameEvent.GoIn event = new GameEvent.GoIn(sessionId, playerId, time, spaceId);
-        broadCast.fire(event);
+        GameEvent.GoIn event = new GameEvent.GoIn(spaceId);
+        broadCast.fire(event, new GameEventContext(sessionId, playerId));
 
         // Then: outPort.doGoal called for the ACTIVE step
         verify(outputPort, times(1)).doGoal(sessionId, playerId, activeGoal);
         // And: broadcaster fires a GoalActive event with same time and stepId
         ArgumentCaptor<GameEvent> captor = ArgumentCaptor.forClass(GameEvent.class);
-        verify(broadCast, times(2)).fire(captor.capture()); // first is GoIn, second is GoalActive
+        ArgumentCaptor<GameEventContext> contextCaptor = ArgumentCaptor.forClass(GameEventContext.class);
+        verify(broadCast, times(2)).fire(captor.capture(), contextCaptor.capture()); // first is GoIn, second is GoalActive
         GameEvent second = captor.getAllValues().get(1);
+        GameEventContext secondContext = contextCaptor.getAllValues().get(1);
         assertThat(second).isInstanceOf(GameEvent.GoalActive.class);
         GameEvent.GoalActive goalActive = (GameEvent.GoalActive) second;
-        assertThat(goalActive.sessionId()).isEqualTo(sessionId);
-        assertThat(goalActive.playerId()).isEqualTo(playerId);
-        assertThat(goalActive.timeUnit()).isEqualTo(time);
+        assertThat(secondContext.sessionId()).isEqualTo(sessionId);
+        assertThat(secondContext.playerId()).isEqualTo(playerId);
         assertThat(goalActive.stepId()).isEqualTo(stepId);
 
         // And: no unexpected side effects
-        verify(outputPort, never()).doAlert(any(), any(), any());
+        verify(outputPort, never()).doMessage(any(), any(), any());
         verify(outputPort, never()).doGoalTarget(any(), any());
         verify(outputPort, never()).doGameOver(any(), any(), any());
     }
@@ -72,7 +73,7 @@ public class GameEventBroadCastInternTest_goalActive {
     @Test
     public void no_goalActive_if_state_not_ACTIVE() {
         // Given
-        TimeUnit time = TimeUnit.ofMinutes(3);
+        GameSessionTimeUnit time = GameSessionTimeUnit.ofMinutes(3);
         ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
         Consequence.ScenarioStep successGoal = new Consequence.ScenarioStep(new Consequence.Id(), stepId, ScenarioGoal.State.SUCCESS);
 
@@ -88,14 +89,14 @@ public class GameEventBroadCastInternTest_goalActive {
                 .thenReturn(Stream.of(possibility));
 
         // When
-        broadCast.fire(new GameEvent.GoIn(sessionId, playerId, time, spaceId));
+        broadCast.fire(new GameEvent.GoIn(spaceId), new GameEventContext(sessionId, playerId));
 
         // Then
         verify(outputPort, times(1)).doGoal(sessionId, playerId, successGoal);
-        verify(broadCast, times(1)).fire(any(GameEvent.class)); // only the initial event
+        verify(broadCast, times(1)).fire(any(), any()); // only the initial event
         verifyNoMoreInteractions(broadCast);
 
-        verify(outputPort, never()).doAlert(any(), any(), any());
+        verify(outputPort, never()).doMessage(any(), any(), any());
         verify(outputPort, never()).doGoalTarget(any(), any());
         verify(outputPort, never()).doGameOver(any(), any(), any());
     }
@@ -103,7 +104,7 @@ public class GameEventBroadCastInternTest_goalActive {
     @Test
     public void chain_multiple_possibilities_and_saveAction_each_time() {
         // Given
-        TimeUnit time = TimeUnit.ofMinutes(5);
+        GameSessionTimeUnit time = GameSessionTimeUnit.ofMinutes(5);
         ScenarioConfig.Step.Id stepId1 = new ScenarioConfig.Step.Id();
         ScenarioConfig.Step.Id stepId2 = new ScenarioConfig.Step.Id();
         Consequence.ScenarioStep activeGoal1 = new Consequence.ScenarioStep(new Consequence.Id(), stepId1, ScenarioGoal.State.ACTIVE);
@@ -121,9 +122,10 @@ public class GameEventBroadCastInternTest_goalActive {
         when(outputPort.findPossibilities(sessionId, playerId))
                 .thenReturn(Stream.of(goInTriggersTwo)) // first fire (GoIn)
                 .thenReturn(Stream.empty());            // second fire (GoalActive)
+        when(outputPort.current(sessionId)).thenReturn(time);
 
         // When
-        broadCast.fire(new GameEvent.GoIn(sessionId, playerId, time, spaceId));
+        broadCast.fire(new GameEvent.GoIn(spaceId),new GameEventContext(sessionId, playerId));
 
         // Then: both consequences executed
         verify(outputPort).doGoal(sessionId, playerId, activeGoal1);
@@ -131,18 +133,17 @@ public class GameEventBroadCastInternTest_goalActive {
 
         // And: GoalActive fired once with same time and stepId1
         ArgumentCaptor<GameEvent> captor = ArgumentCaptor.forClass(GameEvent.class);
-        verify(broadCast, times(2)).fire(captor.capture());
+        verify(broadCast, times(2)).fire(captor.capture(), any());
         GameEvent second = captor.getAllValues().get(1);
         assertThat(second).isInstanceOf(GameEvent.GoalActive.class);
         GameEvent.GoalActive goalActive = (GameEvent.GoalActive) second;
         assertThat(goalActive.stepId()).isEqualTo(stepId1);
-        assertThat(goalActive.timeUnit()).isEqualTo(time);
 
         // And: saveAction called for the initial possibility only once
         verify(outputPort, times(1)).saveAction(eq(playerId), eq(goInTriggersTwo.id()), eq(time));
 
         // No unexpected side effects
-        verify(outputPort, never()).doAlert(any(), any(), any());
+        verify(outputPort, never()).doMessage(any(), any(), any());
         verify(outputPort, never()).doGoalTarget(any(), any());
         verify(outputPort, never()).doGameOver(any(), any(), any());
     }

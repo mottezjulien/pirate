@@ -18,7 +18,8 @@ import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,19 +112,7 @@ public class GameSessionController {
         }
     }
 
-    public record GameMapResponseDTO(String id, String label, int priority, Image image, List<Position> positions) {
-
-        public record Image(String type, String value, Size size) {
-            public static Image toModel(MapItem.Image image) {
-                return new Image(image.type().name(), image.value(), Size.toModel(image.size()));
-            }
-
-            public record Size(int width, int height) {
-                public static Size toModel(MapItem.Image.Size size) {
-                    return new Size(size.width(), size.height());
-                }
-            }
-        }
+    public record GameMapResponseDTO(String id, String label, int priority, ImageResponseDTO image, List<Position> positions) {
 
         public record Position(String type, String id, String label, Bounds bounds, Point point) {
 
@@ -155,8 +144,14 @@ public class GameSessionController {
                     map.id().value(),
                     map.label().value(language),
                     map.priority().value(),
-                    Image.toModel(map.image()),
+                    imageResponseDTOFromModel(map.image()),
                     map.positions().stream().map(Position::fromModel).toList());
+        }
+
+        private static ImageResponseDTO imageResponseDTOFromModel(MapItem.Image image) {
+            MapItem.Image.Size sizeModel = image.size();
+            ImageResponseDTO.Size sizeDTO = new ImageResponseDTO.Size(sizeModel.width(), sizeModel.height());
+            return new ImageResponseDTO(image.type().name(), image.value(), sizeDTO);
         }
 
     }
@@ -230,58 +225,6 @@ public class GameSessionController {
     public record SendMessageRequest(String value) {
 
     }
-
-/*
-    //Talk
-    @GetMapping("{sessionId}/talks/{talkId}")
-    public TalkItemResponseDTO talkGet(
-            @RequestHeader("Language") String languageStr,
-            //token
-            @PathVariable("talkId") String talkIdStr
-            //@PathVariable("itemId") String itemIdStr
-    ) {
-        Talk talk = talkItemGetUseCase.apply(talkIdStr)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return TalkItemResponseDTO.fromModel(talk, Language.valueOfSafe(languageStr));
-    }
-
-    public record TalkItemResponseDTO(String id, String label, String nextItemId, List<Option> qcm) {
-
-        public record Option(String id, String label, String nextItemId) {
-
-        }
-
-        public static TalkItemResponseDTO fromModel(Talk talk, Language language) {
-            Talk.Item root = talk.root();
-            String nextItemId = nextItemId(root.next());
-            List<Option> qcmResponse = qcmResponse(root.next(), language);
-            return new TalkItemResponseDTO(talk.id().value(), root.value().value(language), nextItemId, qcmResponse);
-        }
-
-        private static String nextItemId(Talk.Next next) {
-            if(next instanceof Talk.Next.Continue(Talk.Item.Id itemId)) {
-                return itemId.value();
-            }
-            return null;
-        }
-
-        private static List<Option> qcmResponse(Talk.Next next, Language language) {
-            if(next instanceof Talk.Next.QCM(List<Talk.Next.QCM.Option> options)) {
-                return options.stream()
-                        .map(option -> toResponseOption(option, language))
-                        .toList();
-            }
-            return null;
-        }
-
-        private static Option toResponseOption(Talk.Next.QCM.Option model, Language language) {
-            String optionNextItemId = null;
-            if(model.next() instanceof Talk.Next.Continue(Talk.Item.Id itemId)) {
-                optionNextItemId = itemId.value();
-            }
-            return new Option(model.id().value(), model.label().value(language), optionNextItemId);
-        }
-    }*/
 
 }
 

@@ -12,16 +12,7 @@ ChezWamGene:1.0::15
 
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:1
---------- Consequence:TalkOptions
------------- Label
---------------- FR:Bonjour, bienvenu dans le jeu d'entrainement. Est ce que tu veux faire le tutorial ?
---------------- EN:Hello, welcome to the training game. Do you want to do the tutorial?
------------- Option (ref TUTORIAL_OUI)
---------------- FR:Oui, je veux faire le tutorial
---------------- EN:Yes, I want to do the tutorial
------------- Option (ref TUTORIAL_NON)
---------------- FR:Non, passer au chapitre suivant
---------------- EN:No, skip to next chapter
+--------- Consequence:TalkOptions:TALK_WELCOME
 
 ------ Possibility
 --------- Trigger:SELECTTALKOPTION:TUTORIAL_NON
@@ -63,16 +54,7 @@ ChezWamGene:1.0::15
 ------ Possibility
 --------- Trigger:GOOUTSPACE:Bureau
 --------- Condition:INSTEP:CHAPITRE_BUREAU
---------- Consequence:TalkOptions
------------- Label
---------------- FR:Veux-tu arrêter le tutorial ?
---------------- EN:Do you want to stop the tutorial?
------------- Option (ref ARRETER_TUTORIAL)
---------------- FR:Oui, arrêter le tutorial
---------------- EN:Yes, stop the tutorial
------------- Option (ref CONTINUER_TUTORIAL)
---------------- FR:Non, continuer le tutorial
---------------- EN:No, continue the tutorial
+--------- Consequence:TalkOptions:TALK_STOP_TUTO
 
 ------ Possibility
 --------- Trigger:SELECTTALKOPTION:ARRETER_TUTORIAL
@@ -104,3 +86,25 @@ ChezWamGene:1.0::15
 --------- Priority:HIGH
 ------ Position (ref CASIER):0.48317300356351417:0.8541666177602916
 --------- Priority:HIGH
+
+--- Talk
+------ Options(ref TALK_WELCOME)
+--------- Label
+------------ FR:Bonjour, bienvenu dans le jeu d'entrainement. Est ce que tu veux faire le tutorial ?
+------------ EN:Hello, welcome to the training game. Do you want to do the tutorial?
+--------- Option (ref TUTORIAL_OUI)
+------------ FR:Oui, je veux faire le tutorial
+------------ EN:Yes, I want to do the tutorial
+--------- Option (ref TUTORIAL_NON)
+------------ FR:Non, passer au chapitre suivant
+------------ EN:No, skip to next chapter
+------ Options(ref TALK_STOP_TUTO)
+--------- Label
+------------ FR:Veux-tu arrêter le tutorial ?
+------------ EN:Do you want to stop the tutorial?
+--------- Option (ref ARRETER_TUTORIAL)
+------------ FR:Oui, arrêter le tutorial
+------------ EN:Yes, stop the tutorial
+--------- Option (ref CONTINUER_TUTORIAL)
+------------ FR:Non, continuer le tutorial
+------------ EN:No, continue the tutorial

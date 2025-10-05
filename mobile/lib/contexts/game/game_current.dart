@@ -1,29 +1,36 @@
 
 
+import 'package:flutter/material.dart';
+
 import '../geo/domain/model/coordinate.dart';
 import 'domain/model/game_session.dart';
 
-class GameSessionCurrent {
+class GameCurrent {
 
-  static final _GameSessionCurrent _instance = _GameSessionCurrent();
+  static final _GameSession _sessionInstance = _GameSession();
 
-  static bool get hasSession => _instance.hasSession;
+  static bool get hasSession => _sessionInstance.hasSession;
 
-  static String get sessionId => _instance._session!.id;
+  static String get sessionId => _sessionInstance._session!.id;
 
-  static set session(GameSession session) => _instance._session = session;
+  static set session(GameSession session) => _sessionInstance._session = session;
 
-  static void addOnMoveListener(onMoveListener) => _instance.addOnMoveListener(onMoveListener);
+  static void addOnMoveListener(onMoveListener) => _sessionInstance.addOnMoveListener(onMoveListener);
 
-  static void removeOnMoveListener(onMoveListener) => _instance.removeOnMoveListener(onMoveListener);
+  static void removeOnMoveListener(onMoveListener) => _sessionInstance.removeOnMoveListener(onMoveListener);
 
-  static void addOnGoalListener(onGoalListener) => _instance.addOnGoalListener(onGoalListener);
+  static void addOnGoalListener(onGoalListener) => _sessionInstance.addOnGoalListener(onGoalListener);
 
-  static void removeOnGoalListener(onGoalListener) => _instance.removeOnGoalListener(onGoalListener);
+  static void removeOnGoalListener(onGoalListener) => _sessionInstance.removeOnGoalListener(onGoalListener);
 
+  static final _Style _styleInstance = _Style();
+
+  static _Style get style => _styleInstance;
+  
 }
 
-class _GameSessionCurrent {
+
+class _GameSession {
 
   GameSession? _session;
 
@@ -40,3 +47,29 @@ class _GameSessionCurrent {
   void removeOnGoalListener(onGoalListener) => _session!.removeOnGoalListener(onGoalListener);
 
 }
+
+class _Style {
+  _Color color = _Color();
+  _Dimension dimension = _Dimension();
+  _Duration duration = _Duration();
+}
+
+class _Color {
+  Color get primary => Colors.deepOrange;
+  Color get background => Colors.blueAccent; //TODO ???
+  Color get lightGrey => Color(0x61D1D1D1); //TODO ???
+}
+
+class _Dimension {
+  final double small = 4.0;
+  final double medium = 8.0;
+  final double large = 12.0;
+  final double extraLarge = 16.0;
+  final double xxLarge = 20.0;
+  final double xxxLarge = 24.0;
+}
+
+class _Duration {
+  Duration get default_ => Duration(milliseconds: 300);
+}
+

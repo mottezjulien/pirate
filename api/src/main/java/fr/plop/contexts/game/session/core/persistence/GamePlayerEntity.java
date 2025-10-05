@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;

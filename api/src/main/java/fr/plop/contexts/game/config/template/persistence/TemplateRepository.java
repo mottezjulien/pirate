@@ -1,6 +1,9 @@
 package fr.plop.contexts.game.config.template.persistence;
 
-import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityRepository;
+import fr.plop.contexts.game.config.board.persistence.repository.BoardConfigRepository;
+import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigRepository;
+import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -11,20 +14,16 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
     @Query("FROM TemplateEntity template" +
 
             " LEFT JOIN FETCH template.scenario scenario" +
-            " LEFT JOIN FETCH scenario.steps step" +
-            " LEFT JOIN FETCH step.targets target" +
-            " LEFT JOIN FETCH target.label label" +
-            " LEFT JOIN FETCH target.description description" +
-            " LEFT JOIN FETCH step.possibilities possibility" +
-            ScenarioPossibilityRepository.FETCH_ALL +
+            ScenarioConfigRepository.FETCH_ALL +
 
             " LEFT JOIN FETCH template.board board" +
-            " LEFT JOIN FETCH board.spaces space" +
-            " LEFT JOIN FETCH space.rects rect" +
+            BoardConfigRepository.FETCH_ALL +
 
-            " LEFT JOIN FETCH template.map map_config" +
-            " LEFT JOIN FETCH map_config.items map_item" +
-            " LEFT JOIN FETCH map_item.label map_label" +
+            " LEFT JOIN FETCH template.map map" +
+            MapConfigRepository.FETCH_ALL +
+
+            " LEFT JOIN FETCH template.talk talk" +
+            TalkConfigRepository.FETCH_ALL +
 
             " WHERE template.code = :code")
     List<TemplateEntity> findByCodeFetchAll(String code);

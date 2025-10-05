@@ -10,12 +10,13 @@ class GameSessionRepository {
 
   static const resourcePath = '/sessions';
 
-  Future<GameSession> createLyonPirate() async {
+  Future<GameSession> create() async {
     GenericRepository genericRepository = GenericRepository();
     return sessionToModel(await genericRepository.post(
         path: resourcePath,
         body: {
-      'templateCode': 'CHEZWAM1' //'templateCode': 'pirate_lyon'
+      'templateCode': 'TEST_DISCUSSION'
+      //'templateCode': 'ChezWamGene' //TODO 'templateCode': 'pirate_lyon'
     }));
   }
 
@@ -29,7 +30,7 @@ class GameSessionRepository {
 
   Future<void> move(Coordinate coordinate) async {
     GenericRepository genericRepository = GenericRepository();
-    var path = "$resourcePath/${GameSessionCurrent.sessionId}/move/";
+    var path = "$resourcePath/${GameCurrent.sessionId}/move/";
     await genericRepository.post(path: path,
         body: {
           'lat': coordinate.lat,
@@ -39,7 +40,7 @@ class GameSessionRepository {
 
   Future<List<GameGoal>> findGoals() async {
     GenericRepository genericRepository = GenericRepository();
-    var response = await genericRepository.get(path: "$resourcePath/${GameSessionCurrent.sessionId}/goals/");
+    var response = await genericRepository.get(path: "$resourcePath/${GameCurrent.sessionId}/goals/");
 
     List<GameGoal> goals = [];
     response.forEach((goal) {
@@ -65,68 +66,6 @@ class GameSessionRepository {
       targets: targets
     );
   }
-
-  /*
-  Future<List<GameMap>> findMaps() async {
-    GenericRepository genericRepository = GenericRepository();
-    var response = await genericRepository.get(path: "$resourcePath/${GameSessionCurrent.sessionId}/maps/");
-
-    List<GameMap> maps = [];
-    response.forEach((map) {
-      maps.add(mapToModel(map));
-    });
-    return maps;
-  }
-
-  GameMap mapToModel(json) {
-    GameMapDefinition definition = GameMapDefinition(
-        type: json['definitionType'],
-        value: json['definitionValue']
-    );
-
-    /*List<GameMapPosition> positions = json['positions'].map((json) {
-      Coordinate point = Coordinate(lat: json['point']['lat'], lng: json['point']['lng']);
-      List<String> boardIds = json['boardIds'].toList();
-      return GameMapPosition(
-          priority: json['priority'],
-          point: point,
-          boardIds: boardIds);
-    }).toList();*/
-
-    GameMapPositionPourcent? position;
-    if(json['position'] != null) {
-      position = GameMapPositionPourcent(x: json['position']['x'], y: json['position']['y']);
-    }
-
-    return GameMap(
-      id: json['id'],
-      label: json['label'],
-      priority: json['priority'],
-      definition: definition,
-      position: position
-    );
-  }*/
-
-  /*
-      public record GameMapResponseDTO(String id, String label, int priority,
-                                     String definitionType, String definitionValue,
-                                     Pourcent pourcent) {
-
-        public record Pourcent(double x, double y) {
-            public static Pourcent toModel(Map.Position.Point model) {
-                return new Pourcent(model.x(), model.y());
-            }
-        }
-
-        public static GameMapResponseDTO fromModel(Map map, Optional<Map.Position> optPosition, Language language) {
-            return new GameMapResponseDTO(map.id().value(), map.label().value(language), map.priority().value(),
-                    map.definition().type().name(), map.definition().value(),
-                    optPosition.map(position -> Pourcent.toModel(position.point())).orElse(null));
-        }
-
-    }
-   */
-
 
 
 }

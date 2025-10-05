@@ -28,8 +28,18 @@ public class TemplateInitUseCase {
             outPort.create(firstTemplate());
         }*/
         outPort.deleteAll();
-       //outPort.create(chezWam1Template());
-        outPort.create(chezWamTemplate());
+        // outPort.create(chezWam1Template());
+        Template chezWam = chezWamTemplate();
+        if (!chezWam.isValid()) {
+            throw new IllegalStateException("Template chez_wam invalide: Talks référencés manquants");
+        }
+        outPort.create(chezWam);
+
+        Template testDiscussionTemplate = testDiscussionTemplate();
+        if (!testDiscussionTemplate.isValid()) {
+            throw new IllegalStateException("Template test_discution invalide: Talks référencés manquants");
+        }
+        outPort.create(testDiscussionTemplate);
     }
 
     /*private Template chezWam1Template() {
@@ -100,19 +110,26 @@ public class TemplateInitUseCase {
 
     private Template chezWamTemplate() {
         try {
-            // Lire le contenu du fichier script
             String scriptContent = loadScriptFromResources("template/chez_wam.txt");
-            
-            // Utiliser TemplateGeneratorUseCase pour générer le template
             TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
             TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
-            
             return generator.apply(script);
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
         }
     }
-    
+
+    private Template testDiscussionTemplate() {
+        try {
+            String scriptContent = loadScriptFromResources("template/test_discution.txt");
+            TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
+            TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+            return generator.apply(script);
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors du chargement du script test_discution.txt", e);
+        }
+    }
+
     private String loadScriptFromResources(String resourcePath) throws IOException {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
             if (inputStream == null) {

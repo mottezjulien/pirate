@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../style/style.dart';
 import '../../data/map_data_service.dart';
 import '../../domain/model/map_models.dart';
 import '../../../../shared/map/map_viewer_widget.dart';
+import '../../game_current.dart';
 
 class GameMapView extends StatefulWidget {
 
@@ -338,15 +338,15 @@ class CarouselDots extends StatelessWidget {
       children: List.generate(
         totalItems,
         (index) => AnimatedContainer(
-          duration: Style.duration.default_,
+          duration: GameCurrent.style.duration.default_,
           height: 8,
-          margin: EdgeInsets.symmetric(horizontal: Style.dimension.small),
+          margin: EdgeInsets.symmetric(horizontal: GameCurrent.style.dimension.small),
           width: currentIndex == index ? 16 : 8,
           decoration: BoxDecoration(
             color: currentIndex == index
-                ? Style.color.oneFirstPurple
-                : Style.color.lightGrey,
-            borderRadius: BorderRadius.circular(Style.dimension.extraLarge),
+                ? GameCurrent.style.color.primary
+                : GameCurrent.style.color.lightGrey,
+            borderRadius: BorderRadius.circular(GameCurrent.style.dimension.extraLarge),
           ),
         ),
       ),

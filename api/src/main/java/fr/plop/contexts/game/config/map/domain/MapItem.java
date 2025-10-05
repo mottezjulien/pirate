@@ -2,7 +2,7 @@ package fr.plop.contexts.game.config.map.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;

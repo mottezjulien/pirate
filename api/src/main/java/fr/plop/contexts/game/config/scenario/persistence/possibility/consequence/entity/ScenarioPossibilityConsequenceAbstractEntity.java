@@ -1,8 +1,8 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.config.talk.TalkOptionsEntity;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.contexts.game.config.talk.persistence.TalkItemEntity;
+import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -35,8 +35,9 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case ScenarioPossibilityConsequenceGameOverEntity gameOver -> gameOver.toModel();
             case ScenarioPossibilityConsequenceGoalEntity goal -> goal.toModel();
             case ScenarioPossibilityConsequenceGoalTargetEntity goalTarget -> goalTarget.toModel();
-            case ScenarioPossibilityConsequenceTalkAlertEntity alert -> alert.toModel();
-            default -> throw new IllegalStateException("Unknown type");
+            case ScenarioPossibilityConsequenceMessageEntity alert -> alert.toModel();
+            case ScenarioPossibilityConsequenceTalkEntity options -> options.toModel();
+            default -> throw new IllegalStateException("Unexpected value: " + this);
         };
     }
 
@@ -79,20 +80,20 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setValue(updatedMetadata.value());
                 yield entity;
             }
-            case Consequence.DisplayTalkAlert alert -> {
-                ScenarioPossibilityConsequenceTalkAlertEntity entity = new ScenarioPossibilityConsequenceTalkAlertEntity();
-                entity.setId(alert.id().value());
-                I18nEntity message = new I18nEntity();
-                message.setId(alert.value().id().value());
-                entity.setValue(message);
+            case Consequence.DisplayMessage displayMessage -> {
+                ScenarioPossibilityConsequenceMessageEntity entity = new ScenarioPossibilityConsequenceMessageEntity();
+                entity.setId(displayMessage.id().value());
+                I18nEntity value = new I18nEntity();
+                value.setId(displayMessage.value().id().value());
+                entity.setValue(value);
                 yield entity;
             }
-            case Consequence.DisplayTalkOptions option -> {
-                ScenarioPossibilityConsequenceTalkOptionsEntity entity = new ScenarioPossibilityConsequenceTalkOptionsEntity();
-                entity.setId(option.id().value());
-                TalkOptionsEntity talkOptionEntity = new TalkOptionsEntity();
-                talkOptionEntity.setId(option.value().id().value());
-                entity.setValue(talkOptionEntity);
+            case Consequence.DisplayTalk displayTalk -> {
+                ScenarioPossibilityConsequenceTalkEntity entity = new ScenarioPossibilityConsequenceTalkEntity();
+                entity.setId(displayTalk.id().value());
+                TalkItemEntity talkItemEntity = new TalkItemEntity();
+                talkItemEntity.setId(displayTalk.talkId().value());
+                entity.setTalk(talkItemEntity);
                 yield entity;
             }
         };

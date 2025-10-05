@@ -4,9 +4,8 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.talk.TalkOptions;
-import fr.plop.contexts.game.session.time.TimeUnit;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -20,6 +19,7 @@ import jakarta.persistence.Table;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_POSSIBILITY_TRIGGER")
@@ -31,6 +31,7 @@ public class ScenarioPossibilityTriggerEntity {
     private static final String KEY_SPACE_TYPE = "SPACE_TYPE";
     public static final String VALUE_SPACE_TYPE_IN = "IN";
     public static final String VALUE_SPACE_TYPE_OUT = "OUT";
+    public static final String KEY_TALK_OPTION = "TALK_OPTION";
 
     public enum Type {
         TIME, SPACE, STEP, TALK, MAP;
@@ -76,7 +77,7 @@ public class ScenarioPossibilityTriggerEntity {
         final PossibilityTrigger.Id id = new PossibilityTrigger.Id(this.id);
         return switch (type) {
             case TIME -> {
-                TimeUnit timeUnit = TimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_MINUTES)));
+                GameSessionTimeUnit timeUnit = GameSessionTimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_MINUTES)));
                 if(keyValues.containsKey(KEY_OTHER_POSSIBILITY)) {
                     yield new PossibilityTrigger.RelativeTimeAfterOtherPossibility(id,
                             new Possibility.Id(keyValues.get(KEY_OTHER_POSSIBILITY)), timeUnit);
@@ -92,7 +93,12 @@ public class ScenarioPossibilityTriggerEntity {
                 };
             }
             case STEP -> new PossibilityTrigger.StepActive(id);
-            case TALK -> new PossibilityTrigger.TalkSelectOption(id, new TalkOptions.Option.Id(keyValues.get(KEY_PRIMARY)));
+            case TALK -> {
+                TalkItem.Id talkItemId = new TalkItem.Id(keyValues.get(KEY_PRIMARY));
+                Optional<TalkItem.MultipleOptions.Option.Id> optOptionId = keyValues.containsKey(KEY_TALK_OPTION) ?
+                        Optional.of(new TalkItem.MultipleOptions.Option.Id(keyValues.get(KEY_TALK_OPTION))) : Optional.empty();
+                yield new PossibilityTrigger.TalkNext(id, talkItemId, optOptionId);
+            }
             case MAP -> new PossibilityTrigger.ClickMapObject(id, keyValues.get(KEY_PRIMARY));
         };
     }
@@ -123,9 +129,10 @@ public class ScenarioPossibilityTriggerEntity {
             case PossibilityTrigger.StepActive stepActive -> {
                 entity.setType(Type.STEP);
             }
-            case PossibilityTrigger.TalkSelectOption talkSelectOption -> {
+            case PossibilityTrigger.TalkNext talkNext -> {
                 entity.setType(Type.TALK);
-                entity.getKeyValues().put(KEY_PRIMARY, talkSelectOption.optionId().value());
+                entity.getKeyValues().put(KEY_PRIMARY, talkNext.talkItemId().value());
+                talkNext.optionId().ifPresent(optionId -> entity.getKeyValues().put(KEY_TALK_OPTION, optionId.value()));
             }
             case PossibilityTrigger.ClickMapObject clickMapObject -> {
                 entity.setType(Type.MAP);

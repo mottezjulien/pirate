@@ -1,6 +1,7 @@
 package fr.plop.integration;
 
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,7 +40,8 @@ public class GameFirstStartIntegrationTest {
     void setUp() {
         templateInitUseCase.deleteAll();
         Template.Code code = new Template.Code("TEST_FIRST");
-        Template template = new Template(code, "Mon premier jeu");
+        ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));
+        Template template = new Template(code, "Mon premier jeu", scenario);
         templateInitUseCase.create(template);
     }
 

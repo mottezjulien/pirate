@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'zone_models.dart';
 import '../../shared/map/map_positioning_utils.dart';
-import '../../shared/map/map_viewer_widget.dart';
-import '../../contexts/game/domain/model/map_models.dart';
 
 /// Éditeur graphique pour définir des zones sur une image de carte
 class MapZoneEditor extends StatefulWidget {
@@ -29,7 +27,7 @@ class _MapZoneEditorState extends State<MapZoneEditor> {
   final List<MapZone> _zones = [];
   final List<MapPoint> _points = [];
   final GlobalKey _imageKey = GlobalKey();
-  Size _imageSize = const Size(800, 600); // Taille par défaut
+  final Size _imageSize = const Size(800, 600); // Taille par défaut
   bool _isDrawing = false;
   Offset? _startPoint;
   Offset? _currentPoint;

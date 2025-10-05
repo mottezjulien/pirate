@@ -4,7 +4,7 @@ package fr.plop.contexts.connect.persistence.entity;
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.subs.i18n.domain.Language;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

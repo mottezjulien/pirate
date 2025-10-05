@@ -10,12 +10,13 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.talk.TalkOptions;
+import fr.plop.contexts.game.config.talk.domain.TalkConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.TimeUnit;
-import fr.plop.contexts.i18n.domain.I18n;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.Language;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.position.Point;
@@ -91,21 +92,35 @@ public class TemplateGeneratorUseCase {
         // Créer le context de parsing pour gérer les références
         ParsingContext context = new ParsingContext();
 
-        // 1. Parse d'abord les BoardSpaces pour créer la map label -> BoardSpace.Id
+        // 1. Parse d'abord les BoardSpaces pour créer la map value -> BoardSpace.Id
         List<BoardSpace> boardSpaces = parseBoardSpacesFromTrees(rootTree.children());
         Map<String, BoardSpace.Id> labelToSpaceIdMap = createLabelToSpaceIdMap(boardSpaces);
 
-        // 2. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
-        ScenarioConfig scenario = new ScenarioConfig("", parseSteps(rootTree, labelToSpaceIdMap, context));
+        // 2. Parse les TalkItems pour définir les références avant les Steps
+        List<TalkItem> declaredTalkItems = parseTalkItemsFromTrees(rootTree.children(), context);
+        // Inclure aussi les TalkItem créés inline (ex: dans des Consequence)
+        List<TalkItem> referencedTalkItems = context.getAllReferences(TalkItem.class);
+        Map<String, TalkItem> talkById = new HashMap<>();
+        for (TalkItem ti : declaredTalkItems) {
+            talkById.put(ti instanceof TalkItem.Simple s ? s.id().value() : ((TalkItem.MultipleOptions) ti).id().value(), ti);
+        }
+        for (TalkItem ti : referencedTalkItems) {
+            String id = ti instanceof TalkItem.Simple s ? s.id().value() : ((TalkItem.MultipleOptions) ti).id().value();
+            talkById.putIfAbsent(id, ti);
+        }
+        TalkConfig talk = new TalkConfig(new ArrayList<>(talkById.values()));
+
+        // 3. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
+        ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, labelToSpaceIdMap, context));
         BoardConfig board = new BoardConfig(boardSpaces);
         MapConfig map = new MapConfig(parseMapItemsFromTrees(rootTree.children()));
 
-        // 3. Vérifier qu'il n'y a pas de références non résolues
+        // 4. Vérifier qu'il n'y a pas de références non résolues
         if (context.hasUnresolvedReferences()) {
             throw new TemplateException("Unresolved references: " + context.getUnresolvedReferences());
         }
 
-        return new Template(templateAtom(rootTree), label, version, maxDurationFromParams(params), scenario, board, map);
+        return new Template(templateAtom(rootTree), label, version, maxDurationFromParams(params), scenario, board, map, talk);
     }
 
     private static Template.Atom templateAtom(Tree rootTree) {
@@ -132,10 +147,10 @@ public class TemplateGeneratorUseCase {
     private BoardSpace.Id resolveSpaceId(String spaceLabel, Map<String, BoardSpace.Id> labelToSpaceIdMap) {
         BoardSpace.Id resolvedId = labelToSpaceIdMap.get(spaceLabel);
         if (resolvedId != null) {
-            // Le label correspond à un BoardSpace existant, on utilise son ID
+            // Le value correspond à un BoardSpace existant, on utilise son ID
             return resolvedId;
         } else {
-            // Le label ne correspond à aucun BoardSpace, on crée un nouvel ID
+            // Le value ne correspond à aucun BoardSpace, on crée un nouvel ID
             // (comportement de fallback pour rétrocompatibilité)
             return new BoardSpace.Id(spaceLabel);
         }
@@ -170,6 +185,71 @@ public class TemplateGeneratorUseCase {
         }
 
         return mapItems;
+    }
+
+    private List<TalkItem> parseTalkItemsFromTrees(List<Tree> trees, ParsingContext context) {
+        List<TalkItem> talkItems = new ArrayList<>();
+
+        for (Tree tree : trees) {
+            if ("TALK".equalsIgnoreCase(tree.header())) {
+                // Un Talk peut contenir plusieurs items (Options, Simple, etc.)
+                for (Tree itemTree : tree.children()) {
+                    // Vérifier si le header contient "Options"
+                    if (itemTree.header().toLowerCase().contains("options")) {
+                        TalkItem.MultipleOptions options = parseMultipleOptionsFromTree(itemTree, context);
+                        talkItems.add(options);
+                    }
+                    // Ici on peut ajouter d'autres types de TalkItem plus tard (Simple, etc.)
+                }
+            }
+        }
+
+        return talkItems;
+    }
+
+    private TalkItem.MultipleOptions parseMultipleOptionsFromTree(Tree optionsTree, ParsingContext context) {
+        // Extraire la référence du header si elle existe : "Options(ref OPTIONS_ABCD)"
+        String referenceName = extractReferenceFromHeader(optionsTree.header());
+
+        I18n label = new I18n(Map.of()); // label par défaut
+        List<TalkItem.MultipleOptions.Option> options = new ArrayList<>();
+
+        for (Tree child : optionsTree.children()) {
+            String header = child.header().toLowerCase();
+            if (header.contains("label")) {
+                // Parse l'I18n pour le label
+                Optional<I18n> labelOpt = parseI18nFromChildrenWithoutNewline(child.children());
+                label = labelOpt.orElse(new I18n(Map.of()));
+            } else if (header.contains("option")) {
+                // Extraire la référence du header : "Option(ref REF_CHOIX_A)"
+                String optionReferenceName = extractReferenceFromHeader(child.header());
+
+                // Parse l'I18n pour chaque option
+                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(child.children());
+                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
+                TalkItem.MultipleOptions.Option option = new TalkItem.MultipleOptions.Option(optionMessage);
+                options.add(option);
+
+                // Enregistrer la référence si elle existe
+                if (optionReferenceName != null) {
+                    context.registerReference(optionReferenceName, option);
+                }
+            }
+        }
+
+        TalkItem.MultipleOptions multipleOptions = new TalkItem.MultipleOptions(label, options);
+
+        // Enregistrer la relation option → TalkItem pour chaque option
+        for (TalkItem.MultipleOptions.Option option : options) {
+            context.registerOptionToTalkItemMapping(option.id(), multipleOptions.id());
+        }
+
+        // Enregistrer la référence si elle existe
+        if (referenceName != null) {
+            context.registerReference(referenceName, multipleOptions);
+        }
+
+        return multipleOptions;
     }
 
     private MapItem parseMapItemFromTree(Tree mapTree) {
@@ -207,7 +287,7 @@ public class TemplateGeneratorUseCase {
 
                 MapItem.Position.Atom atom = new MapItem.Position.Atom(
                         new MapItem.Position.Id(),
-                        "", // label vide pour l'instant
+                        "", // value vide pour l'instant
                         positionPriority,
                         List.of() // spaceIds vides pour l'instant
                 );
@@ -222,7 +302,7 @@ public class TemplateGeneratorUseCase {
 
         return new MapItem(
                 new MapItem.Id(),
-                new I18n(Map.of()), // label I18n vide
+                new I18n(Map.of()), // value I18n vide
                 new MapItem.Image(MapItem.Image.Type.ASSET, imagePath, new MapItem.Image.Size(0, 0)),
                 priority,
                 positions,
@@ -460,13 +540,13 @@ public class TemplateGeneratorUseCase {
         // 1. Détecter si c'est optionnel
         boolean optional = tree.header().toUpperCase().contains("(OPT)");
 
-        // 2. Parser le label I18n depuis les paramètres OU depuis le header
+        // 2. Parser le value I18n depuis les paramètres OU depuis le header
         Optional<I18n> targetLabel = Optional.empty();
         if (!tree.params().isEmpty()) {
             String paramsStr = String.join(":", tree.params());
             targetLabel = parseI18nFromLine(paramsStr);
         } else {
-            // Si pas de params, extraire le label du header (enlever "Target " du début)
+            // Si pas de params, extraire le value du header (enlever "Target " du début)
             String headerText = tree.header().toUpperCase();
             if (headerText.toUpperCase().startsWith(TARGET_KEY + " ")) {
                 String labelText = headerText.substring((TARGET_KEY + " ").length()).trim();
@@ -558,10 +638,10 @@ public class TemplateGeneratorUseCase {
             // TreeGenerator sépare différemment : header="FR", params=["Ceci est ma chambre."]
             if (FR_KEY.equals(headerUpper) && !params.isEmpty()) {
                 currentLang = FR_KEY;
-                frenchLines.add(params.get(0));
+                frenchLines.add(params.getFirst());
             } else if (EN_KEY.equals(headerUpper) && !params.isEmpty()) {
                 currentLang = EN_KEY;
-                englishLines.add(params.get(0));
+                englishLines.add(params.getFirst());
             } else if (currentLang != null && params.isEmpty()) {
                 // Ligne de continuation sans préfixe de langue (header contient le texte)
                 switch (currentLang) {
@@ -821,7 +901,7 @@ public class TemplateGeneratorUseCase {
                 // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
                 Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(tree.children());
                 I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
-                return new Consequence.DisplayTalkAlert(new Consequence.Id(), message);
+                return new Consequence.DisplayMessage(new Consequence.Id(), message);
             }
             case "goaltarget" -> {
                 return parseGoalTargetConsequence(tree, context);
@@ -991,7 +1071,7 @@ public class TemplateGeneratorUseCase {
 
                 return new PossibilityTrigger.AbsoluteTime(
                         new PossibilityTrigger.Id(),
-                        TimeUnit.ofMinutes(Integer.parseInt(valueStr))
+                        GameSessionTimeUnit.ofMinutes(Integer.parseInt(valueStr))
                 );
             }
             case "selecttalkoption" -> {
@@ -1007,25 +1087,34 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("SelectTalkOption missing required parameter: option");
                 }
 
-                // Créer un trigger avec une référence à résoudre
-                AtomicReference<TalkOptions.Option.Id> resolvedOptionId = new AtomicReference<>();
+                // Créer des références atomiques pour l'option et son TalkItem parent
+                AtomicReference<TalkItem.MultipleOptions.Option.Id> resolvedOptionId = new AtomicReference<>();
+                AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
 
                 // Demander la résolution de la référence
                 context.requestReference(optionReference, optionObj -> {
-                    if (optionObj instanceof TalkOptions.Option option) {
+                    if (optionObj instanceof TalkItem.MultipleOptions.Option option) {
                         resolvedOptionId.set(option.id());
+                        // Trouver le TalkItem parent qui contient cette option
+                        TalkItem.Id parentTalkItemId = findTalkItemContainingOption(option.id(), context);
+                        if (parentTalkItemId != null) {
+                            resolvedTalkItemId.set(parentTalkItemId);
+                        }
                     }
                 });
 
-                // Si la référence n'est pas encore résolue, créer un ID temporaire
+                // Si la référence n'est pas encore résolue, créer des IDs temporaires
                 if (resolvedOptionId.get() == null) {
-                    // Cela sera résolu plus tard par le context
-                    resolvedOptionId.set(new TalkOptions.Option.Id(optionReference));
+                    resolvedOptionId.set(new TalkItem.MultipleOptions.Option.Id(optionReference));
+                }
+                if (resolvedTalkItemId.get() == null) {
+                    resolvedTalkItemId.set(new TalkItem.Id(optionReference + "_parent"));
                 }
 
-                return new PossibilityTrigger.TalkSelectOption(
+                return new PossibilityTrigger.TalkNext(
                         new PossibilityTrigger.Id(),
-                        resolvedOptionId.get()
+                        resolvedTalkItemId.get(),
+                        Optional.of(resolvedOptionId.get())
                 );
             }
             case "clickmapobject" -> {
@@ -1298,64 +1387,88 @@ public class TemplateGeneratorUseCase {
     }
 
     private Consequence parseTalkOptionsConsequence(Tree tree, ParsingContext context) {
-        // Parse les enfants pour extraire Label et Options
-        I18n label = null;
-        List<TalkOptions.Option> options = new ArrayList<>();
-
-        for (Tree child : tree.children()) {
-            String header = child.header().toLowerCase();
-            if (header.startsWith("label")) {
-                // Parse l'I18n pour le label
-                Optional<I18n> labelOpt = parseI18nFromChildrenWithoutNewline(child.children());
-                label = labelOpt.orElse(new I18n(Map.of()));
-            } else if (header.startsWith("option")) {
-                // Extraire la référence du header : "Option(ref REF_CHOIX_A)"
-                String referenceName = extractReferenceFromHeader(child.header());
-
-                // Parse l'I18n pour chaque option
-                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(child.children());
-                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
-                TalkOptions.Option option = new TalkOptions.Option(optionMessage);
-                options.add(option);
-
-                // Enregistrer la référence si elle existe
-                if (referenceName != null) {
-                    context.registerReference(referenceName, option);
-                }
+        // Cas 1: TalkOptions avec référence (ex: "TalkOptions:OPTIONS_ABCD")
+        if (tree.params().size() >= 2) {
+            String reference = tree.params().get(1); // "OPTIONS_ABCD"
+            return parseTalkOptionsWithReference(reference, context);
+        }
+        
+        // Cas 2: TalkOptions sans référence - options définies directement dans l'arbre
+        if (tree.children().isEmpty()) {
+            throw new TemplateException("TalkOptions consequence without reference must have option children");
+        }
+        
+        return parseTalkOptionsFromTree(tree, context);
+    }
+    
+    private Consequence parseTalkOptionsWithReference(String reference, ParsingContext context) {
+        // Créer une référence atomique pour stocker l'ID résolu
+        AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
+        
+        // Demander la résolution de la référence
+        context.requestReference(reference, referencedObject -> {
+            if (referencedObject instanceof TalkItem.MultipleOptions multipleOptions) {
+                resolvedTalkId.set(multipleOptions.id());
+            } else {
+                throw new TemplateException("Reference '" + reference + "' does not point to a MultipleOptions object");
             }
+        });
+        
+        // Si la référence n'est pas encore résolue, créer un ID temporaire
+        if (resolvedTalkId.get() == null) {
+            // Cela sera résolu plus tard par le context
+            resolvedTalkId.set(new TalkItem.Id(reference));
         }
-
-        // Valeurs par défaut si nécessaire
-        if (label == null) {
-            label = new I18n(Map.of());
-        }
-
-        TalkOptions talkOptions = new TalkOptions(label, options);
-        return new Consequence.DisplayTalkOptions(new Consequence.Id(), talkOptions);
+        
+        return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
+    }
+    
+    private Consequence parseTalkOptionsFromTree(Tree tree, ParsingContext context) {
+        // Parser les options directement depuis l'arbre de la conséquence
+        TalkItem.MultipleOptions multipleOptions = parseMultipleOptionsFromTree(tree, context);
+        
+        // Enregistrer l'objet MultipleOptions pour qu'il soit pris en compte même sans (ref ...)
+        context.registerReference(multipleOptions.id().value(), multipleOptions);
+        
+        return new Consequence.DisplayTalk(new Consequence.Id(), multipleOptions.id());
     }
 
     /**
-     * Extrait une référence du header au format "(ref REFERENCE_NAME)".
+     * Extrait une référence du header au format "(ref REFERENCE_NAME)" ou "(REF REFERENCE_NAME)".
      * Exemple: "Step(ref REF_STEP_A)" -> "REF_STEP_A"
+     * Exemple: "Option (REF CHOIX_A)" -> "CHOIX_A"
      */
     private String extractReferenceFromHeader(String header) {
         if (header == null) {
             return null;
         }
 
-        // Chercher le pattern "(ref XXXX)"
+        // Chercher le pattern "(ref XXXX)" ou "(REF XXXX)"
         int refStart = header.indexOf("(ref ");
         if (refStart == -1) {
-            return null;
+            refStart = header.indexOf("(REF ");
+            if (refStart == -1) {
+                return null;
+            }
         }
 
-        int refNameStart = refStart + 5; // longueur de "(ref "
+        int refNameStart = refStart + 5; // longueur de "(ref " ou "(REF "
         int refEnd = header.indexOf(")", refNameStart);
         if (refEnd == -1) {
             return null;
         }
 
         return header.substring(refNameStart, refEnd).trim();
+    }
+    
+    /**
+     * Trouve le TalkItem qui contient une option donnée.
+     * Cette méthode sera appelée plus tard quand les références seront résolues.
+     */
+    private TalkItem.Id findTalkItemContainingOption(TalkItem.MultipleOptions.Option.Id optionId, ParsingContext context) {
+        // Cette méthode sera implémentée si nécessaire, mais l'approche optimale 
+        // est d'enregistrer cette relation lors du parsing
+        return context.getOptionToTalkItemMapping(optionId);
     }
 
     /**

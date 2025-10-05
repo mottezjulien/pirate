@@ -1,10 +1,11 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.talk.TalkOptions;
+
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.time.TimeUnit;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.Comparator;
@@ -17,7 +18,7 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.StepActive,
         PossibilityTrigger.AbsoluteTime,
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
-        PossibilityTrigger.TalkSelectOption,
+        PossibilityTrigger.TalkNext,
         PossibilityTrigger.ClickMapObject {
 
 
@@ -56,7 +57,11 @@ public sealed interface PossibilityTrigger permits
 
     }
 
-    record AbsoluteTime(Id id, TimeUnit value) implements PossibilityTrigger {
+    record AbsoluteTime(Id id, GameSessionTimeUnit value) implements PossibilityTrigger {
+        public AbsoluteTime(GameSessionTimeUnit value) {
+            this(new Id(), value);
+        }
+
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             if (event instanceof GameEvent.TimeClick timeClickEvent) {
@@ -67,7 +72,7 @@ public sealed interface PossibilityTrigger permits
     }
 
     record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId,
-                                             TimeUnit value) implements PossibilityTrigger {
+                                             GameSessionTimeUnit value) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             if (event instanceof GameEvent.TimeClick timeClickEvent) {
@@ -85,10 +90,8 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record TalkSelectOption(Id id, TalkOptions.Option.Id optionId) implements PossibilityTrigger {
-        public TalkSelectOption(TalkOptions.Option.Id optionId) {
-            this(new Id(), optionId);
-        }
+    record TalkNext(Id id, TalkItem.Id talkItemId, Optional<TalkItem.MultipleOptions.Option.Id> optionId) implements PossibilityTrigger {
+
     }
 
     record ClickMapObject(Id id, String objectReference) implements PossibilityTrigger {

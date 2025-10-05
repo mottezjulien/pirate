@@ -8,11 +8,12 @@ import java.util.Optional;
 
 public interface MapConfigRepository extends JpaRepository<MapConfigEntity, String> {
 
-    @Query("FROM MapConfigEntity config" +
-            " LEFT JOIN FETCH config.items item" +
-            " LEFT JOIN FETCH item.label" +
-            " LEFT JOIN FETCH item.positions position" +
-            " WHERE config.id = :id")
+    String FETCH_ALL =" LEFT JOIN FETCH map.items map_item" +
+            " LEFT JOIN FETCH map_item.label map_label";
+
+    @Query("FROM MapConfigEntity map" +
+            FETCH_ALL +
+            " WHERE map.id = :id")
     Optional<MapConfigEntity> fullById(@Param("id") String id);
 
 }

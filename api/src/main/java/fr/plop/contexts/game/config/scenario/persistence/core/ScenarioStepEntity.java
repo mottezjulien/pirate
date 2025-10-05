@@ -2,7 +2,8 @@ package fr.plop.contexts.game.config.scenario.persistence.core;
 
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.subs.i18n.persistence.I18nEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -24,6 +25,9 @@ public class ScenarioStepEntity {
     @ManyToOne
     @JoinColumn(name = "label_i18n_id")
     private I18nEntity label;
+
+    @Column(name = "step_order")
+    private int order;
 
     @ManyToOne
     @JoinColumn(name = "scenario_id")
@@ -50,6 +54,14 @@ public class ScenarioStepEntity {
 
     public void setLabel(I18nEntity label) {
         this.label = label;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     public ScenarioConfigEntity getScenario() {

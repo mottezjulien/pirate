@@ -2,7 +2,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.consequenc
 
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;

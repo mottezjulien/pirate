@@ -1,18 +1,18 @@
 package fr.plop.contexts.game.config.consequence;
 
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.talk.TalkOptions;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
 
 public sealed interface Consequence permits
         Consequence.ScenarioStep,
         Consequence.ScenarioTarget,
         Consequence.SessionEnd,
-        Consequence.DisplayTalkAlert,
-        Consequence.DisplayTalkOptions,
+        Consequence.DisplayMessage,
+        Consequence.DisplayTalk,
         Consequence.UpdatedMetadata,
         Consequence.ObjetAdd,
         Consequence.ObjetRemove {
@@ -24,7 +24,9 @@ public sealed interface Consequence permits
     }
 
     record ScenarioStep(Id id, ScenarioConfig.Step.Id stepId, ScenarioGoal.State state) implements Consequence {
-
+        public ScenarioStep(ScenarioConfig.Step.Id stepId, ScenarioGoal.State state) {
+            this(new Id(), stepId, state);
+        }
     }
 
     record ScenarioTarget(Id id, ScenarioConfig.Step.Id stepId, ScenarioConfig.Target.Id targetId,
@@ -36,11 +38,11 @@ public sealed interface Consequence permits
 
     }
 
-    record DisplayTalkAlert(Id id, I18n value) implements Consequence {
+    record DisplayMessage(Id id, I18n value) implements Consequence {
 
     }
 
-    record DisplayTalkOptions(Id id, TalkOptions value) implements Consequence {
+    record DisplayTalk(Id id, TalkItem.Id talkId) implements Consequence {
 
     }
 

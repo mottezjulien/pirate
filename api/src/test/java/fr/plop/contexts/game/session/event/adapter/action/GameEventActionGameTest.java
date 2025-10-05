@@ -6,7 +6,7 @@ import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -54,15 +54,9 @@ public class GameEventActionGameTest {
         verify(pushPort, times(3)).push(captor.capture());
         List<PushEvent.GameStatus> pushs = captor.getAllValues();
         assertThat(pushs).hasSize(3)
-                .anySatisfy(push -> {
-                    assertThat(push.playerId()).isEqualTo(playerId);
-                })
-                .anySatisfy(push -> {
-                    assertThat(push.playerId()).isEqualTo(otherPlayerId1);
-                })
-                .anySatisfy(push -> {
-                    assertThat(push.playerId()).isEqualTo(otherPlayerId2);
-                });
+                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId))
+                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(otherPlayerId1))
+                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(otherPlayerId2));
 
     }
 
@@ -79,9 +73,7 @@ public class GameEventActionGameTest {
         verify(pushPort).push(captor.capture());
         List<PushEvent.GameStatus> events = captor.getAllValues();
         assertThat(events).hasSize(1)
-                .anySatisfy(push -> {
-                    assertThat(push.playerId()).isEqualTo(playerId);
-                });
+                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId));
     }
 
 

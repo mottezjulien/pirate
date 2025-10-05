@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.core;
 
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.i18n.persistence.I18nEntity;
+import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

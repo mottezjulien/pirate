@@ -4,9 +4,10 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../../generic/config/server.dart';
 import '../../../../generic/connect/connection_current.dart';
-import '../../../../generic/services/global_dialog_service.dart';
+import '../../../../generic/dialog.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
+import '../../session/talk/views/game_session_talk_dialog.dart';
 
 class GameSession {
 
@@ -93,7 +94,6 @@ class GameEventListener {
     final String wsUrl = "${Server.wsAPI}/ws/games/sessions?token=${ConnectionCurrent.token}&sessionId=$sessionId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _channel!.stream.listen((message) {
-        print('message: ${message.toString()}');
         _do(message.toString());
       },
       onDone: () => running ? connect(sessionId): () {}, // Reconnexion automatique
@@ -102,16 +102,22 @@ class GameEventListener {
   }
 
   void _do(String message) {
-    if(message.toString().toUpperCase().contains('SYSTEM:MOVE')) {
+    var upperCase = message.toString().toUpperCase();
+    if(upperCase.contains('SYSTEM:MOVE')) {
       fireOnMoveListeners();
     }
-    if(message.toString().toUpperCase().contains('SYSTEM:GOAL')) {
+    if(upperCase.contains('SYSTEM:GOAL')) {
       fireOnGoalListeners();
     }
-    if(message.toString().toUpperCase().contains('SYSTEM:MESSAGE')) {
+    if(upperCase.contains('SYSTEM:MESSAGE')) {
       String bodyMessage = message.toString().substring('SYSTEM:MESSAGE:'.length);
-      // Afficher la popup avec le message reçu
-      GlobalDialogService.showCustomMessageDialog(message: bodyMessage);
+      Dialog dialog = Dialog();
+      dialog.showMessage(message: bodyMessage);
+    }
+    if(upperCase.contains('SYSTEM:TALK')) {
+      String talkId = message.toString().substring('SYSTEM:TALK:'.length);
+      GameSessionTalkDialog talkDialog = GameSessionTalkDialog();
+      talkDialog.start(talkId: talkId);
     }
   }
 

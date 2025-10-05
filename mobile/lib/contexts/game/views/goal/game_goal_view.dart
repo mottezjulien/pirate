@@ -20,13 +20,13 @@ class _GameGoalViewState extends State<GameGoalView> implements OnGoalListener {
   initState() {
     super.initState();
     _viewModel.setGoals();
-    GameSessionCurrent.addOnGoalListener(this);
+    GameCurrent.addOnGoalListener(this);
   }
 
   @override
   dispose() {
     super.dispose();
-    GameSessionCurrent.removeOnGoalListener(this);
+    GameCurrent.removeOnGoalListener(this);
   }
 
   @override

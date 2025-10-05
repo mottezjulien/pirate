@@ -2,7 +2,7 @@ package fr.plop.contexts.connect.domain;
 
 
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.i18n.domain.Language;
+import fr.plop.subs.i18n.domain.Language;
 
 import java.util.Optional;
 

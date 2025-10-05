@@ -10,12 +10,14 @@ import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerActionEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerActionRepository;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.game.session.event.adapter.action.GameEventActionMessage;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventMessage;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
-import fr.plop.contexts.game.session.time.TimeUnit;
+import fr.plop.contexts.game.session.time.GameSessionTimer;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.tools.StringTools;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -29,15 +31,17 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     private final GamePlayerActionRepository actionRepository;
     private final GameEventScenarioAdapter scenarioAdapter;
     private final GameOverUseCase gameOverUseCase;
-    private final GameEventActionMessage messageAction;
+    private final GameEventMessage messageAction;
+    private final GameSessionTimer timer;
 
     public GameEventBroadCastInternAdapter(ScenarioGoalRepository goalRepository, GamePlayerActionRepository actionRepository, GameEventScenarioAdapter scenarioAdapter,
-                                           GameOverUseCase gameOverUseCase, GameEventActionMessage messageAction) {
+                                           GameOverUseCase gameOverUseCase, GameEventMessage messageAction, @Lazy GameSessionTimer timer) {
         this.goalRepository = goalRepository;
         this.actionRepository = actionRepository;
         this.scenarioAdapter = scenarioAdapter;
         this.gameOverUseCase = gameOverUseCase;
         this.messageAction = messageAction;
+        this.timer = timer;
     }
 
     //TODO Cache ??
@@ -65,12 +69,12 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void doAlert(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayTalkAlert consequence) {
-        messageAction.alert(sessionId, playerId, consequence);
+    public void doMessage(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayMessage message) {
+        messageAction.apply(sessionId, playerId, message.value());
     }
 
     @Override
-    public void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, TimeUnit timeClick) {
+    public void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, GameSessionTimeUnit timeClick) {
         GamePlayerActionEntity entity = new GamePlayerActionEntity();
         entity.setId(StringTools.generate());
         GamePlayerEntity playerEntity = new GamePlayerEntity();
@@ -89,4 +93,10 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
         return actionRepository.fullByPlayerId(id.value())
                 .stream().map(GamePlayerActionEntity::toModel).toList();
     }
+
+    @Override
+    public GameSessionTimeUnit current(GameSession.Id sessionId) {
+        return timer.current(sessionId);
+    }
+
 }

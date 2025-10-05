@@ -6,6 +6,7 @@ import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
+import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
@@ -80,10 +81,14 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
         mapEntity.setId(template.map().id().value());
         entity.setMap(mapEntity);
 
+        TalkConfigEntity talkEntity = new TalkConfigEntity();
+        talkEntity.setId(template.talk().id().value());
+        entity.setTalk(talkEntity);
+
         entity = sessionRepository.save(entity);
 
         GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-        return GameSession.build(atom, template.scenario(), template.board());
+        return GameSession.build(atom, template.scenario(), template.board(), template.talk());
     }
 
     @Override

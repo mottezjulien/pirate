@@ -8,8 +8,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.time.TimeUnit;
-import fr.plop.contexts.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.enumerate.AndOrOr;
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +33,8 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
     @Test
     public void emptyPossibility() {
         when(outputPort.findPossibilities(sessionId, playerId)).thenReturn(Stream.empty());
-        broadCast.fire(goInEvent());
-        verify(outputPort, never()).doAlert(any(), any(), any());
+        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
+        verify(outputPort, never()).doMessage(any(), any(), any());
         verify(outputPort, never()).doGoal(any(), any(), any());
     }
 
@@ -44,9 +43,9 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         List<Consequence> consequences = consequences();
         when(outputPort.findPossibilities(sessionId, playerId))
                 .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), triggerGoIn(spaceId), List.of(), AndOrOr.AND, consequences)));
-        broadCast.fire(goInEvent());
+        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
 
-        verify(outputPort).doAlert(sessionId, playerId, ((Consequence.DisplayTalkAlert) consequences.getFirst()));
+        verify(outputPort).doMessage(sessionId, playerId, ((Consequence.DisplayMessage) consequences.getFirst()));
         verify(outputPort).doGoal(sessionId, playerId, ((Consequence.ScenarioStep) consequences.get(1)));
     }
 
@@ -55,20 +54,20 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         PossibilityTrigger trigger = triggerGoIn(new BoardSpace.Id("other space"));
         when(outputPort.findPossibilities(sessionId, playerId))
                 .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), trigger, List.of(), AndOrOr.AND, consequences())));
-        broadCast.fire(goInEvent());
+        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
 
-        verify(outputPort, never()).doAlert(any(), any(), any());
+        verify(outputPort, never()).doMessage(any(), any(), any());
         verify(outputPort, never()).doGoal(any(), any(), any());
     }
 
     private List<Consequence> consequences() {
-        Consequence.DisplayTalkAlert alert = new Consequence.DisplayTalkAlert(new Consequence.Id(), mock(I18n.class));
+        Consequence.DisplayMessage message = new Consequence.DisplayMessage(new Consequence.Id(), mock(I18n.class));
         Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE);
-        return List.of(alert, goal);
+        return List.of(message, goal);
     }
 
     private GameEvent.GoIn goInEvent() {
-        return new GameEvent.GoIn(sessionId, playerId, TimeUnit.ofMinutes(0), spaceId);
+        return new GameEvent.GoIn(spaceId);
     }
 
     private PossibilityTrigger.SpaceGoIn triggerGoIn(BoardSpace.Id spaceId) {
