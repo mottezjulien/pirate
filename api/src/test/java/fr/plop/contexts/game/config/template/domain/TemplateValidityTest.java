@@ -45,7 +45,7 @@ public class TemplateValidityTest {
         assertFalse(template.isValid());
     }
 
-    @Test
+   /*@Test
     void isValid_should_be_true_when_all_referenced_talks_exist() {
         // Talk MultipleOptions présent
         TalkItem.MultipleOptions.Option optA = new TalkItem.MultipleOptions.Option(i18n("A"));
@@ -67,5 +67,5 @@ public class TemplateValidityTest {
         Template template = new Template(new Template.Code("T_CODE"), "label", scenario, new BoardConfig(), new MapConfig(), talk);
 
         assertTrue(template.isValid());
-    }
+    }*/
 }

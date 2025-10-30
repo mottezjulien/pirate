@@ -5,6 +5,7 @@ import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
@@ -29,9 +30,8 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameSessionCreateUseCase gameCreateUseCase(GameSessionCreateUseCase.DataOutput dataOutput,
-                                                      GameSessionTimer timer) {
-        return new GameSessionCreateUseCase(dataOutput, timer);
+    public GameSessionCreateUseCase gameCreateUseCase(GameSessionCreateUseCase.DataOutput dataOutput) {
+        return new GameSessionCreateUseCase(dataOutput);
     }
 
     @Bean
@@ -53,6 +53,11 @@ public class GameSpringConfig {
     @Bean
     public GameSessionTimer gameSessionTimer(GamePlayerRepository gamePlayerRepository, GameEventBroadCast broadCast) {
         return new GameSessionTimerAdapter(gamePlayerRepository, broadCast);
+    }
+
+    @Bean
+    public GameSessionStartUseCase gameSessionStartUseCase(GameSessionStartUseCase.DataOutput dataOutput, GameSessionTimer gameSessionTimer) {
+        return new GameSessionStartUseCase(dataOutput, gameSessionTimer);
     }
 
 }

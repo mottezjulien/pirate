@@ -18,7 +18,7 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.StepActive,
         PossibilityTrigger.AbsoluteTime,
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
-        PossibilityTrigger.TalkNext,
+        PossibilityTrigger.SelectTalkOption,
         PossibilityTrigger.ClickMapObject {
 
 
@@ -37,16 +37,11 @@ public sealed interface PossibilityTrigger permits
     record SpaceGoIn(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
-            return event instanceof GameEvent.GoIn goInEvent && goInEvent.spaceId().equals(spaceId);
+            return event instanceof GameEvent.GoIn(BoardSpace.Id spaceId1) && spaceId1.equals(spaceId);
         }
     }
 
     record SpaceGoOut(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
-
-        public SpaceGoOut(BoardSpace.Id spaceId) {
-            this(new Id(), spaceId);
-        }
-
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.GoOut goOutEvent && goOutEvent.spaceId().equals(spaceId);
@@ -90,7 +85,7 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record TalkNext(Id id, TalkItem.Id talkItemId, Optional<TalkItem.MultipleOptions.Option.Id> optionId) implements PossibilityTrigger {
+    record SelectTalkOption(Id id, TalkItem.Id talkId, TalkItem.Options.Option.Id optionId) implements PossibilityTrigger {
 
     }
 

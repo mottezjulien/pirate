@@ -17,17 +17,17 @@ public class TalkCharacterImageEntity {
     @Id
     private String id;
 
+    private String label;
+
     @ManyToOne
     @JoinColumn(name = "character_id")
     private TalkCharacterEntity character;
 
-    @Column(name = "assert_url")
-    private String assertUrl;
-
-    private String identifier;
-
+    @Column(name = "asset_url")
+    private String assetUrl;
 
     public TalkCharacter toModel() {
-        return new TalkCharacter(character.getName(), new Image(Image.Type.ASSERT, assertUrl));
+        return new TalkCharacter(character.getName(), new Image(Image.Type.ASSET, assetUrl));
     }
+
 }

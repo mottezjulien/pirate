@@ -16,16 +16,26 @@ class ConnectionRepository {
     required String deviceId
   }) async {
 
-    final http.Response response = await http.post(Server.uri(path),
-        headers: Headers.noAuth(),
-        body: jsonEncode({
-          'deviceId': deviceId
-        })
-    );
-    if(response.statusCode >= 400) {
-      throw RepositoryException(response.statusCode, response.body);
+    try {
+      var uri = Server.uri(path);
+      var headers = Headers.noAuth();
+      var body = jsonEncode({
+            'deviceId': deviceId
+          });
+
+      final http.Response response = await http.post(uri,
+          headers: headers,
+          body: body
+      );
+      if(response.statusCode >= 400) {
+        throw RepositoryException(response.statusCode, response.body);
+      }
+      return toModel(jsonDecode(response.body));
+    } catch(e) {
+      print(e);
+      rethrow;
     }
-    return toModel(jsonDecode(response.body));
+
   }
 
   Auth toModel(Map<String, dynamic> json) {

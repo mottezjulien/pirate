@@ -10,7 +10,7 @@ import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerActionEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerActionRepository;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.game.session.event.adapter.action.GameEventMessage;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPush;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
@@ -31,16 +31,16 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     private final GamePlayerActionRepository actionRepository;
     private final GameEventScenarioAdapter scenarioAdapter;
     private final GameOverUseCase gameOverUseCase;
-    private final GameEventMessage messageAction;
+    private final GameEventActionPush actionPush;
     private final GameSessionTimer timer;
 
     public GameEventBroadCastInternAdapter(ScenarioGoalRepository goalRepository, GamePlayerActionRepository actionRepository, GameEventScenarioAdapter scenarioAdapter,
-                                           GameOverUseCase gameOverUseCase, GameEventMessage messageAction, @Lazy GameSessionTimer timer) {
+                                           GameOverUseCase gameOverUseCase, GameEventActionPush actionPush, @Lazy GameSessionTimer timer) {
         this.goalRepository = goalRepository;
         this.actionRepository = actionRepository;
         this.scenarioAdapter = scenarioAdapter;
         this.gameOverUseCase = gameOverUseCase;
-        this.messageAction = messageAction;
+        this.actionPush = actionPush;
         this.timer = timer;
     }
 
@@ -54,7 +54,6 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
 
     @Override
     public void doGoal(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.ScenarioStep consequence) {
-        // Only persist/update state here; domain will orchestrate follow-up events
         scenarioAdapter.updateStateOrCreateGoal(playerId, consequence);
     }
 
@@ -70,7 +69,12 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
 
     @Override
     public void doMessage(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayMessage message) {
-        messageAction.apply(sessionId, playerId, message.value());
+        actionPush.message(sessionId, playerId, message.value());
+    }
+
+    @Override
+    public void doTalk(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayTalk talk) {
+        actionPush.talk(sessionId, playerId, talk.talkId());
     }
 
     @Override

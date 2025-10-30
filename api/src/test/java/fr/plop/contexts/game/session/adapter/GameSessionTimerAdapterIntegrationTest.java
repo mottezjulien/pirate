@@ -9,12 +9,13 @@ import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
@@ -57,6 +58,9 @@ public class GameSessionTimerAdapterIntegrationTest {
     private GameSessionCreateUseCase createGameUseCase;
 
     @Autowired
+    private GameSessionStartUseCase startUseCase;
+
+    @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
     @Autowired
@@ -80,8 +84,11 @@ public class GameSessionTimerAdapterIntegrationTest {
         ConnectUser connectUser = connectUseCase.findUserIdBySessionIdAndRawToken(session.id(), auth.token());
         GamePlayer player = connectUser.player().orElseThrow();
 
-        Consequence.ScenarioStep consequence1 = (Consequence.ScenarioStep) template.scenario().steps().getFirst().possibilities().getFirst().consequences().getFirst();
-        Consequence.ScenarioStep consequence2 = (Consequence.ScenarioStep) template.scenario().steps().getFirst().possibilities().get(1).consequences().getFirst();
+        session = startUseCase.apply(session.id(), player.id());
+
+        List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
+        Consequence.ScenarioStep consequence1 = (Consequence.ScenarioStep) possibilities.getFirst().consequences().getFirst();
+        Consequence.ScenarioStep consequence2 = (Consequence.ScenarioStep) possibilities.get(1).consequences().getFirst();
 
         verify(scenarioAdapter, never()).updateStateOrCreateGoal(player.id(), consequence1);
         verify(scenarioAdapter, never()).updateStateOrCreateGoal(player.id(), consequence2);

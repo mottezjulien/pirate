@@ -28,7 +28,7 @@ public interface GameEvent {
 
     }
 
-    record Talk(TalkItem.Id talkId, Optional<TalkItem.MultipleOptions.Option.Id> optOptionId) implements GameEvent {
+    record Talk(TalkItem.Id talkId, Optional<TalkItem.Options.Option.Id> optOptionId) implements GameEvent {
 
     }
 

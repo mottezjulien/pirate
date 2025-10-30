@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.config.template.domain;
+package fr.plop.contexts.game.config.template.domain.usecase;
 
 import fr.plop.contexts.game.config.template.domain.model.Template;
 
@@ -28,7 +28,7 @@ public class TemplateInitUseCase {
             outPort.create(firstTemplate());
         }*/
         outPort.deleteAll();
-        // outPort.create(chezWam1Template());
+        //outPort.create(chezWam1Template());
         Template chezWam = chezWamTemplate();
         if (!chezWam.isValid()) {
             throw new IllegalStateException("Template chez_wam invalide: Talks référencés manquants");

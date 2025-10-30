@@ -31,6 +31,7 @@ class GameSessionUseCase {
     final GameSession session = await repository.create();
     session.init();
     GameCurrent.session = session;
+    repository.start();
   }
 
 }

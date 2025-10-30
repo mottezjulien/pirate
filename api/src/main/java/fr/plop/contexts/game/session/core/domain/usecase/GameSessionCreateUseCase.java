@@ -6,15 +6,17 @@ import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.time.GameSessionTimer;
 
 import java.util.Optional;
 
 public class GameSessionCreateUseCase {
 
-    public interface DataOutput {
+    public GameSessionCreateUseCase(DataOutput dataOutput) {
+        this.dataOutput = dataOutput;
+    }
 
-        Optional<GameSession.Atom> findActiveGameSession(ConnectUser.Id userId);
+    public interface DataOutput {
+        Optional<GameSession.Atom> findCurrentGameSession(ConnectUser.Id userId);
 
         Optional<Template> findTemplateByCode(Template.Code code);
 
@@ -23,21 +25,12 @@ public class GameSessionCreateUseCase {
         GamePlayer.Id insert(GameSession.Id gameId, ConnectUser.Id userId);
 
         void insertGoal(ScenarioGoal goal);
-
-
     }
 
     private final DataOutput dataOutput;
 
-    private final GameSessionTimer gameSessionTimer;
-
-    public GameSessionCreateUseCase(DataOutput dataOutput, GameSessionTimer gameSessionTimer) {
-        this.dataOutput = dataOutput;
-        this.gameSessionTimer = gameSessionTimer;
-    }
-
     public GameSession.Atom apply(Template.Code code, ConnectUser.Id userId) throws GameException {
-        Optional<GameSession.Atom> findInGame = dataOutput.findActiveGameSession(userId);
+        Optional<GameSession.Atom> findInGame = dataOutput.findCurrentGameSession(userId);
         if (findInGame.isPresent()) {
             return findInGame.get();
         }
@@ -53,7 +46,6 @@ public class GameSessionCreateUseCase {
         GamePlayer.Id playerId = dataOutput.insert(session.id(), userId);
         session.init(playerId);
         session.goals(playerId).forEach(dataOutput::insertGoal);
-        gameSessionTimer.start(session.id());
         return session.atom();
     }
 

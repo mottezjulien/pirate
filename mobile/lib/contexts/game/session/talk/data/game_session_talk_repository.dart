@@ -7,26 +7,47 @@ class GameSessionTalkRepository {
 
   Future<GameTalk> findById(String talkId) async {
     final GenericRepository genericRepository = GenericRepository();
-    final response = await genericRepository.get(path: "/sessions/${GameCurrent.sessionId}/talks/{talkId}");
-    return toModel(response);
+    final responseBody = await genericRepository.get(path: "/sessions/${GameCurrent.sessionId}/talks/$talkId");
+    return toModel(responseBody);
   }
+
+  Future<GameTalk?> selectOption({required String talkId, required String optionId}) async {
+    final GenericRepository genericRepository = GenericRepository();
+    final responseBody = await genericRepository.post(path: "/sessions/${GameCurrent.sessionId}/talks/$talkId/options/$optionId/");
+    if(responseBody == GenericRepository.noContent) {
+      return null;
+    }
+    return toModel(responseBody);
+  }
+
 
   GameTalk toModel(Map<String, dynamic> json) {
     final Image image = Image(
         type: ImageType.fromString(json['character']['image']['type']),
         value: json['character']['image']['value']);
     final character = GameTalkCharacter(
-        name: json['character']['id'],
+        name: json['character']['name'],
         image: image
     );
-    List<GameTalkResultOption> options = [];
-    if(json['result']['options'] != null) {
-      options = json['result']['options']
-          .map((each) => talkOptionToModel(each)).toList();
+
+
+    GameTalkResult result = GameTalkResultSimple();
+    switch(GameTalkResultType.fromString(json['result']['type'])) {
+      case GameTalkResultType.SIMPLE:
+        result = GameTalkResultSimple();
+        break;
+      case GameTalkResultType.CONTINUE:
+        result = GameTalkResultContinue(nextId: json['result']['nextId']);
+        break;
+      case GameTalkResultType.MULTIPLE:
+        List<GameTalkResultOption> options = [];
+        if(json['result']['options'] != null) {
+          options = json['result']['options']
+              .map((each) => talkOptionToModel(each)).toList().cast<GameTalkResultOption>();
+        }
+        result = GameTalkResultMultiple(options: options);
+        break;
     }
-    final result = GameTalkResult(
-        type:  GameTalkResultType.fromString(json['result']['type']),
-        options: options);
 
     return GameTalk(
         id: json['id'],
@@ -39,4 +60,16 @@ class GameSessionTalkRepository {
     return GameTalkResultOption(id: json['id'], value: json['value']);
   }
 
+}
+
+enum GameTalkResultType {
+  SIMPLE, CONTINUE, MULTIPLE;
+  static GameTalkResultType fromString(String str) {
+    switch(str) {
+      case 'SIMPLE': return GameTalkResultType.SIMPLE;
+      case 'CONITNUE': return GameTalkResultType.CONTINUE;
+      case 'MULTIPLE': return GameTalkResultType.MULTIPLE;
+      default: throw Exception('Unknown GameTalkResultType: $str' );
+    }
+  }
 }

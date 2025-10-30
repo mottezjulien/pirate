@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.config.template.domain;
+package fr.plop.contexts.game.config.template.domain.usecase;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
@@ -10,13 +10,16 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.position.Point;
@@ -100,15 +103,26 @@ public class TemplateGeneratorUseCase {
         List<TalkItem> declaredTalkItems = parseTalkItemsFromTrees(rootTree.children(), context);
         // Inclure aussi les TalkItem créés inline (ex: dans des Consequence)
         List<TalkItem> referencedTalkItems = context.getAllReferences(TalkItem.class);
-        Map<String, TalkItem> talkById = new HashMap<>();
+        
+        // Build final list: declared items + referenced items not already in declared
+        Map<String, Boolean> seenIds = new HashMap<>();
+        List<TalkItem> finalTalkItems = new ArrayList<>();
+        
+        // Add declared items in order
         for (TalkItem ti : declaredTalkItems) {
-            talkById.put(ti instanceof TalkItem.Simple s ? s.id().value() : ((TalkItem.MultipleOptions) ti).id().value(), ti);
+            finalTalkItems.add(ti);
+            seenIds.put(ti.id().value(), true);
         }
+        
+        // Add referenced items that aren't already in declared items
         for (TalkItem ti : referencedTalkItems) {
-            String id = ti instanceof TalkItem.Simple s ? s.id().value() : ((TalkItem.MultipleOptions) ti).id().value();
-            talkById.putIfAbsent(id, ti);
+            if (!seenIds.containsKey(ti.id().value())) {
+                finalTalkItems.add(ti);
+                seenIds.put(ti.id().value(), true);
+            }
         }
-        TalkConfig talk = new TalkConfig(new ArrayList<>(talkById.values()));
+        
+        TalkConfig talk = new TalkConfig(finalTalkItems);
 
         // 3. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
         ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, labelToSpaceIdMap, context));
@@ -189,17 +203,62 @@ public class TemplateGeneratorUseCase {
 
     private List<TalkItem> parseTalkItemsFromTrees(List<Tree> trees, ParsingContext context) {
         List<TalkItem> talkItems = new ArrayList<>();
+        List<String> talkSimpleReferences = new ArrayList<>(); // Track references for linking
+        Map<Integer, String> nextIdReferencesMap = new HashMap<>(); // Track unresolved nextIds for Continue items by index
 
         for (Tree tree : trees) {
             if ("TALK".equalsIgnoreCase(tree.header())) {
-                // Un Talk peut contenir plusieurs items (Options, Simple, etc.)
+                // 1. Parser d'abord les Characters pour les avoir en map
+                Map<String, Map<String, String>> characters = new HashMap<>();
+                
                 for (Tree itemTree : tree.children()) {
-                    // Vérifier si le header contient "Options"
-                    if (itemTree.header().toLowerCase().contains("options")) {
-                        TalkItem.MultipleOptions options = parseMultipleOptionsFromTree(itemTree, context);
-                        talkItems.add(options);
+                    String headerUpper = itemTree.header().toUpperCase();
+                    if (headerUpper.contains("CHARACTER")) {
+                        Map<String, Map<String, String>> charMap = parseCharactersFromTree(itemTree);
+                        characters.putAll(charMap);
                     }
-                    // Ici on peut ajouter d'autres types de TalkItem plus tard (Simple, etc.)
+                }
+
+                // 2. Parser ensuite les TalkItems (Simple, Continue, Options, etc.)
+                for (Tree itemTree : tree.children()) {
+                    String headerLower = itemTree.header().toLowerCase();
+                    String headerUpper = itemTree.header().toUpperCase();
+                    
+                    if (headerUpper.contains("SIMPLE")) {
+                        String referenceName = extractReferenceFromHeader(itemTree.header());
+                        TalkItem.Simple simple = parseSimpleFromTree(itemTree, characters, context);
+                        talkItems.add(simple);
+                        talkSimpleReferences.add(referenceName); // Track for linking
+                    } else if (headerUpper.contains("CONTINUE")) {
+                        String referenceName = extractReferenceFromHeader(itemTree.header());
+                        String nextIdReference = extractNextIdReferenceFromTree(itemTree);
+                        TalkItem.Continue continueItem = parseContinueFromTree(itemTree, characters, context);
+                        talkItems.add(continueItem);
+                        talkSimpleReferences.add(referenceName); // Track for linking
+                        // Track the nextId reference for later resolution
+                        if (nextIdReference != null) {
+                            nextIdReferencesMap.put(talkItems.size() - 1, nextIdReference);
+                        }
+                    } else if (headerLower.contains("options")) {
+                        TalkItem.Options options = parseMultipleOptionsFromTree(itemTree, characters, context);
+                        talkItems.add(options);
+                        talkSimpleReferences.add(null); // Not a simple, so no reference
+                    }
+                }
+
+                // 3. Resolve Continue nextIds by looking up references
+                if (!nextIdReferencesMap.isEmpty()) {
+                    talkItems = resolveNextIds(talkItems, nextIdReferencesMap, context);
+                }
+                
+                // 3b. Resolve Options nextIds by looking up references
+                talkItems = resolveOptionsNextIds(talkItems, context);
+
+                // 4. Link Talk items (convert Simple to Continue where appropriate)
+                // Only link if there are no explicit Continue items (mixed Simple+Continue)
+                boolean hasExplicitContinue = talkItems.stream().anyMatch(ti -> ti instanceof TalkItem.Continue);
+                if (!hasExplicitContinue) {
+                    talkItems = linkTalkItems(talkItems, talkSimpleReferences, context);
                 }
             }
         }
@@ -207,12 +266,110 @@ public class TemplateGeneratorUseCase {
         return talkItems;
     }
 
-    private TalkItem.MultipleOptions parseMultipleOptionsFromTree(Tree optionsTree, ParsingContext context) {
+    private String extractNextIdReferenceFromTree(Tree continueTree) {
+        // Extract nextId reference from params
+        // Format: "Continue(ref TALK001)" with params [TALK002]
+        List<String> params = continueTree.params();
+        if (!params.isEmpty()) {
+            return params.get(0);
+        }
+        return null;
+    }
+
+    private List<TalkItem> resolveNextIds(List<TalkItem> talkItems, Map<Integer, String> nextIdReferencesMap, ParsingContext context) {
+        List<TalkItem> resolvedItems = new ArrayList<>(talkItems);
+        
+        for (Map.Entry<Integer, String> entry : nextIdReferencesMap.entrySet()) {
+            int index = entry.getKey();
+            String nextIdRef = entry.getValue();
+            
+            if (index >= 0 && index < resolvedItems.size()) {
+                TalkItem item = resolvedItems.get(index);
+                
+                if (item instanceof TalkItem.Continue) {
+                    // Try to resolve the reference to get the actual TalkItem.Id
+                    Optional<TalkItem> nextItemOpt = context.getReference(nextIdRef, TalkItem.class);
+                    if (nextItemOpt.isPresent()) {
+                        TalkItem nextItem = nextItemOpt.get();
+                        // Create a new Continue with the resolved nextId
+                        TalkItem.Continue continueItem = (TalkItem.Continue) item;
+                        TalkItem.Continue resolved = new TalkItem.Continue(
+                            continueItem.id(),
+                            continueItem.value(),
+                            continueItem.character(),
+                            nextItem.id()
+                        );
+                        resolvedItems.set(index, resolved);
+                    }
+                }
+            }
+        }
+        
+        return resolvedItems;
+    }
+    
+    private List<TalkItem> resolveOptionsNextIds(List<TalkItem> talkItems, ParsingContext context) {
+        List<TalkItem> resolvedItems = new ArrayList<>(talkItems);
+        
+        for (int i = 0; i < resolvedItems.size(); i++) {
+            TalkItem item = resolvedItems.get(i);
+            
+            if (item instanceof TalkItem.Options) {
+                TalkItem.Options optionsItem = (TalkItem.Options) item;
+                List<TalkItem.Options.Option> resolvedOptions = new ArrayList<>();
+                boolean hasChanges = false;
+                
+                for (TalkItem.Options.Option option : optionsItem.options()) {
+                    if (option.hasNext()) {
+                        TalkItem.Id tempNextId = option.nextId();
+                        String refValue = tempNextId.value();
+                        
+                        // Try to resolve the reference if it looks like a reference (contains no dashes - UUID style)
+                        if (!refValue.contains("-")) {
+                            Optional<TalkItem> nextItemOpt = context.getReference(refValue, TalkItem.class);
+                            if (nextItemOpt.isPresent()) {
+                                TalkItem nextItem = nextItemOpt.get();
+                                // Create a new Option with the resolved nextId
+                                TalkItem.Options.Option resolved = new TalkItem.Options.Option(
+                                    option.id(),
+                                    option.value(),
+                                    nextItem.id()
+                                );
+                                resolvedOptions.add(resolved);
+                                hasChanges = true;
+                            } else {
+                                resolvedOptions.add(option);
+                            }
+                        } else {
+                            resolvedOptions.add(option);
+                        }
+                    } else {
+                        resolvedOptions.add(option);
+                    }
+                }
+                
+                if (hasChanges) {
+                    // Create a new Options with resolved options
+                    TalkItem.Options resolved = new TalkItem.Options(
+                        optionsItem.id(),
+                        optionsItem.value(),
+                        optionsItem.character(),
+                        resolvedOptions
+                    );
+                    resolvedItems.set(i, resolved);
+                }
+            }
+        }
+        
+        return resolvedItems;
+    }
+
+    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, Map<String, Map<String, String>> characters, ParsingContext context) {
         // Extraire la référence du header si elle existe : "Options(ref OPTIONS_ABCD)"
         String referenceName = extractReferenceFromHeader(optionsTree.header());
 
         I18n label = new I18n(Map.of()); // label par défaut
-        List<TalkItem.MultipleOptions.Option> options = new ArrayList<>();
+        List<TalkItem.Options.Option> options = new ArrayList<>();
 
         for (Tree child : optionsTree.children()) {
             String header = child.header().toLowerCase();
@@ -225,9 +382,38 @@ public class TemplateGeneratorUseCase {
                 String optionReferenceName = extractReferenceFromHeader(child.header());
 
                 // Parse l'I18n pour chaque option
-                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(child.children());
+                // Structure:
+                // Option (ref WAHUP_YES)
+                //   value
+                //     FR:Oui
+                //     EN:Yes
+                //   next:TALK002
+                List<Tree> childrenToParseI18n = child.children();
+                Optional<Tree> valueTree = child.children().stream()
+                        .filter(t -> t.header().toLowerCase().contains("value"))
+                        .findFirst();
+                
+                if (valueTree.isPresent()) {
+                    childrenToParseI18n = valueTree.get().children();
+                }
+
+                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(childrenToParseI18n);
                 I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
-                TalkItem.MultipleOptions.Option option = new TalkItem.MultipleOptions.Option(optionMessage);
+                
+                // Chercher la référence nextId via "next:TALK002"
+                Optional<String> nextIdRef = child.children().stream()
+                        .filter(t -> t.header().toLowerCase().startsWith("next"))
+                        .flatMap(t -> t.params().stream())
+                        .findFirst();
+                
+                TalkItem.Options.Option option;
+                if (nextIdRef.isPresent()) {
+                    // Create a reference that will be resolved later
+                    option = new TalkItem.Options.Option(new TalkItem.Options.Option.Id(), optionMessage, 
+                            new TalkItem.Id(nextIdRef.get()));
+                } else {
+                    option = new TalkItem.Options.Option(optionMessage);
+                }
                 options.add(option);
 
                 // Enregistrer la référence si elle existe
@@ -237,10 +423,16 @@ public class TemplateGeneratorUseCase {
             }
         }
 
-        TalkItem.MultipleOptions multipleOptions = new TalkItem.MultipleOptions(label, options);
+        // Parse character from children (new format: Character:Alice:alice-sad)
+        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(optionsTree.children(), characters);
+        if (talkCharacter == null) {
+            talkCharacter = TalkCharacter.nobody();
+        }
+
+        TalkItem.Options multipleOptions = new TalkItem.Options(new TalkItem.Id(), label, talkCharacter, options);
 
         // Enregistrer la relation option → TalkItem pour chaque option
-        for (TalkItem.MultipleOptions.Option option : options) {
+        for (TalkItem.Options.Option option : options) {
             context.registerOptionToTalkItemMapping(option.id(), multipleOptions.id());
         }
 
@@ -250,6 +442,221 @@ public class TemplateGeneratorUseCase {
         }
 
         return multipleOptions;
+    }
+
+    private Map<String, Map<String, String>> parseCharactersFromTree(Tree characterTree) {
+        // Format:
+        // Character
+        //   - CharacterName
+        //     - AvatarName:Type:image_path.jpg
+        // Stocke: CharacterName -> (AvatarName -> "Type:image_path.jpg")
+        Map<String, Map<String, String>> result = new HashMap<>();
+
+        for (Tree characterChild : characterTree.children()) {
+            String characterName = characterChild.header();
+            Map<String, String> avatarMap = new HashMap<>();
+
+            // Parser les avatars du personnage
+            for (Tree avatarTree : characterChild.children()) {
+                String avatarDef = avatarTree.header();
+                List<String> params = avatarTree.params();
+
+                // Format: "AvatarName:Type:image_path.jpg"
+                // TreeGenerator peut parser cela de 2 façons :
+                // 1. header="AvatarName", params=["Type", "image_path.jpg"]
+                // 2. header="AvatarName:Type:image_path.jpg", params=[]
+                
+                if (params.size() >= 2) {
+                    // Format 1: header + params
+                    String avatarName = avatarDef;
+                    String type = params.get(0);
+                    String imagePath = params.get(1);
+                    avatarMap.put(avatarName, type + SEPARATOR + imagePath);
+                } else if (params.size() == 1) {
+                    // Format hybride: header contient avatarName, params[0] = imagePath
+                    String avatarName = avatarDef;
+                    String imagePath = params.get(0);
+                    avatarMap.put(avatarName, "ASSET" + SEPARATOR + imagePath);
+                } else if (avatarDef.contains(SEPARATOR)) {
+                    // Format 2: tout dans le header "AvatarName:Type:image_path.jpg"
+                    String[] parts = avatarDef.split(":", 3);
+                    if (parts.length >= 3) {
+                        String avatarName = parts[0];
+                        String type = parts[1];
+                        String imagePath = parts[2];
+                        avatarMap.put(avatarName, type + SEPARATOR + imagePath);
+                    }
+                }
+            }
+
+            result.put(characterName, avatarMap);
+        }
+
+        return result;
+    }
+
+    private TalkItem.Simple parseSimpleFromTree(Tree simpleTree, Map<String, Map<String, String>> characters, ParsingContext context) {
+        // Extraire la référence du header: "Simple(ref TALK000):Bob:Happy"
+        String referenceName = extractReferenceFromHeader(simpleTree.header());
+
+        // Parser les paramètres: [CharacterName, AvatarName]
+        // Format dans le header après la ref: "Simple(ref TALK000):Bob:Happy"
+        String characterName = "";
+        String avatarName = "";
+
+        List<String> params = simpleTree.params();
+        if (!params.isEmpty()) {
+            if (params.size() >= 1) {
+                characterName = params.get(0);
+            }
+            if (params.size() >= 2) {
+                avatarName = params.get(1);
+            }
+        }
+
+        // Parser le message I18n
+        Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(simpleTree.children());
+        I18n message = messageOpt.orElse(new I18n(Map.of()));
+
+        // Try to parse character from children (new format: Character:Alice:alice-sad)
+        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(simpleTree.children(), characters);
+        
+        // Fallback to old format if character not found
+        if (talkCharacter == null) {
+            talkCharacter = parseCharacterFromParams(characterName, avatarName, characters);
+        }
+
+        // Créer le TalkItem.Simple
+        TalkItem.Simple simple = new TalkItem.Simple(new TalkItem.Id(), message, talkCharacter);
+
+        // Enregistrer la référence si elle existe
+        if (referenceName != null) {
+            context.registerReference(referenceName, simple);
+        }
+
+        return simple;
+    }
+
+    private TalkItem.Continue parseContinueFromTree(Tree continueTree, Map<String, Map<String, String>> characters, ParsingContext context) {
+        // Format: "Continue(ref TALK001)" with params [TALK002]
+        // The TALK002 will be resolved later in resolveNextIds
+        String referenceName = extractReferenceFromHeader(continueTree.header());
+
+        // Parser le message I18n
+        Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(continueTree.children());
+        I18n message = messageOpt.orElse(new I18n(Map.of()));
+
+        // Parse character from children (new format: Character:Alice:alice-sad)
+        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(continueTree.children(), characters);
+        if (talkCharacter == null) {
+            talkCharacter = TalkCharacter.nobody();
+        }
+
+        // Créer le TalkItem.Continue avec un placeholder nextId
+        // The actual nextId will be set during resolveNextIds()
+        TalkItem.Id placeholderNextId = new TalkItem.Id();
+        TalkItem.Continue continueItem = new TalkItem.Continue(new TalkItem.Id(), message, talkCharacter, placeholderNextId);
+
+        // Enregistrer la référence si elle existe
+        if (referenceName != null) {
+            context.registerReference(referenceName, continueItem);
+        }
+
+        return continueItem;
+    }
+
+    private TalkCharacter parseCharacterFromTreeChildren(List<Tree> children, Map<String, Map<String, String>> characters) {
+        // Look for child with header like "Character:Alice:alice-sad"
+        for (Tree child : children) {
+            String header = child.header();
+            if (header.toUpperCase().startsWith("CHARACTER")) {
+                // Format: "Character:Alice:alice-sad"
+                List<String> parts = child.params();
+                if (parts.size() >= 2) {
+                    String characterName = parts.get(0);
+                    String avatarName = parts.get(1);
+                    return parseCharacterFromParams(characterName, avatarName, characters);
+                }
+            }
+        }
+        return null;
+    }
+
+    private TalkCharacter parseCharacterFromParams(String characterName, String avatarName, Map<String, Map<String, String>> characters) {
+        // Créer le TalkCharacter à partir du nom et de l'avatar
+        TalkCharacter talkCharacter = TalkCharacter.nobody();
+        if (!characterName.isEmpty() && characters.containsKey(characterName)) {
+            Map<String, String> avatars = characters.get(characterName);
+            String avatarSpec = "";
+            
+            if (!avatarName.isEmpty() && avatars.containsKey(avatarName)) {
+                avatarSpec = avatars.get(avatarName); // Format: "Type:image_path.jpg"
+            }
+            
+            // Parser le spec d'avatar
+            Image image = Image.no();
+            if (!avatarSpec.isEmpty()) {
+                String[] parts = avatarSpec.split(":", 2);
+                if (parts.length == 2) {
+                    String typeStr = parts[0].toUpperCase();
+                    String imagePath = parts[1];
+                    
+                    Image.Type imageType = "WEB".equals(typeStr) ? Image.Type.WEB : Image.Type.ASSET;
+                    image = new Image(imageType, imagePath);
+                }
+            }
+            
+            talkCharacter = new TalkCharacter(characterName, image);
+        }
+        return talkCharacter;
+    }
+
+    private List<TalkItem> linkTalkItems(List<TalkItem> talkItems, List<String> talkSimpleReferences, ParsingContext context) {
+        // Convert Simple items to Continue when followed by another Simple with same character/avatar
+        List<TalkItem> linkedItems = new ArrayList<>();
+        
+        for (int i = 0; i < talkItems.size(); i++) {
+            TalkItem currentItem = talkItems.get(i);
+            
+            // Check if current is Simple and has a next item that's also a Simple with same character/avatar
+            if (currentItem instanceof TalkItem.Simple currentSimple && i < talkItems.size() - 1) {
+                TalkItem nextItem = talkItems.get(i + 1);
+                
+                if (nextItem instanceof TalkItem.Simple nextSimple && shouldLink(currentSimple, nextSimple)) {
+                    // Convert Simple to Continue with nextId pointing to next item
+                    TalkItem.Continue continueItem = new TalkItem.Continue(
+                        currentSimple.id(),
+                        currentSimple.value(),
+                        currentSimple.character(),
+                        nextSimple.id()
+                    );
+                    linkedItems.add(continueItem);
+                    
+                    // Re-register reference if needed
+                    String refName = talkSimpleReferences.get(i);
+                    if (refName != null) {
+                        context.registerReference(refName, continueItem);
+                    }
+                } else {
+                    // Keep as Simple
+                    linkedItems.add(currentItem);
+                }
+            } else {
+                // Keep as is (Simple, Continue, or MultipleOptions)
+                linkedItems.add(currentItem);
+            }
+        }
+        
+        return linkedItems;
+    }
+
+    private boolean shouldLink(TalkItem.Simple current, TalkItem.Simple next) {
+        // Link if same character (regardless of avatar)
+        TalkCharacter currentChar = current.character();
+        TalkCharacter nextChar = next.character();
+        
+        // Must have same character name
+        return currentChar.name().equals(nextChar.name());
     }
 
     private MapItem parseMapItemFromTree(Tree mapTree) {
@@ -963,6 +1370,9 @@ public class TemplateGeneratorUseCase {
             case "talkoptions" -> {
                 return parseTalkOptionsConsequence(tree, context);
             }
+            case "talk" -> {
+                return parseTalkConsequence(tree, context);
+            }
         }
 
         throw new TemplateException("Invalid consequence format: " + type);
@@ -1088,12 +1498,12 @@ public class TemplateGeneratorUseCase {
                 }
 
                 // Créer des références atomiques pour l'option et son TalkItem parent
-                AtomicReference<TalkItem.MultipleOptions.Option.Id> resolvedOptionId = new AtomicReference<>();
+                AtomicReference<TalkItem.Options.Option.Id> resolvedOptionId = new AtomicReference<>();
                 AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
 
                 // Demander la résolution de la référence
                 context.requestReference(optionReference, optionObj -> {
-                    if (optionObj instanceof TalkItem.MultipleOptions.Option option) {
+                    if (optionObj instanceof TalkItem.Options.Option option) {
                         resolvedOptionId.set(option.id());
                         // Trouver le TalkItem parent qui contient cette option
                         TalkItem.Id parentTalkItemId = findTalkItemContainingOption(option.id(), context);
@@ -1105,16 +1515,16 @@ public class TemplateGeneratorUseCase {
 
                 // Si la référence n'est pas encore résolue, créer des IDs temporaires
                 if (resolvedOptionId.get() == null) {
-                    resolvedOptionId.set(new TalkItem.MultipleOptions.Option.Id(optionReference));
+                    resolvedOptionId.set(new TalkItem.Options.Option.Id(optionReference));
                 }
                 if (resolvedTalkItemId.get() == null) {
                     resolvedTalkItemId.set(new TalkItem.Id(optionReference + "_parent"));
                 }
 
-                return new PossibilityTrigger.TalkNext(
+                return new PossibilityTrigger.SelectTalkOption(
                         new PossibilityTrigger.Id(),
                         resolvedTalkItemId.get(),
-                        Optional.of(resolvedOptionId.get())
+                        resolvedOptionId.get()
                 );
             }
             case "clickmapobject" -> {
@@ -1407,7 +1817,7 @@ public class TemplateGeneratorUseCase {
         
         // Demander la résolution de la référence
         context.requestReference(reference, referencedObject -> {
-            if (referencedObject instanceof TalkItem.MultipleOptions multipleOptions) {
+            if (referencedObject instanceof TalkItem.Options multipleOptions) {
                 resolvedTalkId.set(multipleOptions.id());
             } else {
                 throw new TemplateException("Reference '" + reference + "' does not point to a MultipleOptions object");
@@ -1425,12 +1835,43 @@ public class TemplateGeneratorUseCase {
     
     private Consequence parseTalkOptionsFromTree(Tree tree, ParsingContext context) {
         // Parser les options directement depuis l'arbre de la conséquence
-        TalkItem.MultipleOptions multipleOptions = parseMultipleOptionsFromTree(tree, context);
+        TalkItem.Options multipleOptions = parseMultipleOptionsFromTree(tree, new HashMap<>(), context);
         
         // Enregistrer l'objet MultipleOptions pour qu'il soit pris en compte même sans (ref ...)
         context.registerReference(multipleOptions.id().value(), multipleOptions);
         
         return new Consequence.DisplayTalk(new Consequence.Id(), multipleOptions.id());
+    }
+
+    private Consequence parseTalkConsequence(Tree tree, ParsingContext context) {
+        // Format: "Consequence:Talk:TALK000"
+        // tree.params() contient ["Talk", "TALK000"]
+        
+        if (tree.params().size() < 2) {
+            throw new TemplateException("Talk consequence must specify a talk ID or reference");
+        }
+
+        String talkReference = tree.params().get(1); // "TALK000"
+
+        // Créer une référence atomique pour stocker l'ID résolu
+        AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
+
+        // Demander la résolution de la référence
+        context.requestReference(talkReference, referencedObject -> {
+            if (referencedObject instanceof TalkItem talkItem) {
+                resolvedTalkId.set(talkItem.id());
+            } else {
+                throw new TemplateException("Reference '" + talkReference + "' does not point to a TalkItem object");
+            }
+        });
+
+        // Si la référence n'est pas encore résolue, créer un ID temporaire
+        if (resolvedTalkId.get() == null) {
+            // Cela sera résolu plus tard par le context
+            resolvedTalkId.set(new TalkItem.Id(talkReference));
+        }
+
+        return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
     }
 
     /**
@@ -1465,7 +1906,7 @@ public class TemplateGeneratorUseCase {
      * Trouve le TalkItem qui contient une option donnée.
      * Cette méthode sera appelée plus tard quand les références seront résolues.
      */
-    private TalkItem.Id findTalkItemContainingOption(TalkItem.MultipleOptions.Option.Id optionId, ParsingContext context) {
+    private TalkItem.Id findTalkItemContainingOption(TalkItem.Options.Option.Id optionId, ParsingContext context) {
         // Cette méthode sera implémentée si nécessaire, mais l'approche optimale 
         // est d'enregistrer cette relation lors du parsing
         return context.getOptionToTalkItemMapping(optionId);

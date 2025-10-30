@@ -5,6 +5,7 @@ import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.Language;
 import org.assertj.core.data.Offset;

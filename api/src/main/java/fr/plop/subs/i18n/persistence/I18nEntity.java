@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 public class I18nEntity {
 
     @Id
-    //@UuidGenerator
     private String id;
 
     private String description;

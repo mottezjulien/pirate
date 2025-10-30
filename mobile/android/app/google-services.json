@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "446532819404",
+    "project_id": "plop-bb574",
+    "storage_bucket": "plop-bb574.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446532819404:android:b85ccfdbde79426a642569",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBol1d197Hqx6x_ZqcothKO-cvxDWXuWVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446532819404:android:c5ab168e428d2b79642569",
+        "android_client_info": {
+          "package_name": "com.example.plop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBol1d197Hqx6x_ZqcothKO-cvxDWXuWVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

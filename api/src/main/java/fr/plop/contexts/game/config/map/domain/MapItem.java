@@ -23,8 +23,8 @@ public record MapItem(Id id, I18n label, Image image,
         return scenarioStepIds.isEmpty() || scenarioStepIds.contains(stepId);
     }
 
-    public boolean isImageAssert() {
-        return image.isAssert();
+    public boolean isImageAsset() {
+        return image.isAsset();
     }
 
     public String imagePath() {
@@ -38,7 +38,7 @@ public record MapItem(Id id, I18n label, Image image,
     }
 
     public record Image(Type type, String value, Size size) {
-        public boolean isAssert() {
+        public boolean isAsset() {
             return type == Type.ASSET;
         }
 

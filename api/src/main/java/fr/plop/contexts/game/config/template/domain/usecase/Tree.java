@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.config.template.domain;
+package fr.plop.contexts.game.config.template.domain.usecase;
 
 import java.util.List;
 import java.util.Objects;

@@ -21,6 +21,7 @@ public class WebSocketPushAdapter implements PushPort {
             case PushEvent.GameMove ignored -> "SYSTEM:MOVE";
             case PushEvent.GameStatus ignored -> "SYSTEM:STATUS";
             case PushEvent.Message message -> "SYSTEM:MESSAGE:" + message.message();
+            case PushEvent.Talk talk -> "SYSTEM:TALK:" + talk.talkId().value();
         };
     }
 }

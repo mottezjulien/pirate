@@ -17,12 +17,12 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
         Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
 
         void doGoal(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.ScenarioStep goal);
-
         void doGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget goalTarget);
 
         void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence);
 
         void doMessage(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayMessage message);
+        void doTalk(GameSession.Id id, GamePlayer.Id id1, Consequence.DisplayTalk talk);
 
         void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, GameSessionTimeUnit timeClick);
 
@@ -68,11 +68,15 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
                 }
             }
             case Consequence.ScenarioTarget goalTarget -> outPort.doGoalTarget(context.playerId(), goalTarget);
+
+
             case Consequence.DisplayMessage message -> outPort.doMessage(context.sessionId(), context.playerId(), message);
+            case Consequence.DisplayTalk talk -> outPort.doTalk(context.sessionId(), context.playerId(), talk);
+
             case Consequence.SessionEnd gameOver -> outPort.doGameOver(context.sessionId(), context.playerId(), gameOver);
 
             //TODO
-            case Consequence.DisplayTalk talk -> { }
+
             case Consequence.ObjetAdd addObjet -> { }
             case Consequence.ObjetRemove removeObjet -> { }
             case Consequence.UpdatedMetadata updatedMetadata -> { }

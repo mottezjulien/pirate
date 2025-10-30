@@ -95,9 +95,10 @@ public class ScenarioPossibilityTriggerEntity {
             case STEP -> new PossibilityTrigger.StepActive(id);
             case TALK -> {
                 TalkItem.Id talkItemId = new TalkItem.Id(keyValues.get(KEY_PRIMARY));
-                Optional<TalkItem.MultipleOptions.Option.Id> optOptionId = keyValues.containsKey(KEY_TALK_OPTION) ?
-                        Optional.of(new TalkItem.MultipleOptions.Option.Id(keyValues.get(KEY_TALK_OPTION))) : Optional.empty();
-                yield new PossibilityTrigger.TalkNext(id, talkItemId, optOptionId);
+                Optional<TalkItem.Options.Option.Id> optOptionId = keyValues.containsKey(KEY_TALK_OPTION) ?
+                        Optional.of(new TalkItem.Options.Option.Id(keyValues.get(KEY_TALK_OPTION))) : Optional.empty();
+                //yield new PossibilityTrigger.TalkNext(id, talkItemId, optOptionId);
+                yield null;
             }
             case MAP -> new PossibilityTrigger.ClickMapObject(id, keyValues.get(KEY_PRIMARY));
         };
@@ -129,10 +130,10 @@ public class ScenarioPossibilityTriggerEntity {
             case PossibilityTrigger.StepActive stepActive -> {
                 entity.setType(Type.STEP);
             }
-            case PossibilityTrigger.TalkNext talkNext -> {
+            case PossibilityTrigger.SelectTalkOption selectTalkOption -> {
                 entity.setType(Type.TALK);
-                entity.getKeyValues().put(KEY_PRIMARY, talkNext.talkItemId().value());
-                talkNext.optionId().ifPresent(optionId -> entity.getKeyValues().put(KEY_TALK_OPTION, optionId.value()));
+                entity.getKeyValues().put(KEY_PRIMARY, selectTalkOption.talkId().value());
+                entity.getKeyValues().put(KEY_TALK_OPTION, selectTalkOption.optionId().value());
             }
             case PossibilityTrigger.ClickMapObject clickMapObject -> {
                 entity.setType(Type.MAP);

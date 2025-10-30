@@ -30,7 +30,7 @@ public class TalkItemMultipleOptionsEntity extends TalkItemEntity {
 
     @Override
     public TalkItem toModel() {
-        return new TalkItem.MultipleOptions(
+        return new TalkItem.Options(
                 new TalkItem.Id(id), value.toModel(), characterModel(),
                 options.stream().map(TalkOptionEntity::toModel).toList());
     }

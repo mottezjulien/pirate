@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
                           BoardConfig board, TalkConfig talk) {
 
-    public static GameSession build(Atom atom, ScenarioConfig scenarioConfig, BoardConfig boardConfig, TalkConfig talkConfig) {
-        return new GameSession(atom, GameSession.State.ACTIVE, List.of(), ScenarioSession.build(scenarioConfig), boardConfig, talkConfig);
+    public static GameSession build(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig, TalkConfig talkConfig) {
+        return new GameSession(atom, state, List.of(), ScenarioSession.build(scenarioConfig), boardConfig, talkConfig);
     }
 
     public record Id(String value) {

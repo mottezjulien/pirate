@@ -81,10 +81,6 @@ public class GameSessionEntity {
         return players;
     }
 
-    public void setPlayers(Set<GamePlayerEntity> players) {
-        this.players = players;
-    }
-
     public String getLabel() {
         return label;
     }
@@ -147,5 +143,9 @@ public class GameSessionEntity {
 
     public void setOverAt(Instant overAt) {
         this.overAt = overAt;
+    }
+
+    public GameSession.Atom toAtomModel() {
+        return new GameSession.Atom(new GameSession.Id(id), label);
     }
 }

@@ -14,24 +14,55 @@ class GameTalkCharacter {
   GameTalkCharacter({required this.name, required this.image});
 }
 
+
+abstract class GameTalkResult {
+
+}
+
+class GameTalkResultSimple extends GameTalkResult {
+
+}
+
+class GameTalkResultContinue extends GameTalkResult {
+
+  final String nextId;
+
+  GameTalkResultContinue({required this.nextId});
+
+}
+
+
+class GameTalkResultMultiple extends GameTalkResult {
+
+  final List<GameTalkResultOption> options;
+
+  GameTalkResultMultiple({required this.options});
+
+}
+
+/*
 class GameTalkResult {
   final GameTalkResultType type;
   final List<GameTalkResultOption> options;
   GameTalkResult({required this.type, required this.options});
+
+  bool isMultiple() {
+    return type == GameTalkResultType.MULTIPLE;
+  }
 }
 
 enum GameTalkResultType {
-  NEXT, OPTIONS, END;
+  MULTIPLE, SIMPLE;
 
   static GameTalkResultType fromString(String str) {
     switch(str) {
-      case 'NEXT': return GameTalkResultType.NEXT;
-      case 'OPTIONS': return GameTalkResultType.OPTIONS;
-      default: throw Exception('Unknown GameTalkResultType');
+      case 'MULTIPLE': return GameTalkResultType.MULTIPLE;
+      case 'SIMPLE': return GameTalkResultType.SIMPLE;
+      default: throw Exception('Unknown GameTalkResultType: $str' );
     }
   }
 
-}
+}*/
 
 class GameTalkResultOption {
   final String id;

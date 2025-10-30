@@ -23,8 +23,8 @@ class GameSession {
   String get label => _label;
 
   void init() {
-    gameLocation.init();
     eventListener.init(_id);
+    gameLocation.init();
   }
 
   Coordinate get coordinate => gameLocation.coordinate;

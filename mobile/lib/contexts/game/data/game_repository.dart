@@ -20,12 +20,20 @@ class GameSessionRepository {
     }));
   }
 
+  Future<GameSession> start() async {
+    GenericRepository genericRepository = GenericRepository();
+    return sessionToModel(await genericRepository.post(
+        path: "$resourcePath/${GameCurrent.sessionId}/start"
+    ));
+  }
+
   GameSession sessionToModel(Map<String, dynamic> json) {
     return GameSession(
       id: json['id'],
       label: json['label'],
     );
   }
+
 
 
   Future<void> move(Coordinate coordinate) async {
@@ -66,6 +74,8 @@ class GameSessionRepository {
       targets: targets
     );
   }
+
+
 
 
 }

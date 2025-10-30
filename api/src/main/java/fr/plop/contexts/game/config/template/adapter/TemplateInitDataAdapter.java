@@ -38,7 +38,7 @@ import fr.plop.contexts.game.config.talk.persistence.TalkOptionEntity;
 import fr.plop.contexts.game.config.talk.persistence.TalkOptionRepository;
 import fr.plop.contexts.game.config.talk.persistence.TalkItemMultipleOptionsEntity;
 import fr.plop.contexts.game.config.talk.persistence.TalkItemMultipleOptionsRepository;
-import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
@@ -265,7 +265,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
                 e.setConfig(config);
                 e.setValue(value);
                 talkItemRepository.save(e);
-            } else if (item instanceof TalkItem.MultipleOptions mo) {
+            } else if (item instanceof TalkItem.Options mo) {
                 I18nEntity label = createI18n(mo.value());
                 TalkItemMultipleOptionsEntity e = new TalkItemMultipleOptionsEntity();
                 e.setId(mo.id().value());

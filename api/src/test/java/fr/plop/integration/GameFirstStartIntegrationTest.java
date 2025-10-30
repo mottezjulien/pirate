@@ -2,7 +2,7 @@ package fr.plop.integration;
 
 import fr.plop.contexts.connect.presenter.ConnectionController;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ public class GameFirstStartIntegrationTest {
 
         ConnectionController.ResponseDTO connection = createAuth();
 
-        GameSessionController.GameSessionCreateResponse session = createGameSession(connection.token());
+        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
 
         assertThat(session.id()).isNotNull();
         assertThat(session.label()).isEqualTo("Mon premier jeu");
@@ -69,7 +69,7 @@ public class GameFirstStartIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionCreateResponse createGameSession(String token) throws URISyntaxException {
+    private GameSessionController.GameSessionResponseDTO createGameSession(String token) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
         URI uri = new URI(baseUrl);
 
@@ -78,8 +78,8 @@ public class GameFirstStartIntegrationTest {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionCreateResponse> result = this.restTemplate
-                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionCreateResponse.class);
+        ResponseEntity<GameSessionController.GameSessionResponseDTO> result = this.restTemplate
+                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionResponseDTO.class);
         return result.getBody();
     }
 

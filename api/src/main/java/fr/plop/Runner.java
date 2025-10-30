@@ -1,6 +1,6 @@
 package fr.plop;
 
-import fr.plop.contexts.game.config.template.domain.TemplateInitUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.session.domain.GameSessionInitUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;

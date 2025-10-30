@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 
-public sealed interface TalkItem permits TalkItem.Simple, TalkItem.MultipleOptions {
-
-
+public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, TalkItem.Options {
 
     record Id(String value) {
         public Id() {
@@ -27,9 +25,7 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.MultipleOptio
 
     I18n value();
 
-
     TalkCharacter character();
-
 
     default String value(Language language) {
         return value().value(language);
@@ -39,9 +35,13 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.MultipleOptio
 
     }
 
-    record MultipleOptions(Id id, I18n value, TalkCharacter character, List<Option> options) implements TalkItem  {
+    record Continue(Id id, I18n value, TalkCharacter character, Id nextId) implements TalkItem  {
 
-        public MultipleOptions(I18n value, List<Option> options) {
+    }
+
+    record Options(Id id, I18n value, TalkCharacter character, List<Option> options) implements TalkItem  {
+
+        public Options(I18n value, List<Option> options) {
             this(new Id(), value, TalkCharacter.nobody(), options);
         }
 
@@ -49,13 +49,29 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.MultipleOptio
             return options.stream().filter(option -> option.is(optionId)).findFirst();
         }
 
-        public record Option(Option.Id id, I18n value) {
+        public record Option(Option.Id id, I18n value, Optional<TalkItem.Id> optNextId) {
             public Option(I18n i18n) {
                 this(new Option.Id(), i18n);
             }
 
+            public Option(Id id, I18n value) {
+                this(id, value, Optional.empty());
+            }
+
+            public Option(Id id, I18n value, TalkItem.Id nextId) {
+                this(id, value, Optional.of(nextId));
+            }
+
             public boolean is(Id otherId) {
                 return id.equals(otherId);
+            }
+
+            public boolean hasNext() {
+                return optNextId.isPresent();
+            }
+
+            public TalkItem.Id nextId() {
+                return optNextId.orElseThrow();
             }
 
             public record Id(String value) {
@@ -64,7 +80,6 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.MultipleOptio
                 }
             }
         }
-
     }
 
 }

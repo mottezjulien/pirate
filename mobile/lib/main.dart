@@ -11,7 +11,7 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
 
   final ConnectionStartUseCase startUseCase = ConnectionStartUseCase();
-  startUseCase.apply();
+  await startUseCase.apply();
   runApp(
       EasyLocalization(
         supportedLocales: Language.values

@@ -5,6 +5,12 @@ TEST_DISCUSSION:1.0:Test de discussion:10
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:TalkOptions:TALK_LETS_GO
 
+------ Possibility
+--------- Recurrence:TIMES:1
+--------- Trigger:SelectTalkOption:option:TALK_LETS_GO_CHOIX_OUI
+--------- Consequence:Alert
+------------ FR:Excellent, continuons !
+------------ EN:Great, let's continue!
 
 ------ Possibility
 --------- Trigger:SelectTalkOption:option:TALK_LETS_GO_CHOIX_NON
@@ -17,12 +23,9 @@ TEST_DISCUSSION:1.0:Test de discussion:10
 --------- Label
 ------------ FR:Tu veux jouer ?
 ------------ EN:Do you want to play?
---------- Option:TALK_LETS_GO_CHOIX_OUI
+--------- Option (ref TALK_LETS_GO_CHOIX_OUI)
 ------------ FR:Oui
 ------------ EN:Yes
 --------- Option (ref TALK_LETS_GO_CHOIX_NON)
 ------------ FR:Non
 ------------ EN:No
------- Simple(ref TALK_LETS_GO_CHOIX_OUI)
---------- FR:Excellent, continuons !
---------- EN:Great, let's continue!

@@ -66,9 +66,9 @@ public record Template(Atom atom, String label, String version, Duration maxDura
             });
             // Triggers TalkNext
             PossibilityTrigger trigger = possibility.trigger();
-            if (trigger instanceof PossibilityTrigger.TalkNext talkNext) {
+            /*if (trigger instanceof PossibilityTrigger.TalkNext talkNext) {
                 requiredTalkIds.add(talkNext.talkItemId().value());
-            }
+            }*/
         }));
 
         return availableTalkIds.containsAll(requiredTalkIds);

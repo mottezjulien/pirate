@@ -2,7 +2,9 @@ package fr.plop.contexts.game.config.talk.persistence;
 
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -20,6 +22,9 @@ public class TalkOptionEntity {
     @JoinColumn(name = "value_i18n_id")
     private I18nEntity value;
 
+    @Column(name = "next_id")
+    private String nullableNextId;
+
     public String getId() {
         return id;
     }
@@ -36,7 +41,13 @@ public class TalkOptionEntity {
         this.value = label;
     }
 
-    public TalkItem.MultipleOptions.Option toModel() {
-        return new TalkItem.MultipleOptions.Option(new TalkItem.MultipleOptions.Option.Id(id), value.toModel());
+    public TalkItem.Options.Option toModel() {
+        TalkItem.Options.Option.Id optionalId = new TalkItem.Options.Option.Id(id);
+        I18n i18n = value.toModel();
+        if(nullableNextId != null) {
+            return new TalkItem.Options.Option(optionalId, i18n, new TalkItem.Id(nullableNextId));
+        }
+        return new TalkItem.Options.Option(optionalId, i18n);
+
     }
 }

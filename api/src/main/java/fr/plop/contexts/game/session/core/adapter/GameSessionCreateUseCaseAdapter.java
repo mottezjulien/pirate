@@ -42,9 +42,9 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
     }
 
     @Override
-    public Optional<GameSession.Atom> findActiveGameSession(ConnectUser.Id userId) {
+    public Optional<GameSession.Atom> findCurrentGameSession(ConnectUser.Id userId) {
         return sessionRepository.findByUserId(userId.value()).stream()
-                .filter(session -> session.getState() == GameSession.State.ACTIVE)
+                .filter(session -> session.getState() != GameSession.State.OVER)
                 .map(entity -> new GameSession.Atom(new GameSession.Id(entity.getId()), entity.getLabel()))
                 .findFirst();
     }
@@ -60,8 +60,10 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
 
     @Override
     public GameSession create(Template template) {
+        GameSession.State state = GameSession.State.INIT;
+
         GameSessionEntity entity = new GameSessionEntity();
-        entity.setState(GameSession.State.ACTIVE);
+        entity.setState(state);
         entity.setId(StringTools.generate());
         TemplateEntity templateEntity = new TemplateEntity();
         templateEntity.setId(template.id().value());
@@ -88,7 +90,7 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
         entity = sessionRepository.save(entity);
 
         GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-        return GameSession.build(atom, template.scenario(), template.board(), template.talk());
+        return GameSession.build(atom, state, template.scenario(), template.board(), template.talk());
     }
 
     @Override

@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public record TalkConfig(Id id, List<TalkItem> items) {
 
-    public Optional<TalkItem> byId(TalkItem.Id taklId) {
-        return items.stream().filter(item -> item.is(taklId)).findFirst();
+    public Optional<TalkItem> byId(TalkItem.Id talkId) {
+        return items.stream().filter(item -> item.is(talkId)).findFirst();
     }
 
     public record Id(String value) {
