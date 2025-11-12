@@ -18,7 +18,8 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.StepActive,
         PossibilityTrigger.AbsoluteTime,
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
-        PossibilityTrigger.SelectTalkOption,
+        PossibilityTrigger.TalkOptionSelect,
+        PossibilityTrigger.TalkEnd,
         PossibilityTrigger.ClickMapObject {
 
 
@@ -85,7 +86,14 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record SelectTalkOption(Id id, TalkItem.Id talkId, TalkItem.Options.Option.Id optionId) implements PossibilityTrigger {
+
+
+
+    record TalkEnd(Id id, TalkItem.Id talkId) implements PossibilityTrigger {
+
+    }
+
+    record TalkOptionSelect(Id id, TalkItem.Id talkId, TalkItem.Options.Option.Id optionId) implements PossibilityTrigger {
 
     }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/contexts/game/data/game_repository.dart';
 
 import '../../../../generic/config/router.dart';
+import '../../domain/game_session_usecase.dart';
 import '../../game_current.dart';
 
 class GameHomeView extends StatelessWidget {
@@ -50,6 +52,18 @@ class GameHomeView extends StatelessWidget {
                   },
                 ),
                 Text('Objectifs :)', style: TextStyle(color: Colors.white)),
+                SizedBox(height: 20),
+                IconButton(
+                  icon: Icon(Icons.exit_to_app),
+                  iconSize: 80,
+                  color: Colors.white,
+                  onPressed: () async {
+                    GameSessionUseCase sessionUseCase = GameSessionUseCase();
+                    await sessionUseCase.stop();
+                    context.pushNamed(AppRouter.homeName);
+                  },
+                ),
+                Text('Sortir :)', style: TextStyle(color: Colors.white)),
               ],
             ),
           ),

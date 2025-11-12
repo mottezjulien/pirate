@@ -6,8 +6,6 @@ import 'model/game_session.dart';
 
 class GameSessionUseCase {
 
-  String exceptionGeolocationPermission = 'Geolocation permission not granted';
-
   Future<void> start() async {
     await checkGeoLocalizationPermission();
     await startSession();
@@ -16,7 +14,7 @@ class GameSessionUseCase {
   checkGeoLocalizationPermission() async {
     if(!_hasPermission(await Geolocator.checkPermission())) {
       if(!_hasPermission(await Geolocator.requestPermission())) {
-        throw Exception(exceptionGeolocationPermission);
+        throw Exception('Geolocation permission not granted');
       }
     }
   }
@@ -32,6 +30,13 @@ class GameSessionUseCase {
     session.init();
     GameCurrent.session = session;
     repository.start();
+  }
+
+  Future<void> stop() async {
+    GameCurrent.stopSession();
+    final GameSessionRepository repository = GameSessionRepository();
+    await repository.stop();
+    GameCurrent.removeSession();
   }
 
 }

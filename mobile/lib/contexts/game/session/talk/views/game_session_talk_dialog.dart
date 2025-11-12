@@ -24,40 +24,43 @@ class GameSessionTalkDialog {
 
         List<Widget> buttonChildren = [];
         
-        // Ajouter les options si multiple
+        // Ajouter les options en fonction du type de résultat
         switch(talk.result) {
-          todo
-        }
-
-
-        if (talk.result.isMultiple()) {
-          talk.result.options.forEach((option) {
-            buttonChildren.add(
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: GameCurrent.style.color.primary,
-                  padding: EdgeInsets.symmetric(vertical: 12),
+          case GameTalkResultSimple():
+            // Cas simple - pas d'options à afficher
+            break;
+          case GameTalkResultContinue():
+            // Cas continuation - pas d'options à afficher
+            break;
+          case GameTalkResultMultiple(:final options):
+            // Cas multiple - afficher les options
+            for (var option in options) {
+              buttonChildren.add(
+                TextButton(style: TextButton.styleFrom(
+                    foregroundColor: GameCurrent.style.color.primary,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    option.value,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  onPressed: () {
+                    print(option.id);
+                    notifier.value = null;
+                    repository.selectOption(talkId: talkId, optionId: option.id)
+                        .then((nextTalk) {
+                      if(nextTalk != null) {
+                        notifier.value = nextTalk;
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    });
+                  },
                 ),
-                child: Text(
-                  option.value,
-                  style: TextStyle(fontSize: 16),
-                ),
-                onPressed: () {
-                  print(option.id);
-                  notifier.value = null;
-                  repository.selectOption(talkId: talkId, optionId: option.id)
-                      .then((nextTalk) {
-                    if(nextTalk != null) {
-                      notifier.value = nextTalk;
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  });
-                },
-              ),
-            );
-            buttonChildren.add(SizedBox(height: 8));
-          });
+              );
+              buttonChildren.add(SizedBox(height: 8));
+            }
+            break;
         }
 
         return SingleChildScrollView(
@@ -68,7 +71,7 @@ class GameSessionTalkDialog {
                 talk.value,
                 style: TextStyle(fontSize: 16),
               ),
-              if (talk.result.isMultiple()) ...[
+              if (talk.result is GameTalkResultMultiple) ...[
                 SizedBox(height: 24),
                 ...buttonChildren,
               ],

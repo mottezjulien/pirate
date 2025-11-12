@@ -5,25 +5,18 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
 
-import java.util.Optional;
-
 public class GameSessionStartUseCase {
-
-    public interface DataOutput {
-        Optional<GameSession.Atom> findSessionById(GameSession.Id sessionId);
-    }
-
-    private final DataOutput dataOutput;
+    private final GameSessionGetPort getPort;
     private final GameSessionTimer gameSessionTimer;
 
-    public GameSessionStartUseCase(DataOutput dataOutput, GameSessionTimer gameSessionTimer) {
-        this.dataOutput = dataOutput;
+    public GameSessionStartUseCase(GameSessionGetPort getPort, GameSessionTimer gameSessionTimer) {
+        this.getPort = getPort;
         this.gameSessionTimer = gameSessionTimer;
     }
 
     public GameSession.Atom apply(GameSession.Id sessionId, GamePlayer.Id playerId) throws GameException {
 
-        final GameSession.Atom sessionAtom = dataOutput.findSessionById(sessionId)
+        final GameSession.Atom sessionAtom = getPort.findById(sessionId)
                 .orElseThrow(() -> new GameException(GameException.Type.SESSION_NOT_FOUND));
 
         //TODO check if player can start in the session

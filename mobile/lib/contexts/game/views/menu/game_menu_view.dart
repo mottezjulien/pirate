@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../generic/config/router.dart';
-import '../../domain/game_session.dart';
+import '../../domain/game_session_usecase.dart';
 import '../../game_current.dart';
 
 class GameMenuView extends StatelessWidget {

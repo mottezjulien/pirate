@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
+import java.util.Optional;
+
 @Entity
 @DiscriminatorValue("GAME_OVER")
 public final class ScenarioPossibilityConsequenceGameOverEntity extends
@@ -36,7 +38,7 @@ public final class ScenarioPossibilityConsequenceGameOverEntity extends
     }
 
     public Consequence toModel() {
-        SessionGameOver gameOver = new SessionGameOver(gameOverType, new I18n.Id(labelId));
+        SessionGameOver gameOver = new SessionGameOver(gameOverType, Optional.ofNullable(labelId).map(I18n.Id::new));
         return new Consequence.SessionEnd(new Consequence.Id(id), gameOver);
     }
 

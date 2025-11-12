@@ -15,7 +15,7 @@ public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> stepActiveIds, List
     }
 
     public enum State {
-        INIT, ACTIVE, WIN
+        INIT, ACTIVE, WIN, LOSE
     }
 
     /*public boolean inSpace(BoardSpace.Id spaceId) {

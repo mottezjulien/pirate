@@ -29,9 +29,12 @@ public class ScenarioPossibilityTriggerEntity {
     private static final String KEY_MINUTES = "MINUTES";
     private static final String KEY_OTHER_POSSIBILITY = "OTHER_POSSIBILITY";
     private static final String KEY_SPACE_TYPE = "SPACE_TYPE";
-    public static final String VALUE_SPACE_TYPE_IN = "IN";
-    public static final String VALUE_SPACE_TYPE_OUT = "OUT";
-    public static final String KEY_TALK_OPTION = "TALK_OPTION";
+    private static final String VALUE_SPACE_TYPE_IN = "IN";
+    private static final String VALUE_SPACE_TYPE_OUT = "OUT";
+    private static final String KEY_TALK_TYPE = "TALK_TYPE";
+    private static final String KEY_TALK_OPTION = "TALK_OPTION";
+    private static final String VALUE_TALK_TYPE_OPTION_SELECT = "OPTION_SELECT";
+    private static final String VALUE_TALK_TYPE_END = "END";
 
     public enum Type {
         TIME, SPACE, STEP, TALK, MAP;
@@ -95,10 +98,14 @@ public class ScenarioPossibilityTriggerEntity {
             case STEP -> new PossibilityTrigger.StepActive(id);
             case TALK -> {
                 TalkItem.Id talkItemId = new TalkItem.Id(keyValues.get(KEY_PRIMARY));
-                Optional<TalkItem.Options.Option.Id> optOptionId = keyValues.containsKey(KEY_TALK_OPTION) ?
-                        Optional.of(new TalkItem.Options.Option.Id(keyValues.get(KEY_TALK_OPTION))) : Optional.empty();
-                //yield new PossibilityTrigger.TalkNext(id, talkItemId, optOptionId);
-                yield null;
+                yield switch (keyValues.get(KEY_TALK_TYPE)) {
+                    case VALUE_TALK_TYPE_OPTION_SELECT -> {
+                        TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(keyValues.get(KEY_TALK_OPTION));
+                        yield new PossibilityTrigger.TalkOptionSelect(id, talkItemId, optionId);
+                    }
+                    case VALUE_TALK_TYPE_END -> new PossibilityTrigger.TalkEnd(id, talkItemId);
+                    default -> throw new IllegalStateException("Unexpected value: " + keyValues.get(KEY_TALK_TYPE));
+                };
             }
             case MAP -> new PossibilityTrigger.ClickMapObject(id, keyValues.get(KEY_PRIMARY));
         };
@@ -130,15 +137,22 @@ public class ScenarioPossibilityTriggerEntity {
             case PossibilityTrigger.StepActive stepActive -> {
                 entity.setType(Type.STEP);
             }
-            case PossibilityTrigger.SelectTalkOption selectTalkOption -> {
+            case PossibilityTrigger.TalkOptionSelect selectTalkOption -> {
                 entity.setType(Type.TALK);
+                entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_OPTION_SELECT);
                 entity.getKeyValues().put(KEY_PRIMARY, selectTalkOption.talkId().value());
                 entity.getKeyValues().put(KEY_TALK_OPTION, selectTalkOption.optionId().value());
+            }
+            case PossibilityTrigger.TalkEnd talkEnd -> {
+                entity.setType(Type.TALK);
+                entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_END);
+                entity.getKeyValues().put(KEY_PRIMARY, talkEnd.talkId().value());
             }
             case PossibilityTrigger.ClickMapObject clickMapObject -> {
                 entity.setType(Type.MAP);
                 entity.getKeyValues().put(KEY_PRIMARY, clickMapObject.objectReference());
             }
+
         }
         return entity;
     }

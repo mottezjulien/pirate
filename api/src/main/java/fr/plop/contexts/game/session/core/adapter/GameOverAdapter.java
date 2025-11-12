@@ -11,6 +11,7 @@ import fr.plop.subs.i18n.persistence.I18nEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Component
@@ -32,16 +33,26 @@ public class GameOverAdapter implements GameOverUseCase.OutputPort {
     }
 
     @Override
-    public void win(GamePlayer.Id playerId, I18n.Id reasonId) {
+    public void win(GamePlayer.Id playerId, Optional<I18n.Id> optReasonId) {
+        stop(playerId, GamePlayer.State.LOSE, optReasonId);
+    }
 
+    @Override
+    public void lose(GamePlayer.Id playerId, Optional<I18n.Id> optReasonId) {
+        stop(playerId, GamePlayer.State.WIN, optReasonId);
+    }
+
+    private void stop(GamePlayer.Id playerId, GamePlayer.State state, Optional<I18n.Id> optReasonId) {
         playerRepository.findById(playerId.value())
-                .ifPresent(player -> {
-                    player.setState(GamePlayer.State.WIN);
+            .ifPresent(player -> {
+                player.setState(state);
+                optReasonId.ifPresent(reasonId -> {
                     I18nEntity reasonEntity = new I18nEntity();
                     reasonEntity.setId(reasonId.value());
                     player.setEndGameReason(reasonEntity);
-                    playerRepository.save(player);
                 });
+                playerRepository.save(player);
+            });
     }
 
     @Override

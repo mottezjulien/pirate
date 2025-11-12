@@ -15,9 +15,7 @@ class GameTalkCharacter {
 }
 
 
-abstract class GameTalkResult {
-
-}
+sealed class GameTalkResult {}
 
 class GameTalkResultSimple extends GameTalkResult {
 

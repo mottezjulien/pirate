@@ -8,6 +8,7 @@ import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.subs.i18n.domain.I18n;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class GameOverUseCase {
@@ -15,7 +16,9 @@ public class GameOverUseCase {
     public interface OutputPort {
         Stream<GamePlayer.Id> findActivePlayerIds(GameSession.Id sessionId);
 
-        void win(GamePlayer.Id playerId, I18n.Id reasonId);
+        void win(GamePlayer.Id playerId, Optional<I18n.Id> optReasonId);
+
+        void lose(GamePlayer.Id each, Optional<I18n.Id> optReasonId);
 
         void ended(GameSession.Id sessionId);
     }
@@ -32,7 +35,19 @@ public class GameOverUseCase {
         switch (gameOver.type()) {
             case SUCCESS_ALL_ENDED -> {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
-                playerIds.forEach(each -> output.win(each, gameOver.reasonId()));
+                playerIds.forEach(each -> output.win(each, gameOver.optReasonId()));
+                output.ended(sessionId);
+                playerIds.forEach(each -> {
+                    try {
+                        pushPort.push(new PushEvent.GameStatus(sessionId, each));
+                    } catch (Exception ignored) {
+                        //TODO
+                    }
+                });
+            }
+            case FAILURE_ALL_ENDED -> {
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
+                playerIds.forEach(each -> output.lose(each, gameOver.optReasonId()));
                 output.ended(sessionId);
                 playerIds.forEach(each -> {
                     try {
@@ -44,7 +59,19 @@ public class GameOverUseCase {
             }
             case SUCCESS_ONE_CONTINUE -> {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
-                output.win(playerId, gameOver.reasonId());
+                output.win(playerId, gameOver.optReasonId());
+                if (playerIds.size() == 1) {
+                    output.ended(sessionId);
+                }
+                try {
+                    pushPort.push(new PushEvent.GameStatus(sessionId, playerId));
+                } catch (Exception ignored) {
+                    //TODO
+                }
+            }
+            case FAILURE_ONE_CONTINUE -> {
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
+                output.lose(playerId, gameOver.optReasonId());
                 if (playerIds.size() == 1) {
                     output.ended(sessionId);
                 }

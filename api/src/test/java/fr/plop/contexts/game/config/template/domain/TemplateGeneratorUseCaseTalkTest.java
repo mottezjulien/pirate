@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
+
 public class TemplateGeneratorUseCaseTalkTest {
 
     private final TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
@@ -262,8 +264,8 @@ TEST_DISCUSSION3
                 })
                 .anySatisfy(possibility -> {
                     assertThat(possibility.trigger())
-                            .isInstanceOf(PossibilityTrigger.SelectTalkOption.class);
-                    PossibilityTrigger.SelectTalkOption trigger = (PossibilityTrigger.SelectTalkOption) possibility.trigger();
+                            .isInstanceOf(PossibilityTrigger.TalkOptionSelect.class);
+                    PossibilityTrigger.TalkOptionSelect trigger = (PossibilityTrigger.TalkOptionSelect) possibility.trigger();
                     assertThat(trigger.talkId()).isEqualTo(firstTalkItem.id());
                     assertThat(trigger.optionId()).isEqualTo(optionYes.id());
                     assertThat(possibility.consequences())
@@ -279,76 +281,153 @@ TEST_DISCUSSION3
 
 
 
-
-/*
-
     @Test
-    public void testInlineChezWamGeneScriptOld() {
-        // Version simplifiée pour tester sans dépendance au fichier
+    public void fullTemplate() {
         String scriptContent = """
-TEST_DISCUSSION
+            TEST_DISCUSSION4
+            --- Step (ref ETAPE_DEBUT):FR:Démarrage:EN:Start
+            ------ Possibility
+            --------- Trigger:ABSOLUTETIME:0
+            --------- Consequence:TalkOptions:TALK_LETS_GO
+            
+            ------ Possibility
+            --------- Trigger:TalkEnd:TALK002
+            --------- Consequence:GameOver:SUCCESS_ONE_CONTINUE
+            
+            ------ Possibility
+            --------- Trigger:TalkOptionSelect:TALK_LETS_GO_CHOIX_NON
+            --------- Consequence:GameOver:FAILURE_ONE_CONTINUE
+            
+            --- Talk
+            ------ Character
+            --------- Bob
+            ------------ default:ASSET:/pouet/bobdefault.jpg
+            ------ Options(ref TALK_LETS_GO)
+            --------- Character:Bob:default
+            --------- Label
+            ------------ FR:Tu veux jouer ?
+            ------------ EN:Do you want to play?
+            --------- Option (ref TALK_LETS_GO_CHOIX_OUI)
+            ------------ FR:Oui
+            ------------ EN:Yes
+            ------------ next:TALK002
+            --------- Option (ref TALK_LETS_GO_CHOIX_NON)
+            ------------ FR:Non
+            ------------ EN:No
+            ------------ next:TALK003
+            ------ Simple(ref TALK002)
+            --------- Character:Bob:default
+            --------- FR:Excellent, continuons !
+            --------- EN:Great, let's continue!
+            ------ Simple(ref TALK003)
+            --------- Character:Bob:default
+            --------- FR:Dommage, fin de test.
+            --------- EN:Too bad, end of test.
 
---- Step
------- Possibility
---------- Trigger:ABSOLUTETIME:0
---------- Consequence:Talk:TALK_LETS_GO
-
---- Talk
------- Options(ref TALK_LETS_GO)
---------- Label
------------- FR:Tu veux jouer ?
------------- EN:Do you want to play?
---------- Option:TALK_LETS_GO_CHOIX_OUI
------------- FR:Oui
------------- EN:Yes
---------- Option (ref TALK_LETS_GO_CHOIX_NON)
------------- FR:Non
------------- EN:No
------- Simple(ref TALK_LETS_GO_CHOIX_OUI)
---------- FR:Excellent, continuons !
---------- EN:Great, let's continue!
------- Simple (ref TALK_LETS_GO_CHOIX_NON)
---------- FR:Excellent, continuons !
---------- EN:Great, let's continue!
             """;
 
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
         Template template = generator.apply(script);
 
         assertThat(template).isNotNull();
-        assertThat(template.code().value()).isEqualTo("ChezWamGene");
-        assertThat(template.version()).isEqualTo("1.0");
-        assertThat(template.maxDuration().toMinutes()).isEqualTo(15);
+        assertThat(template.code().value()).isEqualTo("TEST_DISCUSSION4");
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-            assertThat(scenario.steps()).hasSize(1)
-                    .anySatisfy(step -> {
-                        assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
-                        assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
-                        assertThat(step.targets()).hasSize(1)
-                                .anySatisfy(target -> {
-                                    assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
-                                    assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
-                                });
-                        assertThat(step.possibilities())
-                                .hasSize(1)
-                                .anySatisfy(possibility -> {
-                                    assertThat(possibility.trigger())
-                                            .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
-                                    PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                    assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
-                                    assertThat(possibility.consequences())
-                                            .hasSize(1)
-                                            .anySatisfy(consequence -> {
-                                                assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                                Consequence.DisplayMessage displayMessage = (Consequence.DisplayMessage) consequence;
-                                                assertThat(displayMessage.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
-                                                assertThat(displayMessage.value().value(Language.EN)).isEqualTo("Welcome to the game !");
-                                            });
-                                });
+        assertThat(template.talk().items()).hasSize(3);
+        TalkItem talkItem0 = template.talk().items().getFirst();
+        TalkItem talkItem1 = template.talk().items().get(1);
+        TalkItem talkItem2 = template.talk().items().getLast();
 
-                    });
-        });
-    }*/
+        // First item: Options
+        assertThat(talkItem0.id()).isNotNull();
+        assertThat(talkItem0).isInstanceOf(TalkItem.Options.class);
+        assertThat(talkItem0.value().value(Language.FR)).isEqualTo("Tu veux jouer ?");
+        assertThat(talkItem0.value().value(Language.EN)).isEqualTo("Do you want to play?");
+        assertThat(talkItem0.character().name()).isEqualTo("Bob");
+        assertThat(talkItem0.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem0.character().image().type()).isEqualTo(Image.Type.ASSET);
+        TalkItem.Options optionsItem = (TalkItem.Options) talkItem0;
+
+        assertThat(optionsItem.options()).hasSize(2);
+
+        TalkItem.Options.Option optionYes = optionsItem.options().getFirst();
+        TalkItem.Options.Option optionNo = optionsItem.options().getLast();
+
+        assertThat(optionYes.id()).isNotNull();
+        assertThat(optionYes.value().value(Language.FR)).isEqualTo("Oui");
+        assertThat(optionYes.value().value(Language.EN)).isEqualTo("Yes");
+        assertThat(optionYes.hasNext()).isTrue();
+        assertThat(optionYes.nextId()).isEqualTo(talkItem1.id());
+
+        assertThat(optionNo.id()).isNotNull();
+        assertThat(optionNo.value().value(Language.FR)).isEqualTo("Non");
+        assertThat(optionNo.value().value(Language.EN)).isEqualTo("No");
+        assertThat(optionNo.hasNext()).isTrue();
+        assertThat(optionNo.nextId()).isEqualTo(talkItem2.id());
+
+        assertThat(talkItem1.id()).isNotNull();
+        assertThat(talkItem1).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem1.value().value(Language.FR)).isEqualTo("Excellent, continuons !");
+        assertThat(talkItem1.value().value(Language.EN)).isEqualTo("Great, let's continue!");
+        assertThat(talkItem1.character().name()).isEqualTo("Bob");
+        assertThat(talkItem1.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem1.character().image().type()).isEqualTo(Image.Type.ASSET);
+
+        assertThat(talkItem2.id()).isNotNull();
+        assertThat(talkItem2).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem2.value().value(Language.FR)).isEqualTo("Dommage, fin de test.");
+        assertThat(talkItem2.value().value(Language.EN)).isEqualTo("Too bad, end of test.");
+        assertThat(talkItem2.character().name()).isEqualTo("Bob");
+        assertThat(talkItem2.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem2.character().image().type()).isEqualTo(Image.Type.ASSET);
+
+        // Scenario assertions
+        assertThat(template.scenario().steps()).hasSize(1)
+                .anySatisfy(step -> assertThat(step.possibilities())
+                        .hasSize(3)
+                        .anySatisfy(possibility -> {
+                            assertThat(possibility.trigger())
+                                    .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                            PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                            assertThat(trigger.value()).isEqualTo(new GameSessionTimeUnit(0));
+                            assertThat(possibility.consequences())
+                                    .hasSize(1)
+                                    .anySatisfy(consequence -> {
+                                        assertThat(consequence).isInstanceOf(Consequence.DisplayTalk.class);
+                                        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) consequence;
+                                        assertThat(displayTalk.talkId()).isEqualTo(talkItem0.id());
+                                    });
+                        })
+                        .anySatisfy(possibility -> {
+                            assertThat(possibility.trigger())
+                                    .isInstanceOf(PossibilityTrigger.TalkOptionSelect.class);
+                            PossibilityTrigger.TalkOptionSelect trigger = (PossibilityTrigger.TalkOptionSelect) possibility.trigger();
+                            assertThat(trigger.talkId()).isEqualTo(talkItem0.id());
+                            assertThat(trigger.optionId()).isEqualTo(optionNo.id());
+                            assertThat(possibility.consequences())
+                                    .hasSize(1)
+                                    .anySatisfy(consequence -> {
+                                        assertThat(consequence).isInstanceOf(Consequence.SessionEnd.class);
+                                        Consequence.SessionEnd sessionEnd = (Consequence.SessionEnd) consequence;
+                                        assertThat(sessionEnd.gameOver().type()).isEqualTo(SessionGameOver.Type.FAILURE_ONE_CONTINUE);
+                                    });
+                        })
+                        .anySatisfy(possibility -> {
+                            assertThat(possibility.trigger())
+                                    .isInstanceOf(PossibilityTrigger.TalkEnd.class);
+                            PossibilityTrigger.TalkEnd trigger = (PossibilityTrigger.TalkEnd) possibility.trigger();
+                            assertThat(trigger.talkId()).isEqualTo(talkItem1.id());
+                            assertThat(possibility.consequences())
+                                    .hasSize(1)
+                                    .anySatisfy(consequence -> {
+                                        assertThat(consequence).isInstanceOf(Consequence.SessionEnd.class);
+                                        Consequence.SessionEnd sessionEnd = (Consequence.SessionEnd) consequence;
+                                        assertThat(sessionEnd.gameOver().type()).isEqualTo(SessionGameOver.Type.SUCCESS_ONE_CONTINUE);
+                                    });
+                        }));
+    }
+
+    /*
+
+     */
 
 }

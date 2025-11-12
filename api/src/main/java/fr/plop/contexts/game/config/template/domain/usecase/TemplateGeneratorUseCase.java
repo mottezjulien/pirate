@@ -15,6 +15,7 @@ import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.I18n;
@@ -61,6 +62,7 @@ public class TemplateGeneratorUseCase {
     public static final String EN_KEY = "EN";
     public static final String BOTTOM_LEFT = "bottomLeft";
     public static final String TOP_RIGHT = "topRight";
+
 
 
     public static class Script {
@@ -255,9 +257,14 @@ public class TemplateGeneratorUseCase {
                 talkItems = resolveOptionsNextIds(talkItems, context);
 
                 // 4. Link Talk items (convert Simple to Continue where appropriate)
-                // Only link if there are no explicit Continue items (mixed Simple+Continue)
+                // Only link if there are no explicit Continue items AND no Options with next references
                 boolean hasExplicitContinue = talkItems.stream().anyMatch(ti -> ti instanceof TalkItem.Continue);
-                if (!hasExplicitContinue) {
+                boolean hasOptionsWithNexts = talkItems.stream()
+                    .filter(ti -> ti instanceof TalkItem.Options)
+                    .map(ti -> (TalkItem.Options) ti)
+                    .flatMap(opt -> opt.options().stream())
+                    .anyMatch(TalkItem.Options.Option::hasNext);
+                if (!hasExplicitContinue && !hasOptionsWithNexts) {
                     talkItems = linkTalkItems(talkItems, talkSimpleReferences, context);
                 }
             }
@@ -377,7 +384,7 @@ public class TemplateGeneratorUseCase {
                 // Parse l'I18n pour le label
                 Optional<I18n> labelOpt = parseI18nFromChildrenWithoutNewline(child.children());
                 label = labelOpt.orElse(new I18n(Map.of()));
-            } else if (header.contains("option")) {
+            } else if (header.contains(PARAM_KEY_TALK_OPTION)) {
                 // Extraire la référence du header : "Option(ref REF_CHOIX_A)"
                 String optionReferenceName = extractReferenceFromHeader(child.header());
 
@@ -1189,43 +1196,34 @@ public class TemplateGeneratorUseCase {
                         spaceId
                 );
 
-                /*if (split.length >= 4 && "SpaceId".equals(split[2])) {
-                    // Format: "Condition:outsidespace:SpaceId:ABCD"
-
-                } else if (split.length >= 3) {
-                    // Format: "CONDITION:outSidespace:9823"
-                    return new PossibilityCondition.OutsideSpace(
-                            new PossibilityCondition.Id(),
-                            new BoardSpace.Id(split[2])
-                    );
-                }*/
             }
             case "absolutetime" -> {
                 // Format: "CONDITION:ABSOLUTETIME:Duration:27" -> params=[ABSOLUTETIME, Duration, 27] 
                 // ou "condition:ABSOLUTETIME:27" -> params=[ABSOLUTETIME, 27]
-                if (tree.params().size() >= 3 && "Duration".equalsIgnoreCase(tree.params().get(1))) {
-                    return new PossibilityCondition.AbsoluteTime(
-                            new PossibilityCondition.Id(),
-                            Duration.ofMinutes(Long.parseLong(tree.params().get(2))),
-                            BeforeOrAfter.BEFORE //TODO
-                    );
+                Tree subTree = tree.sub();
+                String durationStr;
+                if (subTree.hasUniqueParam()) {
+                    durationStr = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("Duration")) {
+                    durationStr = subTree.paramValue("Duration");
                 } else {
-                    return new PossibilityCondition.AbsoluteTime(
-                            new PossibilityCondition.Id(),
-                            Duration.ofMinutes(Long.parseLong(tree.params().get(1))),
-                            BeforeOrAfter.BEFORE //TODO
-                    );
+                    throw new TemplateException("AbsoluteTime condition missing required parameter: Duration");
                 }
+                
+                return new PossibilityCondition.AbsoluteTime(
+                        new PossibilityCondition.Id(),
+                        Duration.ofMinutes(Long.parseLong(durationStr)),
+                        BeforeOrAfter.BEFORE //TODO
+                );
             }
             case "instep" -> {
                 // Format: "CONDITION:InStep:stepId:0987" ou "CONDITION:InStep:0987" (legacy)
+                Tree subTree = tree.sub();
                 String stepIdStr;
-                if (tree.params().size() >= 3 && "stepId".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: InStep:stepId:0987
-                    stepIdStr = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: InStep:0987
-                    stepIdStr = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    stepIdStr = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("stepId")) {
+                    stepIdStr = subTree.paramValue("stepId");
                 } else {
                     throw new TemplateException("InStep missing required parameter: stepId");
                 }
@@ -1237,13 +1235,12 @@ public class TemplateGeneratorUseCase {
             }
             case "insidespace" -> {
                 // Format: "CONDITION:InsideSpace:spaceId:LABEL" ou "CONDITION:InsideSpace:LABEL" (legacy)
+                Tree subTree = tree.sub();
                 String spaceLabel;
-                if (tree.params().size() >= 3 && "spaceId".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: InsideSpace:spaceId:LABEL
-                    spaceLabel = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: InsideSpace:LABEL
-                    spaceLabel = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    spaceLabel = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("spaceId")) {
+                    spaceLabel = subTree.paramValue("spaceId");
                 } else {
                     throw new TemplateException("InsideSpace missing required parameter: spaceId");
                 }
@@ -1256,13 +1253,12 @@ public class TemplateGeneratorUseCase {
             }
             case "steptarget" -> {
                 // Format: "CONDITION:StepTarget:targetId:TARGET_REF" ou "CONDITION:StepTarget:TARGET_REF" (legacy)
+                Tree subTree = tree.sub();
                 String targetIdStr;
-                if (tree.params().size() >= 3 && "targetId".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: StepTarget:targetId:TARGET_REF
-                    targetIdStr = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: StepTarget:TARGET_REF
-                    targetIdStr = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    targetIdStr = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("targetId")) {
+                    targetIdStr = subTree.paramValue("targetId");
                 } else {
                     throw new TemplateException("StepTarget missing required parameter: targetId");
                 }
@@ -1373,6 +1369,9 @@ public class TemplateGeneratorUseCase {
             case "talk" -> {
                 return parseTalkConsequence(tree, context);
             }
+            case "gameover" -> {
+                return parseGameOverConsequence(tree, context);
+            }
         }
 
         throw new TemplateException("Invalid consequence format: " + type);
@@ -1430,13 +1429,12 @@ public class TemplateGeneratorUseCase {
         switch (type) {
             case "goinspace" -> {
                 // Format: "Trigger:GoInSpace:SpaceId:ABCD" ou "Trigger:GoInSpace:EFG" (legacy)
+                Tree subTree = tree.sub();
                 String spaceLabel;
-                if (tree.params().size() >= 3 && "SpaceId".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: GoInSpace:SpaceId:ABCD
-                    spaceLabel = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: GoInSpace:EFG
-                    spaceLabel = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    spaceLabel = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("SpaceId")) {
+                    spaceLabel = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoInSpace missing required parameter: SpaceId");
                 }
@@ -1449,13 +1447,12 @@ public class TemplateGeneratorUseCase {
             }
             case "gooutspace" -> {
                 // Format: "Trigger:GoOutSpace:SpaceId:ABCD" ou "Trigger:GoOutSpace:EFG" (legacy)
+                Tree subTree = tree.sub();
                 String spaceLabel;
-                if (tree.params().size() >= 3 && "SpaceId".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: GoOutSpace:SpaceId:ABCD
-                    spaceLabel = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: GoOutSpace:EFG
-                    spaceLabel = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    spaceLabel = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("SpaceId")) {
+                    spaceLabel = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoOutSpace missing required parameter: SpaceId");
                 }
@@ -1468,13 +1465,12 @@ public class TemplateGeneratorUseCase {
             }
             case "absolutetime" -> {
                 // Format: "Trigger:AbsoluteTime:value:42" ou "Trigger:AbsoluteTime:42" (legacy)
+                Tree subTree = tree.sub();
                 String valueStr;
-                if (tree.params().size() >= 3 && "value".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: AbsoluteTime:value:42
-                    valueStr = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: AbsoluteTime:42
-                    valueStr = tree.params().get(1);
+                if(subTree.hasUniqueParam()) {
+                    valueStr = subTree.uniqueParam();
+                } else if(subTree.hasParamKey("value")) {
+                    valueStr = subTree.paramValue("value");
                 } else {
                     throw new TemplateException("AbsoluteTime missing required parameter: value");
                 }
@@ -1484,58 +1480,49 @@ public class TemplateGeneratorUseCase {
                         GameSessionTimeUnit.ofMinutes(Integer.parseInt(valueStr))
                 );
             }
-            case "selecttalkoption" -> {
-                // Format: "Trigger:SelectTalkOption:option:REF_CHOIX_A" ou "Trigger:SelectTalkOption:REF_CHOIX_A" (legacy)
-                String optionReference;
-                if (tree.params().size() >= 3 && "option".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: SelectTalkOption:option:REF_CHOIX_A
-                    optionReference = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: SelectTalkOption:REF_CHOIX_A
-                    optionReference = tree.params().get(1);
+            case "talkoptionselect", "selecttalkoption"  -> {
+                return createTalkOptionSelect(tree, context);
+            }
+            case "talkend" -> {
+                // Format: "Trigger:TalkEnd:TALK002" ou "Trigger:TalkEnd:talkId:TALK002" (format clé-valeur)
+                Tree subTree = tree.sub();
+                String talkIdStr;
+                if (subTree.hasUniqueParam()) {
+                    talkIdStr = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("talkId")) {
+                    talkIdStr = subTree.paramValue("talkId");
                 } else {
-                    throw new TemplateException("SelectTalkOption missing required parameter: option");
+                    throw new TemplateException("TalkEnd missing required parameter: talkId");
                 }
 
-                // Créer des références atomiques pour l'option et son TalkItem parent
-                AtomicReference<TalkItem.Options.Option.Id> resolvedOptionId = new AtomicReference<>();
+                // Créer une référence atomique pour le TalkItem.Id
                 AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
 
                 // Demander la résolution de la référence
-                context.requestReference(optionReference, optionObj -> {
-                    if (optionObj instanceof TalkItem.Options.Option option) {
-                        resolvedOptionId.set(option.id());
-                        // Trouver le TalkItem parent qui contient cette option
-                        TalkItem.Id parentTalkItemId = findTalkItemContainingOption(option.id(), context);
-                        if (parentTalkItemId != null) {
-                            resolvedTalkItemId.set(parentTalkItemId);
-                        }
+                context.requestReference(talkIdStr, talkItemObj -> {
+                    if (talkItemObj instanceof TalkItem talkItem) {
+                        resolvedTalkItemId.set(talkItem.id());
                     }
                 });
 
-                // Si la référence n'est pas encore résolue, créer des IDs temporaires
-                if (resolvedOptionId.get() == null) {
-                    resolvedOptionId.set(new TalkItem.Options.Option.Id(optionReference));
-                }
+                // Si la référence n'est pas encore résolue, créer un ID temporaire
                 if (resolvedTalkItemId.get() == null) {
-                    resolvedTalkItemId.set(new TalkItem.Id(optionReference + "_parent"));
+                    resolvedTalkItemId.set(new TalkItem.Id(talkIdStr));
                 }
 
-                return new PossibilityTrigger.SelectTalkOption(
+                return new PossibilityTrigger.TalkEnd(
                         new PossibilityTrigger.Id(),
-                        resolvedTalkItemId.get(),
-                        resolvedOptionId.get()
+                        resolvedTalkItemId.get()
                 );
             }
             case "clickmapobject" -> {
                 // Format: "Trigger:ClickMapObject:objectReference:REF_OBJECT" ou "Trigger:ClickMapObject:REF_OBJECT" (legacy)
+                Tree subTree = tree.sub();
                 String objectReference;
-                if (tree.params().size() >= 3 && "objectReference".equalsIgnoreCase(tree.params().get(1))) {
-                    // Nouveau format key:value: ClickMapObject:objectReference:REF_OBJECT
-                    objectReference = tree.params().get(2);
-                } else if (tree.params().size() == 2) {
-                    // Legacy format: ClickMapObject:REF_OBJECT
-                    objectReference = tree.params().get(1);
+                if (subTree.hasUniqueParam()) {
+                    objectReference = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("objectReference")) {
+                    objectReference = subTree.paramValue("objectReference");
                 } else {
                     throw new TemplateException("ClickMapObject missing required parameter: objectReference");
                 }
@@ -1547,8 +1534,11 @@ public class TemplateGeneratorUseCase {
             }
         }
 
+
         return null;
     }
+
+
 
     private ScenarioGoal.State parseState(String state) {
         return switch (state.toLowerCase()) {
@@ -1874,6 +1864,26 @@ public class TemplateGeneratorUseCase {
         return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
     }
 
+    private Consequence parseGameOverConsequence(Tree tree, ParsingContext context) {
+        // Format: "Consequence:GameOver:FAILURE_ONE_CONTINUE"
+        // tree.params() contient ["GameOver", "FAILURE_ONE_CONTINUE"]
+        
+        if (tree.params().size() < 2) {
+            throw new TemplateException("GameOver consequence must specify a game over type");
+        }
+
+        String gameOverTypeStr = tree.params().get(1); // "FAILURE_ONE_CONTINUE"
+
+        try {
+            SessionGameOver.Type gameOverType = SessionGameOver.Type.valueOf(gameOverTypeStr);
+            SessionGameOver gameOver = new SessionGameOver(gameOverType, Optional.empty());
+            return new Consequence.SessionEnd(new Consequence.Id(), gameOver);
+        } catch (IllegalArgumentException e) {
+            throw new TemplateException("Invalid GameOver type: '" + gameOverTypeStr + "'. Valid types are: " + 
+                java.util.Arrays.toString(SessionGameOver.Type.values()));
+        }
+    }
+
     /**
      * Extrait une référence du header au format "(ref REFERENCE_NAME)" ou "(REF REFERENCE_NAME)".
      * Exemple: "Step(ref REF_STEP_A)" -> "REF_STEP_A"
@@ -1946,4 +1956,69 @@ public class TemplateGeneratorUseCase {
                 .map(ScenarioConfig.Step::id)
                 .findFirst();
     }
+
+
+
+    ///Refacto
+
+    private static final String PARAM_KEY_TALK_OPTION = "option";
+
+
+    private PossibilityTrigger createTalkOptionSelect(Tree tree, ParsingContext context) {
+        // Format: "Trigger:SelectTalkOption:option:REF_CHOIX_A" ou "Trigger:SelectTalkOption:REF_CHOIX_A" (legacy)
+
+        Tree subTree = tree.sub();
+
+        String optionReference;
+        if(subTree.hasUniqueParam()) {
+            optionReference = subTree.uniqueParam();
+        } else if(subTree.hasParamKey(PARAM_KEY_TALK_OPTION)) {
+            optionReference = subTree.paramValue(PARAM_KEY_TALK_OPTION);
+        } else {
+            throw new TemplateException("TalkOptionSelect missing required parameter: option");
+        }
+
+        /*String optionReference;
+        if (tree.params().size() >= 3 && PARAM_KEY_TALK_OPTION.equalsIgnoreCase(tree.params().get(1))) {
+            // Nouveau format key:value: SelectTalkOption:option:REF_CHOIX_A
+            optionReference = tree.params().get(2);
+        } else if (tree.params().size() == 2) {
+            // Legacy format: SelectTalkOption:REF_CHOIX_A
+            optionReference = tree.params().get(1);
+        } else {
+            throw new TemplateException("TalkOptionSelect missing required parameter: option");
+        }*/
+
+        // Créer des références atomiques pour l'option et son TalkItem parent
+        AtomicReference<TalkItem.Options.Option.Id> resolvedOptionId = new AtomicReference<>();
+        AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
+
+        // Demander la résolution de la référence
+        context.requestReference(optionReference, optionObj -> {
+            if (optionObj instanceof TalkItem.Options.Option option) {
+                resolvedOptionId.set(option.id());
+                // Trouver le TalkItem parent qui contient cette option
+                TalkItem.Id parentTalkItemId = findTalkItemContainingOption(option.id(), context);
+                if (parentTalkItemId != null) {
+                    resolvedTalkItemId.set(parentTalkItemId);
+                }
+            }
+        });
+
+        // Si la référence n'est pas encore résolue, créer des IDs temporaires
+        if (resolvedOptionId.get() == null) {
+            resolvedOptionId.set(new TalkItem.Options.Option.Id(optionReference));
+        }
+        if (resolvedTalkItemId.get() == null) {
+            resolvedTalkItemId.set(new TalkItem.Id(optionReference + "_parent"));
+        }
+
+        return new PossibilityTrigger.TalkOptionSelect(
+                new PossibilityTrigger.Id(),
+                resolvedTalkItemId.get(),
+                resolvedOptionId.get()
+        );
+    }
+
+
 }

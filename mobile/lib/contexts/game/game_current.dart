@@ -26,6 +26,10 @@ class GameCurrent {
   static final _Style _styleInstance = _Style();
 
   static _Style get style => _styleInstance;
+
+  static void stopSession() => _sessionInstance._session?.stop();
+
+  static void removeSession() => _sessionInstance._session = null;
   
 }
 

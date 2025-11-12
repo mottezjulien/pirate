@@ -71,8 +71,13 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setState(goalTarget.state());
                 yield entity;
             }
-
-            case Consequence.SessionEnd ignored -> new ScenarioPossibilityConsequenceGameOverEntity();
+            case Consequence.SessionEnd sessionEnd -> {
+                ScenarioPossibilityConsequenceGameOverEntity entity = new ScenarioPossibilityConsequenceGameOverEntity();
+                entity.setId(sessionEnd.id().value());
+                entity.setGameOverType(sessionEnd.gameOver().type());
+                sessionEnd.gameOver().optReasonId().ifPresent(reasonId -> entity.setLabelId(reasonId.value()));
+                yield entity;
+            }
             case Consequence.UpdatedMetadata updatedMetadata -> {
                 ScenarioPossibilityConsequenceUpdatedMetadataEntity entity = new ScenarioPossibilityConsequenceUpdatedMetadataEntity();
                 entity.setId(updatedMetadata.id().value());

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,12 +43,12 @@ public class GameEventActionGameTest {
     public void allSuccess() {
 
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ALL_ENDED, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ALL_ENDED, Optional.of(i18nId));
         event.apply(sessionId, playerId, gameOver);
 
-        verify(outputPort).win(playerId, i18nId);
-        verify(outputPort).win(otherPlayerId1, i18nId);
-        verify(outputPort).win(otherPlayerId2, i18nId);
+        verify(outputPort).win(playerId, Optional.of(i18nId));
+        verify(outputPort).win(otherPlayerId1, Optional.of(i18nId));
+        verify(outputPort).win(otherPlayerId2, Optional.of(i18nId));
         verify(outputPort).ended(sessionId);
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);
@@ -63,10 +64,10 @@ public class GameEventActionGameTest {
     @Test
     public void oneSuccess() {
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
         event.apply(sessionId, playerId, gameOver);
 
-        verify(outputPort).win(playerId, i18nId);
+        verify(outputPort).win(playerId, Optional.of(i18nId));
         verify(outputPort, never()).ended(sessionId);
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);
@@ -83,10 +84,10 @@ public class GameEventActionGameTest {
                 .thenReturn(Stream.of(playerId));
 
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, i18nId);
+        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
         event.apply(sessionId, playerId, gameOver);
 
-        verify(outputPort).win(playerId, i18nId);
+        verify(outputPort).win(playerId, Optional.of(i18nId));
         verify(outputPort).ended(sessionId);
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);

@@ -1,28 +1,39 @@
 TEST_DISCUSSION:1.0:Test de discussion:10
-
 --- Step (ref ETAPE_DEBUT):FR:Démarrage:EN:Start
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:TalkOptions:TALK_LETS_GO
 
+------ Possibility
+--------- Trigger:TalkEnd:TALK002
+--------- Consequence:GameOver:SUCCESS_ONE_CONTINUE
 
 ------ Possibility
---------- Trigger:SelectTalkOption:option:TALK_LETS_GO_CHOIX_NON
---------- Consequence:Alert
------------- FR:Dommage, fin de test.
------------- EN:Too bad, end of test.
+--------- Trigger:TalkOptionSelect:TALK_LETS_GO_CHOIX_NON
+--------- Consequence:GameOver:FAILURE_ONE_CONTINUE
 
 --- Talk
+------ Character
+--------- Bob
+------------ default:ASSET:/pouet/bobdefault.jpg
 ------ Options(ref TALK_LETS_GO)
+--------- Character:Bob:default
 --------- Label
 ------------ FR:Tu veux jouer ?
 ------------ EN:Do you want to play?
---------- Option:TALK_LETS_GO_CHOIX_OUI
+--------- Option (ref TALK_LETS_GO_CHOIX_OUI)
 ------------ FR:Oui
 ------------ EN:Yes
+------------ next:TALK002
 --------- Option (ref TALK_LETS_GO_CHOIX_NON)
 ------------ FR:Non
 ------------ EN:No
------- Simple(ref TALK_LETS_GO_CHOIX_OUI)
+------------ next:TALK003
+------ Simple(ref TALK002)
+--------- Character:Bob:default
 --------- FR:Excellent, continuons !
 --------- EN:Great, let's continue!
+------ Simple(ref TALK003)
+--------- Character:Bob:default
+--------- FR:Dommage, fin de test.
+--------- EN:Too bad, end of test.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -27,6 +29,11 @@ class GameSession {
     gameLocation.init();
   }
 
+  void stop() {
+    eventListener.stop();
+    gameLocation.stop();
+  }
+
   Coordinate get coordinate => gameLocation.coordinate;
 
   void addOnMoveListener(onMoveListener) => eventListener.addOnMoveListener(onMoveListener);
@@ -46,14 +53,19 @@ class GameSession {
 class GameLocation {
 
   late Stream<Position> _streamPosition;
+  late StreamSubscription<Position> _streamSubscription;
   Position? last;
 
   void init() {
     const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation);
     _streamPosition = Geolocator.getPositionStream(locationSettings: locationSettings);
-    _streamPosition.listen((position) {
+    _streamSubscription = _streamPosition.listen((position) {
       onMove(position);
     });
+  }
+
+  void stop() {
+    _streamSubscription.cancel();
   }
 
 
@@ -75,15 +87,18 @@ class GameLocation {
   Stream<Coordinate> get stream => _streamPosition
       .map((position) => Coordinate(lat: position.latitude, lng: position.longitude));
 
+
+
 }
 
 class GameEventListener {
 
   bool running = false;
 
-  WebSocketChannel? _channel;
-  List<OnMoveListener> onMoveListeners = [];
-  List<OnGoalListener> onGoalListeners = [];
+  late WebSocketChannel _channel;
+  late StreamSubscription<dynamic> _streamSubscription;
+  final List<OnMoveListener> onMoveListeners = [];
+  final List<OnGoalListener> onGoalListeners = [];
 
   void init(String sessionId) {
     running = true;
@@ -93,7 +108,7 @@ class GameEventListener {
   void connect(String sessionId) {
     final String wsUrl = "${Server.wsAPI}/ws/games/sessions?token=${ConnectionCurrent.token}&sessionId=$sessionId";
     _channel = IOWebSocketChannel.connect(wsUrl);
-    _channel!.stream.listen((message) {
+    _streamSubscription = _channel.stream.listen((message) {
         _do(message.toString());
       },
       onDone: () => running ? connect(sessionId): () {}, // Reconnexion automatique
@@ -119,6 +134,11 @@ class GameEventListener {
       GameSessionTalkDialog talkDialog = GameSessionTalkDialog();
       talkDialog.start(talkId: talkId);
     }
+  }
+
+  void stop() {
+    running = false;
+    _streamSubscription.cancel();
   }
 
   void addOnMoveListener(OnMoveListener listener) {
@@ -151,10 +171,12 @@ class GameEventListener {
 
   void dispose() {
     running = false;
-    _channel?.sink.close();
+    _channel.sink.close();
     onMoveListeners.clear();
     onGoalListeners.clear();
   }
+
+
 
 }
 
