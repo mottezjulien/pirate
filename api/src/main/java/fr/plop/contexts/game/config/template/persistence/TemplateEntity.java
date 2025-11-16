@@ -5,12 +5,7 @@ import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Duration;
 

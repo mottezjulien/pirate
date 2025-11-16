@@ -3,12 +3,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.consequenc
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.talk.persistence.TalkItemEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_POSSIBILITY_CONSEQUENCE")

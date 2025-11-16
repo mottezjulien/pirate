@@ -6,15 +6,7 @@ import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEnti
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.HashSet;

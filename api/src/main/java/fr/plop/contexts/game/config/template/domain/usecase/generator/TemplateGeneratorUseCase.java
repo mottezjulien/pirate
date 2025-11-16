@@ -1,39 +1,30 @@
-package fr.plop.contexts.game.config.template.domain.usecase;
+package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
+import fr.plop.contexts.game.config.scenario.domain.model.*;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.domain.model.Tree;
+import fr.plop.contexts.game.config.template.domain.usecase.ParsingContext;
+import fr.plop.contexts.game.config.template.domain.usecase.TreeGenerator;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.subs.i18n.domain.I18n;
-import fr.plop.subs.i18n.domain.Language;
-import fr.plop.subs.image.Image;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.Language;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TemplateGeneratorUseCase {
@@ -53,13 +44,13 @@ public class TemplateGeneratorUseCase {
     public static final String STEP_KEY = "STEP";
     public static final String TARGET_KEY = "TARGET";
     public static final String POSSIBILITY_KEY = "POSSIBILITY";
-    public static final String OPTIONAL_KEY = "(OPT)";
     public static final String BOARD_KEY = "BOARD";
     public static final String SPACE_KEY = "SPACE";
 
+
+    private static final String PARAM_KEY_TALK_OPTION = "option";
+
     // Langues
-    public static final String FR_KEY = "FR";
-    public static final String EN_KEY = "EN";
     public static final String BOTTOM_LEFT = "bottomLeft";
     public static final String TOP_RIGHT = "topRight";
 
@@ -78,7 +69,10 @@ public class TemplateGeneratorUseCase {
     }
 
     private final TreeGenerator treeGenerator = new TreeGenerator();
+    private final ParsingContext context = new ParsingContext();
+    private final TemplateGeneratorTalkUseCase talkGenerator = new TemplateGeneratorTalkUseCase(context);
 
+    private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
 
     public Template apply(Script script) {
         // Parse avec TreeGenerator pour avoir une structure d'arbre
@@ -94,8 +88,8 @@ public class TemplateGeneratorUseCase {
         String version = !params.isEmpty() ? params.get(0) : DEFAULT_VERSION;
         String label = params.size() > 1 ? params.get(1) : "";
 
-        // Créer le context de parsing pour gérer les références
-        ParsingContext context = new ParsingContext();
+
+
 
         // 1. Parse d'abord les BoardSpaces pour créer la map value -> BoardSpace.Id
         List<BoardSpace> boardSpaces = parseBoardSpacesFromTrees(rootTree.children());
@@ -140,7 +134,7 @@ public class TemplateGeneratorUseCase {
     }
 
     private static Template.Atom templateAtom(Tree rootTree) {
-        return new Template.Atom(new Template.Id(), new Template.Code(rootTree.header()));
+        return new Template.Atom(new Template.Id(), new Template.Code(rootTree.headerKeepCase()));
     }
 
     private static Duration maxDurationFromParams(List<String> params) {
@@ -204,466 +198,12 @@ public class TemplateGeneratorUseCase {
     }
 
     private List<TalkItem> parseTalkItemsFromTrees(List<Tree> trees, ParsingContext context) {
-        List<TalkItem> talkItems = new ArrayList<>();
-        List<String> talkSimpleReferences = new ArrayList<>(); // Track references for linking
-        Map<Integer, String> nextIdReferencesMap = new HashMap<>(); // Track unresolved nextIds for Continue items by index
-
         for (Tree tree : trees) {
             if ("TALK".equalsIgnoreCase(tree.header())) {
-                // 1. Parser d'abord les Characters pour les avoir en map
-                Map<String, Map<String, String>> characters = new HashMap<>();
-                
-                for (Tree itemTree : tree.children()) {
-                    String headerUpper = itemTree.header().toUpperCase();
-                    if (headerUpper.contains("CHARACTER")) {
-                        Map<String, Map<String, String>> charMap = parseCharactersFromTree(itemTree);
-                        characters.putAll(charMap);
-                    }
-                }
-
-                // 2. Parser ensuite les TalkItems (Simple, Continue, Options, etc.)
-                for (Tree itemTree : tree.children()) {
-                    String headerLower = itemTree.header().toLowerCase();
-                    String headerUpper = itemTree.header().toUpperCase();
-                    
-                    if (headerUpper.contains("SIMPLE")) {
-                        String referenceName = extractReferenceFromHeader(itemTree.header());
-                        TalkItem.Simple simple = parseSimpleFromTree(itemTree, characters, context);
-                        talkItems.add(simple);
-                        talkSimpleReferences.add(referenceName); // Track for linking
-                    } else if (headerUpper.contains("CONTINUE")) {
-                        String referenceName = extractReferenceFromHeader(itemTree.header());
-                        String nextIdReference = extractNextIdReferenceFromTree(itemTree);
-                        TalkItem.Continue continueItem = parseContinueFromTree(itemTree, characters, context);
-                        talkItems.add(continueItem);
-                        talkSimpleReferences.add(referenceName); // Track for linking
-                        // Track the nextId reference for later resolution
-                        if (nextIdReference != null) {
-                            nextIdReferencesMap.put(talkItems.size() - 1, nextIdReference);
-                        }
-                    } else if (headerLower.contains("options")) {
-                        TalkItem.Options options = parseMultipleOptionsFromTree(itemTree, characters, context);
-                        talkItems.add(options);
-                        talkSimpleReferences.add(null); // Not a simple, so no reference
-                    }
-                }
-
-                // 3. Resolve Continue nextIds by looking up references
-                if (!nextIdReferencesMap.isEmpty()) {
-                    talkItems = resolveNextIds(talkItems, nextIdReferencesMap, context);
-                }
-                
-                // 3b. Resolve Options nextIds by looking up references
-                talkItems = resolveOptionsNextIds(talkItems, context);
-
-                // 4. Link Talk items (convert Simple to Continue where appropriate)
-                // Only link if there are no explicit Continue items AND no Options with next references
-                boolean hasExplicitContinue = talkItems.stream().anyMatch(ti -> ti instanceof TalkItem.Continue);
-                boolean hasOptionsWithNexts = talkItems.stream()
-                    .filter(ti -> ti instanceof TalkItem.Options)
-                    .map(ti -> (TalkItem.Options) ti)
-                    .flatMap(opt -> opt.options().stream())
-                    .anyMatch(TalkItem.Options.Option::hasNext);
-                if (!hasExplicitContinue && !hasOptionsWithNexts) {
-                    talkItems = linkTalkItems(talkItems, talkSimpleReferences, context);
-                }
+                return talkGenerator.apply(tree);
             }
         }
-
-        return talkItems;
-    }
-
-    private String extractNextIdReferenceFromTree(Tree continueTree) {
-        // Extract nextId reference from params
-        // Format: "Continue(ref TALK001)" with params [TALK002]
-        List<String> params = continueTree.params();
-        if (!params.isEmpty()) {
-            return params.get(0);
-        }
-        return null;
-    }
-
-    private List<TalkItem> resolveNextIds(List<TalkItem> talkItems, Map<Integer, String> nextIdReferencesMap, ParsingContext context) {
-        List<TalkItem> resolvedItems = new ArrayList<>(talkItems);
-        
-        for (Map.Entry<Integer, String> entry : nextIdReferencesMap.entrySet()) {
-            int index = entry.getKey();
-            String nextIdRef = entry.getValue();
-            
-            if (index >= 0 && index < resolvedItems.size()) {
-                TalkItem item = resolvedItems.get(index);
-                
-                if (item instanceof TalkItem.Continue) {
-                    // Try to resolve the reference to get the actual TalkItem.Id
-                    Optional<TalkItem> nextItemOpt = context.getReference(nextIdRef, TalkItem.class);
-                    if (nextItemOpt.isPresent()) {
-                        TalkItem nextItem = nextItemOpt.get();
-                        // Create a new Continue with the resolved nextId
-                        TalkItem.Continue continueItem = (TalkItem.Continue) item;
-                        TalkItem.Continue resolved = new TalkItem.Continue(
-                            continueItem.id(),
-                            continueItem.value(),
-                            continueItem.character(),
-                            nextItem.id()
-                        );
-                        resolvedItems.set(index, resolved);
-                    }
-                }
-            }
-        }
-        
-        return resolvedItems;
-    }
-    
-    private List<TalkItem> resolveOptionsNextIds(List<TalkItem> talkItems, ParsingContext context) {
-        List<TalkItem> resolvedItems = new ArrayList<>(talkItems);
-        
-        for (int i = 0; i < resolvedItems.size(); i++) {
-            TalkItem item = resolvedItems.get(i);
-            
-            if (item instanceof TalkItem.Options) {
-                TalkItem.Options optionsItem = (TalkItem.Options) item;
-                List<TalkItem.Options.Option> resolvedOptions = new ArrayList<>();
-                boolean hasChanges = false;
-                
-                for (TalkItem.Options.Option option : optionsItem.options()) {
-                    if (option.hasNext()) {
-                        TalkItem.Id tempNextId = option.nextId();
-                        String refValue = tempNextId.value();
-                        
-                        // Try to resolve the reference if it looks like a reference (contains no dashes - UUID style)
-                        if (!refValue.contains("-")) {
-                            Optional<TalkItem> nextItemOpt = context.getReference(refValue, TalkItem.class);
-                            if (nextItemOpt.isPresent()) {
-                                TalkItem nextItem = nextItemOpt.get();
-                                // Create a new Option with the resolved nextId
-                                TalkItem.Options.Option resolved = new TalkItem.Options.Option(
-                                    option.id(),
-                                    option.value(),
-                                    nextItem.id()
-                                );
-                                resolvedOptions.add(resolved);
-                                hasChanges = true;
-                            } else {
-                                resolvedOptions.add(option);
-                            }
-                        } else {
-                            resolvedOptions.add(option);
-                        }
-                    } else {
-                        resolvedOptions.add(option);
-                    }
-                }
-                
-                if (hasChanges) {
-                    // Create a new Options with resolved options
-                    TalkItem.Options resolved = new TalkItem.Options(
-                        optionsItem.id(),
-                        optionsItem.value(),
-                        optionsItem.character(),
-                        resolvedOptions
-                    );
-                    resolvedItems.set(i, resolved);
-                }
-            }
-        }
-        
-        return resolvedItems;
-    }
-
-    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, Map<String, Map<String, String>> characters, ParsingContext context) {
-        // Extraire la référence du header si elle existe : "Options(ref OPTIONS_ABCD)"
-        String referenceName = extractReferenceFromHeader(optionsTree.header());
-
-        I18n label = new I18n(Map.of()); // label par défaut
-        List<TalkItem.Options.Option> options = new ArrayList<>();
-
-        for (Tree child : optionsTree.children()) {
-            String header = child.header().toLowerCase();
-            if (header.contains("label")) {
-                // Parse l'I18n pour le label
-                Optional<I18n> labelOpt = parseI18nFromChildrenWithoutNewline(child.children());
-                label = labelOpt.orElse(new I18n(Map.of()));
-            } else if (header.contains(PARAM_KEY_TALK_OPTION)) {
-                // Extraire la référence du header : "Option(ref REF_CHOIX_A)"
-                String optionReferenceName = extractReferenceFromHeader(child.header());
-
-                // Parse l'I18n pour chaque option
-                // Structure:
-                // Option (ref WAHUP_YES)
-                //   value
-                //     FR:Oui
-                //     EN:Yes
-                //   next:TALK002
-                List<Tree> childrenToParseI18n = child.children();
-                Optional<Tree> valueTree = child.children().stream()
-                        .filter(t -> t.header().toLowerCase().contains("value"))
-                        .findFirst();
-                
-                if (valueTree.isPresent()) {
-                    childrenToParseI18n = valueTree.get().children();
-                }
-
-                Optional<I18n> optionOpt = parseI18nFromChildrenWithoutNewline(childrenToParseI18n);
-                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
-                
-                // Chercher la référence nextId via "next:TALK002"
-                Optional<String> nextIdRef = child.children().stream()
-                        .filter(t -> t.header().toLowerCase().startsWith("next"))
-                        .flatMap(t -> t.params().stream())
-                        .findFirst();
-                
-                TalkItem.Options.Option option;
-                if (nextIdRef.isPresent()) {
-                    // Create a reference that will be resolved later
-                    option = new TalkItem.Options.Option(new TalkItem.Options.Option.Id(), optionMessage, 
-                            new TalkItem.Id(nextIdRef.get()));
-                } else {
-                    option = new TalkItem.Options.Option(optionMessage);
-                }
-                options.add(option);
-
-                // Enregistrer la référence si elle existe
-                if (optionReferenceName != null) {
-                    context.registerReference(optionReferenceName, option);
-                }
-            }
-        }
-
-        // Parse character from children (new format: Character:Alice:alice-sad)
-        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(optionsTree.children(), characters);
-        if (talkCharacter == null) {
-            talkCharacter = TalkCharacter.nobody();
-        }
-
-        TalkItem.Options multipleOptions = new TalkItem.Options(new TalkItem.Id(), label, talkCharacter, options);
-
-        // Enregistrer la relation option → TalkItem pour chaque option
-        for (TalkItem.Options.Option option : options) {
-            context.registerOptionToTalkItemMapping(option.id(), multipleOptions.id());
-        }
-
-        // Enregistrer la référence si elle existe
-        if (referenceName != null) {
-            context.registerReference(referenceName, multipleOptions);
-        }
-
-        return multipleOptions;
-    }
-
-    private Map<String, Map<String, String>> parseCharactersFromTree(Tree characterTree) {
-        // Format:
-        // Character
-        //   - CharacterName
-        //     - AvatarName:Type:image_path.jpg
-        // Stocke: CharacterName -> (AvatarName -> "Type:image_path.jpg")
-        Map<String, Map<String, String>> result = new HashMap<>();
-
-        for (Tree characterChild : characterTree.children()) {
-            String characterName = characterChild.header();
-            Map<String, String> avatarMap = new HashMap<>();
-
-            // Parser les avatars du personnage
-            for (Tree avatarTree : characterChild.children()) {
-                String avatarDef = avatarTree.header();
-                List<String> params = avatarTree.params();
-
-                // Format: "AvatarName:Type:image_path.jpg"
-                // TreeGenerator peut parser cela de 2 façons :
-                // 1. header="AvatarName", params=["Type", "image_path.jpg"]
-                // 2. header="AvatarName:Type:image_path.jpg", params=[]
-                
-                if (params.size() >= 2) {
-                    // Format 1: header + params
-                    String avatarName = avatarDef;
-                    String type = params.get(0);
-                    String imagePath = params.get(1);
-                    avatarMap.put(avatarName, type + SEPARATOR + imagePath);
-                } else if (params.size() == 1) {
-                    // Format hybride: header contient avatarName, params[0] = imagePath
-                    String avatarName = avatarDef;
-                    String imagePath = params.get(0);
-                    avatarMap.put(avatarName, "ASSET" + SEPARATOR + imagePath);
-                } else if (avatarDef.contains(SEPARATOR)) {
-                    // Format 2: tout dans le header "AvatarName:Type:image_path.jpg"
-                    String[] parts = avatarDef.split(":", 3);
-                    if (parts.length >= 3) {
-                        String avatarName = parts[0];
-                        String type = parts[1];
-                        String imagePath = parts[2];
-                        avatarMap.put(avatarName, type + SEPARATOR + imagePath);
-                    }
-                }
-            }
-
-            result.put(characterName, avatarMap);
-        }
-
-        return result;
-    }
-
-    private TalkItem.Simple parseSimpleFromTree(Tree simpleTree, Map<String, Map<String, String>> characters, ParsingContext context) {
-        // Extraire la référence du header: "Simple(ref TALK000):Bob:Happy"
-        String referenceName = extractReferenceFromHeader(simpleTree.header());
-
-        // Parser les paramètres: [CharacterName, AvatarName]
-        // Format dans le header après la ref: "Simple(ref TALK000):Bob:Happy"
-        String characterName = "";
-        String avatarName = "";
-
-        List<String> params = simpleTree.params();
-        if (!params.isEmpty()) {
-            if (params.size() >= 1) {
-                characterName = params.get(0);
-            }
-            if (params.size() >= 2) {
-                avatarName = params.get(1);
-            }
-        }
-
-        // Parser le message I18n
-        Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(simpleTree.children());
-        I18n message = messageOpt.orElse(new I18n(Map.of()));
-
-        // Try to parse character from children (new format: Character:Alice:alice-sad)
-        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(simpleTree.children(), characters);
-        
-        // Fallback to old format if character not found
-        if (talkCharacter == null) {
-            talkCharacter = parseCharacterFromParams(characterName, avatarName, characters);
-        }
-
-        // Créer le TalkItem.Simple
-        TalkItem.Simple simple = new TalkItem.Simple(new TalkItem.Id(), message, talkCharacter);
-
-        // Enregistrer la référence si elle existe
-        if (referenceName != null) {
-            context.registerReference(referenceName, simple);
-        }
-
-        return simple;
-    }
-
-    private TalkItem.Continue parseContinueFromTree(Tree continueTree, Map<String, Map<String, String>> characters, ParsingContext context) {
-        // Format: "Continue(ref TALK001)" with params [TALK002]
-        // The TALK002 will be resolved later in resolveNextIds
-        String referenceName = extractReferenceFromHeader(continueTree.header());
-
-        // Parser le message I18n
-        Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(continueTree.children());
-        I18n message = messageOpt.orElse(new I18n(Map.of()));
-
-        // Parse character from children (new format: Character:Alice:alice-sad)
-        TalkCharacter talkCharacter = parseCharacterFromTreeChildren(continueTree.children(), characters);
-        if (talkCharacter == null) {
-            talkCharacter = TalkCharacter.nobody();
-        }
-
-        // Créer le TalkItem.Continue avec un placeholder nextId
-        // The actual nextId will be set during resolveNextIds()
-        TalkItem.Id placeholderNextId = new TalkItem.Id();
-        TalkItem.Continue continueItem = new TalkItem.Continue(new TalkItem.Id(), message, talkCharacter, placeholderNextId);
-
-        // Enregistrer la référence si elle existe
-        if (referenceName != null) {
-            context.registerReference(referenceName, continueItem);
-        }
-
-        return continueItem;
-    }
-
-    private TalkCharacter parseCharacterFromTreeChildren(List<Tree> children, Map<String, Map<String, String>> characters) {
-        // Look for child with header like "Character:Alice:alice-sad"
-        for (Tree child : children) {
-            String header = child.header();
-            if (header.toUpperCase().startsWith("CHARACTER")) {
-                // Format: "Character:Alice:alice-sad"
-                List<String> parts = child.params();
-                if (parts.size() >= 2) {
-                    String characterName = parts.get(0);
-                    String avatarName = parts.get(1);
-                    return parseCharacterFromParams(characterName, avatarName, characters);
-                }
-            }
-        }
-        return null;
-    }
-
-    private TalkCharacter parseCharacterFromParams(String characterName, String avatarName, Map<String, Map<String, String>> characters) {
-        // Créer le TalkCharacter à partir du nom et de l'avatar
-        TalkCharacter talkCharacter = TalkCharacter.nobody();
-        if (!characterName.isEmpty() && characters.containsKey(characterName)) {
-            Map<String, String> avatars = characters.get(characterName);
-            String avatarSpec = "";
-            
-            if (!avatarName.isEmpty() && avatars.containsKey(avatarName)) {
-                avatarSpec = avatars.get(avatarName); // Format: "Type:image_path.jpg"
-            }
-            
-            // Parser le spec d'avatar
-            Image image = Image.no();
-            if (!avatarSpec.isEmpty()) {
-                String[] parts = avatarSpec.split(":", 2);
-                if (parts.length == 2) {
-                    String typeStr = parts[0].toUpperCase();
-                    String imagePath = parts[1];
-                    
-                    Image.Type imageType = "WEB".equals(typeStr) ? Image.Type.WEB : Image.Type.ASSET;
-                    image = new Image(imageType, imagePath);
-                }
-            }
-            
-            talkCharacter = new TalkCharacter(characterName, image);
-        }
-        return talkCharacter;
-    }
-
-    private List<TalkItem> linkTalkItems(List<TalkItem> talkItems, List<String> talkSimpleReferences, ParsingContext context) {
-        // Convert Simple items to Continue when followed by another Simple with same character/avatar
-        List<TalkItem> linkedItems = new ArrayList<>();
-        
-        for (int i = 0; i < talkItems.size(); i++) {
-            TalkItem currentItem = talkItems.get(i);
-            
-            // Check if current is Simple and has a next item that's also a Simple with same character/avatar
-            if (currentItem instanceof TalkItem.Simple currentSimple && i < talkItems.size() - 1) {
-                TalkItem nextItem = talkItems.get(i + 1);
-                
-                if (nextItem instanceof TalkItem.Simple nextSimple && shouldLink(currentSimple, nextSimple)) {
-                    // Convert Simple to Continue with nextId pointing to next item
-                    TalkItem.Continue continueItem = new TalkItem.Continue(
-                        currentSimple.id(),
-                        currentSimple.value(),
-                        currentSimple.character(),
-                        nextSimple.id()
-                    );
-                    linkedItems.add(continueItem);
-                    
-                    // Re-register reference if needed
-                    String refName = talkSimpleReferences.get(i);
-                    if (refName != null) {
-                        context.registerReference(refName, continueItem);
-                    }
-                } else {
-                    // Keep as Simple
-                    linkedItems.add(currentItem);
-                }
-            } else {
-                // Keep as is (Simple, Continue, or MultipleOptions)
-                linkedItems.add(currentItem);
-            }
-        }
-        
-        return linkedItems;
-    }
-
-    private boolean shouldLink(TalkItem.Simple current, TalkItem.Simple next) {
-        // Link if same character (regardless of avatar)
-        TalkCharacter currentChar = current.character();
-        TalkCharacter nextChar = next.character();
-        
-        // Must have same character name
-        return currentChar.name().equals(nextChar.name());
+        return new ArrayList<>();
     }
 
     private MapItem parseMapItemFromTree(Tree mapTree) {
@@ -770,7 +310,7 @@ public class TemplateGeneratorUseCase {
     }
 
     private Rect parseRectFromTree(Tree tree) {
-        String header = tree.header().toUpperCase();
+        String header = tree.header();
         List<String> params = tree.params();
 
         // Format court: header numérique avec 4 params numériques [1, 2, 4, 3]
@@ -839,7 +379,7 @@ public class TemplateGeneratorUseCase {
     private List<ScenarioConfig.Step> parseSteps(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
         List<ScenarioConfig.Step> steps = new ArrayList<>();
         root.children().forEach(child -> {
-            if (child.header().toUpperCase().startsWith(STEP_KEY)) {
+            if (child.header().startsWith(STEP_KEY)) {
                 ScenarioConfig.Step step = parseStep(child, labelToSpaceIdMap, context);
                 steps.add(step);
             }
@@ -874,13 +414,13 @@ public class TemplateGeneratorUseCase {
 
     private ScenarioConfig.Step parseStep(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
         // Extraire la référence du header si elle existe : "Step(ref REF_STEP_A)"
-        String referenceName = extractReferenceFromHeader(root.header());
+        String referenceName = root.reference();
 
         // Format: "---" + " Step:FR:Chez Moi:EN:At Home" ou "---" + " Step"
         Optional<I18n> stepLabel = Optional.empty();
 
         if (!root.params().isEmpty()) {
-            String stepInfo = String.join(":", root.params());
+            String stepInfo = String.join(SEPARATOR, root.params());
             stepLabel = parseI18nFromLine(stepInfo);
         }
 
@@ -890,7 +430,7 @@ public class TemplateGeneratorUseCase {
         List<Tree> possibilityTrees = new ArrayList<>();
 
         root.children().forEach(child -> {
-            switch (child.header().toUpperCase()) {
+            switch (child.header()) {
                 case TARGET_KEY:
                     ScenarioConfig.Target target = parseTarget(child, context);
                     targets.add(target);
@@ -900,7 +440,7 @@ public class TemplateGeneratorUseCase {
                     break;
                 default:
                     // Vérifions si c'est un Target qui commence par TARGET mais avec du texte après
-                    if (child.header().toUpperCase().startsWith(TARGET_KEY)) {
+                    if (child.header().startsWith(TARGET_KEY)) {
                         ScenarioConfig.Target extendedTarget = parseTarget(child, context);
                         targets.add(extendedTarget);
                     }
@@ -949,19 +489,19 @@ public class TemplateGeneratorUseCase {
 
     private ScenarioConfig.Target parseTarget(Tree tree, ParsingContext context) {
         // Extraire la référence du header si elle existe : "Target (ref TARGET_ATTERRIR):FR:..."
-        String referenceName = extractReferenceFromHeader(tree.header());
+        String referenceName = tree.reference();
 
         // 1. Détecter si c'est optionnel
-        boolean optional = tree.header().toUpperCase().contains("(OPT)");
+        boolean optional = tree.originalHeader().toUpperCase().contains("(OPT)");
 
         // 2. Parser le value I18n depuis les paramètres OU depuis le header
         Optional<I18n> targetLabel = Optional.empty();
         if (!tree.params().isEmpty()) {
-            String paramsStr = String.join(":", tree.params());
+            String paramsStr = String.join(SEPARATOR, tree.params());
             targetLabel = parseI18nFromLine(paramsStr);
         } else {
             // Si pas de params, extraire le value du header (enlever "Target " du début)
-            String headerText = tree.header().toUpperCase();
+            String headerText = tree.header();
             if (headerText.toUpperCase().startsWith(TARGET_KEY + " ")) {
                 String labelText = headerText.substring((TARGET_KEY + " ").length()).trim();
                 // Enlever "(Opt)" si présent
@@ -982,7 +522,7 @@ public class TemplateGeneratorUseCase {
         }
 
         // 3. Parser la description depuis les children (lignes de description)
-        Optional<I18n> description = parseDescriptionFromChildren(tree.children());
+        Optional<I18n> description = i18nGenerator.apply(tree.children());
 
         ScenarioConfig.Target target = new ScenarioConfig.Target(
                 new ScenarioConfig.Target.Id(),
@@ -999,85 +539,7 @@ public class TemplateGeneratorUseCase {
         return target;
     }
 
-    private Optional<I18n> parseDescriptionFromChildren(List<Tree> children) {
-        List<String> frenchLines = new ArrayList<>();
-        List<String> englishLines = new ArrayList<>();
-        String currentLang = null;
 
-        for (Tree child : children) {
-            String originalHeader = child.header();
-            String headerUpper = originalHeader.toUpperCase();
-            List<String> params = child.params();
-
-            // TreeGenerator sépare différemment : header="FR", params=["Ceci est ma chambre."]
-            if (FR_KEY.equals(headerUpper) && !params.isEmpty()) {
-                currentLang = FR_KEY;
-                frenchLines.add(params.get(0));
-            } else if (EN_KEY.equals(headerUpper) && !params.isEmpty()) {
-                currentLang = EN_KEY;
-                englishLines.add(params.get(0));
-            } else if (currentLang != null && params.isEmpty()) {
-                // Ligne de continuation sans préfixe de langue (header contient le texte)
-                switch (currentLang) {
-                    case FR_KEY -> frenchLines.add(originalHeader);
-                    case EN_KEY -> englishLines.add(originalHeader);
-                }
-            }
-        }
-
-        if (!frenchLines.isEmpty() || !englishLines.isEmpty()) {
-            Map<Language, String> values = new HashMap<>();
-            if (!frenchLines.isEmpty()) {
-                values.put(Language.FR, String.join("\n", frenchLines) + "\n");
-            }
-            if (!englishLines.isEmpty()) {
-                values.put(Language.EN, String.join("\n", englishLines) + "\n");
-            }
-            return Optional.of(new I18n(values));
-        }
-
-        return Optional.empty();
-    }
-
-    private Optional<I18n> parseI18nFromChildrenWithoutNewline(List<Tree> children) {
-        List<String> frenchLines = new ArrayList<>();
-        List<String> englishLines = new ArrayList<>();
-        String currentLang = null;
-
-        for (Tree child : children) {
-            String originalHeader = child.header();
-            String headerUpper = originalHeader.toUpperCase();
-            List<String> params = child.params();
-
-            // TreeGenerator sépare différemment : header="FR", params=["Ceci est ma chambre."]
-            if (FR_KEY.equals(headerUpper) && !params.isEmpty()) {
-                currentLang = FR_KEY;
-                frenchLines.add(params.getFirst());
-            } else if (EN_KEY.equals(headerUpper) && !params.isEmpty()) {
-                currentLang = EN_KEY;
-                englishLines.add(params.getFirst());
-            } else if (currentLang != null && params.isEmpty()) {
-                // Ligne de continuation sans préfixe de langue (header contient le texte)
-                switch (currentLang) {
-                    case FR_KEY -> frenchLines.add(originalHeader);
-                    case EN_KEY -> englishLines.add(originalHeader);
-                }
-            }
-        }
-
-        if (!frenchLines.isEmpty() || !englishLines.isEmpty()) {
-            Map<Language, String> values = new HashMap<>();
-            if (!frenchLines.isEmpty()) {
-                values.put(Language.FR, String.join("\n", frenchLines)); // Pas de \n final
-            }
-            if (!englishLines.isEmpty()) {
-                values.put(Language.EN, String.join("\n", englishLines)); // Pas de \n final
-            }
-            return Optional.of(new I18n(values));
-        }
-
-        return Optional.empty();
-    }
 
 
     private Optional<I18n> parseI18nFromLine(String line) {
@@ -1129,7 +591,7 @@ public class TemplateGeneratorUseCase {
                     }
                     break;
                 default:
-                    throw new TemplateException("Invalid format: " + tree.header().toUpperCase() + ":" + String.join(":", tree.params()));
+                    throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
             }
         }
         AndOrOr conditionType = AndOrOr.valueOf(conditionTypeStr);
@@ -1142,7 +604,7 @@ public class TemplateGeneratorUseCase {
         // Parse en deux passes : d'abord les conséquences pour enregistrer les références, puis les triggers
         // Première passe : conséquences et conditions
         tree.children().forEach(child -> {
-            String actionStr = child.header().toUpperCase().trim();
+            String actionStr = child.header().trim();
             switch (actionStr) {
                 case POSSIBILITY_CONDITION_KEY:
                     conditions.add(parseCondition(child, labelToSpaceIdMap));
@@ -1157,20 +619,20 @@ public class TemplateGeneratorUseCase {
                     // Ignorer pour l'instant, sera traité dans la deuxième passe
                     break;
                 default:
-                    throw new TemplateException("Invalid format: " + child.header() + ":" + String.join(":", child.params()));
+                    throw new TemplateException("Invalid format: " + child.header() + SEPARATOR + String.join(SEPARATOR, child.params()));
             }
         });
 
         // Deuxième passe : triggers (après que les références des conséquences soient enregistrées)
         tree.children().forEach(child -> {
-            String actionStr = child.header().toUpperCase().trim();
+            String actionStr = child.header().trim();
             if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
                 trigger.set(parseTrigger(child, labelToSpaceIdMap, context));
             }
         });
 
         if (trigger.get() == null) {
-            throw new TemplateException("Invalid format: " + tree.header() + ":" + String.join(":", tree.params()));
+            throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
         }
 
         return new Possibility(recurrence.get(), trigger.get(), conditions, conditionType, consequences);
@@ -1270,7 +732,7 @@ public class TemplateGeneratorUseCase {
             }
         }
 
-        throw new TemplateException("Invalid condition format: " + String.join(":", tree.params()));
+        throw new TemplateException("Invalid condition format: " + String.join(SEPARATOR, tree.params()));
     }
 
     private PossibilityRecurrence parseRecurrence(Tree tree) {
@@ -1284,11 +746,11 @@ public class TemplateGeneratorUseCase {
                 int times = Integer.parseInt(tree.params().get(1));
                 return new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(), times);
             } catch (NumberFormatException e) {
-                throw new TemplateException("Invalid recurrence format: " + String.join(":", tree.params()));
+                throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
             }
         }
 
-        throw new TemplateException("Invalid recurrence format: " + String.join(":", tree.params()));
+        throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
     }
 
     private Consequence parseConsequence(Tree tree, ParsingContext context) {
@@ -1302,7 +764,7 @@ public class TemplateGeneratorUseCase {
         switch (type) {
             case "alert" -> {
                 // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
-                Optional<I18n> messageOpt = parseI18nFromChildrenWithoutNewline(tree.children());
+                Optional<I18n> messageOpt = i18nGenerator.apply(tree.children());
                 I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
                 return new Consequence.DisplayMessage(new Consequence.Id(), message);
             }
@@ -1538,14 +1000,11 @@ public class TemplateGeneratorUseCase {
         return null;
     }
 
-
-
     private ScenarioGoal.State parseState(String state) {
         return switch (state.toLowerCase()) {
-            case "success" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS;
-            case "failure" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE;
-            case "active" -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE;
-            default -> fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE;
+            case "success" -> ScenarioGoal.State.SUCCESS;
+            case "failure" -> ScenarioGoal.State.FAILURE;
+            default -> ScenarioGoal.State.ACTIVE;
         };
     }
 
@@ -1574,7 +1033,7 @@ public class TemplateGeneratorUseCase {
             case "MEDIUM" -> BoardSpace.Priority.MEDIUM;
             case "LOW" -> BoardSpace.Priority.LOW;
             case "LOWEST" -> BoardSpace.Priority.LOWEST;
-            default -> BoardSpace.Priority.LOW;
+            default -> BoardSpace.Priority.MEDIUM;
         };
     }
 
@@ -1601,7 +1060,7 @@ public class TemplateGeneratorUseCase {
 
     private Rect parseRect(String rectLine) {
         String rectInfo = rectLine.substring(SPACE_2.length() + 1);
-        String[] segments = rectInfo.split(":");
+        String[] segments = rectInfo.split(SEPARATOR);
 
         // Format court: "1:2:4:3" ou "89.745:5.5684:0.8547:8.147"
         if (segments.length == 4 && isAllNumeric(segments)) {
@@ -1792,13 +1251,8 @@ public class TemplateGeneratorUseCase {
             String reference = tree.params().get(1); // "OPTIONS_ABCD"
             return parseTalkOptionsWithReference(reference, context);
         }
-        
-        // Cas 2: TalkOptions sans référence - options définies directement dans l'arbre
-        if (tree.children().isEmpty()) {
-            throw new TemplateException("TalkOptions consequence without reference must have option children");
-        }
-        
-        return parseTalkOptionsFromTree(tree, context);
+
+        throw new TemplateException("TalkOptions consequence without reference");
     }
     
     private Consequence parseTalkOptionsWithReference(String reference, ParsingContext context) {
@@ -1823,15 +1277,7 @@ public class TemplateGeneratorUseCase {
         return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
     }
     
-    private Consequence parseTalkOptionsFromTree(Tree tree, ParsingContext context) {
-        // Parser les options directement depuis l'arbre de la conséquence
-        TalkItem.Options multipleOptions = parseMultipleOptionsFromTree(tree, new HashMap<>(), context);
-        
-        // Enregistrer l'objet MultipleOptions pour qu'il soit pris en compte même sans (ref ...)
-        context.registerReference(multipleOptions.id().value(), multipleOptions);
-        
-        return new Consequence.DisplayTalk(new Consequence.Id(), multipleOptions.id());
-    }
+
 
     private Consequence parseTalkConsequence(Tree tree, ParsingContext context) {
         // Format: "Consequence:Talk:TALK000"
@@ -1884,33 +1330,7 @@ public class TemplateGeneratorUseCase {
         }
     }
 
-    /**
-     * Extrait une référence du header au format "(ref REFERENCE_NAME)" ou "(REF REFERENCE_NAME)".
-     * Exemple: "Step(ref REF_STEP_A)" -> "REF_STEP_A"
-     * Exemple: "Option (REF CHOIX_A)" -> "CHOIX_A"
-     */
-    private String extractReferenceFromHeader(String header) {
-        if (header == null) {
-            return null;
-        }
 
-        // Chercher le pattern "(ref XXXX)" ou "(REF XXXX)"
-        int refStart = header.indexOf("(ref ");
-        if (refStart == -1) {
-            refStart = header.indexOf("(REF ");
-            if (refStart == -1) {
-                return null;
-            }
-        }
-
-        int refNameStart = refStart + 5; // longueur de "(ref " ou "(REF "
-        int refEnd = header.indexOf(")", refNameStart);
-        if (refEnd == -1) {
-            return null;
-        }
-
-        return header.substring(refNameStart, refEnd).trim();
-    }
     
     /**
      * Trouve le TalkItem qui contient une option donnée.
@@ -1961,7 +1381,7 @@ public class TemplateGeneratorUseCase {
 
     ///Refacto
 
-    private static final String PARAM_KEY_TALK_OPTION = "option";
+
 
 
     private PossibilityTrigger createTalkOptionSelect(Tree tree, ParsingContext context) {

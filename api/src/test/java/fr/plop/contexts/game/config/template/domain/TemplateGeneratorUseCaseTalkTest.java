@@ -4,7 +4,7 @@ import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.template.domain.usecase.TemplateGeneratorUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.Image;
@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
+
+import java.util.List;
 
 public class TemplateGeneratorUseCaseTalkTest {
 
@@ -194,6 +196,10 @@ TEST_DISCUSSION3
 ------------ value
 --------------- FR:Non
 --------------- EN:No
+--------- Option (ref WAHUP_MAYBE)
+------------ value
+--------------- FR:peut être
+--------------- EN:may be
 ------ Simple(ref TALK002)
 --------- Character:Alice:alice-happy
 --------- FR:Content de le savoir
@@ -220,10 +226,12 @@ TEST_DISCUSSION3
         assertThat(firstTalkItem.character().image().type()).isEqualTo(Image.Type.WEB);
         TalkItem.Options optionsItem = (TalkItem.Options) firstTalkItem;
 
-        assertThat(optionsItem.options()).hasSize(2);
+        List<TalkItem.Options.Option> options = optionsItem.options().toList();
+        assertThat(options).hasSize(3);
 
-        TalkItem.Options.Option optionYes = optionsItem.options().getFirst();
-        TalkItem.Options.Option optionNo = optionsItem.options().getLast();
+        TalkItem.Options.Option optionYes = options.getFirst();
+        TalkItem.Options.Option optionNo = options.get(1);
+        TalkItem.Options.Option optionMayBe = options.get(2);
 
         assertThat(optionYes.id()).isNotNull();
         assertThat(optionYes.value().value(Language.FR)).isEqualTo("Oui");
@@ -235,6 +243,11 @@ TEST_DISCUSSION3
         assertThat(optionNo.value().value(Language.FR)).isEqualTo("Non");
         assertThat(optionNo.value().value(Language.EN)).isEqualTo("No");
         assertThat(optionNo.hasNext()).isFalse();
+
+        assertThat(optionMayBe.id()).isNotNull();
+        assertThat(optionMayBe.value().value(Language.FR)).isEqualTo("peut être");
+        assertThat(optionMayBe.value().value(Language.EN)).isEqualTo("may be");
+        assertThat(optionMayBe.hasNext()).isFalse();
 
         // Last item: Simple
         assertThat(lastTalkItem.id()).isNotNull();
@@ -280,7 +293,6 @@ TEST_DISCUSSION3
     }
 
 
-
     @Test
     public void fullTemplate() {
         String scriptContent = """
@@ -312,9 +324,13 @@ TEST_DISCUSSION3
             ------------ EN:Yes
             ------------ next:TALK002
             --------- Option (ref TALK_LETS_GO_CHOIX_NON)
+            ------------ next:TALK003
             ------------ FR:Non
             ------------ EN:No
-            ------------ next:TALK003
+            --------- Option (ref TALK_LETS_GO_CHOIX_MAYBE):TALK004
+            ------------ FR:Peut être
+            ------------ EN:May be
+            ------------ next:TALK004
             ------ Simple(ref TALK002)
             --------- Character:Bob:default
             --------- FR:Excellent, continuons !
@@ -323,7 +339,14 @@ TEST_DISCUSSION3
             --------- Character:Bob:default
             --------- FR:Dommage, fin de test.
             --------- EN:Too bad, end of test.
-
+            ------ Continue (ref TALK004):TALK005
+            --------- Character:Bob:default
+            --------- FR:Alors, on hésite ?
+            --------- EN:Alors, on hésite ? EN
+            ------ Simple(ref TALK005)
+            --------- Character:Bob:default
+            --------- FR:fin de la discution.
+            --------- EN:fin de la discution. EN
             """;
 
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
@@ -332,10 +355,12 @@ TEST_DISCUSSION3
         assertThat(template).isNotNull();
         assertThat(template.code().value()).isEqualTo("TEST_DISCUSSION4");
 
-        assertThat(template.talk().items()).hasSize(3);
+        assertThat(template.talk().items()).hasSize(5);
         TalkItem talkItem0 = template.talk().items().getFirst();
         TalkItem talkItem1 = template.talk().items().get(1);
-        TalkItem talkItem2 = template.talk().items().getLast();
+        TalkItem talkItem2 = template.talk().items().get(2);
+        TalkItem talkItem3 = template.talk().items().get(3);
+        TalkItem talkItem4 = template.talk().items().get(4);
 
         // First item: Options
         assertThat(talkItem0.id()).isNotNull();
@@ -347,10 +372,12 @@ TEST_DISCUSSION3
         assertThat(talkItem0.character().image().type()).isEqualTo(Image.Type.ASSET);
         TalkItem.Options optionsItem = (TalkItem.Options) talkItem0;
 
-        assertThat(optionsItem.options()).hasSize(2);
+        List<TalkItem.Options.Option> options = optionsItem.options().toList();
+        assertThat(options).hasSize(3);
 
-        TalkItem.Options.Option optionYes = optionsItem.options().getFirst();
-        TalkItem.Options.Option optionNo = optionsItem.options().getLast();
+        TalkItem.Options.Option optionYes = options.getFirst();
+        TalkItem.Options.Option optionNo = options.get(1);
+        TalkItem.Options.Option optionMayBe = options.get(2);
 
         assertThat(optionYes.id()).isNotNull();
         assertThat(optionYes.value().value(Language.FR)).isEqualTo("Oui");
@@ -363,6 +390,12 @@ TEST_DISCUSSION3
         assertThat(optionNo.value().value(Language.EN)).isEqualTo("No");
         assertThat(optionNo.hasNext()).isTrue();
         assertThat(optionNo.nextId()).isEqualTo(talkItem2.id());
+
+        assertThat(optionMayBe.id()).isNotNull();
+        assertThat(optionMayBe.value().value(Language.FR)).isEqualTo("Peut être");
+        assertThat(optionMayBe.value().value(Language.EN)).isEqualTo("May be");
+        assertThat(optionMayBe.hasNext()).isTrue();
+        assertThat(optionMayBe.nextId()).isEqualTo(talkItem3.id());
 
         assertThat(talkItem1.id()).isNotNull();
         assertThat(talkItem1).isInstanceOf(TalkItem.Simple.class);
@@ -379,6 +412,24 @@ TEST_DISCUSSION3
         assertThat(talkItem2.character().name()).isEqualTo("Bob");
         assertThat(talkItem2.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
         assertThat(talkItem2.character().image().type()).isEqualTo(Image.Type.ASSET);
+
+        assertThat(talkItem3.id()).isNotNull();
+        assertThat(talkItem3).isInstanceOf(TalkItem.Continue.class);
+        assertThat(talkItem3.value().value(Language.FR)).isEqualTo("Alors, on hésite ?");
+        assertThat(talkItem3.value().value(Language.EN)).isEqualTo("Alors, on hésite ? EN");
+        assertThat(talkItem3.character().name()).isEqualTo("Bob");
+        assertThat(talkItem3.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem3.character().image().type()).isEqualTo(Image.Type.ASSET);
+        TalkItem.Continue continueItem = (TalkItem.Continue) talkItem3;
+        assertThat(continueItem.nextId()).isEqualTo(talkItem4.id());
+
+        assertThat(talkItem4.id()).isNotNull();
+        assertThat(talkItem4).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem4.value().value(Language.FR)).isEqualTo("fin de la discution.");
+        assertThat(talkItem4.value().value(Language.EN)).isEqualTo("fin de la discution. EN");
+        assertThat(talkItem4.character().name()).isEqualTo("Bob");
+        assertThat(talkItem4.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem4.character().image().type()).isEqualTo(Image.Type.ASSET);
 
         // Scenario assertions
         assertThat(template.scenario().steps()).hasSize(1)
@@ -425,9 +476,5 @@ TEST_DISCUSSION3
                                     });
                         }));
     }
-
-    /*
-
-     */
 
 }

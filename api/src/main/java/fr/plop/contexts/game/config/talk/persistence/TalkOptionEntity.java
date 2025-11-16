@@ -4,12 +4,11 @@ package fr.plop.contexts.game.config.talk.persistence;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
+import java.util.Optional;
 
 @Entity
 @Table(name = "TEST2_TALK_OPTION_ITEM")
@@ -20,10 +19,14 @@ public class TalkOptionEntity {
 
     @ManyToOne
     @JoinColumn(name = "value_i18n_id")
+    @Fetch(FetchMode.JOIN) //TODO GOOD idea ?
     private I18nEntity value;
 
     @Column(name = "next_id")
     private String nullableNextId;
+
+    @Column(name = "_order")
+    private int order;
 
     public String getId() {
         return id;
@@ -41,13 +44,28 @@ public class TalkOptionEntity {
         this.value = label;
     }
 
+    public String getNullableNextId() {
+        return nullableNextId;
+    }
+
+    public void setNullableNextId(String nullableNextId) {
+        this.nullableNextId = nullableNextId;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
     public TalkItem.Options.Option toModel() {
         TalkItem.Options.Option.Id optionalId = new TalkItem.Options.Option.Id(id);
         I18n i18n = value.toModel();
         if(nullableNextId != null) {
-            return new TalkItem.Options.Option(optionalId, i18n, new TalkItem.Id(nullableNextId));
+            return new TalkItem.Options.Option(optionalId, order, i18n, Optional.of(new TalkItem.Id(nullableNextId)));
         }
-        return new TalkItem.Options.Option(optionalId, i18n);
-
+        return new TalkItem.Options.Option(optionalId, order, i18n, Optional.empty());
     }
 }

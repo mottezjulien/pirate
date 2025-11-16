@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
+import fr.plop.contexts.game.config.template.domain.model.Tree;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

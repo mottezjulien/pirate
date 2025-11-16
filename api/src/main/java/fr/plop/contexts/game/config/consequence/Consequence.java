@@ -4,8 +4,8 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
+import fr.plop.subs.i18n.domain.I18n;
 
 public sealed interface Consequence permits
         Consequence.ScenarioStep,

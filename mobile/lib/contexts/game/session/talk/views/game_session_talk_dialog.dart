@@ -1,6 +1,7 @@
 
 import 'package:easy_localization/easy_localization.dart';
 
+import '../../../../../generic/config/router.dart';
 import '../../../../../generic/dialog.dart';
 import '../../../game_current.dart';
 import '../data/game_session_talk_repository.dart';
@@ -11,93 +12,89 @@ class GameSessionTalkDialog {
 
   final GameSessionTalkRepository repository = GameSessionTalkRepository();
   final Dialog dialog = Dialog();
+  final ValueNotifier<GameTalk?> notifier = ValueNotifier(null);
 
   void start({required String talkId}) {
-    final ValueNotifier<GameTalk?> notifier = ValueNotifier(null);
-    
-    final widgetBuilder = ValueListenableBuilder<GameTalk?>(
-      valueListenable: notifier,
-      builder: (BuildContext context, GameTalk? talk, Widget? _) {
-        if (talk == null) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        List<Widget> buttonChildren = [];
-        
-        // Ajouter les options en fonction du type de résultat
-        switch(talk.result) {
-          case GameTalkResultSimple():
-            // Cas simple - pas d'options à afficher
-            break;
-          case GameTalkResultContinue():
-            // Cas continuation - pas d'options à afficher
-            break;
-          case GameTalkResultMultiple(:final options):
-            // Cas multiple - afficher les options
-            for (var option in options) {
-              buttonChildren.add(
-                TextButton(style: TextButton.styleFrom(
-                    foregroundColor: GameCurrent.style.color.primary,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text(
-                    option.value,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  onPressed: () {
-                    print(option.id);
-                    notifier.value = null;
-                    repository.selectOption(talkId: talkId, optionId: option.id)
-                        .then((nextTalk) {
-                      if(nextTalk != null) {
-                        notifier.value = nextTalk;
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    });
-                  },
-                ),
-              );
-              buttonChildren.add(SizedBox(height: 8));
+    final BuildContext? context = AppRouter.navigatorKey.currentContext;
+    if (context != null) {
+      notifier.value = null;
+      final AlertDialog alertDialog = AlertDialog(
+        content: ValueListenableBuilder<GameTalk?>(
+            valueListenable: notifier,
+            builder: (BuildContext context, GameTalk? talk, Widget? child) {
+              return build(context, talk);
             }
-            break;
-        }
+        ),
+      );
 
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                talk.value,
+      dialog.showWidget(dialog: alertDialog, paramContext: context);
+      repository.findById(talkId).then((talk) => notifier.value = talk);
+    }
+
+
+  }
+
+  Widget build(BuildContext context, GameTalk? talk) {
+    if (talk == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    List<Widget> buttonChildren = [];
+    switch(talk.result) {
+      case GameTalkResultSimple():
+        buttonChildren.add(TextButton(child: Text('default.close'.tr()),
+          onPressed: () => Navigator.of(context).pop()));
+        break;
+      case GameTalkResultContinue(:final nextId):
+        buttonChildren.add(TextButton(child: Text('continue pouet'.tr()),
+            onPressed: () {
+              notifier.value = null;
+              repository.findById(nextId).then((talk) => notifier.value = talk);
+            })
+        );
+        break;
+      case GameTalkResultMultiple(:final options):
+        for (var option in options) {
+          buttonChildren.add(
+            TextButton(style: TextButton.styleFrom(
+              foregroundColor: GameCurrent.style.color.primary,
+              padding: EdgeInsets.symmetric(vertical: 12),
+            ),
+              child: Text(
+                option.value,
                 style: TextStyle(fontSize: 16),
               ),
-              if (talk.result is GameTalkResultMultiple) ...[
-                SizedBox(height: 24),
-                ...buttonChildren,
-              ],
-            ],
-          ),
-        );
-      },
-    );
+              onPressed: () {
+                notifier.value = null;
+                repository.selectOption(talkId: talk.id, optionId: option.id)
+                    .then((nextTalk) {
+                  if(nextTalk != null) {
+                    notifier.value = nextTalk;
+                  } else {
+                    Navigator.of(context).pop();
+                  }
+                });
+              }
+            )
+          );
+          buttonChildren.add(SizedBox(height: 8));
+        }
+        break;
+    }
 
-    final AlertDialog alertDialog = AlertDialog(
-      content: widgetBuilder,
-      actions: [
-        TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: GameCurrent.style.color.primary,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            talk.value,
+            style: TextStyle(fontSize: 16),
           ),
-          child: Text('default.close'.tr()),
-          onPressed: () {
-            // Navigator.of(context).pop();
-          },
-        )
-      ],
+          SizedBox(height: 24),
+          ...buttonChildren,
+        ],
+      ),
     );
-
-    dialog.showWidget(dialog: alertDialog);
-    repository.findById(talkId).then((talk) => notifier.value = talk);
   }
 
 }

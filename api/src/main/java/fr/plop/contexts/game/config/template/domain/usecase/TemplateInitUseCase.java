@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 
 import java.io.IOException;
 import java.io.InputStream;

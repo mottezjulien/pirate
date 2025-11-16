@@ -4,11 +4,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.consequenc
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.*;
 
 @Entity
 @DiscriminatorValue("GOAL_TARGET")

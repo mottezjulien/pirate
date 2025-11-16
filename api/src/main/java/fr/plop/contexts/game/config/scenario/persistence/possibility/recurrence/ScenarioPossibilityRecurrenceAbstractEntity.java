@@ -1,12 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence;
 
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_POSSIBILITY_RECURRENCE")
@@ -28,7 +23,7 @@ public abstract class ScenarioPossibilityRecurrenceAbstractEntity {
 
     public PossibilityRecurrence toModel() {
         return switch (this) {
-            case ScenarioPossibilityRecurrenceAlwaysEntity always ->
+            case ScenarioPossibilityRecurrenceAlwaysEntity ignored ->
                     new PossibilityRecurrence.Always(new PossibilityRecurrence.Id(id));
             case ScenarioPossibilityRecurrenceTimesEntity times ->
                     new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(id), times.getValue());

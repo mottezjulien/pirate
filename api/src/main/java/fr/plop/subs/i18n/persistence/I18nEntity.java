@@ -1,9 +1,9 @@
 package fr.plop.subs.i18n.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
-import fr.plop.generic.tools.StringTools;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

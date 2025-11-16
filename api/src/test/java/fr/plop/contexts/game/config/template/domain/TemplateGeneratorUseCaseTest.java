@@ -10,7 +10,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.template.domain.usecase.TemplateGeneratorUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.I18n;
@@ -148,11 +148,9 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Chambre", "Room")));
                                 assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est ma chambre.
-                                        C'est une belle chambre.
-                                        """, """
+                                        C'est une belle chambre.""", """
                                         This is my room.
-                                        It's a beautiful room.
-                                        """)));
+                                        It's a beautiful room.""")));
                                 assertThat(target.optional()).isTrue(); // Corrigé: (Opt) dans le script
                             })
                             .anySatisfy(target -> {
@@ -161,12 +159,10 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est mon bureau.
                                         Ceci est ma chambre.
-                                        Ceci est mon bureau.
-                                        """, """
+                                        Ceci est mon bureau.""", """
                                         This is another space.
                                         It's an other space.
-                                        It's an other space.
-                                        """)));
+                                        It's an other space.""")));
                                 assertThat(target.optional()).isFalse();
                             });
                 });
@@ -621,97 +617,6 @@ public class TemplateGeneratorUseCaseTest {
                             });
                 });
     }
-
-
-    /*
-    @Test
-    public void prepareFirstMap_add_refs() {
-
-        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
-                addRef:0.0.0:Ajout de la notion de Reférénce
-                --- Step(ref STEP_A)
-                ------ Target (ref TARGET_ATTERRIR):FR:Atterrir sur la lune:EN:Atterrir sur la lune en anglais
-                ------ Possibility
-                --------- Trigger:GoInSpace:SpaceId:abcd
-                --------- consequence:TalkOptions:OPTIONS_ABCD
-                ------ Possibility
-                --------- Trigger:SelectTalkOption:CHOIX_A
-                --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
-                --------- Consequence:GoalTarget:stepId:STEP_A:targetId:TARGET_ATTERRIR:state:active
-                --- Step(ref REF_STEP_B)
-                ------ Target:FR:Réparer la station:EN:Réparer la station en anglais
-                --- Talk
-                ------ Options(ref OPTIONS_ABCD)
-                --------- Option (REF CHOIX_A)
-                ------------ FR: Le choix A
-                ------------ EN: Le choix A en anglais ?
-                --------- Label
-                ------------ FR: C'est quoi ton choix ?
-                ------------ EN: C'est quoi ton choix en anglais ?
-                --------- Option
-                ------------ EN: Le choix B en anglais
-                ------------ FR: Le choix B
-                
-                """);
-        Template template = generator.apply(script);
-
-
-        assertThat(template.talk().items())
-                .hasSize(1)
-                .anySatisfy(talk -> {
-                    assertThat(talk).isInstanceOf(TalkItem.MultipleOptions.class);
-                    TalkItem.MultipleOptions talkOptions = (TalkItem.MultipleOptions) talk;
-                    assertThat(talkOptions.id()).isNotNull();
-                    assertThat(talkOptions.value().value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
-                    assertThat(talkOptions.value().value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
-                    assertThat(talkOptions.options()).hasSize(2);
-                    assertThat(talkOptions.options().getFirst().id()).isNotNull();
-                    assertThat(talkOptions.options().getFirst().value().value(Language.FR)).isEqualTo("Le choix A");
-                    assertThat(talkOptions.options().getFirst().value().value(Language.EN)).isEqualTo("Le choix A en anglais ?");
-                    assertThat(talkOptions.options().get(1).id()).isNotNull();
-                    assertThat(talkOptions.options().get(1).value().value(Language.FR)).isEqualTo("Le choix B");
-                    assertThat(talkOptions.options().get(1).value().value(Language.EN)).isEqualTo("Le choix B en anglais");
-                });
-        TalkItem.MultipleOptions.Option.Id optionIdChoixA = ((TalkItem.MultipleOptions) template.talk().items().getFirst()).options().getFirst().id();
-
-        List<ScenarioConfig.Step> steps = template.scenario().steps();
-        assertThat(steps.size()).isEqualTo(2);
-
-        ScenarioConfig.Step step = steps.getFirst();
-
-        assertThat(step.targets().getFirst().id()).isNotNull();
-        assertThat(step.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Atterrir sur la lune");
-        assertThat(step.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Atterrir sur la lune en anglais");
-
-        Possibility possibilityFirst = step.possibilities().getFirst();
-
-        assertThat(possibilityFirst.trigger())
-                .isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
-        PossibilityTrigger.SpaceGoIn goInSpace = (PossibilityTrigger.SpaceGoIn) possibilityFirst.trigger();
-        assertThat(goInSpace.id()).isNotNull();
-        assertThat(goInSpace.spaceId()).isEqualTo(new BoardSpace.Id("abcd"));
-
-        assertThat(possibilityFirst.consequences().getFirst()).isInstanceOf(Consequence.DisplayTalk.class);
-        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) possibilityFirst.consequences().getFirst();
-
-
-        Possibility possibilitySecond = step.possibilities().get(1);
-
-        assertThat(possibilitySecond.trigger()).isInstanceOf(PossibilityTrigger.TalkNext.class);
-        PossibilityTrigger.TalkNext talkNext = (PossibilityTrigger.TalkNext) possibilitySecond.trigger();
-        assertThat(talkNext.id()).isNotNull();
-        assertThat(talkNext.talkItemId()).isEqualTo(displayTalk.talkId());
-        assertThat(talkNext.optionId()).contains(optionIdChoixA);
-
-
-        assertThat(possibilitySecond.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
-        Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibilitySecond.consequences().getFirst();
-        assertThat(scenarioTarget.id()).isNotNull();
-        assertThat(scenarioTarget.stepId()).isEqualTo(step.id());
-        assertThat(scenarioTarget.targetId()).isEqualTo(step.targets().getFirst().id());
-        assertThat(scenarioTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
-
-    }*/
 
     @Test
     public void prepareFirstMap_add_refs_withoutStepId() {

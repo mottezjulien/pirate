@@ -7,14 +7,7 @@ import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.List;

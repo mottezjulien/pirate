@@ -2,12 +2,7 @@ package fr.plop.contexts.game.config.board.persistence.entity;
 
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "TEST2_BOARD_RECT")

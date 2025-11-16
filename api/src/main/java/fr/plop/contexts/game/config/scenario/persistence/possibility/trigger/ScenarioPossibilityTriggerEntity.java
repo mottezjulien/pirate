@@ -6,20 +6,10 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.MapKeyColumn;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_POSSIBILITY_TRIGGER")

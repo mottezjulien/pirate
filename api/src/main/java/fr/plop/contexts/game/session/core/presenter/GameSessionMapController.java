@@ -8,31 +8,16 @@ import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
-import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
-import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
-import fr.plop.contexts.game.session.push.PushEvent;
-import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @RestController

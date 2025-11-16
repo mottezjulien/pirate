@@ -1,7 +1,6 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;

@@ -1,11 +1,9 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +16,7 @@ public class TalkItemMultipleOptionsEntity extends TalkItemEntity {
     @JoinTable(name = "TEST2_TALK_MULTIPLE_OPTIONS_JOIN",
             joinColumns = @JoinColumn(name = "multiple_options_id"),
             inverseJoinColumns = @JoinColumn(name = "option_id"))
+    @Fetch(FetchMode.JOIN) //TODO GOOD idea ?
     private Set<TalkOptionEntity> options = new HashSet<>();
 
     public Set<TalkOptionEntity> getOptions() {
@@ -30,8 +29,7 @@ public class TalkItemMultipleOptionsEntity extends TalkItemEntity {
 
     @Override
     public TalkItem toModel() {
-        return new TalkItem.Options(
-                new TalkItem.Id(id), value.toModel(), characterModel(),
+        return new TalkItem.Options(new TalkItem.Id(id), value.toModel(), characterModel(),
                 options.stream().map(TalkOptionEntity::toModel).toList());
     }
 }

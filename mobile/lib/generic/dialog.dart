@@ -23,8 +23,8 @@ class Dialog {
     ));
   }
 
-  Future<void> showWidget({required AlertDialog dialog }) {
-    final BuildContext? context = AppRouter.navigatorKey.currentContext;
+  Future<void> showWidget({required AlertDialog dialog, BuildContext? paramContext }) {
+    final BuildContext? context = paramContext ?? AppRouter.navigatorKey.currentContext;
     if (context != null) {
       return showDialog<void>(
         context: context,
@@ -37,12 +37,4 @@ class Dialog {
     return Future.value();
   }
 
-  /*Widget buildTitle(String title) {
-    return Row(
-      children: [
-        Icon(Icons.message, color: GameCurrent.style.color.primary),
-        SizedBox(width: GameCurrent.style.dimension.medium), Text(title)
-      ],
-    );
-  }*/
 }

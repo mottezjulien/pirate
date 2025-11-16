@@ -1,5 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
+import fr.plop.contexts.game.config.template.domain.model.Tree;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

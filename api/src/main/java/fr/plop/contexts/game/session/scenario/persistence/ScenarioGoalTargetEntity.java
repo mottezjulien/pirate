@@ -2,13 +2,7 @@ package fr.plop.contexts.game.session.scenario.persistence;
 
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_GOAL_TARGET")

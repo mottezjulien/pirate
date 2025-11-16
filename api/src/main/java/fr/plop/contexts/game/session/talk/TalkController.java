@@ -11,19 +11,14 @@ import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
+import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.event.domain.GameEventContext;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import fr.plop.contexts.game.session.event.domain.GameEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -128,6 +123,10 @@ public class TalkController {
         public record Result(String type, List<Option> options, String nextId) {
             public record Option(String id, String value) {
 
+                public static Result.Option fromModel(TalkItem.Options.Option model, Language language) {
+                    return new Result.Option(model.id().value(), model.value().value(language));
+                }
+
             }
         }
         public static ResponseDTO fromModel(TalkItem item, Language language) {
@@ -137,8 +136,8 @@ public class TalkController {
             String nextId = null;
             String resultType = switch (item) {
                 case TalkItem.Options multipleOptions -> {
-                    options = multipleOptions.options().stream()
-                            .map(option -> new Result.Option(option.id().value(), option.value().value(language)))
+                    options = multipleOptions.options()
+                            .map(option -> Result.Option.fromModel(option, language))
                             .toList();
                     yield "MULTIPLE";
                 }

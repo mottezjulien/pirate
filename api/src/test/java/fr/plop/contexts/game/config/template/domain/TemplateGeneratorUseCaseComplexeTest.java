@@ -5,7 +5,7 @@ import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.template.domain.usecase.TemplateGeneratorUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.Language;
 import org.assertj.core.data.Offset;
@@ -99,35 +99,33 @@ class TemplateGeneratorUseCaseComplexeTest {
         assertThat(template.version()).isEqualTo("1.0");
         assertThat(template.maxDuration().toMinutes()).isEqualTo(15);
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-            assertThat(scenario.steps()).hasSize(1)
-                    .anySatisfy(step -> {
-                        assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
-                        assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
-                        assertThat(step.targets()).hasSize(1)
-                                .anySatisfy(target -> {
-                                    assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
-                                    assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
-                                });
-                        assertThat(step.possibilities())
-                                .hasSize(1)
-                                .anySatisfy(possibility -> {
-                                    assertThat(possibility.trigger())
-                                            .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
-                                    PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                    assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
-                                    assertThat(possibility.consequences())
-                                            .hasSize(1)
-                                            .anySatisfy(consequence -> {
-                                                assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                                Consequence.DisplayMessage alert = (Consequence.DisplayMessage) consequence;
-                                                assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
-                                                assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
-                                            });
-                                });
+        assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
+                .anySatisfy(step -> {
+                    assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
+                    assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
+                    assertThat(step.targets()).hasSize(1)
+                            .anySatisfy(target -> {
+                                assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
+                                assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
+                            });
+                    assertThat(step.possibilities())
+                            .hasSize(1)
+                            .anySatisfy(possibility -> {
+                                assertThat(possibility.trigger())
+                                        .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                                PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                                assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
+                                assertThat(possibility.consequences())
+                                        .hasSize(1)
+                                        .anySatisfy(consequence -> {
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
+                                            Consequence.DisplayMessage alert = (Consequence.DisplayMessage) consequence;
+                                            assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                                            assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                                        });
+                            });
 
-                    });
-        });
+                }));
 
 
     }

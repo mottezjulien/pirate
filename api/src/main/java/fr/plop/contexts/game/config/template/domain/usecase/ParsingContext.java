@@ -1,12 +1,8 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
+
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -19,7 +15,7 @@ public class ParsingContext {
     private final Map<String, List<Consumer<Object>>> pendingResolvers = new HashMap<>();
     private final Set<String> unresolvedReferences = new HashSet<>();
     // Relation option ID → TalkItem ID
-    private final Map<Object, Object> optionToTalkItemMapping = new HashMap<>();
+    private final Map<TalkItem.Options.Option.Id, TalkItem.Id> optionToTalkItemMapping = new HashMap<>();
 
     /**
      * Enregistre une référence avec son objet associé.
@@ -124,17 +120,14 @@ public class ParsingContext {
     /**
      * Enregistre la relation entre une option et son TalkItem parent.
      */
-    public void registerOptionToTalkItemMapping(Object optionId, Object talkItemId) {
-        if (optionId != null && talkItemId != null) {
-            optionToTalkItemMapping.put(optionId, talkItemId);
-        }
+    public void registerOptionToTalkItemMapping(TalkItem.Options.Option.Id optionId, TalkItem.Id talkItemId) {
+        optionToTalkItemMapping.put(optionId, talkItemId);
     }
 
     /**
      * Obtient l'ID du TalkItem qui contient une option donnée.
      */
-    @SuppressWarnings("unchecked")
-    public <T> T getOptionToTalkItemMapping(Object optionId) {
-        return (T) optionToTalkItemMapping.get(optionId);
+    public TalkItem.Id getOptionToTalkItemMapping(TalkItem.Options.Option.Id optionId) {
+        return optionToTalkItemMapping.get(optionId);
     }
 }

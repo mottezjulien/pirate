@@ -1,12 +1,7 @@
 package fr.plop.contexts.game.config.board.persistence.entity;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.Set;

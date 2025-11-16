@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
-import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
+import fr.plop.subs.i18n.domain.I18n;
 
 import java.util.List;
 import java.util.Optional;

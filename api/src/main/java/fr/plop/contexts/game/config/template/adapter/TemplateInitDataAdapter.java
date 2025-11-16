@@ -10,20 +10,10 @@ import fr.plop.contexts.game.config.board.persistence.repository.BoardSpaceRepos
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
-import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
-import fr.plop.contexts.game.config.map.persistence.MapItemEntity;
-import fr.plop.contexts.game.config.map.persistence.MapItemRepository;
-import fr.plop.contexts.game.config.map.persistence.MapPositionEntity;
-import fr.plop.contexts.game.config.map.persistence.MapPositionRepository;
+import fr.plop.contexts.game.config.map.persistence.*;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigRepository;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepRepository;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioTargetRepository;
+import fr.plop.contexts.game.config.scenario.persistence.core.*;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionEntity;
@@ -34,25 +24,20 @@ import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerRepository;
-import fr.plop.contexts.game.config.talk.persistence.TalkOptionEntity;
-import fr.plop.contexts.game.config.talk.persistence.TalkOptionRepository;
-import fr.plop.contexts.game.config.talk.persistence.TalkItemMultipleOptionsEntity;
-import fr.plop.contexts.game.config.talk.persistence.TalkItemMultipleOptionsRepository;
-import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
+import fr.plop.contexts.game.config.talk.domain.TalkConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.persistence.*;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
+import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import fr.plop.subs.i18n.persistence.I18nRepository;
-import fr.plop.generic.tools.StringTools;
-import fr.plop.contexts.game.config.talk.domain.TalkConfig;
-import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
-import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
-import fr.plop.contexts.game.config.talk.persistence.TalkItemEntity;
-import fr.plop.contexts.game.config.talk.persistence.TalkItemRepository;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
@@ -83,7 +68,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
     private final TalkItemRepository talkItemRepository;
     private final TalkConfigRepository talkConfigRepository;
-
 
     public TemplateInitDataAdapter(I18nRepository i18nRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TalkItemRepository talkItemRepository, TalkConfigRepository talkConfigRepository) {
         this.i18nRepository = i18nRepository;
@@ -242,9 +226,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
             ScenarioPossibilityConsequenceAbstractEntity consequenceEntity = ScenarioPossibilityConsequenceAbstractEntity.fromModel(consequence);
             if (consequence instanceof Consequence.DisplayMessage message) {
                 createI18n(message.value());
-            } else if (consequence instanceof Consequence.DisplayTalk talk) {
-                // Vérification déplacée côté domaine (Template.isValid())
-                // Ici, on persiste simplement la conséquence.
             }
             possibilityEntity.getConsequences().add(consequenceRepository.save(consequenceEntity));
         });
@@ -256,41 +237,47 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         TalkConfigEntity config = new TalkConfigEntity();
         config.setId(talk.id().value());
         talkConfigRepository.save(config);
-
-        talk.items().forEach(item -> {
-            if (item instanceof TalkItem.Simple simple) {
-                I18nEntity value = createI18n(simple.value());
-                TalkItemEntity e = new TalkItemEntity();
-                e.setId(simple.id().value());
-                e.setConfig(config);
-                e.setValue(value);
-                talkItemRepository.save(e);
-            } else if (item instanceof TalkItem.Options mo) {
-                I18nEntity label = createI18n(mo.value());
-                TalkItemMultipleOptionsEntity e = new TalkItemMultipleOptionsEntity();
-                e.setId(mo.id().value());
-                e.setConfig(config);
-                e.setValue(label);
-                // create and attach options
-                mo.options().forEach(opt -> {
-                    TalkOptionEntity oe = new TalkOptionEntity();
-                    oe.setId(opt.id().value());
-                    oe.setValue(createI18n(opt.value()));
-                    talkOptionItemRepository.save(oe);
-                    e.getOptions().add(oe);
-                });
-                talkOptionsRepository.save(e);
-            }
-        });
-
+        talk.items().forEach(item -> createTalkItem(item, config));
         return config;
     }
+
+    private void createTalkItem(TalkItem item, TalkConfigEntity config) {
+        if (item instanceof TalkItem.Simple simple) {
+            I18nEntity value = createI18n(simple.value());
+            TalkItemEntity e = new TalkItemEntity();
+            e.setId(simple.id().value());
+            e.setConfig(config);
+            e.setValue(value);
+            talkItemRepository.save(e);
+        } else if (item instanceof TalkItem.Options mo) {
+            TalkItemMultipleOptionsEntity e = new TalkItemMultipleOptionsEntity();
+            e.setId(mo.id().value());
+            e.setConfig(config);
+            e.setValue(createI18n(mo.value()));
+            List<TalkItem.Options.Option> options = mo.options().toList();
+            for(int i = 0; i < options.size(); ++i) {
+                e.getOptions().add(createTalkOption(options.get(i), i));
+            }
+            talkOptionsRepository.save(e);
+        }
+    }
+
+    private TalkOptionEntity createTalkOption(TalkItem.Options.Option talkOption, int index) {
+        TalkOptionEntity entity = new TalkOptionEntity();
+        entity.setId(talkOption.id().value());
+        entity.setValue(createI18n(talkOption.value()));
+        entity.setOrder(index);
+        talkOption.optNextId().ifPresent(nextId -> entity.setNullableNextId(nextId.value()));
+        return talkOptionItemRepository.save(entity);
+    }
+
+
+
 
     private MapConfigEntity createMap(MapConfig mapConfig) {
         MapConfigEntity mapConfigEntity = new MapConfigEntity();
         mapConfigEntity.setId(mapConfig.id().value());
         mapConfigRepository.save(mapConfigEntity);
-
         mapConfig.items().forEach(item -> {
             MapItemEntity mapItemEntity = new MapItemEntity();
             mapItemEntity.setId(item.id().value());
@@ -338,22 +325,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         return mapConfigEntity;
     }
-
-
-    /*
-    private TalkItemMultipleOptionsEntity createTalkOptions(TalkOptions talkOptions) {
-        TalkItemMultipleOptionsEntity entity = new TalkItemMultipleOptionsEntity();
-        entity.setId(talkOptions.id().value());
-        entity.setLabel(createI18n(talkOptions.label()));
-
-        talkOptions.options().forEach(option -> {
-            TalkOptionEntity itemEntity = new TalkOptionEntity();
-            itemEntity.setId(option.id().value());
-            itemEntity.setValue(createI18n(talkOptions.label()));
-            entity.getOptions().add(talkOptionItemRepository.save(itemEntity));
-        });
-        return talkOptionsRepository.save(entity);
-    }*/
 
     private I18nEntity createI18n(I18n i18n) {
         I18nEntity entity = new I18nEntity();

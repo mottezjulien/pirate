@@ -6,12 +6,7 @@ import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPos
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 

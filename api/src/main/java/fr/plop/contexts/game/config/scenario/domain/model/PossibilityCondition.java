@@ -1,7 +1,6 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.tools.StringTools;
 

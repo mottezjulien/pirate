@@ -2,7 +2,6 @@ package fr.plop.contexts.game.session.adapter;
 
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionGetPort;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import org.springframework.stereotype.Component;

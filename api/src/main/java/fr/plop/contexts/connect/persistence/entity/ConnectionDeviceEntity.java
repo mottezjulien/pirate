@@ -2,13 +2,7 @@ package fr.plop.contexts.connect.persistence.entity;
 
 import fr.plop.contexts.connect.domain.DeviceConnect;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.Set;

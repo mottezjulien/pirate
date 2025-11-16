@@ -1,11 +1,13 @@
 package fr.plop.contexts.game.config.talk.domain;
 
-import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.generic.tools.StringTools;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 
 public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, TalkItem.Options {
@@ -36,31 +38,30 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
     }
 
     record Continue(Id id, I18n value, TalkCharacter character, Id nextId) implements TalkItem  {
-
+        public TalkItem withNextId(Id newNextId) {
+            return new Continue(id(), value(), character(), newNextId);
+        }
     }
 
-    record Options(Id id, I18n value, TalkCharacter character, List<Option> options) implements TalkItem  {
+    record Options(Id id, I18n value, TalkCharacter character, List<Option> _options) implements TalkItem  {
 
         public Options(I18n value, List<Option> options) {
             this(new Id(), value, TalkCharacter.nobody(), options);
         }
 
         public Optional<Option> option(Option.Id optionId) {
-            return options.stream().filter(option -> option.is(optionId)).findFirst();
+            return options().filter(option -> option.is(optionId)).findFirst();
         }
 
-        public record Option(Option.Id id, I18n value, Optional<TalkItem.Id> optNextId) {
-            public Option(I18n i18n) {
-                this(new Option.Id(), i18n);
-            }
+        public Stream<Option> options() {
+            return _options.stream().sorted(Comparator.comparing(Option::order));
+        }
 
-            public Option(Id id, I18n value) {
-                this(id, value, Optional.empty());
-            }
+        public TalkItem withOptions(List<Option> newOptions) {
+            return new Options(id, value, character, newOptions);
+        }
 
-            public Option(Id id, I18n value, TalkItem.Id nextId) {
-                this(id, value, Optional.of(nextId));
-            }
+        public record Option(Option.Id id, Integer order, I18n value, Optional<TalkItem.Id> optNextId) {
 
             public boolean is(Id otherId) {
                 return id.equals(otherId);
@@ -72,6 +73,10 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
 
             public TalkItem.Id nextId() {
                 return optNextId.orElseThrow();
+            }
+
+            public Option withNextId(TalkItem.Id nextId) {
+                return new Option(id, order, value, Optional.of(nextId));
             }
 
             public record Id(String value) {

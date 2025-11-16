@@ -9,8 +9,8 @@ import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.connect.persistence.repository.ConnectionAuthRepository;
 import fr.plop.contexts.connect.persistence.repository.ConnectionDeviceRepository;
 import fr.plop.contexts.connect.persistence.repository.ConnectionUserRepository;
-import fr.plop.subs.i18n.domain.Language;
 import fr.plop.generic.tools.StringTools;
+import fr.plop.subs.i18n.domain.Language;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Component;
 

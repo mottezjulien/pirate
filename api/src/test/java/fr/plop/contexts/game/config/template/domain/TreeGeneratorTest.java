@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.template.domain;
 
-import fr.plop.contexts.game.config.template.domain.usecase.Tree;
+import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.contexts.game.config.template.domain.usecase.TreeGenerator;
 import org.junit.jupiter.api.Test;
 

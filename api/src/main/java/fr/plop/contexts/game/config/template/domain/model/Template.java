@@ -1,12 +1,12 @@
 package fr.plop.contexts.game.config.template.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.generic.tools.StringTools;
 
 import java.time.Duration;

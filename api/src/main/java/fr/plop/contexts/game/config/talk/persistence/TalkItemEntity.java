@@ -4,15 +4,7 @@ package fr.plop.contexts.game.config.talk.persistence;
 import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.subs.i18n.persistence.I18nEntity;
-import jakarta.persistence.DiscriminatorColumn;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.Optional;
 
@@ -20,7 +12,7 @@ import java.util.Optional;
 @Table(name = "TEST2_TALK_ITEM")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type")
-@DiscriminatorValue("ONE")
+@DiscriminatorValue("SIMPLE")
 public class TalkItemEntity {
 
     @Id

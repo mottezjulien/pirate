@@ -4,12 +4,7 @@ import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.DeviceConnect;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 
