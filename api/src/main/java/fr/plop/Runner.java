@@ -15,7 +15,7 @@ public class Runner {
         SpringApplication.run(Runner.class, args);
     }
 
-    @Autowired
+   @Autowired
     private TemplateInitUseCase.OutPort templateOutPort;
 
     @Autowired

@@ -59,4 +59,13 @@ public class I18nEntity {
             return new I18n(description, new HashMap<>());
         }
     }
+
+    public static I18nEntity fromModel(I18n model) {
+        I18nEntity entity = new I18nEntity();
+        entity.setId(model.id().value());
+        entity.setDescription(model.description());
+        entity.setJsonValues(model.jsonValues());
+        return entity;
+    }
+
 }

@@ -28,32 +28,16 @@ public class TalkOptionEntity {
     @Column(name = "_order")
     private int order;
 
-    public String getId() {
-        return id;
-    }
-
     public void setId(String id) {
         this.id = id;
-    }
-
-    public I18nEntity getValue() {
-        return value;
     }
 
     public void setValue(I18nEntity label) {
         this.value = label;
     }
 
-    public String getNullableNextId() {
-        return nullableNextId;
-    }
-
     public void setNullableNextId(String nullableNextId) {
         this.nullableNextId = nullableNextId;
-    }
-
-    public int getOrder() {
-        return order;
     }
 
     public void setOrder(int order) {

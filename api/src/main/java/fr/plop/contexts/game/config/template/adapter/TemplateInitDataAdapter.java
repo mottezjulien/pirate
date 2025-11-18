@@ -24,9 +24,6 @@ import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerRepository;
-import fr.plop.contexts.game.config.talk.domain.TalkConfig;
-import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.persistence.*;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
@@ -37,15 +34,10 @@ import fr.plop.subs.i18n.persistence.I18nEntity;
 import fr.plop.subs.i18n.persistence.I18nRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
     private final I18nRepository i18nRepository;
-
-    private final TalkItemMultipleOptionsRepository talkOptionsRepository;
-    private final TalkOptionRepository talkOptionItemRepository;
 
     private final TemplateRepository templateRepository;
 
@@ -66,13 +58,10 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final MapItemRepository mapItemRepository;
     private final MapPositionRepository mapPositionRepository;
 
-    private final TalkItemRepository talkItemRepository;
-    private final TalkConfigRepository talkConfigRepository;
+    private final TemplateInitTalkDataAdapter talkAdapter;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TalkItemRepository talkItemRepository, TalkConfigRepository talkConfigRepository) {
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TemplateInitTalkDataAdapter talkAdapter) {
         this.i18nRepository = i18nRepository;
-        this.talkOptionsRepository = talkOptionsRepository;
-        this.talkOptionItemRepository = talkOptionItemRepository;
         this.templateRepository = templateRepository;
         this.boardRepository = boardRepository;
         this.boardSpaceRepository = boardSpaceRepository;
@@ -88,10 +77,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.mapConfigRepository = mapConfigRepository;
         this.mapItemRepository = mapItemRepository;
         this.mapPositionRepository = mapPositionRepository;
-        this.talkItemRepository = talkItemRepository;
-        this.talkConfigRepository = talkConfigRepository;
+        this.talkAdapter = talkAdapter;
     }
-
 
     @Override
     public boolean isEmpty() {
@@ -112,11 +99,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         triggerRepository.deleteAll();
         recurrenceRepository.deleteAll();
 
-        // Purge Talk data (order matters: join -> options -> items -> config)
-        talkOptionsRepository.deleteAll();
-        talkOptionItemRepository.deleteAll();
-        talkItemRepository.deleteAll();
-        talkConfigRepository.deleteAll();
+        talkAdapter.deleteAll();
 
         scenarioTargetRepository.deleteAll();
         scenarioStepRepository.deleteAll();
@@ -137,8 +120,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         templateEntity.setLabel(template.label());
         templateEntity.setVersion(template.version());
         templateEntity.setDurationInMinute(template.maxDuration().toMinutes());
-        // Persist Talk first so consequences can reference existing TalkItemEntity
-        templateEntity.setTalk(createTalk(template.talk()));
+        templateEntity.setTalk(talkAdapter.createTalk(template.talk()));
         templateEntity.setBoard(createBoard(template.board()));
         templateEntity.setScenario(createScenario(template.scenario()));
         templateEntity.setMap(createMap(template.map()));
@@ -233,33 +215,74 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         possibilityRepository.save(possibilityEntity);
     }
 
-    private TalkConfigEntity createTalk(TalkConfig talk) {
+    /*private TalkConfigEntity createTalk(TalkConfig talk) {
         TalkConfigEntity config = new TalkConfigEntity();
         config.setId(talk.id().value());
         talkConfigRepository.save(config);
-        talk.items().forEach(item -> createTalkItem(item, config));
+        List<TalkCharacter.Reference> savedCharacterReferences = createTalkCharacterReferences(talk.items());
+        talk.items().forEach(item -> createTalkItem(item, config, savedCharacterReferences));
         return config;
     }
 
-    private void createTalkItem(TalkItem item, TalkConfigEntity config) {
-        if (item instanceof TalkItem.Simple simple) {
-            I18nEntity value = createI18n(simple.value());
-            TalkItemEntity e = new TalkItemEntity();
-            e.setId(simple.id().value());
-            e.setConfig(config);
-            e.setValue(value);
-            talkItemRepository.save(e);
-        } else if (item instanceof TalkItem.Options mo) {
-            TalkItemMultipleOptionsEntity e = new TalkItemMultipleOptionsEntity();
-            e.setId(mo.id().value());
-            e.setConfig(config);
-            e.setValue(createI18n(mo.value()));
-            List<TalkItem.Options.Option> options = mo.options().toList();
-            for(int i = 0; i < options.size(); ++i) {
-                e.getOptions().add(createTalkOption(options.get(i), i));
-            }
-            talkOptionsRepository.save(e);
+    private List<TalkCharacter.Reference> createTalkCharacterReferences(List<TalkItem> items) {
+        Map<TalkCharacter, List<TalkCharacter.Reference>> allSaved = new HashMap<>();
+        for (TalkItem item: items) {
+            TalkCharacter itemCharacter = item.character();
+            TalkCharacter savedCharacter = allSaved.keySet().stream()
+                    .filter(itemCharacter::hasSameName)
+                    .findFirst()
+                    .orElseGet(() -> {
+                        TalkCharacterEntity entity = TalkCharacterEntity.fromModel(itemCharacter);
+                        talkCharacterRepository.save(entity);
+                        allSaved.put(itemCharacter, new ArrayList<>());
+                        return itemCharacter;
+                    });
+            List<TalkCharacter.Reference> savedReferences = allSaved.get(savedCharacter);
+            savedReferences.stream()
+                    .filter(reference -> reference.hasSameValue(item.characterReference()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        TalkCharacterReferenceEntity entity = TalkCharacterReferenceEntity.fromModel(item.characterReference());
+                        talkCharacterReferenceRepository.save(entity);
+                        savedReferences.add(item.characterReference());
+                        allSaved.put(itemCharacter, savedReferences);
+                    });
         }
+
+
+    }
+
+    private void createTalkItem(TalkItem item, TalkConfigEntity config, List<TalkCharacter.Reference> savedCharacterReferences) {
+        I18nEntity value = createI18n(item.value());
+        TalkItemEntity entity = switch (item) {
+            case TalkItem.Simple ignored -> new TalkItemEntity();
+            case TalkItem.Continue _continue -> {
+                TalkItemContinueEntity continueEntity = new TalkItemContinueEntity();
+                continueEntity.setNextId(_continue.nextId().value());
+                yield continueEntity;
+            }
+            case TalkItem.Options model -> {
+                TalkItemMultipleOptionsEntity optionsEntity = new TalkItemMultipleOptionsEntity();
+                List<TalkItem.Options.Option> options = model.options().toList();
+                for(int i = 0; i < options.size(); i++) {
+                    optionsEntity.getOptions().add(createTalkOption(options.get(i), i));
+                }
+                yield optionsEntity;
+            }
+        };
+        entity.setId(item.id().value());
+        entity.setConfig(config);
+        entity.setValue(value);
+        entity.setCharacterReference(findTalkCharacterReference(item.characterReference(), savedCharacterReferences));
+        talkItemRepository.save(entity);
+    }
+
+    private TalkCharacterReferenceEntity findTalkCharacterReference(TalkCharacter.Reference characterReference, List<TalkCharacter.Reference> savedCharacterReferences) {
+        TalkCharacter.Reference foundSaved = savedCharacterReferences.stream().filter(savedReference -> characterReference.value().equals(savedReference.value())
+                && characterReference.character().name().equals(savedReference.character().name())).findFirst().orElseThrow();
+        TalkCharacterReferenceEntity entity = new TalkCharacterReferenceEntity();
+        entity.setId(foundSaved.id().value());
+        return entity;
     }
 
     private TalkOptionEntity createTalkOption(TalkItem.Options.Option talkOption, int index) {
@@ -269,9 +292,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         entity.setOrder(index);
         talkOption.optNextId().ifPresent(nextId -> entity.setNullableNextId(nextId.value()));
         return talkOptionItemRepository.save(entity);
-    }
-
-
+    }*/
 
 
     private MapConfigEntity createMap(MapConfig mapConfig) {

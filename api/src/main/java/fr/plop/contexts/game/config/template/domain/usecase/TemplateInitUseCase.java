@@ -30,11 +30,11 @@ public class TemplateInitUseCase {
         }*/
         outPort.deleteAll();
         //outPort.create(chezWam1Template());
-        Template chezWam = chezWamTemplate();
+        /*Template chezWam = chezWamTemplate();
         if (!chezWam.isValid()) {
             throw new IllegalStateException("Template chez_wam invalide: Talks référencés manquants");
         }
-        outPort.create(chezWam);
+        outPort.create(chezWam);*/
 
         Template testDiscussionTemplate = testDiscussionTemplate();
         if (!testDiscussionTemplate.isValid()) {

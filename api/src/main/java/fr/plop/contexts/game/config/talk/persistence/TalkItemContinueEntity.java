@@ -12,17 +12,13 @@ public class TalkItemContinueEntity extends TalkItemEntity {
     @Column(name = "next_id")
     private String nextId;
 
-    public String getNextId() {
-        return nextId;
-    }
-
     public void setNextId(String nextId) {
         this.nextId = nextId;
     }
 
     @Override
     public TalkItem toModel() {
-        return new TalkItem.Continue(new TalkItem.Id(id), value.toModel(), characterModel(), new TalkItem.Id(nextId));
+        return new TalkItem.Continue(new TalkItem.Id(id), value.toModel(), characterReference.toModel(), new TalkItem.Id(nextId));
     }
 
 }

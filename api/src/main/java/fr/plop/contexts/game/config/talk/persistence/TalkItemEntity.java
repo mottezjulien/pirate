@@ -1,12 +1,9 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
 
-import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
-
-import java.util.Optional;
 
 @Entity
 @Table(name = "TEST2_TALK_ITEM")
@@ -27,48 +24,32 @@ public class TalkItemEntity {
     protected I18nEntity value;
 
     @ManyToOne
-    @JoinColumn(name = "character_image_id")
-    protected TalkCharacterImageEntity characterImage;
-
-    public String getId() {
-        return id;
-    }
+    @JoinColumn(name = "character_reference_id")
+    protected TalkCharacterReferenceEntity characterReference;
 
     public void setId(String id) {
         this.id = id;
     }
 
-    public TalkConfigEntity getConfig() {
-        return config;
+    public String getId() {
+        return id;
     }
 
     public void setConfig(TalkConfigEntity config) {
         this.config = config;
     }
 
-    public I18nEntity getValue() {
-        return value;
-    }
-
     public void setValue(I18nEntity value) {
         this.value = value;
     }
 
-    public TalkCharacterImageEntity getCharacterImage() {
-        return characterImage;
-    }
 
-    public void setCharacterImage(TalkCharacterImageEntity characterImage) {
-        this.characterImage = characterImage;
+    public void setCharacterReference(TalkCharacterReferenceEntity characterReference) {
+        this.characterReference = characterReference;
     }
 
     public TalkItem toModel() {
-        return new TalkItem.Simple(new TalkItem.Id(id), value.toModel(), characterModel());
+        return new TalkItem.Simple(new TalkItem.Id(id), value.toModel(), characterReference.toModel());
     }
 
-    protected TalkCharacter characterModel() {
-        return Optional.ofNullable(characterImage)
-                .map(TalkCharacterImageEntity::toModel)
-                .orElseGet(TalkCharacter::nobody);
-    }
 }

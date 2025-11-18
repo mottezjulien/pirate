@@ -1,12 +1,9 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
+import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_TALK_CHARACTER")
@@ -17,10 +14,19 @@ public class TalkCharacterEntity {
 
     private String name;
 
-    @OneToMany(mappedBy = "character")
-    private Set<TalkCharacterImageEntity> images = new HashSet<>();
-
-    public String getName() {
-        return name;
+    public void setId(String id) {
+        this.id = id;
     }
+
+    public TalkCharacter toModel() {
+        return new TalkCharacter(new TalkCharacter.Id(id), name);
+    }
+
+    public static TalkCharacterEntity fromModel(TalkCharacter model) {
+        TalkCharacterEntity entity = new TalkCharacterEntity();
+        entity.id = model.id().value();
+        entity.name = model.name();
+        return entity;
+    }
+
 }

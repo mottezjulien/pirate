@@ -53,8 +53,8 @@ TEST_DISCUSSION1
                             assertThat(talkItem.value().value(Language.FR)).isEqualTo("Bonjour");
                             assertThat(talkItem.value().value(Language.EN)).isEqualTo("Hello");
                             assertThat(talkItem.character().name()).isEqualTo("Bob");
-                            assertThat(talkItem.character().image().path()).isEqualTo("bob-happy.jpg");
-                            assertThat(talkItem.character().image().type()).isEqualTo(Image.Type.ASSET);
+                            assertThat(talkItem.characterReference().image().value()).isEqualTo("bob-happy.jpg");
+                            assertThat(talkItem.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
                         });
 
 
@@ -122,8 +122,8 @@ TEST_DISCUSSION2
         assertThat(talkItem.value().value(Language.FR)).isEqualTo("Pouet");
         assertThat(talkItem.value().value(Language.EN)).isEqualTo("Pouet en anglais");
         assertThat(talkItem.character().name()).isEqualTo("Alice");
-        assertThat(talkItem.character().image().path()).isEqualTo("www.toto.yo/alicesad.png");
-        assertThat(talkItem.character().image().type()).isEqualTo(Image.Type.WEB);
+        assertThat(talkItem.characterReference().image().value()).isEqualTo("www.toto.yo/alicesad.png");
+        assertThat(talkItem.characterReference().image().type()).isEqualTo(Image.Type.WEB);
         TalkItem.Continue continueItem = (TalkItem.Continue) talkItem;
         assertThat(continueItem.nextId()).isEqualTo(template.talk().items().getLast().id());
 
@@ -133,31 +133,26 @@ TEST_DISCUSSION2
         assertThat(talkItem.value().value(Language.FR)).isEqualTo("La suite");
         assertThat(talkItem.value().value(Language.EN)).isEqualTo("The next");
         assertThat(talkItem.character().name()).isEqualTo("Alice");
-        assertThat(talkItem.character().image().path()).isEqualTo("alicehappy.jpg");
-        assertThat(talkItem.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem.characterReference().image().value()).isEqualTo("alicehappy.jpg");
+        assertThat(talkItem.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-            assertThat(scenario.steps()).hasSize(1)
-                    .anySatisfy(step -> {
-                        assertThat(step.possibilities())
-                                .hasSize(1)
-                                .anySatisfy(possibility -> {
-                                    assertThat(possibility.trigger())
-                                            .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
-                                    PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                    assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
-                                    assertThat(possibility.consequences())
-                                            .hasSize(1)
-                                            .anySatisfy(consequence -> {
-                                                assertThat(consequence).isInstanceOf(Consequence.DisplayTalk.class);
-                                                Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) consequence;
-                                                assertThat(displayTalk.talkId()).isEqualTo(template.talk().items().getFirst().id());
-                                            });
-                                });
-
-                    });
-        });
+        assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
+                .anySatisfy(step -> assertThat(step.possibilities())
+                        .hasSize(1)
+                        .anySatisfy(possibility -> {
+                            assertThat(possibility.trigger())
+                                    .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                            PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                            assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
+                            assertThat(possibility.consequences())
+                                    .hasSize(1)
+                                    .anySatisfy(consequence -> {
+                                        assertThat(consequence).isInstanceOf(Consequence.DisplayTalk.class);
+                                        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) consequence;
+                                        assertThat(displayTalk.talkId()).isEqualTo(template.talk().items().getFirst().id());
+                                    });
+                        })));
     }
 
     @Test
@@ -222,8 +217,8 @@ TEST_DISCUSSION3
         assertThat(firstTalkItem.value().value(Language.FR)).isEqualTo("Ca va ?");
         assertThat(firstTalkItem.value().value(Language.EN)).isEqualTo("Wahup ?");
         assertThat(firstTalkItem.character().name()).isEqualTo("Alice");
-        assertThat(firstTalkItem.character().image().path()).isEqualTo("www.toto.yo/alicesad.png");
-        assertThat(firstTalkItem.character().image().type()).isEqualTo(Image.Type.WEB);
+        assertThat(firstTalkItem.characterReference().image().value()).isEqualTo("www.toto.yo/alicesad.png");
+        assertThat(firstTalkItem.characterReference().image().type()).isEqualTo(Image.Type.WEB);
         TalkItem.Options optionsItem = (TalkItem.Options) firstTalkItem;
 
         List<TalkItem.Options.Option> options = optionsItem.options().toList();
@@ -255,8 +250,8 @@ TEST_DISCUSSION3
         assertThat(lastTalkItem.value().value(Language.FR)).isEqualTo("Content de le savoir");
         assertThat(lastTalkItem.value().value(Language.EN)).isEqualTo("Happy to know");
         assertThat(lastTalkItem.character().name()).isEqualTo("Alice");
-        assertThat(lastTalkItem.character().image().path()).isEqualTo("alicehappy.jpg");
-        assertThat(lastTalkItem.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(lastTalkItem.characterReference().image().value()).isEqualTo("alicehappy.jpg");
+        assertThat(lastTalkItem.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         // Scenario assertions
         assertThat(template.scenario().steps()).hasSize(1)
@@ -368,8 +363,8 @@ TEST_DISCUSSION3
         assertThat(talkItem0.value().value(Language.FR)).isEqualTo("Tu veux jouer ?");
         assertThat(talkItem0.value().value(Language.EN)).isEqualTo("Do you want to play?");
         assertThat(talkItem0.character().name()).isEqualTo("Bob");
-        assertThat(talkItem0.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
-        assertThat(talkItem0.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem0.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem0.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
         TalkItem.Options optionsItem = (TalkItem.Options) talkItem0;
 
         List<TalkItem.Options.Option> options = optionsItem.options().toList();
@@ -402,24 +397,24 @@ TEST_DISCUSSION3
         assertThat(talkItem1.value().value(Language.FR)).isEqualTo("Excellent, continuons !");
         assertThat(talkItem1.value().value(Language.EN)).isEqualTo("Great, let's continue!");
         assertThat(talkItem1.character().name()).isEqualTo("Bob");
-        assertThat(talkItem1.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
-        assertThat(talkItem1.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem1.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem1.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         assertThat(talkItem2.id()).isNotNull();
         assertThat(talkItem2).isInstanceOf(TalkItem.Simple.class);
         assertThat(talkItem2.value().value(Language.FR)).isEqualTo("Dommage, fin de test.");
         assertThat(talkItem2.value().value(Language.EN)).isEqualTo("Too bad, end of test.");
         assertThat(talkItem2.character().name()).isEqualTo("Bob");
-        assertThat(talkItem2.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
-        assertThat(talkItem2.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem2.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem2.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         assertThat(talkItem3.id()).isNotNull();
         assertThat(talkItem3).isInstanceOf(TalkItem.Continue.class);
         assertThat(talkItem3.value().value(Language.FR)).isEqualTo("Alors, on hésite ?");
         assertThat(talkItem3.value().value(Language.EN)).isEqualTo("Alors, on hésite ? EN");
         assertThat(talkItem3.character().name()).isEqualTo("Bob");
-        assertThat(talkItem3.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
-        assertThat(talkItem3.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem3.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem3.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
         TalkItem.Continue continueItem = (TalkItem.Continue) talkItem3;
         assertThat(continueItem.nextId()).isEqualTo(talkItem4.id());
 
@@ -428,8 +423,8 @@ TEST_DISCUSSION3
         assertThat(talkItem4.value().value(Language.FR)).isEqualTo("fin de la discution.");
         assertThat(talkItem4.value().value(Language.EN)).isEqualTo("fin de la discution. EN");
         assertThat(talkItem4.character().name()).isEqualTo("Bob");
-        assertThat(talkItem4.character().image().path()).isEqualTo("/pouet/bobdefault.jpg");
-        assertThat(talkItem4.character().image().type()).isEqualTo(Image.Type.ASSET);
+        assertThat(talkItem4.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
+        assertThat(talkItem4.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         // Scenario assertions
         assertThat(template.scenario().steps()).hasSize(1)

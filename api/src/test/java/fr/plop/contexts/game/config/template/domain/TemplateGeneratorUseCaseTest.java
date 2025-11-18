@@ -563,7 +563,11 @@ public class TemplateGeneratorUseCaseTest {
                 --------- Trigger:GoInSpace:SpaceId:La lune
                 --------- consequence:TalkOptions:OPTIONS_ABCD
                 --- Talk
+                ------ Character
+                --------- Bob
+                ------------ Happy:ASSET:bob-happy.jpg
                 ------ Options(ref OPTIONS_ABCD)
+                --------- Character:Bob:Happy
                 --------- Option
                 ------------ FR: Le choix A
                 ------------ EN: Le choix A en anglais ?

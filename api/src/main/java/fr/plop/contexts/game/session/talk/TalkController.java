@@ -70,7 +70,6 @@ public class TalkController {
     }
 
 
-    //TODO MERGE 2
     @PostMapping({"/{talkId}/options/{optionId}", "/{talkId}/options/{optionId}/"})
     public ResponseDTO selectOption(@RequestHeader("Authorization") String rawToken,
                                     @RequestHeader("Language") String languageStr,
@@ -130,7 +129,7 @@ public class TalkController {
             }
         }
         public static ResponseDTO fromModel(TalkItem item, Language language) {
-            ImageResponseDTO image = new ImageResponseDTO(item.character().image().type().name(), item.character().image().path(), null);
+            ImageResponseDTO image = new ImageResponseDTO(item.characterReference().image().type().name(), item.characterReference().image().value(), null);
             ResponseDTO.Character character = new Character(item.character().name(), image);
             List<Result.Option> options = List.of();
             String nextId = null;

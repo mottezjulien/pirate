@@ -1,4 +1,6 @@
 TEST_DISCUSSION:1.0:Test de discussion:10
+
+
 --- Step (ref ETAPE_DEBUT):FR:Démarrage:EN:Start
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
@@ -26,9 +28,13 @@ TEST_DISCUSSION:1.0:Test de discussion:10
 ------------ EN:Yes
 ------------ next:TALK002
 --------- Option (ref TALK_LETS_GO_CHOIX_NON)
+------------ next:TALK003
 ------------ FR:Non
 ------------ EN:No
------------- next:TALK003
+--------- Option (ref TALK_LETS_GO_CHOIX_MAYBE):TALK004
+------------ FR:Peut être
+------------ EN:May be
+------------ next:TALK004
 ------ Simple(ref TALK002)
 --------- Character:Bob:default
 --------- FR:Excellent, continuons !
@@ -37,3 +43,11 @@ TEST_DISCUSSION:1.0:Test de discussion:10
 --------- Character:Bob:default
 --------- FR:Dommage, fin de test.
 --------- EN:Too bad, end of test.
+------ Continue (ref TALK004):TALK005
+--------- Character:Bob:default
+--------- FR:Alors, on hésite ?
+--------- EN:Alors, on hésite ? EN
+------ Simple(ref TALK005)
+--------- Character:Bob:default
+--------- FR:fin de la discution.
+--------- EN:fin de la discution. EN

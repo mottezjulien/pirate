@@ -27,27 +27,27 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
 
     I18n value();
 
-    TalkCharacter character();
+    TalkCharacter.Reference characterReference();
+
+    default TalkCharacter character() {
+        return characterReference().character();
+    }
 
     default String value(Language language) {
         return value().value(language);
     }
 
-    record Simple(Id id, I18n value, TalkCharacter character) implements TalkItem {
+    record Simple(Id id, I18n value, TalkCharacter.Reference characterReference) implements TalkItem {
 
     }
 
-    record Continue(Id id, I18n value, TalkCharacter character, Id nextId) implements TalkItem  {
+    record Continue(Id id, I18n value, TalkCharacter.Reference characterReference, Id nextId) implements TalkItem  {
         public TalkItem withNextId(Id newNextId) {
-            return new Continue(id(), value(), character(), newNextId);
+            return new Continue(id, value, characterReference, newNextId);
         }
     }
 
-    record Options(Id id, I18n value, TalkCharacter character, List<Option> _options) implements TalkItem  {
-
-        public Options(I18n value, List<Option> options) {
-            this(new Id(), value, TalkCharacter.nobody(), options);
-        }
+    record Options(Id id, I18n value, TalkCharacter.Reference characterReference, List<Option> _options) implements TalkItem  {
 
         public Optional<Option> option(Option.Id optionId) {
             return options().filter(option -> option.is(optionId)).findFirst();
@@ -58,7 +58,7 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
         }
 
         public TalkItem withOptions(List<Option> newOptions) {
-            return new Options(id, value, character, newOptions);
+            return new Options(id, value, characterReference, newOptions);
         }
 
         public record Option(Option.Id id, Integer order, I18n value, Optional<TalkItem.Id> optNextId) {
