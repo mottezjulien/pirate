@@ -5,8 +5,9 @@ import '../../../../../generic/config/router.dart';
 import '../../../../../generic/dialog.dart';
 import '../../../game_current.dart';
 import '../data/game_session_talk_repository.dart';
-import '../game_talk.dart';
 import 'package:flutter/material.dart' hide Dialog;
+
+import '../game_talk.dart';
 
 class GameSessionTalkDialog {
 
@@ -30,15 +31,89 @@ class GameSessionTalkDialog {
       dialog.showWidget(dialog: alertDialog, paramContext: context);
       repository.findById(talkId).then((talk) => notifier.value = talk);
     }
-
-
   }
 
   Widget build(BuildContext context, GameTalk? talk) {
     if (talk == null) {
-      return Center(child: CircularProgressIndicator());
+      return SizedBox(
+        height: 80,
+        width: 80,
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 100,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey[200],
+                ),
+                child: _buildCharacterImage(talk.character.image),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    talk.value,
+                    style: TextStyle(fontSize: 16, height: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          ...buttons(talk, context),
+        ],
+      ),
+    );
+  }
 
+  Widget? _buildCharacterImage(GameImage image) {
+    return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: image.toWidget(fit: BoxFit.cover));
+    //return Image.asset("assets/pouet/bobdefault.jpg", fit: BoxFit.cover);
+    /*
+    if (characterImage.type.toString() == 'ImageType.ASSET') {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset(
+          characterImage.value,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          characterImage.value,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Icon(Icons.broken_image, size: 40),
+            );
+          },
+        ),
+      );
+    }
+     */
+
+  }
+
+  /*
+  Widget _buildCharacterImage(dynamic characterImage) {
+
+  }*/
+
+  List<Widget> buttons(GameTalk talk, BuildContext context) {
     List<Widget> buttonChildren = [];
     switch(talk.result) {
       case GameTalkResultSimple():
@@ -81,20 +156,9 @@ class GameSessionTalkDialog {
         }
         break;
     }
-
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            talk.value,
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(height: 24),
-          ...buttonChildren,
-        ],
-      ),
-    );
+    return buttonChildren;
   }
+
+
 
 }

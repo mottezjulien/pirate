@@ -22,8 +22,8 @@ class GameSessionTalkRepository {
 
 
   GameTalk toModel(Map<String, dynamic> json) {
-    final Image image = Image(
-        type: ImageType.fromString(json['character']['image']['type']),
+    final GameImage image = GameImage(
+        type: GameImageType.fromString(json['character']['image']['type']),
         value: json['character']['image']['value']);
     final character = GameTalkCharacter(
         name: json['character']['name'],
@@ -65,11 +65,6 @@ class GameSessionTalkRepository {
 enum GameTalkResultType {
   SIMPLE, CONTINUE, MULTIPLE;
   static GameTalkResultType fromString(String str) {
-    switch(str) {
-      case 'SIMPLE': return GameTalkResultType.SIMPLE;
-      case 'CONITNUE': return GameTalkResultType.CONTINUE;
-      case 'MULTIPLE': return GameTalkResultType.MULTIPLE;
-      default: throw Exception('Unknown GameTalkResultType: $str' );
-    }
+    return GameTalkResultType.values.singleWhere((each) => each.name == str);
   }
 }
