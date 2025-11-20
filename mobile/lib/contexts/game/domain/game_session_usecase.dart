@@ -1,4 +1,5 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:mobile/generic/dialog.dart';
 
 import '../data/game_repository.dart';
 import '../game_current.dart';
@@ -25,10 +26,15 @@ class GameSessionUseCase {
   }
 
   startSession() async {
+    Dialog dialog = new Dialog();
+    dialog.showMessage(
+        message: "Session de jeux en cours de preparation :)",
+        isClosable: false
+    );
     final GameSessionRepository repository = GameSessionRepository();
     final GameSession session = await repository.create();
-    session.init();
     GameCurrent.session = session;
+    await session.init();
     repository.start();
   }
 

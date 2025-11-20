@@ -24,9 +24,11 @@ class GameSession {
 
   String get label => _label;
 
-  void init() {
-    eventListener.init(_id);
-    gameLocation.init();
+  Future<void> init() async {
+    await Future.wait([
+      eventListener.init(_id),
+      gameLocation.init(),
+    ]);
   }
 
   void stop() {
@@ -54,14 +56,25 @@ class GameLocation {
 
   late Stream<Position> _streamPosition;
   late StreamSubscription<Position> _streamSubscription;
+
   Position? last;
 
-  void init() {
+  Future<void> init() {
+    final Completer<void> readyCompleter = Completer<void>();
     const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation);
     _streamPosition = Geolocator.getPositionStream(locationSettings: locationSettings);
     _streamSubscription = _streamPosition.listen((position) {
+      if (!readyCompleter.isCompleted) {
+        readyCompleter.complete();
+      }
       onMove(position);
+    },
+    onError: (e) {
+      if (!readyCompleter.isCompleted) {
+        readyCompleter.completeError(e);
+      }
     });
+    return readyCompleter.future;
   }
 
   void stop() {
@@ -100,20 +113,30 @@ class GameEventListener {
   final List<OnMoveListener> onMoveListeners = [];
   final List<OnGoalListener> onGoalListeners = [];
 
-  void init(String sessionId) {
+  Future<void> init(String sessionId) {
     running = true;
-    connect(sessionId);
+    return connect(sessionId);
   }
 
-  void connect(String sessionId) {
+  Future<void> connect(String sessionId) {
+    final Completer<void> connectionCompleter = Completer<void>();
     final String wsUrl = "${Server.wsAPI}/ws/games/sessions?token=${ConnectionCurrent.token}&sessionId=$sessionId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _streamSubscription = _channel.stream.listen((message) {
+        if (!connectionCompleter.isCompleted) {
+          connectionCompleter.complete();
+        }
         _do(message.toString());
       },
       onDone: () => running ? connect(sessionId): () {}, // Reconnexion automatique
-      onError: (e) => print('Erreur WebSocket: $e'),
+      onError: (e) {
+        print('Erreur WebSocket: $e');
+        if (!connectionCompleter.isCompleted) {
+          connectionCompleter.completeError(e);
+        }
+      },
     );
+    return connectionCompleter.future;
   }
 
   void _do(String message) {

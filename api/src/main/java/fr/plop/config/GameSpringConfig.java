@@ -1,4 +1,4 @@
-package fr.plop;
+package fr.plop.config;
 
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;

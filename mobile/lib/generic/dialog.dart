@@ -6,7 +6,8 @@ import 'config/router.dart';
 
 class Dialog {
 
-  Future<void> showMessage({required String message}) async {
+  Future<void> showMessage({required String message,
+    bool isClosable = true }) async {
     final BuildContext? context = AppRouter.navigatorKey.currentContext;
     if (context == null) {
       return Future.value();
@@ -14,11 +15,12 @@ class Dialog {
     return await showWidget(dialog: AlertDialog(
       content: SingleChildScrollView(child: ListBody(children: [Text(message)])),
       actions: [
-        TextButton(
-            style: TextButton.styleFrom(foregroundColor: GameCurrent.style.color.primary),
-            child: Text('default.close'.tr()),
-            onPressed: () => Navigator.of(context).pop()
-        )
+        if(isClosable)
+          TextButton(
+              style: TextButton.styleFrom(foregroundColor: GameCurrent.style.color.primary),
+              child: Text('default.close'.tr()),
+              onPressed: () => Navigator.of(context).pop()
+          )
       ],
     ));
   }

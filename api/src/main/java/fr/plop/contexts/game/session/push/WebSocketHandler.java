@@ -40,7 +40,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         logger.info("Nouvelle connexion WebSocket établie: {}", session.getId());
         Optional<Key> optionalKey = keyFromSession(session);
-        optionalKey.ifPresent(key -> playerIdsWithSession.put(key, session));
+        optionalKey.ifPresent(key -> {
+            playerIdsWithSession.put(key, session);
+            broadcastMessage(key.sessionId(), key.playerId(), WebSocketPushAdapter.MESSAGE_INIT);
+        });
     }
 
     @Override
@@ -50,22 +53,25 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     private Optional<Key> keyFromSession(WebSocketSession session) {
-        String sessionIdStr = null;
+        final String sessionIdPrefix = "sessionId=";
+        final String tokenPrefix = "token=";
+        Optional<GameSession.Id> optSessionId = Optional.empty();
         String tokenStr = null;
-        String query = session.getUri().getQuery();
-        if (query != null) {
+        if (session.getUri() != null
+                && session.getUri().getQuery() != null) {
+            String query = session.getUri().getQuery();
             String[] params = query.split("&");
             for (String param : params) {
-                if (param.startsWith("sessionId=")) {
-                    sessionIdStr = param.substring("sessionId=".length());
+                if (param.startsWith(sessionIdPrefix)) {
+                    optSessionId = Optional.of(new GameSession.Id(param.substring(sessionIdPrefix.length())));
                 }
-                if (param.startsWith("token=")) {
-                    tokenStr = param.substring("token=".length());
+                if (param.startsWith(tokenPrefix)) {
+                    tokenStr = param.substring(tokenPrefix.length());
                 }
             }
         }
-        if (sessionIdStr != null && tokenStr != null) {
-            GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        if (optSessionId.isPresent() && tokenStr != null) {
+            GameSession.Id sessionId = optSessionId.get();
             try {
                 ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(tokenStr));
                 if (user.player().isPresent()) {
