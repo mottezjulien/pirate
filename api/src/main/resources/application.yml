@@ -1,14 +1,11 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/plop2
-    username: postgres
-    password: postgres
+    url: ${POSTGRESQL_ADDON_URI}
+    username: ${POSTGRESQL_ADDON_USER}
+    password: ${POSTGRESQL_ADDON_PASSWORD}
     driverClassName: org.postgresql.Driver
   jpa:
     hibernate.ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        show_sql: true
-
