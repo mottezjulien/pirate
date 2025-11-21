@@ -2,6 +2,7 @@ package fr.plop.contexts.game.session.core.adapter;
 
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
+import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
@@ -86,6 +87,10 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
         TalkConfigEntity talkEntity = new TalkConfigEntity();
         talkEntity.setId(template.talk().id().value());
         entity.setTalk(talkEntity);
+
+        ImageConfigEntity imageEntity = new ImageConfigEntity();
+        imageEntity.setId(template.image().id().value());
+        entity.setImage(imageEntity);
 
         entity = sessionRepository.save(entity);
 

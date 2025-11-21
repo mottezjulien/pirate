@@ -98,5 +98,15 @@ public record Tree(String originalHeader, String _header, String reference, List
     }
 
 
+    public int paramSize() {
+        return params.size();
+    }
 
+    public String param(int index) {
+        return params.get(index);
+    }
+
+    public boolean hasParams() {
+        return !params.isEmpty();
+    }
 }

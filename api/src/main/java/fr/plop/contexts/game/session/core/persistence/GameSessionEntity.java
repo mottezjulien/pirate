@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.core.persistence;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
@@ -43,6 +44,10 @@ public class GameSessionEntity {
     @ManyToOne
     @JoinColumn(name = "talk_config_id")
     private TalkConfigEntity talk;
+
+    @ManyToOne
+    @JoinColumn(name = "image_config_id")
+    private ImageConfigEntity image;
 
     @Enumerated(EnumType.STRING)
     private GameSession.State state;
@@ -111,6 +116,14 @@ public class GameSessionEntity {
 
     public void setTalk(TalkConfigEntity talk) {
         this.talk = talk;
+    }
+
+    public ImageConfigEntity getImage() {
+        return image;
+    }
+
+    public void setImage(ImageConfigEntity image) {
+        this.image = image;
     }
 
     public GameSession.State getState() {

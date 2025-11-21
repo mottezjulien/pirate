@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.persistence;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
@@ -37,6 +38,10 @@ public class TemplateEntity {
     @ManyToOne
     @JoinColumn(name = "talk_id")
     private TalkConfigEntity talk;
+
+    @ManyToOne
+    @JoinColumn(name = "image_id")
+    private ImageConfigEntity image;
 
     @Column(name = "duration_in_minute")
     private long durationInMinute;
@@ -89,6 +94,14 @@ public class TemplateEntity {
         this.board = board;
     }
 
+    public ImageConfigEntity getImage() {
+        return image;
+    }
+
+    public void setImage(ImageConfigEntity image) {
+        this.image = image;
+    }
+
     public MapConfigEntity getMap() {
         return map;
     }
@@ -118,6 +131,6 @@ public class TemplateEntity {
         Template.Atom atom = new Template.Atom(id, new Template.Code(code));
         Duration duration = Duration.ofMinutes(durationInMinute);
         return new Template(atom, label, version, duration, scenario.toModel(),
-                board.toModel(), map.toModel(), talk.toModel());
+                board.toModel(), map.toModel(), talk.toModel(), image.toModel());
     }
 }

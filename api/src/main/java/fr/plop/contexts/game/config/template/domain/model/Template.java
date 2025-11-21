@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.domain.model;
 
+import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
@@ -15,7 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public record Template(Atom atom, String label, String version, Duration maxDuration, ScenarioConfig scenario,
-                       BoardConfig board, MapConfig map, TalkConfig talk) {
+                       BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
 
     private static final Duration DEFAULT_DURATION = Duration.ofMinutes(30);
 
@@ -40,7 +41,7 @@ public record Template(Atom atom, String label, String version, Duration maxDura
     }
 
     public Template(Code code, String label, ScenarioConfig scenario, BoardConfig board, MapConfig map, TalkConfig talk) {
-        this(new Atom(new Id(), code), label, "", DEFAULT_DURATION, scenario, board, map, talk);
+        this(new Atom(new Id(), code), label, "", DEFAULT_DURATION, scenario, board, map, talk, new ImageConfig());
     }
 
 

@@ -1,12 +1,6 @@
 package fr.plop.contexts.game.config.template.adapter;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
-import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
-import fr.plop.contexts.game.config.board.persistence.entity.BoardRectEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
-import fr.plop.contexts.game.config.board.persistence.repository.BoardConfigRepository;
-import fr.plop.contexts.game.config.board.persistence.repository.BoardRectRepository;
-import fr.plop.contexts.game.config.board.persistence.repository.BoardSpaceRepository;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
@@ -41,10 +35,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
     private final TemplateRepository templateRepository;
 
-    private final BoardConfigRepository boardRepository;
-    private final BoardSpaceRepository boardSpaceRepository;
-    private final BoardRectRepository boardRectRepository;
-
     private final ScenarioConfigRepository scenarioRepository;
     private final ScenarioStepRepository scenarioStepRepository;
     private final ScenarioTargetRepository scenarioTargetRepository;
@@ -58,14 +48,14 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final MapItemRepository mapItemRepository;
     private final MapPositionRepository mapPositionRepository;
 
-    private final TemplateInitTalkDataAdapter talkAdapter;
+    private final TemplateInitDataBoardAdapter boardAdapter;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, BoardConfigRepository boardRepository, BoardSpaceRepository boardSpaceRepository, BoardRectRepository boardRectRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TemplateInitTalkDataAdapter talkAdapter) {
+    private final TemplateInitDataTalkAdapter talkAdapter;
+    private final TemplateInitDataImageAdapter imageAdapter;
+
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
-        this.boardRepository = boardRepository;
-        this.boardSpaceRepository = boardSpaceRepository;
-        this.boardRectRepository = boardRectRepository;
         this.scenarioRepository = scenarioRepository;
         this.scenarioStepRepository = scenarioStepRepository;
         this.scenarioTargetRepository = scenarioTargetRepository;
@@ -77,7 +67,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.mapConfigRepository = mapConfigRepository;
         this.mapItemRepository = mapItemRepository;
         this.mapPositionRepository = mapPositionRepository;
+        this.boardAdapter = boardAdapter;
         this.talkAdapter = talkAdapter;
+        this.imageAdapter = imageAdapter;
     }
 
     @Override
@@ -101,13 +93,13 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         talkAdapter.deleteAll();
 
+        imageAdapter.deleteAll();
+
         scenarioTargetRepository.deleteAll();
         scenarioStepRepository.deleteAll();
         scenarioRepository.deleteAll();
 
-        boardRectRepository.deleteAll();
-        boardSpaceRepository.deleteAll();
-        boardRepository.deleteAll();
+        boardAdapter.deleteAll();
 
         i18nRepository.deleteAll();
     }
@@ -121,38 +113,12 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         templateEntity.setVersion(template.version());
         templateEntity.setDurationInMinute(template.maxDuration().toMinutes());
         templateEntity.setTalk(talkAdapter.createTalk(template.talk()));
-        templateEntity.setBoard(createBoard(template.board()));
+        templateEntity.setBoard(boardAdapter.createBoard(template.board()));
+        templateEntity.setImage(imageAdapter.createImage(template.image()));
         templateEntity.setScenario(createScenario(template.scenario()));
         templateEntity.setMap(createMap(template.map()));
         templateRepository.save(templateEntity);
     }
-
-
-    private BoardConfigEntity createBoard(BoardConfig board) {
-        BoardConfigEntity boardEntity = new BoardConfigEntity();
-        boardEntity.setId(board.id().value());
-        boardRepository.save(boardEntity);
-        board.spaces().forEach(space -> {
-            BoardSpaceEntity spaceEntity = new BoardSpaceEntity();
-            spaceEntity.setId(space.id().value());
-            spaceEntity.setBoard(boardEntity);
-            spaceEntity.setLabel(space.label());
-            spaceEntity.setPriority(space.priority().ordinal());
-            boardSpaceRepository.save(spaceEntity);
-            space.rects().forEach(rect -> {
-                BoardRectEntity rectEntity = new BoardRectEntity();
-                rectEntity.setId(StringTools.generate());
-                rectEntity.setSpace(spaceEntity);
-                rectEntity.setTopRightLatitude(rect.topRight().lat());
-                rectEntity.setTopRightLongitude(rect.topRight().lng());
-                rectEntity.setBottomLeftLatitude(rect.bottomLeft().lat());
-                rectEntity.setBottomLeftLongitude(rect.bottomLeft().lng());
-                boardRectRepository.save(rectEntity);
-            });
-        });
-        return boardEntity;
-    }
-
 
     private ScenarioConfigEntity createScenario(ScenarioConfig scenario) {
         ScenarioConfigEntity scenarioEntity = new ScenarioConfigEntity();
@@ -348,11 +314,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     }
 
     private I18nEntity createI18n(I18n i18n) {
-        I18nEntity entity = new I18nEntity();
-        entity.setId(i18n.id().value());
-        entity.setDescription(i18n.description());
-        entity.setJsonValues(i18n.jsonValues());
-        return i18nRepository.save(entity);
+        return i18nRepository.save(I18nEntity.fromModel(i18n));
     }
 
 }

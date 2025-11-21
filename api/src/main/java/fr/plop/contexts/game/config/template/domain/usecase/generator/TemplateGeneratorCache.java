@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.config.template.domain.usecase;
+package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 
@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  * Context pour gérer les références pendant le parsing du template.
  * Permet de définir des références et de les résoudre plus tard.
  */
-public class ParsingContext {
+public class TemplateGeneratorCache {
 
     private final Map<String, Object> references = new HashMap<>();
     private final Map<String, List<Consumer<Object>>> pendingResolvers = new HashMap<>();
@@ -98,13 +98,6 @@ public class ParsingContext {
             return Optional.of(type.cast(ref));
         }
         return Optional.empty();
-    }
-
-    /**
-     * Vérifie si une référence existe.
-     */
-    public boolean hasReference(String referenceName) {
-        return references.containsKey(referenceName);
     }
 
     /**

@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.persistence;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageConfigRepository;
 import fr.plop.contexts.game.config.board.persistence.repository.BoardConfigRepository;
 import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigRepository;
@@ -24,6 +25,9 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
 
             " LEFT JOIN FETCH template.talk talk" +
             TalkConfigRepository.FETCH_ALL +
+
+            " LEFT JOIN FETCH template.image image" +
+            ImageConfigRepository.FETCH_ALL +
 
             " WHERE template.code = :code")
     List<TemplateEntity> findByCodeFetchAll(String code);

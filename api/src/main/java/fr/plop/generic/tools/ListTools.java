@@ -1,6 +1,7 @@
 package fr.plop.generic.tools;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ListTools {
 
@@ -14,4 +15,7 @@ public class ListTools {
         return removed(diff, origin);
     }
 
+    public static <T> List<T> concat(List<T> one, List<T> other) {
+        return Stream.concat(one.stream(), other.stream()).toList();
+    }
 }

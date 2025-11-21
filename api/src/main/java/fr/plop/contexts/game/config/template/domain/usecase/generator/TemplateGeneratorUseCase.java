@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
+import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.consequence.Consequence;
@@ -11,15 +12,12 @@ import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
-import fr.plop.contexts.game.config.template.domain.usecase.ParsingContext;
 import fr.plop.contexts.game.config.template.domain.usecase.TreeGenerator;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.enumerate.BeforeOrAfter;
-import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 
@@ -29,10 +27,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class TemplateGeneratorUseCase {
 
-    private static final String SPACE_0 = "---";
-    private static final String SPACE_1 = "------";
-    private static final String SPACE_2 = "---------";
-    private static final String SPACE_3 = "------------";
+    //private static final String SPACE_0 = "---";
+    //private static final String SPACE_1 = "------";
+    //private static final String SPACE_2 = "---------";
+    //private static final String SPACE_3 = "------------";
     private static final String SEPARATOR = ":";
     public static final String DEFAULT_VERSION = "0.0.0";
     public static final String POSSIBILITY_CONDITION_KEY = "CONDITION";
@@ -44,16 +42,14 @@ public class TemplateGeneratorUseCase {
     public static final String STEP_KEY = "STEP";
     public static final String TARGET_KEY = "TARGET";
     public static final String POSSIBILITY_KEY = "POSSIBILITY";
-    public static final String BOARD_KEY = "BOARD";
-    public static final String SPACE_KEY = "SPACE";
-
+    //public static final String BOARD_KEY = "BOARD";
+    //public static final String SPACE_KEY = "SPACE";
 
     private static final String PARAM_KEY_TALK_OPTION = "option";
 
     // Langues
-    public static final String BOTTOM_LEFT = "bottomLeft";
-    public static final String TOP_RIGHT = "topRight";
-
+    //public static final String BOTTOM_LEFT = "bottomLeft";
+    //public static final String TOP_RIGHT = "topRight";
 
 
     public static class Script {
@@ -69,9 +65,11 @@ public class TemplateGeneratorUseCase {
     }
 
     private final TreeGenerator treeGenerator = new TreeGenerator();
-    private final ParsingContext context = new ParsingContext();
-    private final TemplateGeneratorTalkUseCase talkGenerator = new TemplateGeneratorTalkUseCase(context);
+    private final TemplateGeneratorCache context = new TemplateGeneratorCache();
 
+    private final TemplateGeneratorBoardUseCase boardGenerator = new TemplateGeneratorBoardUseCase();
+    private final TemplateGeneratorTalkUseCase talkGenerator = new TemplateGeneratorTalkUseCase(context);
+    private final TemplateGeneratorImageUseCase imageGenerator = new TemplateGeneratorImageUseCase();
     private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
 
     public Template apply(Script script) {
@@ -83,46 +81,16 @@ public class TemplateGeneratorUseCase {
         }
 
         Tree rootTree = trees.getFirst();
-        List<String> params = rootTree.params();
 
-        String version = !params.isEmpty() ? params.get(0) : DEFAULT_VERSION;
-        String label = params.size() > 1 ? params.get(1) : "";
+        BoardConfig board = boardGenerator.apply(rootTree);
 
+        TalkConfig talk = talkGenerator.apply(rootTree);
 
-
-
-        // 1. Parse d'abord les BoardSpaces pour créer la map value -> BoardSpace.Id
-        List<BoardSpace> boardSpaces = parseBoardSpacesFromTrees(rootTree.children());
-        Map<String, BoardSpace.Id> labelToSpaceIdMap = createLabelToSpaceIdMap(boardSpaces);
-
-        // 2. Parse les TalkItems pour définir les références avant les Steps
-        List<TalkItem> declaredTalkItems = parseTalkItemsFromTrees(rootTree.children(), context);
-        // Inclure aussi les TalkItem créés inline (ex: dans des Consequence)
-        List<TalkItem> referencedTalkItems = context.getAllReferences(TalkItem.class);
-        
-        // Build final list: declared items + referenced items not already in declared
-        Map<String, Boolean> seenIds = new HashMap<>();
-        List<TalkItem> finalTalkItems = new ArrayList<>();
-        
-        // Add declared items in order
-        for (TalkItem ti : declaredTalkItems) {
-            finalTalkItems.add(ti);
-            seenIds.put(ti.id().value(), true);
-        }
-        
-        // Add referenced items that aren't already in declared items
-        for (TalkItem ti : referencedTalkItems) {
-            if (!seenIds.containsKey(ti.id().value())) {
-                finalTalkItems.add(ti);
-                seenIds.put(ti.id().value(), true);
-            }
-        }
-        
-        TalkConfig talk = new TalkConfig(finalTalkItems);
+        ImageConfig image = imageGenerator.apply(rootTree);
 
         // 3. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
-        ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, labelToSpaceIdMap, context));
-        BoardConfig board = new BoardConfig(boardSpaces);
+        ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, board, context));
+
         MapConfig map = new MapConfig(parseMapItemsFromTrees(rootTree.children()));
 
         // 4. Vérifier qu'il n'y a pas de références non résolues
@@ -130,80 +98,33 @@ public class TemplateGeneratorUseCase {
             throw new TemplateException("Unresolved references: " + context.getUnresolvedReferences());
         }
 
-        return new Template(templateAtom(rootTree), label, version, maxDurationFromParams(params), scenario, board, map, talk);
-    }
-
-    private static Template.Atom templateAtom(Tree rootTree) {
-        return new Template.Atom(new Template.Id(), new Template.Code(rootTree.headerKeepCase()));
-    }
-
-    private static Duration maxDurationFromParams(List<String> params) {
-        if (params.size() > 2 && !params.get(2).isEmpty()) {
-            return Duration.ofMinutes(Long.parseLong(params.get(2)));
+        String version = rootTree.hasParams() ? rootTree.param(0) : DEFAULT_VERSION;
+        String label = rootTree.paramSize() > 1 ? rootTree.param(1) : "";
+        Duration duration = Duration.ofHours(1);
+        if (rootTree.paramSize() > 2 && !rootTree.param(2).isEmpty()) {
+            duration = Duration.ofMinutes(Long.parseLong(rootTree.param(2)));
         }
-        return Duration.ofHours(1); // Valeur par défaut
+        Template.Atom templateAtom = new Template.Atom(new Template.Id(), new Template.Code(rootTree.headerKeepCase()));
+        return new Template(templateAtom, label, version, duration, scenario, board, map, talk, image);
     }
 
     // ============ NOUVELLES METHODES BASEES SUR TREEGENERATOR ============
 
-    private Map<String, BoardSpace.Id> createLabelToSpaceIdMap(List<BoardSpace> boardSpaces) {
-        Map<String, BoardSpace.Id> map = new HashMap<>();
-        for (BoardSpace space : boardSpaces) {
-            map.put(space.label(), space.id());
-        }
-        return map;
-    }
-
-    private BoardSpace.Id resolveSpaceId(String spaceLabel, Map<String, BoardSpace.Id> labelToSpaceIdMap) {
-        BoardSpace.Id resolvedId = labelToSpaceIdMap.get(spaceLabel);
-        if (resolvedId != null) {
-            // Le value correspond à un BoardSpace existant, on utilise son ID
-            return resolvedId;
-        } else {
-            // Le value ne correspond à aucun BoardSpace, on crée un nouvel ID
-            // (comportement de fallback pour rétrocompatibilité)
-            return new BoardSpace.Id(spaceLabel);
-        }
-    }
-
-    private List<BoardSpace> parseBoardSpacesFromTrees(List<Tree> trees) {
-        List<BoardSpace> spaces = new ArrayList<>();
-
-        for (Tree tree : trees) {
-            if (BOARD_KEY.equalsIgnoreCase(tree.header())) {
-                // Un Board peut contenir plusieurs Spaces
-                for (Tree spaceTree : tree.children()) {
-                    if (SPACE_KEY.equalsIgnoreCase(spaceTree.header())) {
-                        BoardSpace space = parseBoardSpaceFromTree(spaceTree);
-                        spaces.add(space);
-                    }
-                }
-            }
-        }
-
-        return spaces;
+    private BoardSpace.Id findSpaceId(BoardConfig board, String value) {
+        Optional<BoardSpace> optSpace = board.findByLabel(value);
+        return optSpace.map(BoardSpace::id)
+                .orElseGet(() -> new BoardSpace.Id(value));
     }
 
     private List<MapItem> parseMapItemsFromTrees(List<Tree> trees) {
         List<MapItem> mapItems = new ArrayList<>();
-
         for (Tree tree : trees) {
             if ("MAP".equalsIgnoreCase(tree.header())) {
                 MapItem item = parseMapItemFromTree(tree);
                 mapItems.add(item);
             }
         }
-
         return mapItems;
-    }
-
-    private List<TalkItem> parseTalkItemsFromTrees(List<Tree> trees, ParsingContext context) {
-        for (Tree tree : trees) {
-            if ("TALK".equalsIgnoreCase(tree.header())) {
-                return talkGenerator.apply(tree);
-            }
-        }
-        return new ArrayList<>();
     }
 
     private MapItem parseMapItemFromTree(Tree mapTree) {
@@ -213,7 +134,7 @@ public class TemplateGeneratorUseCase {
         }
 
         // Format: "Map:Asset:imgs/first/map.png"
-        String type = params.get(0); // "Asset"
+        //String type = params.get(0); // "Asset"
         String imagePath = params.get(1); // "imgs/first/map.png"
 
         // Parse priority and positions from children
@@ -223,7 +144,7 @@ public class TemplateGeneratorUseCase {
 
         for (Tree child : mapTree.children()) {
             if ("PRIORITY".equalsIgnoreCase(child.header()) && !child.params().isEmpty()) {
-                priority = parseMapPriority(child.params().get(0));
+                priority = MapItem.Priority.valueOf(child.params().getFirst().toUpperCase());
             } else if ("POSITION".equalsIgnoreCase(child.header()) && child.params().size() >= 2) {
                 // Format: "position:89.09:10.064"
                 float x = Float.parseFloat(child.params().get(0));
@@ -233,19 +154,13 @@ public class TemplateGeneratorUseCase {
                 MapItem.Priority positionPriority = MapItem.Priority.LOW; // default
                 for (Tree posChild : child.children()) {
                     if ("PRIORITY".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
-                        positionPriority = parseMapPriority(posChild.params().get(0));
+                        positionPriority = MapItem.Priority.valueOf(posChild.params().getFirst().toUpperCase());
                     } else if ("SPACE".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
-                        stepIds.add(new ScenarioConfig.Step.Id(posChild.params().get(0)));
+                        stepIds.add(new ScenarioConfig.Step.Id(posChild.params().getFirst()));
                     }
                 }
 
-                MapItem.Position.Atom atom = new MapItem.Position.Atom(
-                        new MapItem.Position.Id(),
-                        "", // value vide pour l'instant
-                        positionPriority,
-                        List.of() // spaceIds vides pour l'instant
-                );
-
+                MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(),"", positionPriority, List.of());
                 MapItem.Position position = new MapItem.Position.Point(atom, x, y);
                 positions.add(position);
             }
@@ -264,155 +179,20 @@ public class TemplateGeneratorUseCase {
         );
     }
 
-    private MapItem.Priority parseMapPriority(String priorityStr) {
-        return switch (priorityStr.toUpperCase()) {
-            case "HIGHEST" -> MapItem.Priority.HIGHEST;
-            case "HIGH" -> MapItem.Priority.HIGH;
-            case "MEDIUM" -> MapItem.Priority.MEDIUM;
-            case "LOW" -> MapItem.Priority.LOW;
-            case "LOWEST" -> MapItem.Priority.LOWEST;
-            default -> MapItem.Priority.LOW;
-        };
-    }
-
-    private BoardSpace parseBoardSpaceFromTree(Tree spaceTree) {
-        List<String> params = spaceTree.params();
-        if (params.size() < 2) {
-            throw new TemplateException("Invalid space format in tree: " + spaceTree);
-        }
-
-        String label = params.get(0);
-        BoardSpace.Priority priority = parsePriority(params.get(1));
-
-        List<Rect> rects = parseRectsFromTrees(spaceTree.children());
-
-        return new BoardSpace(label, priority, rects);
-    }
-
-    private List<Rect> parseRectsFromTrees(List<Tree> trees) {
-        List<Rect> rects = new ArrayList<>();
-
-        for (Tree tree : trees) {
-            // Les rectangles sont des arbres avec header et params
-            Rect rect = parseRectFromTree(tree);
-            if (rect != null) {
-                rects.add(rect);
-            }
-        }
-
-        return rects;
-    }
-
-    private Rect parseRectFromTreeParams(List<String> params) {
-        // Note: Avec TreeGenerator, le format est différent. 
-        // Le header contient bottomLeft/topRight, et les params contiennent les coordonnées
-        return null; // Sera géré dans parseRectFromTree
-    }
-
-    private Rect parseRectFromTree(Tree tree) {
-        String header = tree.header();
-        List<String> params = tree.params();
-
-        // Format court: header numérique avec 4 params numériques [1, 2, 4, 3]
-        if (params.size() == 3 && isAllNumeric(new String[]{header, params.get(0), params.get(1), params.get(2)})) {
-            try {
-                Point bottomLeft = new Point(Float.parseFloat(header), Float.parseFloat(params.get(0)));
-                Point topRight = new Point(Float.parseFloat(params.get(1)), Float.parseFloat(params.get(2)));
-                return new Rect(bottomLeft, topRight);
-            } catch (NumberFormatException e) {
-                // Continue to long format
-            }
-        }
-
-        // Format long: header="bottomLeft", params=[5.7, 10, topRight, 8.097, 50.43]
-        Point bottomLeft = null;
-        Point topRight = null;
-
-        if (BOTTOM_LEFT.equalsIgnoreCase(header) && params.size() >= 2) {
-            try {
-                float x = Float.parseFloat(params.get(0));
-                float y = Float.parseFloat(params.get(1));
-                bottomLeft = new Point(x, y);
-
-                // Chercher topRight dans la suite des params
-                for (int i = 2; i < params.size(); i++) {
-                    if (TOP_RIGHT.equalsIgnoreCase(params.get(i)) && i + 2 < params.size()) {
-                        float x2 = Float.parseFloat(params.get(i + 1));
-                        float y2 = Float.parseFloat(params.get(i + 2));
-                        topRight = new Point(x2, y2);
-                        break;
-                    }
-                }
-            } catch (NumberFormatException e) {
-                // Continue
-            }
-        } else if (TOP_RIGHT.equalsIgnoreCase(header) && params.size() >= 2) {
-            try {
-                float x = Float.parseFloat(params.get(0));
-                float y = Float.parseFloat(params.get(1));
-                topRight = new Point(x, y);
-
-                // Chercher bottomLeft dans la suite des params
-                for (int i = 2; i < params.size(); i++) {
-                    if (BOTTOM_LEFT.equalsIgnoreCase(params.get(i)) && i + 2 < params.size()) {
-                        float x2 = Float.parseFloat(params.get(i + 1));
-                        float y2 = Float.parseFloat(params.get(i + 2));
-                        bottomLeft = new Point(x2, y2);
-                        break;
-                    }
-                }
-            } catch (NumberFormatException e) {
-                // Continue
-            }
-        }
-
-        if (bottomLeft != null && topRight != null) {
-            return new Rect(bottomLeft, topRight);
-        }
-
-        return null;
-    }
-
-
     // ============ ANCIENNES METHODES (à conserver pour le moment) ============
 
-    private List<ScenarioConfig.Step> parseSteps(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
+    private List<ScenarioConfig.Step> parseSteps(Tree root, BoardConfig board, TemplateGeneratorCache context) {
         List<ScenarioConfig.Step> steps = new ArrayList<>();
         root.children().forEach(child -> {
             if (child.header().startsWith(STEP_KEY)) {
-                ScenarioConfig.Step step = parseStep(child, labelToSpaceIdMap, context);
+                ScenarioConfig.Step step = parseStep(child, board, context);
                 steps.add(step);
             }
         });
         return steps;
     }
 
-    private List<BoardSpace> parseBoardSpaces(String[] lines) {
-        List<BoardSpace> spaces = new ArrayList<>();
-
-        for (int i = 1; i < lines.length; i++) {
-            String line = lines[i].trim();
-
-            if (line.startsWith(SPACE_0 + " " + BOARD_KEY)) {
-                // On a trouvé un board, on parse ses spaces
-                for (int j = i + 1; j < lines.length; j++) {
-                    String spaceLine = lines[j].trim();
-
-                    if (spaceLine.startsWith(SPACE_1 + " " + SPACE_KEY)) {
-                        BoardSpace space = parseBoardSpace(spaceLine, lines, j);
-                        spaces.add(space);
-                    } else if (spaceLine.startsWith(SPACE_0 + " ")) {
-                        // On a atteint un autre élément de niveau 0, on sort
-                        break;
-                    }
-                }
-            }
-        }
-
-        return spaces;
-    }
-
-    private ScenarioConfig.Step parseStep(Tree root, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
+    private ScenarioConfig.Step parseStep(Tree root, BoardConfig board, TemplateGeneratorCache context) {
         // Extraire la référence du header si elle existe : "Step(ref REF_STEP_A)"
         String referenceName = root.reference();
 
@@ -449,12 +229,7 @@ public class TemplateGeneratorUseCase {
         });
 
         // Créer le step d'abord (sans les possibilités)
-        ScenarioConfig.Step step = new ScenarioConfig.Step(
-                new ScenarioConfig.Step.Id(),
-                stepLabel,
-                targets,
-                new ArrayList<>() // possibilités vides pour l'instant
-        );
+        ScenarioConfig.Step step = new ScenarioConfig.Step(new ScenarioConfig.Step.Id(), stepLabel, targets, new ArrayList<>());
 
         // Enregistrer la référence immédiatement si elle existe
         if (referenceName != null) {
@@ -466,17 +241,12 @@ public class TemplateGeneratorUseCase {
 
         // Parse toutes les possibilités maintenant que CURRENT_STEP est disponible
         for (Tree possibilityTree : possibilityTrees) {
-            Possibility possibility = parsePossibility(possibilityTree, labelToSpaceIdMap, context);
+            Possibility possibility = parsePossibility(possibilityTree, board, context);
             possibilities.add(possibility);
         }
 
         // Mettre à jour le step avec les possibilités
-        ScenarioConfig.Step finalStep = new ScenarioConfig.Step(
-                step.id(),
-                stepLabel,
-                targets,
-                possibilities
-        );
+        ScenarioConfig.Step finalStep = new ScenarioConfig.Step(step.id(), stepLabel, targets, possibilities);
 
         // Mettre à jour les références avec le step final
         if (referenceName != null) {
@@ -487,7 +257,7 @@ public class TemplateGeneratorUseCase {
         return finalStep;
     }
 
-    private ScenarioConfig.Target parseTarget(Tree tree, ParsingContext context) {
+    private ScenarioConfig.Target parseTarget(Tree tree, TemplateGeneratorCache context) {
         // Extraire la référence du header si elle existe : "Target (ref TARGET_ATTERRIR):FR:..."
         String referenceName = tree.reference();
 
@@ -535,40 +305,25 @@ public class TemplateGeneratorUseCase {
         if (referenceName != null) {
             context.registerReference(referenceName, target);
         }
-
         return target;
     }
-
-
-
 
     private Optional<I18n> parseI18nFromLine(String line) {
         // Format: "FR:Chez Moi:EN:At Home" ou "EN:Office:FR:Bureau"
         String[] parts = line.split(SEPARATOR);
-
         if (parts.length >= 4) {
             Map<Language, String> i18nMap = new HashMap<>();
-
             for (int i = 0; i < parts.length - 1; i += 2) {
-                String langCode = parts[i].trim();
-                String text = parts[i + 1].trim();
-
-                if ("FR".equals(langCode)) {
-                    i18nMap.put(Language.FR, text);
-                } else if ("EN".equals(langCode)) {
-                    i18nMap.put(Language.EN, text);
-                }
+                i18nMap.put(Language.valueOf(parts[i].trim()), parts[i + 1].trim());
             }
-
             if (!i18nMap.isEmpty()) {
                 return Optional.of(new I18n(i18nMap));
             }
         }
-
         return Optional.empty();
     }
 
-    private Possibility parsePossibility(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
+    private Possibility parsePossibility(Tree tree, BoardConfig board, TemplateGeneratorCache context) {
         // Format: "------" + " Possibility:ALWAYS" ou "------" + " Possibility:times:4:OR" ou "------" + " Possibility"
         AtomicReference<PossibilityRecurrence> recurrence = new AtomicReference<>(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id())); // Par défaut
 
@@ -607,7 +362,7 @@ public class TemplateGeneratorUseCase {
             String actionStr = child.header().trim();
             switch (actionStr) {
                 case POSSIBILITY_CONDITION_KEY:
-                    conditions.add(parseCondition(child, labelToSpaceIdMap));
+                    conditions.add(parseCondition(child, board));
                     break;
                 case POSSIBILITY_CONSEQUENCE_KEY:
                     consequences.add(parseConsequence(child, context));
@@ -627,7 +382,7 @@ public class TemplateGeneratorUseCase {
         tree.children().forEach(child -> {
             String actionStr = child.header().trim();
             if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
-                trigger.set(parseTrigger(child, labelToSpaceIdMap, context));
+                trigger.set(parseTrigger(child, board, context));
             }
         });
 
@@ -638,26 +393,38 @@ public class TemplateGeneratorUseCase {
         return new Possibility(recurrence.get(), trigger.get(), conditions, conditionType, consequences);
     }
 
-    private PossibilityCondition parseCondition(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap) {
+    private PossibilityCondition parseCondition(Tree tree, BoardConfig board) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
+            case "insidespace" -> {
+                // Format: "CONDITION:InsideSpace:spaceId:LABEL" ou "CONDITION:InsideSpace:LABEL" (legacy)
+                Tree subTree = tree.sub();
+                String spaceLabel;
+                if (subTree.hasUniqueParam()) {
+                    spaceLabel = subTree.uniqueParam();
+                } else if (subTree.hasParamKey("spaceId")) {
+                    spaceLabel = subTree.paramValue("spaceId");
+                } else {
+                    throw new TemplateException("InsideSpace missing required parameter: spaceId");
+                }
+
+                BoardSpace.Id spaceId = findSpaceId(board, spaceLabel);
+                return new PossibilityCondition.InsideSpace(
+                        new PossibilityCondition.Id(),
+                        spaceId
+                );
+            }
             case "outsidespace" -> {
                 if (tree.params().size() == 2) {
-                    String spaceLabel = tree.params().get(1);
-                    BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
+                    BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(1));
                     return new PossibilityCondition.OutsideSpace(
                             new PossibilityCondition.Id(),
                             spaceId
                     );
                 }
-                String spaceLabel = tree.params().get(2);
-                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
-                return new PossibilityCondition.OutsideSpace(
-                        new PossibilityCondition.Id(),
-                        spaceId
-                );
-
+                BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(2));
+                return new PossibilityCondition.OutsideSpace(new PossibilityCondition.Id(), spaceId);
             }
             case "absolutetime" -> {
                 // Format: "CONDITION:ABSOLUTETIME:Duration:27" -> params=[ABSOLUTETIME, Duration, 27] 
@@ -672,11 +439,7 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("AbsoluteTime condition missing required parameter: Duration");
                 }
                 
-                return new PossibilityCondition.AbsoluteTime(
-                        new PossibilityCondition.Id(),
-                        Duration.ofMinutes(Long.parseLong(durationStr)),
-                        BeforeOrAfter.BEFORE //TODO
-                );
+                return new PossibilityCondition.AbsoluteTime(new PossibilityCondition.Id(),Duration.ofMinutes(Long.parseLong(durationStr)), BeforeOrAfter.BEFORE);
             }
             case "instep" -> {
                 // Format: "CONDITION:InStep:stepId:0987" ou "CONDITION:InStep:0987" (legacy)
@@ -695,24 +458,7 @@ public class TemplateGeneratorUseCase {
                         new ScenarioConfig.Step.Id(stepIdStr)
                 );
             }
-            case "insidespace" -> {
-                // Format: "CONDITION:InsideSpace:spaceId:LABEL" ou "CONDITION:InsideSpace:LABEL" (legacy)
-                Tree subTree = tree.sub();
-                String spaceLabel;
-                if (subTree.hasUniqueParam()) {
-                    spaceLabel = subTree.uniqueParam();
-                } else if (subTree.hasParamKey("spaceId")) {
-                    spaceLabel = subTree.paramValue("spaceId");
-                } else {
-                    throw new TemplateException("InsideSpace missing required parameter: spaceId");
-                }
 
-                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
-                return new PossibilityCondition.InsideSpace(
-                        new PossibilityCondition.Id(),
-                        spaceId
-                );
-            }
             case "steptarget" -> {
                 // Format: "CONDITION:StepTarget:targetId:TARGET_REF" ou "CONDITION:StepTarget:TARGET_REF" (legacy)
                 Tree subTree = tree.sub();
@@ -753,25 +499,25 @@ public class TemplateGeneratorUseCase {
         throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
     }
 
-    private Consequence parseConsequence(Tree tree, ParsingContext context) {
+    private Consequence parseConsequence(Tree tree, TemplateGeneratorCache context) {
         // Format: "---------" + " consequence:Alert" ou "---------" + " consequence:GoalTarget:stepId:EFG:targetId:9876:state:FAILURE"
 
         if (tree.params().isEmpty()) {
             throw new TemplateException("Invalid consequence format: no type specified");
         }
 
-        String type = tree.params().get(0).toLowerCase();
+        String type = tree.params().getFirst().toUpperCase();
         switch (type) {
-            case "alert" -> {
+            case "ALERT" -> {
                 // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
                 Optional<I18n> messageOpt = i18nGenerator.apply(tree.children());
                 I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
                 return new Consequence.DisplayMessage(new Consequence.Id(), message);
             }
-            case "goaltarget" -> {
+            case "GOALTARGET" -> {
                 return parseGoalTargetConsequence(tree, context);
             }
-            case "goal" -> {
+            case "GOAL" -> {
                 // Format: "Goal:state:SUCCESS:stepId:KLM" ou autre ordre
                 Map<String, String> paramMap = parseKeyValueParams(tree.params());
 
@@ -786,7 +532,7 @@ public class TemplateGeneratorUseCase {
                 ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(stepIdParam);
                 return new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
-            case "addobjet" -> {
+            case "ADDOBJECT" -> {
                 // Format: "AddObjet:objetId:SWORD123"
                 if (tree.params().size() < 3) {
                     throw new TemplateException("AddObjet missing required parameters: objetId");
@@ -794,21 +540,16 @@ public class TemplateGeneratorUseCase {
 
                 // Support legacy format directement ou nouveau format key:value
                 String objetId;
-                if (tree.params().size() == 2) {
-                    // Legacy: "AddObjet:SWORD123"
-                    objetId = tree.params().get(1);
-                } else {
-                    // Nouveau: "AddObjet:objetId:SWORD123"
-                    Map<String, String> paramMap = parseKeyValueParams(tree.params());
-                    objetId = paramMap.get("objetid");
-                    if (objetId == null) {
-                        throw new TemplateException("AddObjet missing required parameter: objetId");
-                    }
+                // Nouveau: "AddObjet:objetId:SWORD123"
+                Map<String, String> paramMap = parseKeyValueParams(tree.params());
+                objetId = paramMap.get("objetid");
+                if (objetId == null) {
+                    throw new TemplateException("AddObjet missing required parameter: objetId");
                 }
 
                 return new Consequence.ObjetAdd(new Consequence.Id(), objetId);
             }
-            case "updatedmetadata" -> {
+            case "UPDATEDMETADATA" -> {
                 // Format: "UpdatedMetadata:metadataId:META123:value:25.5" ou "UpdatedMetadata:metadataId:META123:toMinutes:25.5"
                 Map<String, String> paramMap = parseKeyValueParams(tree.params());
 
@@ -825,20 +566,19 @@ public class TemplateGeneratorUseCase {
                 float value = Float.parseFloat(valueStr);
                 return new Consequence.UpdatedMetadata(new Consequence.Id(), metadataId, value);
             }
-            case "talkoptions" -> {
+            case "TALKOPTIONS" -> {
                 return parseTalkOptionsConsequence(tree, context);
             }
-            case "talk" -> {
+            case "TALK" -> {
                 return parseTalkConsequence(tree, context);
             }
-            case "gameover" -> {
-                return parseGameOverConsequence(tree, context);
+            case "GAMEOVER" -> {
+                return parseGameOverConsequence(tree);
             }
         }
-
         throw new TemplateException("Invalid consequence format: " + type);
     }
-
+/*
     private I18n parseAlertMessage(String[] allLines, int startIndex) {
         Map<Language, String> messages = new HashMap<>();
         StringBuilder currentMessage = new StringBuilder();
@@ -883,25 +623,25 @@ public class TemplateGeneratorUseCase {
         }
 
         return new I18n(messages);
-    }
+    }*/
 
-    private PossibilityTrigger parseTrigger(Tree tree, Map<String, BoardSpace.Id> labelToSpaceIdMap, ParsingContext context) {
+    private PossibilityTrigger parseTrigger(Tree tree, BoardConfig board, TemplateGeneratorCache context) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
             case "goinspace" -> {
                 // Format: "Trigger:GoInSpace:SpaceId:ABCD" ou "Trigger:GoInSpace:EFG" (legacy)
                 Tree subTree = tree.sub();
-                String spaceLabel;
+                String spaceValue;
                 if (subTree.hasUniqueParam()) {
-                    spaceLabel = subTree.uniqueParam();
+                    spaceValue = subTree.uniqueParam();
                 } else if (subTree.hasParamKey("SpaceId")) {
-                    spaceLabel = subTree.paramValue("SpaceId");
+                    spaceValue = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoInSpace missing required parameter: SpaceId");
                 }
 
-                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
+                BoardSpace.Id spaceId = findSpaceId(board, spaceValue);
                 return new PossibilityTrigger.SpaceGoIn(
                         new PossibilityTrigger.Id(),
                         spaceId
@@ -910,16 +650,16 @@ public class TemplateGeneratorUseCase {
             case "gooutspace" -> {
                 // Format: "Trigger:GoOutSpace:SpaceId:ABCD" ou "Trigger:GoOutSpace:EFG" (legacy)
                 Tree subTree = tree.sub();
-                String spaceLabel;
+                String spaceValue;
                 if (subTree.hasUniqueParam()) {
-                    spaceLabel = subTree.uniqueParam();
+                    spaceValue = subTree.uniqueParam();
                 } else if (subTree.hasParamKey("SpaceId")) {
-                    spaceLabel = subTree.paramValue("SpaceId");
+                    spaceValue = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoOutSpace missing required parameter: SpaceId");
                 }
 
-                BoardSpace.Id spaceId = resolveSpaceId(spaceLabel, labelToSpaceIdMap);
+                BoardSpace.Id spaceId = findSpaceId(board, spaceValue);
                 return new PossibilityTrigger.SpaceGoOut(
                         new PossibilityTrigger.Id(),
                         spaceId
@@ -995,8 +735,6 @@ public class TemplateGeneratorUseCase {
                 );
             }
         }
-
-
         return null;
     }
 
@@ -1006,120 +744,6 @@ public class TemplateGeneratorUseCase {
             case "failure" -> ScenarioGoal.State.FAILURE;
             default -> ScenarioGoal.State.ACTIVE;
         };
-    }
-
-    private BoardSpace parseBoardSpace(String spaceLine, String[] allLines, int currentIndex) {
-        // Format: "------" + " Space:Mon premier espace:LOW"
-        String spaceInfo = spaceLine.substring((SPACE_1 + " " + SPACE_KEY + SEPARATOR).length());
-        String[] parts = spaceInfo.split(SEPARATOR);
-
-        if (parts.length < 2) {
-            throw new TemplateException("Invalid space format: " + spaceLine);
-        }
-
-        String label = parts[0];
-        BoardSpace.Priority priority = parsePriority(parts[1]);
-
-        // Parse les rectangles qui suivent
-        List<Rect> rects = parseRects(allLines, currentIndex);
-
-        return new BoardSpace(label, priority, rects);
-    }
-
-    private BoardSpace.Priority parsePriority(String priorityStr) {
-        return switch (priorityStr.toUpperCase()) {
-            case "HIGHEST" -> BoardSpace.Priority.HIGHEST;
-            case "HIGH" -> BoardSpace.Priority.HIGH;
-            case "MEDIUM" -> BoardSpace.Priority.MEDIUM;
-            case "LOW" -> BoardSpace.Priority.LOW;
-            case "LOWEST" -> BoardSpace.Priority.LOWEST;
-            default -> BoardSpace.Priority.MEDIUM;
-        };
-    }
-
-    private List<Rect> parseRects(String[] allLines, int currentIndex) {
-        List<Rect> rects = new ArrayList<>();
-
-        for (int i = currentIndex + 1; i < allLines.length; i++) {
-            String line = allLines[i].trim();
-
-            if (line.startsWith(SPACE_2 + " ")) {
-                // Différents formats de rectangles supportés
-                Rect rect = parseRect(line);
-                if (rect != null) {
-                    rects.add(rect);
-                }
-            } else if (line.startsWith(SPACE_1 + " ") || line.startsWith(SPACE_0 + " ")) {
-                // On a atteint un autre élément, on sort
-                break;
-            }
-        }
-
-        return rects;
-    }
-
-    private Rect parseRect(String rectLine) {
-        String rectInfo = rectLine.substring(SPACE_2.length() + 1);
-        String[] segments = rectInfo.split(SEPARATOR);
-
-        // Format court: "1:2:4:3" ou "89.745:5.5684:0.8547:8.147"
-        if (segments.length == 4 && isAllNumeric(segments)) {
-            try {
-                float x1 = Float.parseFloat(segments[0]);
-                float y1 = Float.parseFloat(segments[1]);
-                float x2 = Float.parseFloat(segments[2]);
-                float y2 = Float.parseFloat(segments[3]);
-
-                Point bottomLeft = new Point(x1, y1);
-                Point topRight = new Point(x2, y2);
-                return new Rect(bottomLeft, topRight);
-            } catch (NumberFormatException e) {
-                // Fallback vers le format long
-            }
-        }
-
-        // Format long: "bottomLeft:5.7:10:topRight:8.097:50.43"
-        Point bottomLeft = null;
-        Point topRight = null;
-
-        for (int i = 0; i < segments.length; i++) {
-            if (BOTTOM_LEFT.equals(segments[i]) && i + 2 < segments.length) {
-                try {
-                    float x = Float.parseFloat(segments[i + 1]);
-                    float y = Float.parseFloat(segments[i + 2]);
-                    bottomLeft = new Point(x, y);
-                    i += 2; // Avancer de 2 positions
-                } catch (NumberFormatException e) {
-                    // Ignorer cette partie
-                }
-            } else if (TOP_RIGHT.equals(segments[i]) && i + 2 < segments.length) {
-                try {
-                    float x = Float.parseFloat(segments[i + 1]);
-                    float y = Float.parseFloat(segments[i + 2]);
-                    topRight = new Point(x, y);
-                    i += 2; // Avancer de 2 positions
-                } catch (NumberFormatException e) {
-                    // Ignorer cette partie
-                }
-            }
-        }
-
-        if (bottomLeft != null && topRight != null) {
-            return new Rect(bottomLeft, topRight);
-        }
-
-        return null;
-    }
-
-    private boolean isAllNumeric(String[] segments) {
-        for (String segment : segments) {
-            try {
-                Float.parseFloat(segment);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -1153,7 +777,7 @@ public class TemplateGeneratorUseCase {
      * Format: "GoalTarget:stepId:EFG123:targetId:TARGET_ATTERRIR:state:active" ou ordre différent
      * Format simplifié: "GoalTarget:targetId:TARGET_ATTERRIR:state:active" (stepId déduit automatiquement)
      */
-    private Consequence parseGoalTargetConsequence(Tree tree, ParsingContext context) {
+    private Consequence parseGoalTargetConsequence(Tree tree, TemplateGeneratorCache context) {
         // Paramètres attendus: ["goaltarget", puis des paires clé:valeur]
         // Minimum: targetId + state (stepId optionnel)
         if (tree.params().size() < 5) {
@@ -1245,7 +869,7 @@ public class TemplateGeneratorUseCase {
         return new Consequence.ScenarioTarget(new Consequence.Id(), resolvedStepId.get(), resolvedTargetId.get(), state);
     }
 
-    private Consequence parseTalkOptionsConsequence(Tree tree, ParsingContext context) {
+    private Consequence parseTalkOptionsConsequence(Tree tree, TemplateGeneratorCache context) {
         // Cas 1: TalkOptions avec référence (ex: "TalkOptions:OPTIONS_ABCD")
         if (tree.params().size() >= 2) {
             String reference = tree.params().get(1); // "OPTIONS_ABCD"
@@ -1255,7 +879,7 @@ public class TemplateGeneratorUseCase {
         throw new TemplateException("TalkOptions consequence without reference");
     }
     
-    private Consequence parseTalkOptionsWithReference(String reference, ParsingContext context) {
+    private Consequence parseTalkOptionsWithReference(String reference, TemplateGeneratorCache context) {
         // Créer une référence atomique pour stocker l'ID résolu
         AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
         
@@ -1279,7 +903,7 @@ public class TemplateGeneratorUseCase {
     
 
 
-    private Consequence parseTalkConsequence(Tree tree, ParsingContext context) {
+    private Consequence parseTalkConsequence(Tree tree, TemplateGeneratorCache context) {
         // Format: "Consequence:Talk:TALK000"
         // tree.params() contient ["Talk", "TALK000"]
         
@@ -1310,7 +934,7 @@ public class TemplateGeneratorUseCase {
         return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
     }
 
-    private Consequence parseGameOverConsequence(Tree tree, ParsingContext context) {
+    private Consequence parseGameOverConsequence(Tree tree) {
         // Format: "Consequence:GameOver:FAILURE_ONE_CONTINUE"
         // tree.params() contient ["GameOver", "FAILURE_ONE_CONTINUE"]
         
@@ -1336,7 +960,7 @@ public class TemplateGeneratorUseCase {
      * Trouve le TalkItem qui contient une option donnée.
      * Cette méthode sera appelée plus tard quand les références seront résolues.
      */
-    private TalkItem.Id findTalkItemContainingOption(TalkItem.Options.Option.Id optionId, ParsingContext context) {
+    private TalkItem.Id findTalkItemContainingOption(TalkItem.Options.Option.Id optionId, TemplateGeneratorCache context) {
         // Cette méthode sera implémentée si nécessaire, mais l'approche optimale 
         // est d'enregistrer cette relation lors du parsing
         return context.getOptionToTalkItemMapping(optionId);
@@ -1349,7 +973,7 @@ public class TemplateGeneratorUseCase {
      * @param context     Le contexte de parsing contenant les références
      * @return L'ID du step qui contient ce target, ou Optional.empty() si non trouvé
      */
-    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, ParsingContext context) {
+    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, TemplateGeneratorCache context) {
         // D'abord essayer de résoudre le target comme une référence
         Optional<ScenarioConfig.Target> referencedTarget = context.getReference(targetParam, ScenarioConfig.Target.class);
 
@@ -1384,7 +1008,7 @@ public class TemplateGeneratorUseCase {
 
 
 
-    private PossibilityTrigger createTalkOptionSelect(Tree tree, ParsingContext context) {
+    private PossibilityTrigger createTalkOptionSelect(Tree tree, TemplateGeneratorCache context) {
         // Format: "Trigger:SelectTalkOption:option:REF_CHOIX_A" ou "Trigger:SelectTalkOption:REF_CHOIX_A" (legacy)
 
         Tree subTree = tree.sub();
@@ -1397,17 +1021,6 @@ public class TemplateGeneratorUseCase {
         } else {
             throw new TemplateException("TalkOptionSelect missing required parameter: option");
         }
-
-        /*String optionReference;
-        if (tree.params().size() >= 3 && PARAM_KEY_TALK_OPTION.equalsIgnoreCase(tree.params().get(1))) {
-            // Nouveau format key:value: SelectTalkOption:option:REF_CHOIX_A
-            optionReference = tree.params().get(2);
-        } else if (tree.params().size() == 2) {
-            // Legacy format: SelectTalkOption:REF_CHOIX_A
-            optionReference = tree.params().get(1);
-        } else {
-            throw new TemplateException("TalkOptionSelect missing required parameter: option");
-        }*/
 
         // Créer des références atomiques pour l'option et son TalkItem parent
         AtomicReference<TalkItem.Options.Option.Id> resolvedOptionId = new AtomicReference<>();

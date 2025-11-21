@@ -1,7 +1,9 @@
 package fr.plop.contexts.game.config.board.persistence.entity;
 
+import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
+import fr.plop.generic.tools.StringTools;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,7 +11,6 @@ import jakarta.persistence.*;
 public class BoardRectEntity {
 
     @Id
-    //@UuidGenerator
     private String id;
 
     @ManyToOne
@@ -79,4 +80,18 @@ public class BoardRectEntity {
     public Rect toModel() {
         return new Rect(new Point(bottomLeftLatitude, bottomLeftLongitude), new Point(topRightLatitude, topRightLongitude));
     }
+
+    public static BoardRectEntity fromModel(BoardSpace.Id spaceId, Rect model) {
+        BoardRectEntity entity = new BoardRectEntity();
+        entity.setId(StringTools.generate());
+        BoardSpaceEntity spaceEntity = new BoardSpaceEntity();
+        spaceEntity.setId(spaceId.value());
+        entity.setSpace(spaceEntity);
+        entity.setTopRightLatitude(model.topRight().lat());
+        entity.setTopRightLongitude(model.topRight().lng());
+        entity.setBottomLeftLatitude(model.bottomLeft().lat());
+        entity.setBottomLeftLongitude(model.bottomLeft().lng());
+        return entity;
+    }
+
 }

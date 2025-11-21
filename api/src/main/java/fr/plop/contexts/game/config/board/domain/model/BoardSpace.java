@@ -30,5 +30,9 @@ public record BoardSpace(Id id, String label, Priority priority, List<Rect> rect
         return rects.stream().anyMatch(rect -> rect.in(point));
     }
 
+    public boolean hasLabel(String label) {
+        return this.label.equalsIgnoreCase(label);
+    }
+
 
 }

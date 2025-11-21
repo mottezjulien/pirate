@@ -25,6 +25,8 @@ public class TemplateInitUseCase {
     }
 
     public void apply() {
+
+        //TODO: On supprime tout comme des gros bourrins ???
         /*if (outPort.isEmpty()) {
             outPort.create(firstTemplate());
         }*/

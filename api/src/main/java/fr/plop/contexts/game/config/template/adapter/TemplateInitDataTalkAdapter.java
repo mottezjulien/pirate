@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Component
-public class TemplateInitTalkDataAdapter {
+public class TemplateInitDataTalkAdapter {
 
     private final I18nRepository i18nRepository;
 
@@ -25,7 +25,7 @@ public class TemplateInitTalkDataAdapter {
     private final TalkCharacterRepository talkCharacterRepository;
     private final TalkCharacterReferenceRepository talkCharacterReferenceRepository;
 
-    public TemplateInitTalkDataAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository) {
+    public TemplateInitDataTalkAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository) {
         this.i18nRepository = i18nRepository;
         this.talkConfigRepository = talkConfigRepository;
         this.talkItemRepository = talkItemRepository;
