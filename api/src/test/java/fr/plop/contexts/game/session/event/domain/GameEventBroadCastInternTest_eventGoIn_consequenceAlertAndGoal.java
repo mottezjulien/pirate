@@ -12,6 +12,7 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.i18n.domain.I18n;
 import org.junit.jupiter.api.Test;
 
@@ -24,9 +25,10 @@ import static org.mockito.Mockito.*;
 public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
 
     private final GameEventBroadCastIntern.Port port = mock(GameEventBroadCastIntern.Port.class);
+    private final GameSessionSituationGetPort situationGetPort = mock(GameSessionSituationGetPort.class);
     private final GameEventActionPushAdapter pushAdapter = mock(GameEventActionPushAdapter.class);
     private final GameEventActionScenarioAdapter scenarioAdapter = mock(GameEventActionScenarioAdapter.class);
-    private final GameEventBroadCastIntern broadCast = new GameEventBroadCastIntern(port, pushAdapter, scenarioAdapter);
+    private final GameEventBroadCastIntern broadCast = new GameEventBroadCastIntern(port, situationGetPort, pushAdapter, scenarioAdapter);
 
     private final GameSession.Id sessionId = new GameSession.Id();
     private final GamePlayer.Id playerId = new GamePlayer.Id();

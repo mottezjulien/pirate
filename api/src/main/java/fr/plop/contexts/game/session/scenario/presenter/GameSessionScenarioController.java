@@ -6,7 +6,6 @@ import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
@@ -47,7 +46,7 @@ public class GameSessionScenarioController {
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            ScenarioSessionPlayer scenarioSessionPlayer = getUseCase.findByPlayerId(new GameContext(sessionId, player.id()));
+            ScenarioSessionPlayer scenarioSessionPlayer = getUseCase.findByPlayerId(player.id());
             ScenarioConfig scenario = cache.scenario(sessionId);
             return scenarioSessionPlayer.bySteps()
                     .entrySet().stream()

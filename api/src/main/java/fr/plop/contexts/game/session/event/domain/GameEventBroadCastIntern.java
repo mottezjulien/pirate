@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.session.event.domain;
 
-import fr.plop.contexts.game.config.condition.GameSessionSituation;
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
@@ -10,13 +10,13 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 public class GameEventBroadCastIntern implements GameEventBroadCast {
-
     public interface Port {
         Stream<Possibility> findPossibilities(GameContext context);
         void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence);
@@ -24,19 +24,19 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
         List<GameAction> findActions(GamePlayer.Id id);
         GameSessionTimeUnit current(GameSession.Id sessionId);
-        GameSessionSituation generateSituation(GameContext context);
     }
 
     private final Port port;
+    private final GameSessionSituationGetPort situationGetPort;
     private final GameEventActionPushAdapter pushAdapter;
     private final GameEventActionScenarioAdapter scenarioAdapter;
 
-    public GameEventBroadCastIntern(Port port, GameEventActionPushAdapter pushAdapter, GameEventActionScenarioAdapter scenarioAdapter) {
+    public GameEventBroadCastIntern(Port port, GameSessionSituationGetPort situationGetPort, GameEventActionPushAdapter pushAdapter, GameEventActionScenarioAdapter scenarioAdapter) {
         this.port = port;
+        this.situationGetPort = situationGetPort;
         this.pushAdapter = pushAdapter;
         this.scenarioAdapter = scenarioAdapter;
     }
-
 
     //TODO ASYNC
     @Override
@@ -48,7 +48,7 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
 
     private Stream<Possibility> select(GameEvent event, GameContext context) {
         List<GameAction> previousActions = port.findActions(context.playerId());
-        GameSessionSituation situation = port.generateSituation(context);
+        GameSessionSituation situation = situationGetPort.get(context);
         return port.findPossibilities(context)
                 .filter(possibility -> possibility.accept(event, previousActions, situation));
     }

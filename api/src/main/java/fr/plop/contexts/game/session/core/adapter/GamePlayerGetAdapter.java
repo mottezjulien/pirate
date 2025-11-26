@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.session.adapter;
+package fr.plop.contexts.game.session.core.adapter;
 
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;

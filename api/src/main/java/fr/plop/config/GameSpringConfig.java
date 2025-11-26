@@ -15,6 +15,7 @@ import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.contexts.game.session.scenario.domain.usecase.ScenarioSessionPlayerGetUseCase;
+import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
 import fr.plop.contexts.game.session.time.GameSessionTimerRemove;
 import fr.plop.contexts.game.session.time.adapter.GameSessionTimerAdapter;
@@ -41,9 +42,9 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.Port port, GameEventActionPushAdapter pushAdapter,
+    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.Port port, GameSessionSituationGetPort situationGetPort, GameEventActionPushAdapter pushAdapter,
                                                  GameEventActionScenarioAdapter scenarioAdapter) {
-        return new GameEventBroadCastIntern(port, pushAdapter, scenarioAdapter);
+        return new GameEventBroadCastIntern(port, situationGetPort, pushAdapter, scenarioAdapter);
     }
 
     @Bean

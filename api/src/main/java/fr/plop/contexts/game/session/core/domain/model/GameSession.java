@@ -11,6 +11,7 @@ import fr.plop.generic.tools.StringTools;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO USEFULL ?? (Cache && ScenarioSession by player)
 public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
                           BoardConfig board, MapConfig map, TalkConfig talk) {
 

@@ -14,6 +14,8 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -31,12 +33,14 @@ public class TalkController {
     private final GameSessionRepository gameSessionRepository;
     private final TalkConfigRepository talkConfigRepository;
     private final GameEventBroadCast broadCast;
+    private final GameSessionSituationGetPort situationGetPort;
 
-    public TalkController(ConnectUseCase connectUseCase, GameSessionRepository gameSessionRepository, TalkConfigRepository talkConfigRepository, GameEventBroadCast broadCast) {
+    public TalkController(ConnectUseCase connectUseCase, GameSessionRepository gameSessionRepository, TalkConfigRepository talkConfigRepository, GameEventBroadCast broadCast, GameSessionSituationGetPort situationGetPort) {
         this.connectUseCase = connectUseCase;
         this.gameSessionRepository = gameSessionRepository;
         this.talkConfigRepository = talkConfigRepository;
         this.broadCast = broadCast;
+        this.situationGetPort = situationGetPort;
     }
 
     @GetMapping({"/{talkId}", "/{talkId}/"})
@@ -49,17 +53,22 @@ public class TalkController {
         TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
 
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));//TODO*/
+            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            final GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
 
-            TalkConfig.Id talkConfigId = new TalkConfig.Id(gameSessionRepository.talkId(sessionId.value())
+            final TalkConfig.Id talkConfigId = new TalkConfig.Id(gameSessionRepository.talkId(sessionId.value())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found")));
 
-            TalkConfig talkConfig = talkConfigRepository.fullById(talkConfigId.value())
+            final TalkConfig talkConfig = talkConfigRepository.fullById(talkConfigId.value())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"))
                     .toModel();
             TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
+
+            GameSessionSituation situation = situationGetPort.get(sessionId, player);
+
+            item = item.select(situation);
+
             return ResponseDTO.fromModel(item, language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
@@ -118,7 +127,6 @@ public class TalkController {
 
         public record Result(String type, List<Option> options, String nextId) {
             public record Option(String id, String value) {
-
                 public static Result.Option fromModel(TalkItem.Options.Option model, Language language) {
                     return new Result.Option(model.id().value(), model.value().value(language));
                 }

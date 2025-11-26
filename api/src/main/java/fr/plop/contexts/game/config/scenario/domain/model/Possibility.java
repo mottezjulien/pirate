@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.condition.Condition;
-import fr.plop.contexts.game.config.condition.GameSessionSituation;
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
@@ -31,7 +31,7 @@ public record Possibility(Id id, PossibilityRecurrence recurrence,
         int count = (int) previousActions.stream().filter(action -> action.is(id))
                 .count();
         return trigger.accept(event, previousActions)
-                && optCondition.map(condition -> condition.accept(situation) == Condition.Result.TRUE).orElse(true)
+                && optCondition.map(condition -> condition.accept(situation).toBoolean()).orElse(true)
                 && recurrence.accept(count);
     }
 

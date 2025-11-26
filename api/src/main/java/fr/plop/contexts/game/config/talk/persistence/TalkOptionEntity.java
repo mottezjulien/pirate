@@ -45,11 +45,12 @@ public class TalkOptionEntity {
     }
 
     public TalkItem.Options.Option toModel() {
+        //TODO condition
         TalkItem.Options.Option.Id optionalId = new TalkItem.Options.Option.Id(id);
         I18n i18n = value.toModel();
         if(nullableNextId != null) {
-            return new TalkItem.Options.Option(optionalId, order, i18n, Optional.of(new TalkItem.Id(nullableNextId)));
+            return new TalkItem.Options.Option(optionalId, order, i18n, Optional.of(new TalkItem.Id(nullableNextId)), Optional.empty());
         }
-        return new TalkItem.Options.Option(optionalId, order, i18n, Optional.empty());
+        return new TalkItem.Options.Option(optionalId, order, i18n, Optional.empty(), Optional.empty());
     }
 }

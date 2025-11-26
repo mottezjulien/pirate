@@ -1,5 +1,7 @@
 package fr.plop.contexts.game.config.talk.domain;
 
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
@@ -37,6 +39,10 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
         return value().value(language);
     }
 
+    default TalkItem select(GameSessionSituation situation) {
+        return this;
+    }
+
     record Simple(Id id, I18n value, TalkCharacter.Reference characterReference) implements TalkItem {
 
     }
@@ -61,7 +67,17 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
             return new Options(id, value, characterReference, newOptions);
         }
 
-        public record Option(Option.Id id, Integer order, I18n value, Optional<TalkItem.Id> optNextId) {
+        @Override
+        public TalkItem select(GameSessionSituation situation) {
+            List<Option> selected = options().filter(option -> option.accept(situation)).toList();
+            return withOptions(selected);
+        }
+
+        public record Option(Option.Id id, Integer order, I18n value, Optional<TalkItem.Id> optNextId, Optional<Condition> optCondition) {
+
+            public Option(Id id, int order, I18n value) {
+                this(id, order, value, Optional.empty(), Optional.empty());
+            }
 
             public boolean is(Id otherId) {
                 return id.equals(otherId);
@@ -76,7 +92,12 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
             }
 
             public Option withNextId(TalkItem.Id nextId) {
-                return new Option(id, order, value, Optional.of(nextId));
+                return new Option(id, order, value, Optional.of(nextId), optCondition);
+            }
+
+            public boolean accept(GameSessionSituation situation) {
+                return optCondition.map(condition -> condition.accept(situation).toBoolean())
+                        .orElse(true);
             }
 
             public record Id(String value) {

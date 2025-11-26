@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.session.adapter;
+package fr.plop.contexts.game.session.core.adapter;
 
 import fr.plop.contexts.game.session.board.persistence.BoardPositionRepository;
 import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;

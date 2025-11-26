@@ -207,8 +207,7 @@ public class TemplateGeneratorTalkUseCase {
                 I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
 
                 // Create a reference that will be resolved later
-                TalkItem.Options.Option option = new TalkItem.Options.Option(new TalkItem.Options.Option.Id(), options.size(), optionMessage,
-                        Optional.empty());
+                TalkItem.Options.Option option = new TalkItem.Options.Option(new TalkItem.Options.Option.Id(), options.size(), optionMessage);
 
                 // Chercher la référence nextId via "next:TALK002"
                 Optional<String> nextIdRef = child.children().stream()
