@@ -6,7 +6,6 @@ import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
-import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
@@ -18,9 +17,11 @@ import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalRepository;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepEntity;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepRepository;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetEntity;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetRepository;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
@@ -29,17 +30,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase.DataOutput {
+public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
     private final TemplateRepository templateRepository;
     private final GameSessionRepository sessionRepository;
     private final GamePlayerRepository playerRepository;
-    private final ScenarioGoalRepository scenarioGoalRepository;
+    private final ScenarioGoalStepRepository scenarioGoalStepRepository;
+    private final ScenarioGoalTargetRepository scenarioGoalTargetRepository;
 
-    public GameSessionCreateUseCaseAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository, ScenarioGoalRepository scenarioGoalRepository) {
+    public GameSessionCreateAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository, ScenarioGoalStepRepository scenarioGoalStepRepository, ScenarioGoalTargetRepository scenarioGoalTargetRepository) {
         this.templateRepository = templateRepository;
         this.sessionRepository = sessionRepository;
         this.playerRepository = playerRepository;
-        this.scenarioGoalRepository = scenarioGoalRepository;
+        this.scenarioGoalStepRepository = scenarioGoalStepRepository;
+        this.scenarioGoalTargetRepository = scenarioGoalTargetRepository;
     }
 
     @Override
@@ -95,7 +98,7 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
         entity = sessionRepository.save(entity);
 
         GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-        return GameSession.build(atom, state, template.scenario(), template.board(), template.talk());
+        return GameSession.buildWithoutPlayer(atom, state, template.scenario(), template.board(), template.map(), template.talk());
     }
 
     @Override
@@ -119,20 +122,11 @@ public class GameSessionCreateUseCaseAdapter implements GameSessionCreateUseCase
     }
 
     @Override
-    public void insertGoal(ScenarioGoal goal) {
-        ScenarioGoalEntity entity = new ScenarioGoalEntity();
-        entity.setId(goal.id().value());
-        entity.setState(ScenarioGoal.State.ACTIVE);
-
-        GamePlayerEntity playerEntity = new GamePlayerEntity();
-        playerEntity.setId(goal.playerId().value());
-        entity.setPlayer(playerEntity);
-
-        ScenarioStepEntity step = new ScenarioStepEntity();
-        step.setId(goal.stepId().value());
-        entity.setStep(step);
-
-        scenarioGoalRepository.save(entity);
+    public void insertScenarioSessionPlayer(GamePlayer.Id playerId, ScenarioSessionPlayer sessionPlayer) {
+        sessionPlayer.bySteps().forEach((stepId, state) ->
+                scenarioGoalStepRepository.save(ScenarioGoalStepEntity.build(playerId, stepId, state)));
+        sessionPlayer.byTargets().forEach((targetId, state) ->
+                scenarioGoalTargetRepository.save(ScenarioGoalTargetEntity.build(playerId, targetId, state)));
     }
 
 }

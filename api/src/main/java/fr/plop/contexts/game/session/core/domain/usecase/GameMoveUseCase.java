@@ -3,14 +3,13 @@ package fr.plop.contexts.game.session.core.domain.usecase;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.session.core.domain.GameException;
+import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
-import fr.plop.contexts.game.session.event.domain.GameEventContext;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.game.session.time.GameSessionTimer;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.ListTools;
 
@@ -37,17 +36,14 @@ public class GameMoveUseCase {
 
     private final PushPort pushPort;
 
-    private final GameSessionTimer timer;
-
-    public GameMoveUseCase(OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort, GameSessionTimer timer) {
+    public GameMoveUseCase(OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort) {
         this.outPort = outPort;
         this.broadCast = broadCast;
         this.pushPort = pushPort;
-        this.timer = timer;
     }
 
     public void apply(GameSession.Id sessionId, GamePlayer player, Request request) throws GameException {
-        GameEventContext context = new GameEventContext(sessionId, player.id());
+        GameContext context = new GameContext(sessionId, player.id());
         BoardConfig board = outPort.boardBySessionId(sessionId);
 
         List<BoardSpace.Id> spaceInIds = player.spaceIds();

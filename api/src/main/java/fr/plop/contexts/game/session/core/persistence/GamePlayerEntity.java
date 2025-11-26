@@ -5,7 +5,7 @@ import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalEntity;
+import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
@@ -36,7 +36,7 @@ public class GamePlayerEntity {
     private BoardPositionEntity lastPosition;
 
     @OneToMany(mappedBy = "player")
-    private Set<ScenarioGoalEntity> goals = new HashSet<>();
+    private Set<ScenarioGoalStepEntity> goals = new HashSet<>();
 
     @OneToMany(mappedBy = "player")
     private Set<GamePlayerActionEntity> actions = new HashSet<>();
@@ -86,11 +86,11 @@ public class GamePlayerEntity {
         this.lastPosition = lastPosition;
     }
 
-    public Set<ScenarioGoalEntity> getGoals() {
+    public Set<ScenarioGoalStepEntity> getGoals() {
         return goals;
     }
 
-    public void setGoals(Set<ScenarioGoalEntity> goals) {
+    public void setGoals(Set<ScenarioGoalStepEntity> goals) {
         this.goals = goals;
     }
 

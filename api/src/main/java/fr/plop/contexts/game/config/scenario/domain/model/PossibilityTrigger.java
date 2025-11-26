@@ -30,21 +30,21 @@ public sealed interface PossibilityTrigger permits
 
     Id id();
 
-    default boolean accept(GameEvent event, List<GameAction> actions) {
+    default boolean accept(GameEvent event, List<GameAction> previousUserActions) {
         return false;
     }
 
     record SpaceGoIn(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
         @Override
-        public boolean accept(GameEvent event, List<GameAction> actions) {
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
             return event instanceof GameEvent.GoIn(BoardSpace.Id spaceId1) && spaceId1.equals(spaceId);
         }
     }
 
     record SpaceGoOut(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
         @Override
-        public boolean accept(GameEvent event, List<GameAction> actions) {
-            return event instanceof GameEvent.GoOut goOutEvent && goOutEvent.spaceId().equals(spaceId);
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            return event instanceof GameEvent.GoOut(BoardSpace.Id spaceId1) && spaceId1.equals(spaceId);
         }
     }
 
@@ -58,7 +58,7 @@ public sealed interface PossibilityTrigger permits
         }
 
         @Override
-        public boolean accept(GameEvent event, List<GameAction> actions) {
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
             if (event instanceof GameEvent.TimeClick timeClickEvent) {
                 return timeClickEvent.is(this.value);
             }
@@ -66,26 +66,23 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId,
-                                             GameSessionTimeUnit value) implements PossibilityTrigger {
+    record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId, GameSessionTimeUnit value) implements PossibilityTrigger {
         @Override
-        public boolean accept(GameEvent event, List<GameAction> actions) {
-            if (event instanceof GameEvent.TimeClick timeClickEvent) {
-                Optional<GameAction> optFirst = optFirst(actions, otherPossibilityId);
-                return optFirst.map(first -> first.timeClick().add(value).equals(timeClickEvent.timeUnit()))
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            if (event instanceof GameEvent.TimeClick(GameSessionTimeUnit timeUnit)) {
+                Optional<GameAction> optFirst = optFirst(previousUserActions, otherPossibilityId);
+                return optFirst.map(first -> first.timeClick().add(value).equals(timeUnit))
                         .orElse(false);
             }
             return false;
         }
 
-        private Optional<GameAction> optFirst(List<GameAction> actions, Possibility.Id possibilityId) {
-            return actions.stream()
+        private Optional<GameAction> optFirst(List<GameAction> previousUserActions, Possibility.Id possibilityId) {
+            return previousUserActions.stream()
                     .filter(action -> action.possibilityId().equals(possibilityId))
                     .min(Comparator.comparing(GameAction::timeClick));
         }
     }
-
-
 
 
     record TalkEnd(Id id, TalkItem.Id talkId) implements PossibilityTrigger {
@@ -97,10 +94,6 @@ public sealed interface PossibilityTrigger permits
     }
 
     record ClickMapObject(Id id, String objectReference) implements PossibilityTrigger {
-        public ClickMapObject(String objectReference) {
-            this(new Id(), objectReference);
-        }
-        
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             // TODO: Implement when MapClick GameEvent is added

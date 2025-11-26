@@ -6,7 +6,6 @@ import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -50,14 +49,6 @@ public class ScenarioStepEntity {
         this.label = label;
     }
 
-    public int getOrder() {
-        return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
     public ScenarioConfigEntity getScenario() {
         return scenario;
     }
@@ -85,7 +76,7 @@ public class ScenarioStepEntity {
     public ScenarioConfig.Step toModel() {
         return new ScenarioConfig.Step(
                 new ScenarioConfig.Step.Id(id),
-                Optional.ofNullable(label).map(I18nEntity::toModel),
+                label.toModel(),
                 targets.stream().map(ScenarioTargetEntity::toModel).toList(),
                 possibilities.stream().map(ScenarioPossibilityEntity::toModel).toList()
         );

@@ -25,7 +25,7 @@ public class TemplateGeneratorUseCaseTalkTest {
         String scriptContent = """
 TEST_DISCUSSION1
 
---- Step
+--- Step:FR:Salut:EN:Hi
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:Talk:TALK000
@@ -58,27 +58,22 @@ TEST_DISCUSSION1
                         });
 
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-           assertThat(scenario.steps()).hasSize(1)
-           .anySatisfy(step -> {
-              assertThat(step.possibilities())
-                  .hasSize(1)
-                  .anySatisfy(possibility -> {
-                      assertThat(possibility.trigger())
-                              .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
-                      PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                      assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
-                      assertThat(possibility.consequences())
-                          .hasSize(1)
-                          .anySatisfy(consequence -> {
-                              assertThat(consequence).isInstanceOf(Consequence.DisplayTalk.class);
-                              Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) consequence;
-                              assertThat(displayTalk.talkId()).isEqualTo(template.talk().items().getFirst().id());
-                          });
-                  });
-
-           });
-        });
+        assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
+        .anySatisfy(step -> assertThat(step.possibilities())
+            .hasSize(1)
+            .anySatisfy(possibility -> {
+                assertThat(possibility.trigger())
+                        .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
+                assertThat(possibility.consequences())
+                    .hasSize(1)
+                    .anySatisfy(consequence -> {
+                        assertThat(consequence).isInstanceOf(Consequence.DisplayTalk.class);
+                        Consequence.DisplayTalk displayTalk = (Consequence.DisplayTalk) consequence;
+                        assertThat(displayTalk.talkId()).isEqualTo(template.talk().items().getFirst().id());
+                    });
+            })));
     }
 
     @Test
@@ -86,7 +81,7 @@ TEST_DISCUSSION1
         String scriptContent = """
 TEST_DISCUSSION2
 
---- Step
+--- Step:FR:Salut:EN:Hi
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:Talk:TALK001
@@ -160,7 +155,7 @@ TEST_DISCUSSION2
 
         String scriptContent = """
 TEST_DISCUSSION3
---- Step
+--- Step:FR:Salut:EN:Hi
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:Talk:TALK001

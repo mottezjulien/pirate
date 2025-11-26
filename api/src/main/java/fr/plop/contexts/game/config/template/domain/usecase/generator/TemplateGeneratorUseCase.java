@@ -3,10 +3,14 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator;
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.scenario.domain.model.*;
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
@@ -14,9 +18,8 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.contexts.game.config.template.domain.usecase.TreeGenerator;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
@@ -27,10 +30,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class TemplateGeneratorUseCase {
 
-    //private static final String SPACE_0 = "---";
-    //private static final String SPACE_1 = "------";
-    //private static final String SPACE_2 = "---------";
-    //private static final String SPACE_3 = "------------";
     private static final String SEPARATOR = ":";
     public static final String DEFAULT_VERSION = "0.0.0";
     public static final String POSSIBILITY_CONDITION_KEY = "CONDITION";
@@ -42,15 +41,8 @@ public class TemplateGeneratorUseCase {
     public static final String STEP_KEY = "STEP";
     public static final String TARGET_KEY = "TARGET";
     public static final String POSSIBILITY_KEY = "POSSIBILITY";
-    //public static final String BOARD_KEY = "BOARD";
-    //public static final String SPACE_KEY = "SPACE";
 
     private static final String PARAM_KEY_TALK_OPTION = "option";
-
-    // Langues
-    //public static final String BOTTOM_LEFT = "bottomLeft";
-    //public static final String TOP_RIGHT = "topRight";
-
 
     public static class Script {
         private final String value;
@@ -160,7 +152,7 @@ public class TemplateGeneratorUseCase {
                     }
                 }
 
-                MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(),"", positionPriority, List.of());
+                MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(), "", positionPriority, List.of());
                 MapItem.Position position = new MapItem.Position.Point(atom, x, y);
                 positions.add(position);
             }
@@ -197,12 +189,7 @@ public class TemplateGeneratorUseCase {
         String referenceName = root.reference();
 
         // Format: "---" + " Step:FR:Chez Moi:EN:At Home" ou "---" + " Step"
-        Optional<I18n> stepLabel = Optional.empty();
-
-        if (!root.params().isEmpty()) {
-            String stepInfo = String.join(SEPARATOR, root.params());
-            stepLabel = parseI18nFromLine(stepInfo);
-        }
+        I18n stepLabel = parseI18nFromLine(root).orElseThrow();
 
         // Parse les targets et possibilities qui suivent
         List<ScenarioConfig.Target> targets = new ArrayList<>();
@@ -265,11 +252,8 @@ public class TemplateGeneratorUseCase {
         boolean optional = tree.originalHeader().toUpperCase().contains("(OPT)");
 
         // 2. Parser le value I18n depuis les paramètres OU depuis le header
-        Optional<I18n> targetLabel = Optional.empty();
-        if (!tree.params().isEmpty()) {
-            String paramsStr = String.join(SEPARATOR, tree.params());
-            targetLabel = parseI18nFromLine(paramsStr);
-        } else {
+        Optional<I18n> targetLabel = parseI18nFromLine(tree);
+        if (targetLabel.isEmpty()) {
             // Si pas de params, extraire le value du header (enlever "Target " du début)
             String headerText = tree.header();
             if (headerText.toUpperCase().startsWith(TARGET_KEY + " ")) {
@@ -296,7 +280,7 @@ public class TemplateGeneratorUseCase {
 
         ScenarioConfig.Target target = new ScenarioConfig.Target(
                 new ScenarioConfig.Target.Id(),
-                targetLabel,
+                targetLabel.orElseThrow(),
                 description,
                 optional
         );
@@ -308,13 +292,12 @@ public class TemplateGeneratorUseCase {
         return target;
     }
 
-    private Optional<I18n> parseI18nFromLine(String line) {
+    private Optional<I18n> parseI18nFromLine(Tree tree) {
         // Format: "FR:Chez Moi:EN:At Home" ou "EN:Office:FR:Bureau"
-        String[] parts = line.split(SEPARATOR);
-        if (parts.length >= 4) {
+        if (tree.paramSize() >= 4) {
             Map<Language, String> i18nMap = new HashMap<>();
-            for (int i = 0; i < parts.length - 1; i += 2) {
-                i18nMap.put(Language.valueOf(parts[i].trim()), parts[i + 1].trim());
+            for (int i = 0; i < tree.paramSize() - 1; i += 2) {
+                i18nMap.put(Language.valueOf(tree.param(i).trim()), tree.param(i + 1).trim());
             }
             if (!i18nMap.isEmpty()) {
                 return Optional.of(new I18n(i18nMap));
@@ -327,32 +310,26 @@ public class TemplateGeneratorUseCase {
         // Format: "------" + " Possibility:ALWAYS" ou "------" + " Possibility:times:4:OR" ou "------" + " Possibility"
         AtomicReference<PossibilityRecurrence> recurrence = new AtomicReference<>(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id())); // Par défaut
 
-        String conditionTypeStr = "AND";
+
 
         if (!tree.params().isEmpty()) {
             String typeStr = tree.params().getFirst().trim().toUpperCase();
             switch (typeStr) {
                 case "ALWAYS":
                     recurrence.set(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id()));
-                    if (tree.params().size() > 1) {
-                        conditionTypeStr = tree.params().get(1);
-                    }
                     break;
                 case "TIMES":
                     int times = Integer.parseInt(tree.params().get(1));
                     recurrence.set(new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(), times));
-                    if (tree.params().size() > 2) {
-                        conditionTypeStr = tree.params().get(2);
-                    }
                     break;
                 default:
                     throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
             }
         }
-        AndOrOr conditionType = AndOrOr.valueOf(conditionTypeStr);
 
         // Parse les conditions, conséquences et trigger qui suivent
-        List<PossibilityCondition> conditions = new ArrayList<>();
+        //AtomicReference<Condition> condition = new AtomicReference<>(null);
+        List<Condition> conditions = new ArrayList<>();
         List<Consequence> consequences = new ArrayList<>();
         AtomicReference<PossibilityTrigger> trigger = new AtomicReference<>();
 
@@ -362,6 +339,7 @@ public class TemplateGeneratorUseCase {
             String actionStr = child.header().trim();
             switch (actionStr) {
                 case POSSIBILITY_CONDITION_KEY:
+                    //condition.set(parseCondition(child, board));
                     conditions.add(parseCondition(child, board));
                     break;
                 case POSSIBILITY_CONSEQUENCE_KEY:
@@ -389,11 +367,17 @@ public class TemplateGeneratorUseCase {
         if (trigger.get() == null) {
             throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
         }
-
-        return new Possibility(recurrence.get(), trigger.get(), conditions, conditionType, consequences);
+        if (!conditions.isEmpty()) {
+            if (conditions.size() > 1) {
+                Condition.And and = new Condition.And(new Condition.Id(), conditions);
+                return new Possibility(recurrence.get(), trigger.get(), and, consequences);
+            }
+            return new Possibility(recurrence.get(), trigger.get(), conditions.getFirst(), consequences);
+        }
+        return new Possibility(recurrence.get(), trigger.get(), consequences);
     }
 
-    private PossibilityCondition parseCondition(Tree tree, BoardConfig board) {
+    private Condition parseCondition(Tree tree, BoardConfig board) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
@@ -410,21 +394,21 @@ public class TemplateGeneratorUseCase {
                 }
 
                 BoardSpace.Id spaceId = findSpaceId(board, spaceLabel);
-                return new PossibilityCondition.InsideSpace(
-                        new PossibilityCondition.Id(),
+                return new Condition.InsideSpace(
+                        new Condition.Id(),
                         spaceId
                 );
             }
             case "outsidespace" -> {
                 if (tree.params().size() == 2) {
                     BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(1));
-                    return new PossibilityCondition.OutsideSpace(
-                            new PossibilityCondition.Id(),
+                    return new Condition.OutsideSpace(
+                            new Condition.Id(),
                             spaceId
                     );
                 }
                 BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(2));
-                return new PossibilityCondition.OutsideSpace(new PossibilityCondition.Id(), spaceId);
+                return new Condition.OutsideSpace(new Condition.Id(), spaceId);
             }
             case "absolutetime" -> {
                 // Format: "CONDITION:ABSOLUTETIME:Duration:27" -> params=[ABSOLUTETIME, Duration, 27] 
@@ -438,8 +422,7 @@ public class TemplateGeneratorUseCase {
                 } else {
                     throw new TemplateException("AbsoluteTime condition missing required parameter: Duration");
                 }
-                
-                return new PossibilityCondition.AbsoluteTime(new PossibilityCondition.Id(),Duration.ofMinutes(Long.parseLong(durationStr)), BeforeOrAfter.BEFORE);
+                return new Condition.AbsoluteTime(new Condition.Id(), GameSessionTimeUnit.ofMinutes(Integer.parseInt(durationStr)), BeforeOrAfter.BEFORE);
             }
             case "instep" -> {
                 // Format: "CONDITION:InStep:stepId:0987" ou "CONDITION:InStep:0987" (legacy)
@@ -453,8 +436,8 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("InStep missing required parameter: stepId");
                 }
 
-                return new PossibilityCondition.StepIn(
-                        new PossibilityCondition.Id(),
+                return new Condition.Step(
+                        new Condition.Id(),
                         new ScenarioConfig.Step.Id(stepIdStr)
                 );
             }
@@ -471,8 +454,8 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("StepTarget missing required parameter: targetId");
                 }
 
-                return new PossibilityCondition.StepTarget(
-                        new PossibilityCondition.Id(),
+                return new Condition.Target(
+                        new Condition.Id(),
                         new ScenarioConfig.Target.Id(targetIdStr)
                 );
             }
@@ -528,7 +511,7 @@ public class TemplateGeneratorUseCase {
                     throw new TemplateException("Goal missing required parameters: state, stepId");
                 }
 
-                ScenarioGoal.State state = parseState(stateParam);
+                ScenarioSessionState state = parseState(stateParam);
                 ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(stepIdParam);
                 return new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
@@ -669,9 +652,9 @@ public class TemplateGeneratorUseCase {
                 // Format: "Trigger:AbsoluteTime:value:42" ou "Trigger:AbsoluteTime:42" (legacy)
                 Tree subTree = tree.sub();
                 String valueStr;
-                if(subTree.hasUniqueParam()) {
+                if (subTree.hasUniqueParam()) {
                     valueStr = subTree.uniqueParam();
-                } else if(subTree.hasParamKey("value")) {
+                } else if (subTree.hasParamKey("value")) {
                     valueStr = subTree.paramValue("value");
                 } else {
                     throw new TemplateException("AbsoluteTime missing required parameter: value");
@@ -682,7 +665,7 @@ public class TemplateGeneratorUseCase {
                         GameSessionTimeUnit.ofMinutes(Integer.parseInt(valueStr))
                 );
             }
-            case "talkoptionselect", "selecttalkoption"  -> {
+            case "talkoptionselect", "selecttalkoption" -> {
                 return createTalkOptionSelect(tree, context);
             }
             case "talkend" -> {
@@ -738,11 +721,11 @@ public class TemplateGeneratorUseCase {
         return null;
     }
 
-    private ScenarioGoal.State parseState(String state) {
+    private ScenarioSessionState parseState(String state) {
         return switch (state.toLowerCase()) {
-            case "success" -> ScenarioGoal.State.SUCCESS;
-            case "failure" -> ScenarioGoal.State.FAILURE;
-            default -> ScenarioGoal.State.ACTIVE;
+            case "success" -> ScenarioSessionState.SUCCESS;
+            case "failure" -> ScenarioSessionState.FAILURE;
+            default -> ScenarioSessionState.ACTIVE;
         };
     }
 
@@ -795,7 +778,7 @@ public class TemplateGeneratorUseCase {
             throw new TemplateException("GoalTarget missing required parameters: targetId, state (stepId is optional and will be deduced if not provided)");
         }
 
-        ScenarioGoal.State state = parseState(stateParam);
+        ScenarioSessionState state = parseState(stateParam);
 
         // Créer les placeholders pour les IDs résolus
         final AtomicReference<ScenarioConfig.Step.Id> resolvedStepId = new AtomicReference<>();
@@ -878,11 +861,11 @@ public class TemplateGeneratorUseCase {
 
         throw new TemplateException("TalkOptions consequence without reference");
     }
-    
+
     private Consequence parseTalkOptionsWithReference(String reference, TemplateGeneratorCache context) {
         // Créer une référence atomique pour stocker l'ID résolu
         AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
-        
+
         // Demander la résolution de la référence
         context.requestReference(reference, referencedObject -> {
             if (referencedObject instanceof TalkItem.Options multipleOptions) {
@@ -891,22 +874,21 @@ public class TemplateGeneratorUseCase {
                 throw new TemplateException("Reference '" + reference + "' does not point to a MultipleOptions object");
             }
         });
-        
+
         // Si la référence n'est pas encore résolue, créer un ID temporaire
         if (resolvedTalkId.get() == null) {
             // Cela sera résolu plus tard par le context
             resolvedTalkId.set(new TalkItem.Id(reference));
         }
-        
+
         return new Consequence.DisplayTalk(new Consequence.Id(), resolvedTalkId.get());
     }
-    
 
 
     private Consequence parseTalkConsequence(Tree tree, TemplateGeneratorCache context) {
         // Format: "Consequence:Talk:TALK000"
         // tree.params() contient ["Talk", "TALK000"]
-        
+
         if (tree.params().size() < 2) {
             throw new TemplateException("Talk consequence must specify a talk ID or reference");
         }
@@ -937,7 +919,7 @@ public class TemplateGeneratorUseCase {
     private Consequence parseGameOverConsequence(Tree tree) {
         // Format: "Consequence:GameOver:FAILURE_ONE_CONTINUE"
         // tree.params() contient ["GameOver", "FAILURE_ONE_CONTINUE"]
-        
+
         if (tree.params().size() < 2) {
             throw new TemplateException("GameOver consequence must specify a game over type");
         }
@@ -949,13 +931,12 @@ public class TemplateGeneratorUseCase {
             SessionGameOver gameOver = new SessionGameOver(gameOverType, Optional.empty());
             return new Consequence.SessionEnd(new Consequence.Id(), gameOver);
         } catch (IllegalArgumentException e) {
-            throw new TemplateException("Invalid GameOver type: '" + gameOverTypeStr + "'. Valid types are: " + 
-                java.util.Arrays.toString(SessionGameOver.Type.values()));
+            throw new TemplateException("Invalid GameOver type: '" + gameOverTypeStr + "'. Valid types are: " +
+                    java.util.Arrays.toString(SessionGameOver.Type.values()));
         }
     }
 
 
-    
     /**
      * Trouve le TalkItem qui contient une option donnée.
      * Cette méthode sera appelée plus tard quand les références seront résolues.
@@ -1002,10 +983,7 @@ public class TemplateGeneratorUseCase {
     }
 
 
-
-    ///Refacto
-
-
+    /// Refacto
 
 
     private PossibilityTrigger createTalkOptionSelect(Tree tree, TemplateGeneratorCache context) {
@@ -1014,9 +992,9 @@ public class TemplateGeneratorUseCase {
         Tree subTree = tree.sub();
 
         String optionReference;
-        if(subTree.hasUniqueParam()) {
+        if (subTree.hasUniqueParam()) {
             optionReference = subTree.uniqueParam();
-        } else if(subTree.hasParamKey(PARAM_KEY_TALK_OPTION)) {
+        } else if (subTree.hasParamKey(PARAM_KEY_TALK_OPTION)) {
             optionReference = subTree.paramValue(PARAM_KEY_TALK_OPTION);
         } else {
             throw new TemplateException("TalkOptionSelect missing required parameter: option");

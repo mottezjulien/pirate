@@ -1,4 +1,4 @@
-package fr.plop.contexts.game.session.core.domain.usecase;
+package fr.plop.contexts.game.session.core.domain.port;
 
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 

@@ -12,7 +12,7 @@ import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionGetPort;
+import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

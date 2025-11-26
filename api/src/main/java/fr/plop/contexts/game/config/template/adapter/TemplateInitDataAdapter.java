@@ -10,8 +10,8 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.scenario.persistence.core.*;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityRepository;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionEntity;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionRepository;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
+import fr.plop.contexts.game.config.condition.persistence.ConditionRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.ScenarioPossibilityConsequenceRepository;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
@@ -41,7 +41,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final ScenarioPossibilityRepository possibilityRepository;
     private final ScenarioPossibilityRecurrenceRepository recurrenceRepository;
     private final ScenarioPossibilityTriggerRepository triggerRepository;
-    private final ScenarioPossibilityConditionRepository conditionRepository;
+    private final ConditionRepository conditionRepository;
     private final ScenarioPossibilityConsequenceRepository consequenceRepository;
 
     private final MapConfigRepository mapConfigRepository;
@@ -53,7 +53,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final TemplateInitDataTalkAdapter talkAdapter;
     private final TemplateInitDataImageAdapter imageAdapter;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter) {
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ConditionRepository conditionRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapPositionRepository mapPositionRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.scenarioRepository = scenarioRepository;
@@ -129,7 +129,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         scenario.steps().forEach(step -> {
             ScenarioStepEntity stepEntity = new ScenarioStepEntity();
             stepEntity.setId(step.id().value());
-            step.label().ifPresent(label -> stepEntity.setLabel(createI18n(label)));
+            stepEntity.setLabel(createI18n(step.label()));
             stepEntity.setScenario(scenarioEntity);
             scenarioStepRepository.save(stepEntity);
             step.targets().forEach(target -> createTarget(target, stepEntity));
@@ -141,8 +141,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private void createTarget(ScenarioConfig.Target target, ScenarioStepEntity stepEntity) {
         ScenarioTargetEntity targetEntity = new ScenarioTargetEntity();
         targetEntity.setId(target.id().value());
-        target.label().ifPresent(label ->
-                targetEntity.setLabel(createI18n(label)));
+        targetEntity.setLabel(createI18n(target.label()));
         target.desc().ifPresent(desc ->
                 targetEntity.setDescription(createI18n(desc)));
         targetEntity.setStep(stepEntity);
@@ -154,7 +153,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         ScenarioPossibilityEntity possibilityEntity = new ScenarioPossibilityEntity();
         possibilityEntity.setId(possibility.id().value());
-        possibilityEntity.setConditionType(possibility.conditionType());
         possibilityEntity.setStep(stepEntity);
         possibilityRepository.save(possibilityEntity);
 
@@ -164,10 +162,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         ScenarioPossibilityTriggerEntity triggerEntity = ScenarioPossibilityTriggerEntity.fromModel(possibility.trigger());
         possibilityEntity.setTrigger(triggerRepository.save(triggerEntity));
 
-        possibility.conditions().forEach(condition -> {
-            ScenarioPossibilityConditionEntity conditionEntity = ScenarioPossibilityConditionEntity
-                    .fromModel(condition);
-            possibilityEntity.getConditions().add(conditionRepository.save(conditionEntity));
+        possibility.optCondition().ifPresent(condition -> {
+            possibilityEntity.setNullableCondition(saveConditionRecursively(ConditionEntity.fromModel(condition)));
         });
 
         possibility.consequences().forEach(consequence -> {
@@ -181,85 +177,10 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         possibilityRepository.save(possibilityEntity);
     }
 
-    /*private TalkConfigEntity createTalk(TalkConfig talk) {
-        TalkConfigEntity config = new TalkConfigEntity();
-        config.setId(talk.id().value());
-        talkConfigRepository.save(config);
-        List<TalkCharacter.Reference> savedCharacterReferences = createTalkCharacterReferences(talk.items());
-        talk.items().forEach(item -> createTalkItem(item, config, savedCharacterReferences));
-        return config;
+    private ConditionEntity saveConditionRecursively(ConditionEntity entity) {
+        entity.getSubs().forEach(this::saveConditionRecursively);
+        return conditionRepository.save(entity);
     }
-
-    private List<TalkCharacter.Reference> createTalkCharacterReferences(List<TalkItem> items) {
-        Map<TalkCharacter, List<TalkCharacter.Reference>> allSaved = new HashMap<>();
-        for (TalkItem item: items) {
-            TalkCharacter itemCharacter = item.character();
-            TalkCharacter savedCharacter = allSaved.keySet().stream()
-                    .filter(itemCharacter::hasSameName)
-                    .findFirst()
-                    .orElseGet(() -> {
-                        TalkCharacterEntity entity = TalkCharacterEntity.fromModel(itemCharacter);
-                        talkCharacterRepository.save(entity);
-                        allSaved.put(itemCharacter, new ArrayList<>());
-                        return itemCharacter;
-                    });
-            List<TalkCharacter.Reference> savedReferences = allSaved.get(savedCharacter);
-            savedReferences.stream()
-                    .filter(reference -> reference.hasSameValue(item.characterReference()))
-                    .findFirst()
-                    .orElseGet(() -> {
-                        TalkCharacterReferenceEntity entity = TalkCharacterReferenceEntity.fromModel(item.characterReference());
-                        talkCharacterReferenceRepository.save(entity);
-                        savedReferences.add(item.characterReference());
-                        allSaved.put(itemCharacter, savedReferences);
-                    });
-        }
-
-
-    }
-
-    private void createTalkItem(TalkItem item, TalkConfigEntity config, List<TalkCharacter.Reference> savedCharacterReferences) {
-        I18nEntity value = createI18n(item.value());
-        TalkItemEntity entity = switch (item) {
-            case TalkItem.Simple ignored -> new TalkItemEntity();
-            case TalkItem.Continue _continue -> {
-                TalkItemContinueEntity continueEntity = new TalkItemContinueEntity();
-                continueEntity.setNextId(_continue.nextId().value());
-                yield continueEntity;
-            }
-            case TalkItem.Options model -> {
-                TalkItemMultipleOptionsEntity optionsEntity = new TalkItemMultipleOptionsEntity();
-                List<TalkItem.Options.Option> options = model.options().toList();
-                for(int i = 0; i < options.size(); i++) {
-                    optionsEntity.getOptions().add(createTalkOption(options.get(i), i));
-                }
-                yield optionsEntity;
-            }
-        };
-        entity.setId(item.id().value());
-        entity.setConfig(config);
-        entity.setValue(value);
-        entity.setCharacterReference(findTalkCharacterReference(item.characterReference(), savedCharacterReferences));
-        talkItemRepository.save(entity);
-    }
-
-    private TalkCharacterReferenceEntity findTalkCharacterReference(TalkCharacter.Reference characterReference, List<TalkCharacter.Reference> savedCharacterReferences) {
-        TalkCharacter.Reference foundSaved = savedCharacterReferences.stream().filter(savedReference -> characterReference.value().equals(savedReference.value())
-                && characterReference.character().name().equals(savedReference.character().name())).findFirst().orElseThrow();
-        TalkCharacterReferenceEntity entity = new TalkCharacterReferenceEntity();
-        entity.setId(foundSaved.id().value());
-        return entity;
-    }
-
-    private TalkOptionEntity createTalkOption(TalkItem.Options.Option talkOption, int index) {
-        TalkOptionEntity entity = new TalkOptionEntity();
-        entity.setId(talkOption.id().value());
-        entity.setValue(createI18n(talkOption.value()));
-        entity.setOrder(index);
-        talkOption.optNextId().ifPresent(nextId -> entity.setNullableNextId(nextId.value()));
-        return talkOptionItemRepository.save(entity);
-    }*/
-
 
     private MapConfigEntity createMap(MapConfig mapConfig) {
         MapConfigEntity mapConfigEntity = new MapConfigEntity();

@@ -1,34 +1,23 @@
 package fr.plop.contexts.game.session.adapter;
 
-import fr.plop.contexts.connect.domain.ConnectAuth;
-import fr.plop.contexts.connect.domain.ConnectException;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
+import fr.plop.contexts.connect.domain.*;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
-import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
-import fr.plop.contexts.game.session.scenario.adapter.GameEventScenarioAdapter;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.contexts.game.session.time.GameSessionTimer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
@@ -38,18 +27,8 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest
-@TestPropertySource(properties = "spring.main.allow-bean-definition-overriding=true")
+@SpringBootTest(properties = {"game.session.timer.duration=1000"})
 public class GameSessionTimerAdapterIntegrationTest {
-
-    @TestConfiguration
-    static class Config {
-        @Bean
-        @Primary
-        public GameSessionTimer gameSessionTimer(GamePlayerRepository gamePlayerRepository, GameEventBroadCast broadCast) {
-            return new GameSessionTimerAdapter(gamePlayerRepository, broadCast, Duration.ofSeconds(1));
-        }
-    }
 
     @Autowired
     private ConnectUseCase connectUseCase;
@@ -67,7 +46,7 @@ public class GameSessionTimerAdapterIntegrationTest {
     private ConnectionCreateAuthUseCase createAuthUseCase;
 
     @MockitoBean
-    private GameEventScenarioAdapter scenarioAdapter;
+    private GameEventActionScenarioAdapter scenarioAdapter;
 
     @Test
     public void fireTimeClickEvent() throws GameException, ConnectException {
@@ -90,18 +69,18 @@ public class GameSessionTimerAdapterIntegrationTest {
         Consequence.ScenarioStep consequence1 = (Consequence.ScenarioStep) possibilities.getFirst().consequences().getFirst();
         Consequence.ScenarioStep consequence2 = (Consequence.ScenarioStep) possibilities.get(1).consequences().getFirst();
 
-        verify(scenarioAdapter, never()).updateStateOrCreateGoal(player.id(), consequence1);
-        verify(scenarioAdapter, never()).updateStateOrCreateGoal(player.id(), consequence2);
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence1);
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence2);
 
         await().pollDelay(Duration.ofSeconds(2)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoal(player.id(), consequence1);
-            verify(scenarioAdapter, never()).updateStateOrCreateGoal(player.id(), consequence2);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence1);
+            verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence2);
             return true;
         });
 
         await().pollDelay(Duration.ofSeconds(4)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoal(player.id(), consequence1);
-            verify(scenarioAdapter).updateStateOrCreateGoal(player.id(), consequence2);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence1);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence2);
             return true;
         });
 
@@ -116,8 +95,8 @@ public class GameSessionTimerAdapterIntegrationTest {
 
     private static Possibility possibility(GameSessionTimeUnit value) {
         PossibilityTrigger.AbsoluteTime trigger = new PossibilityTrigger.AbsoluteTime(value);
-        Consequence.ScenarioStep consequence = new Consequence.ScenarioStep(new ScenarioConfig.Step.Id(), ScenarioGoal.State.ACTIVE);
-        return new Possibility(trigger, consequence);
+        Consequence.ScenarioStep consequence = new Consequence.ScenarioStep(new ScenarioConfig.Step.Id(), ScenarioSessionState.ACTIVE);
+        return new Possibility(trigger, List.of(consequence));
     }
 
 }

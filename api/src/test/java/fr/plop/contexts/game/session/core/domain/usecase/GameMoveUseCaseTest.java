@@ -3,17 +3,14 @@ package fr.plop.contexts.game.session.core.domain.usecase;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.session.core.domain.GameException;
+import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
-import fr.plop.contexts.game.session.event.domain.GameEventContext;
 import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.game.session.time.GameSessionTimer;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -30,8 +27,7 @@ public class GameMoveUseCaseTest {
     private final GameMoveUseCase.OutPort outPort = mock(GameMoveUseCase.OutPort.class);
     private final GameEventBroadCast browCast = mock(GameEventBroadCast.class);
     private final PushPort pushPort = mock(PushPort.class);
-    private final GameSessionTimer timer = mock(GameSessionTimer.class);
-    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast, pushPort, timer);
+    private final GameMoveUseCase useCase = new GameMoveUseCase(outPort, browCast, pushPort);
 
     private final GameSession.Id sessionId = new GameSession.Id("ABC");
 
@@ -40,12 +36,6 @@ public class GameMoveUseCaseTest {
     private final BoardSpace spaceC = spaceC();
     private final BoardSpace spaceD = spaceD();
     private final BoardSpace spaceE = spaceE();
-    private final GameSessionTimeUnit current = new GameSessionTimeUnit(25);
-
-    @BeforeEach
-    void setUp() {
-        when(timer.current(sessionId)).thenReturn(current);
-    }
 
     @Test
     public void whenBoardNotFound() throws GameException {
@@ -81,7 +71,7 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, inSpaceAPosition());
 
-        verify(browCast).fire(new GameEvent.GoIn(spaceA.id()), new GameEventContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoIn(spaceA.id()), new GameContext(sessionId, player.id()));
         verify(outPort).savePosition(player.id(), List.of(spaceA.id()));
     }
 
@@ -95,7 +85,7 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, outPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(spaceA.id()), new GameEventContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoOut(spaceA.id()), new GameContext(sessionId, player.id()));
         verify(outPort).savePosition(player.id(), List.of());
     }
 
@@ -108,10 +98,10 @@ public class GameMoveUseCaseTest {
 
         useCase.apply(sessionId, player, inCDEPosition());
 
-        verify(browCast).fire(new GameEvent.GoOut(spaceA.id()), new GameEventContext(sessionId, player.id()));
-        verify(browCast).fire(new GameEvent.GoOut(spaceB.id()), new GameEventContext(sessionId, player.id()));
-        verify(browCast).fire(new GameEvent.GoIn(spaceD.id()), new GameEventContext(sessionId, player.id()));
-        verify(browCast).fire(new GameEvent.GoIn(spaceE.id()), new GameEventContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoOut(spaceA.id()), new GameContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoOut(spaceB.id()), new GameContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoIn(spaceD.id()), new GameContext(sessionId, player.id()));
+        verify(browCast).fire(new GameEvent.GoIn(spaceE.id()), new GameContext(sessionId, player.id()));
 
         verify(outPort).savePosition(player.id(), List.of(spaceC.id(), spaceD.id(), spaceE.id()));
     }

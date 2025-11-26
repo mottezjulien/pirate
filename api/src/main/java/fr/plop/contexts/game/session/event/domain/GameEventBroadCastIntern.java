@@ -1,11 +1,15 @@
 package fr.plop.contexts.game.session.event.domain;
 
+import fr.plop.contexts.game.config.condition.GameSessionSituation;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
+import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 
 import java.util.List;
@@ -13,70 +17,64 @@ import java.util.stream.Stream;
 
 public class GameEventBroadCastIntern implements GameEventBroadCast {
 
-    public interface OutPort {
-        Stream<Possibility> findPossibilities(GameSession.Id gameId, GamePlayer.Id playerId);
-
-        void doGoal(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.ScenarioStep goal);
-        void doGoalTarget(GamePlayer.Id playerId, Consequence.ScenarioTarget goalTarget);
-
+    public interface Port {
+        Stream<Possibility> findPossibilities(GameContext context);
         void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence);
-
-        void doMessage(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.DisplayMessage message);
-        void doTalk(GameSession.Id id, GamePlayer.Id id1, Consequence.DisplayTalk talk);
-
         void saveAction(GamePlayer.Id playerId, Possibility.Id possibilityId, GameSessionTimeUnit timeClick);
 
         List<GameAction> findActions(GamePlayer.Id id);
-
         GameSessionTimeUnit current(GameSession.Id sessionId);
-
+        GameSessionSituation generateSituation(GameContext context);
     }
 
-    private final OutPort outPort;
+    private final Port port;
+    private final GameEventActionPushAdapter pushAdapter;
+    private final GameEventActionScenarioAdapter scenarioAdapter;
 
-    public GameEventBroadCastIntern(OutPort outPort) {
-        this.outPort = outPort;
+    public GameEventBroadCastIntern(Port port, GameEventActionPushAdapter pushAdapter, GameEventActionScenarioAdapter scenarioAdapter) {
+        this.port = port;
+        this.pushAdapter = pushAdapter;
+        this.scenarioAdapter = scenarioAdapter;
     }
 
 
     //TODO ASYNC
     @Override
-    public void fire(GameEvent event, GameEventContext context) {
+    public void fire(GameEvent event, GameContext context) {
         //TODO Game in cache ?? In repo cache ?? Utile ??
         Stream<Possibility> possibilities = select(event, context);
         possibilities.forEach(possibility -> doAction(event, context, possibility));
     }
 
-    private Stream<Possibility> select(GameEvent event, GameEventContext context) {
-        List<GameAction> actions = outPort.findActions(context.playerId());
-        return outPort.findPossibilities(context.sessionId(), context.playerId())
-                .filter(possibility -> possibility.accept(event, actions));
+    private Stream<Possibility> select(GameEvent event, GameContext context) {
+        List<GameAction> previousActions = port.findActions(context.playerId());
+        GameSessionSituation situation = port.generateSituation(context);
+        return port.findPossibilities(context)
+                .filter(possibility -> possibility.accept(event, previousActions, situation));
     }
 
-    private void doAction(GameEvent event, GameEventContext context, Possibility possibility) {
+    private void doAction(GameEvent event, GameContext context, Possibility possibility) {
         possibility.consequences()
                 .forEach(consequence -> _do(event, context, consequence));
-        outPort.saveAction(context.playerId(), possibility.id(), outPort.current(context.sessionId()));
+        port.saveAction(context.playerId(), possibility.id(), port.current(context.sessionId()));
     }
 
-    private void _do(GameEvent event, GameEventContext context, Consequence consequence) {
+    private void _do(GameEvent event, GameContext context, Consequence consequence) {
         switch (consequence) {
             case Consequence.ScenarioStep goal -> {
-                outPort.doGoal(context.sessionId(), context.playerId(), goal);
-                if (goal.state() == ScenarioGoal.State.ACTIVE) {
+                scenarioAdapter.updateStateOrCreateGoalStep(context.playerId(), goal);
+                if (goal.state() == ScenarioSessionState.ACTIVE) {
                     this.fire(new GameEvent.GoalActive(goal.stepId()), context);
                 }
             }
-            case Consequence.ScenarioTarget goalTarget -> outPort.doGoalTarget(context.playerId(), goalTarget);
+            case Consequence.ScenarioTarget goalTarget -> scenarioAdapter.updateStateOrCreateGoalTarget(context.playerId(), goalTarget);
 
+            case Consequence.DisplayMessage message -> pushAdapter.message(context.sessionId(), context.playerId(), message.value());
+            case Consequence.DisplayTalk talk -> pushAdapter.talk(context.sessionId(), context.playerId(), talk.talkId());
 
-            case Consequence.DisplayMessage message -> outPort.doMessage(context.sessionId(), context.playerId(), message);
-            case Consequence.DisplayTalk talk -> outPort.doTalk(context.sessionId(), context.playerId(), talk);
-
-            case Consequence.SessionEnd gameOver -> outPort.doGameOver(context.sessionId(), context.playerId(), gameOver);
+            case Consequence.SessionEnd gameOver -> port.doGameOver(context.sessionId(), context.playerId(), gameOver);
 
             //TODO
-
             case Consequence.ObjetAdd addObjet -> { }
             case Consequence.ObjetRemove removeObjet -> { }
             case Consequence.UpdatedMetadata updatedMetadata -> { }

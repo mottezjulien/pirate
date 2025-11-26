@@ -1,16 +1,14 @@
-package fr.plop.contexts.game.session.core.presenter;
+package fr.plop.contexts.game.session.map.presenter;
 
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.map.persistence.MapConfigRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -25,14 +23,11 @@ import java.util.stream.Stream;
 public class GameSessionMapController {
 
     private final ConnectUseCase connectUseCase;
-    private final GameSessionRepository gameSessionRepository;
+    private final GameConfigCache cache;
 
-    private final MapConfigRepository mapConfigRepository;
-
-    public GameSessionMapController(ConnectUseCase connectUseCase, GameSessionRepository gameSessionRepository, MapConfigRepository mapConfigRepository) {
+    public GameSessionMapController(ConnectUseCase connectUseCase, GameConfigCache cache) {
         this.connectUseCase = connectUseCase;
-        this.gameSessionRepository = gameSessionRepository;
-        this.mapConfigRepository = mapConfigRepository;
+        this.cache = cache;
     }
 
     @GetMapping({"", "/"})
@@ -46,21 +41,12 @@ public class GameSessionMapController {
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-
-            MapConfig.Id mapConfigId = new MapConfig.Id(gameSessionRepository.mapId(sessionId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No map found", null)));
-
-            //TODO Cache
-            MapConfig mapConfig = mapConfigRepository.fullById(mapConfigId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No map found", null))
-                    .toModel();
-            Stream<MapItem> maps = mapConfig.byStepIds(player.stepActiveIds());
-            return maps.map(model -> GameMapResponseDTO.fromModel(model, language))
-                    .toList();
-
+            Stream<MapItem> maps = cache.map(sessionId).byStepIds(player.activeStepIds());
+            return maps.map(model -> GameMapResponseDTO.fromModel(model, language)).toList();
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
+
     }
 
     public record GameMapResponseDTO(String id, String label, int priority, ImageResponseDTO image, List<Position> positions) {

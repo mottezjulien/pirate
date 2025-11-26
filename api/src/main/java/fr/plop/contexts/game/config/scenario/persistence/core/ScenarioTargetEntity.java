@@ -51,10 +51,6 @@ public class ScenarioTargetEntity {
         this.label = label;
     }
 
-    public I18nEntity getDescription() {
-        return description;
-    }
-
     public void setDescription(I18nEntity description) {
         this.description = description;
     }
@@ -70,7 +66,7 @@ public class ScenarioTargetEntity {
     public ScenarioConfig.Target toModel() {
         return new ScenarioConfig.Target(
                 new ScenarioConfig.Target.Id(id),
-                Optional.ofNullable(label).map(l -> label.toModel()),
+                label.toModel(),
                 Optional.ofNullable(description).map(I18nEntity::toModel),
                 optional
         );

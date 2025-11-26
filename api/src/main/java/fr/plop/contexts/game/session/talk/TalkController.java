@@ -8,12 +8,12 @@ import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
+import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
-import fr.plop.contexts.game.session.event.domain.GameEventContext;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -48,12 +48,9 @@ public class TalkController {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
 
-        //try {
-            /*
-            TODO access control
+        try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));//TODO*/
-
 
             TalkConfig.Id talkConfigId = new TalkConfig.Id(gameSessionRepository.talkId(sessionId.value())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found")));
@@ -64,9 +61,9 @@ public class TalkController {
             TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
             return ResponseDTO.fromModel(item, language);
-        /*} catch (ConnectException e) {
+        } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
-        }*/
+        }
     }
 
 
@@ -94,7 +91,7 @@ public class TalkController {
             TalkItem item = talkConfig.byId(taklId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
 
-            GameEventContext context = new GameEventContext(sessionId, player.id());
+            GameContext context = new GameContext(sessionId, player.id());
 
             if(item instanceof TalkItem.Options multipleOptions) {
                 Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);

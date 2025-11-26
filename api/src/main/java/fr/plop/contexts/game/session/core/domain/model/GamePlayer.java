@@ -6,7 +6,7 @@ import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
 
-public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> stepActiveIds, List<BoardSpace.Id> spaceIds) {
+public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> activeStepIds, List<BoardSpace.Id> spaceIds) {
 
     public record Id(String value) {
         public Id() {
@@ -17,9 +17,5 @@ public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> stepActiveIds, List
     public enum State {
         INIT, ACTIVE, WIN, LOSE
     }
-
-    /*public boolean inSpace(BoardSpace.Id spaceId) {
-        return spaceIds.contains(spaceId);
-    }*/
 
 }

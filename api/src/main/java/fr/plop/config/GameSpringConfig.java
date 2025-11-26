@@ -2,16 +2,25 @@ package fr.plop.config;
 
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
-import fr.plop.contexts.game.session.adapter.GameSessionTimerAdapter;
-import fr.plop.contexts.game.session.core.domain.usecase.*;
+import fr.plop.contexts.game.config.cache.GameConfigCache;
+import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
+import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCastIntern;
 import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.session.scenario.domain.usecase.ScenarioSessionPlayerGetUseCase;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
+import fr.plop.contexts.game.session.time.GameSessionTimerRemove;
+import fr.plop.contexts.game.session.time.adapter.GameSessionTimerAdapter;
+import fr.plop.contexts.game.session.time.persistence.GameSessionTimerMemoryRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class GameSpringConfig {
@@ -27,34 +36,39 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameSessionCreateUseCase gameCreateUseCase(GameSessionCreateUseCase.DataOutput dataOutput) {
-        return new GameSessionCreateUseCase(dataOutput);
+    public GameSessionCreateUseCase gameCreateUseCase(GameSessionCreateUseCase.Port port, GameConfigCache cache) {
+        return new GameSessionCreateUseCase(port, cache);
     }
 
     @Bean
-    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.OutPort outPort) {
-        return new GameEventBroadCastIntern(outPort);
+    public GameEventBroadCast gameEventBroadCast(GameEventBroadCastIntern.Port port, GameEventActionPushAdapter pushAdapter,
+                                                 GameEventActionScenarioAdapter scenarioAdapter) {
+        return new GameEventBroadCastIntern(port, pushAdapter, scenarioAdapter);
     }
 
     @Bean
-    public GameMoveUseCase gameMoveUseCase(GameMoveUseCase.OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort, GameSessionTimer timer) {
-        return new GameMoveUseCase(outPort, broadCast, pushPort, timer);
+    public GameMoveUseCase gameMoveUseCase(GameMoveUseCase.OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort) {
+        return new GameMoveUseCase(outPort, broadCast, pushPort);
     }
 
     @Bean
-    public GameOverUseCase gameOverUseCase(GameOverUseCase.OutputPort outputPort, PushPort pushPort) {
-        return new GameOverUseCase(outputPort, pushPort);
-    }
-
-    @Lazy
-    @Bean
-    public GameSessionTimer gameSessionTimer(GamePlayerRepository gamePlayerRepository, GameEventBroadCast broadCast) {
-        return new GameSessionTimerAdapter(gamePlayerRepository, broadCast);
+    public GameOverUseCase gameOverUseCase(GameOverUseCase.OutputPort outputPort, PushPort pushPort, GameSessionTimerRemove timerRemove, GameConfigCache cache) {
+        return new GameOverUseCase(outputPort, pushPort, timerRemove, cache);
     }
 
     @Bean
-    public GameSessionStartUseCase gameSessionStartUseCase(GameSessionGetPort getPort, GameSessionTimer gameSessionTimer) {
-        return new GameSessionStartUseCase(getPort, gameSessionTimer);
+    public GameSessionTimer gameSessionTimer(GameSessionTimerMemoryRepository repository, GamePlayerRepository gamePlayerRepository, GameEventBroadCast broadCast) {
+        return new GameSessionTimerAdapter(repository, gamePlayerRepository, broadCast);
+    }
+
+    @Bean
+    public GameSessionStartUseCase gameSessionStartUseCase(GameSessionStartUseCase.Port port, GameSessionGetPort get, GameSessionTimer timer) {
+        return new GameSessionStartUseCase(port, get, timer);
+    }
+
+    @Bean
+    public ScenarioSessionPlayerGetUseCase scenarioSessionPlayerGetUseCase(ScenarioSessionPlayerGetUseCase.Port port) {
+        return new ScenarioSessionPlayerGetUseCase(port);
     }
 
 }

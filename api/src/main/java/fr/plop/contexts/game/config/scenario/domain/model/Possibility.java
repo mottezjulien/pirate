@@ -1,46 +1,38 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.condition.GameSessionSituation;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.generic.enumerate.AndOrOr;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
+import java.util.Optional;
 
-public record Possibility(
-        Id id,
-        PossibilityRecurrence recurrence,
-        PossibilityTrigger trigger,
-        List<PossibilityCondition> conditions,
-        AndOrOr conditionType,
-        List<Consequence> consequences) {
+public record Possibility(Id id, PossibilityRecurrence recurrence,
+                          PossibilityTrigger trigger, Optional<Condition> optCondition,
+                          List<Consequence> consequences) {
 
-    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, List<Consequence> consequences) {
-        this(recurrence, trigger, conditions, AndOrOr.AND, consequences);
+    public Possibility(PossibilityTrigger trigger, List<Consequence> consequences) {
+        this(new PossibilityRecurrence.Always(), trigger, consequences);
     }
 
-    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<PossibilityCondition> conditions, AndOrOr conditionType, List<Consequence> consequences) {
-        this(new Id(), recurrence, trigger, conditions, conditionType, consequences);
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, List<Consequence> consequences) {
+        this(new Id(), recurrence, trigger, Optional.empty(), consequences);
     }
 
-    public Possibility(PossibilityTrigger trigger, PossibilityCondition condition, Consequence consequence) {
-        this(new Id(), new PossibilityRecurrence.Always(), trigger, List.of(condition), AndOrOr.AND, List.of(consequence));
+    public Possibility(PossibilityRecurrence recurrence, PossibilityTrigger trigger, Condition condition, List<Consequence> consequences) {
+        this(new Id(), recurrence, trigger, Optional.of(condition), consequences);
     }
 
-    public Possibility(PossibilityTrigger trigger, Consequence consequence) {
-        this(new Id(), new PossibilityRecurrence.Always(), trigger, List.of(), AndOrOr.AND, List.of(consequence));
-    }
 
-    public boolean isFirst() {
-        return conditions.isEmpty();
-    }
-
-    public boolean accept(GameEvent event, List<GameAction> actions) {
-        int count = (int) actions.stream()
-                .filter(action -> action.is(id))
+    public boolean accept(GameEvent event, List<GameAction> previousActions, GameSessionSituation situation) {
+        int count = (int) previousActions.stream().filter(action -> action.is(id))
                 .count();
-        return trigger.accept(event, actions) && recurrence.accept(count);
+        return trigger.accept(event, previousActions)
+                && optCondition.map(condition -> condition.accept(situation) == Condition.Result.TRUE).orElse(true)
+                && recurrence.accept(count);
     }
 
     public record Id(String value) {

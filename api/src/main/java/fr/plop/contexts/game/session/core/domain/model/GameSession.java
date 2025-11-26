@@ -1,20 +1,21 @@
 package fr.plop.contexts.game.session.core.domain.model;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSession;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
 import fr.plop.generic.tools.StringTools;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
-                          BoardConfig board, TalkConfig talk) {
+                          BoardConfig board, MapConfig map, TalkConfig talk) {
 
-    public static GameSession build(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig, TalkConfig talkConfig) {
-        return new GameSession(atom, state, List.of(), ScenarioSession.build(scenarioConfig), boardConfig, talkConfig);
+    public static GameSession buildWithoutPlayer(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig, MapConfig mapConfig, TalkConfig talkConfig) {
+        return new GameSession(atom, state, new ArrayList<>(), ScenarioSession.build(scenarioConfig), boardConfig, mapConfig, talkConfig);
     }
 
     public record Id(String value) {
@@ -35,13 +36,8 @@ public record GameSession(Atom atom, State state, List<GamePlayer> players, Scen
         return atom.id();
     }
 
-    public void init(GamePlayer.Id playerId) {
-        scenario.init(playerId);
+    public ScenarioSessionPlayer scenarioPlayer(GamePlayer.Id playerId) {
+        return scenario.player(playerId);
     }
-
-    public Stream<ScenarioGoal> goals(GamePlayer.Id playerId) {
-        return scenario.goals(playerId);
-    }
-
 
 }

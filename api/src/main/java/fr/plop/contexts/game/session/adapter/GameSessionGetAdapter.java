@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.adapter;
 
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionGetPort;
+import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import org.springframework.stereotype.Component;
@@ -22,4 +22,5 @@ public class GameSessionGetAdapter implements GameSessionGetPort {
         return sessionRepository.findById(sessionId.value())
                 .map(GameSessionEntity::toAtomModel);
     }
+
 }

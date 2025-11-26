@@ -14,7 +14,8 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
         }
     }
 
-    public record Step(Id id, Optional<I18n> label, List<Target> targets, List<Possibility> possibilities) {
+    public record Step(Id id, I18n label, List<Target> targets, List<Possibility> possibilities) {
+
 
         public record Id(String value) {
             public Id() {
@@ -26,24 +27,22 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
             this(List.of());
         }
 
-        public Step(List<Possibility> possibility) {
-            this(List.of(), possibility);
+        public Step(List<Possibility> possibilities) {
+            this(List.of(), possibilities);
         }
 
         public Step(List<Target> targets, List<Possibility> possibilities) {
-            this(new Id(), Optional.empty(), targets, possibilities);
+            this(new Id(), new I18n(), targets, possibilities);
         }
 
     }
 
-    public record Target(Id id, Optional<I18n> label, Optional<I18n> desc, boolean optional) {
-
+    public record Target(Id id, I18n label, Optional<I18n> desc, boolean optional) {
         public record Id(String value) {
             public Id() {
                 this(StringTools.generate());
             }
         }
-
     }
 
     public ScenarioConfig() {
@@ -57,6 +56,5 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
     public Step firstStep() {
         return steps.getFirst();
     }
-
 
 }

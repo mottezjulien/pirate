@@ -11,12 +11,12 @@ import fr.plop.subs.i18n.domain.I18n;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GameEventActionPush {
+public class GameEventActionPushAdapter {
 
     private final PushPort pushPort;
     private final GamePlayerRepository playerRepository;
 
-    public GameEventActionPush(PushPort pushPort, GamePlayerRepository playerRepository) {
+    public GameEventActionPushAdapter(PushPort pushPort, GamePlayerRepository playerRepository) {
         this.pushPort = pushPort;
         this.playerRepository = playerRepository;
     }

@@ -8,7 +8,7 @@ import fr.plop.subs.i18n.domain.I18n;
 import java.util.List;
 
 public record MapItem(Id id, I18n label, Image image,
-                      Priority priority, List<Position> positions, List<ScenarioConfig.Step.Id> scenarioStepIds) {
+                      Priority priority, List<Position> positions, List<ScenarioConfig.Step.Id> stepIds) {
 
 
     public MapItem(I18n label, Image image, Priority priority, List<Position> positions) {
@@ -20,7 +20,7 @@ public record MapItem(Id id, I18n label, Image image,
     }
 
     public boolean isStep(ScenarioConfig.Step.Id stepId) {
-        return scenarioStepIds.isEmpty() || scenarioStepIds.contains(stepId);
+        return stepIds.contains(stepId);
     }
 
     public boolean isImageAsset() {

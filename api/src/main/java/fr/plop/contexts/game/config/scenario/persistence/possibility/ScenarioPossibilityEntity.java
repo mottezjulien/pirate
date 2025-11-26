@@ -3,14 +3,14 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility;
 
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.condition.ScenarioPossibilityConditionEntity;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.recurrence.ScenarioPossibilityRecurrenceAbstractEntity;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.trigger.ScenarioPossibilityTriggerEntity;
-import fr.plop.generic.enumerate.AndOrOr;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -32,15 +32,9 @@ public class ScenarioPossibilityEntity {
     @JoinColumn(name = "trigger_id")
     private ScenarioPossibilityTriggerEntity trigger;
 
-    @ManyToMany
-    @JoinTable(name = "TEST2_RELATION_SCENARIO_POSSIBILITY_CONDITION",
-            joinColumns = @JoinColumn(name = "possibility_id"),
-            inverseJoinColumns = @JoinColumn(name = "condition_id"))
-    private Set<ScenarioPossibilityConditionEntity> conditions = new HashSet<>();
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "condition_type")
-    private AndOrOr conditionType;
+    @ManyToOne
+    @JoinColumn(name = "condition_id")
+    private ConditionEntity nullableCondition;
 
     @ManyToMany
     @JoinTable(name = "TEST2_RELATION_SCENARIO_POSSIBILITY_CONSEQUENCE",
@@ -81,20 +75,8 @@ public class ScenarioPossibilityEntity {
         this.trigger = trigger;
     }
 
-    public Set<ScenarioPossibilityConditionEntity> getConditions() {
-        return conditions;
-    }
-
-    public void setConditions(Set<ScenarioPossibilityConditionEntity> conditions) {
-        this.conditions = conditions;
-    }
-
-    public AndOrOr getConditionType() {
-        return conditionType;
-    }
-
-    public void setConditionType(AndOrOr conditionType) {
-        this.conditionType = conditionType;
+    public void setNullableCondition(ConditionEntity nullableCondition) {
+        this.nullableCondition = nullableCondition;
     }
 
     public Set<ScenarioPossibilityConsequenceAbstractEntity> getConsequences() {
@@ -109,8 +91,7 @@ public class ScenarioPossibilityEntity {
         return new Possibility(new Possibility.Id(id),
                 recurrence.toModel(),
                 trigger.toModel(),
-                conditions.stream().map(ScenarioPossibilityConditionEntity::toModel).toList(),
-                conditionType,
+                Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel),
                 consequences.stream().map(ScenarioPossibilityConsequenceAbstractEntity::toModel).toList());
     }
 }

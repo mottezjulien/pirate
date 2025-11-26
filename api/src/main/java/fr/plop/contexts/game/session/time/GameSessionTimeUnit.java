@@ -18,6 +18,14 @@ public record GameSessionTimeUnit(int value) implements Comparable<GameSessionTi
         return this.value - other.value;
     }
 
+    public boolean isBefore(GameSessionTimeUnit value) {
+        return this.compareTo(value) < 0;
+    }
+
+    public boolean isAfter(GameSessionTimeUnit value) {
+        return this.compareTo(value) > 0;
+    }
+
     public GameSessionTimeUnit add(GameSessionTimeUnit timeClick) {
         return new GameSessionTimeUnit(this.value + timeClick.value);
     }
@@ -25,4 +33,5 @@ public record GameSessionTimeUnit(int value) implements Comparable<GameSessionTi
     public GameSessionTimeUnit inc() {
         return new GameSessionTimeUnit(this.value + 1);
     }
+
 }

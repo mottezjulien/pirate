@@ -28,7 +28,7 @@ public class GameMapUseCase {
 
 
     public Response apply(GameSession.Id sessionId, GamePlayer player) {
-        List<MapItem> maps = output.findMaps(sessionId, player.stepActiveIds());
+        List<MapItem> maps = output.findMaps(sessionId, player.activeStepIds());
         return new Response(maps);
     }
 

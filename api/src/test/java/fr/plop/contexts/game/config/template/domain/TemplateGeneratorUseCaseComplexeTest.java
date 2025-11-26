@@ -2,7 +2,7 @@ package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
+import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
@@ -45,35 +45,33 @@ class TemplateGeneratorUseCaseComplexeTest {
         assertThat(template.version()).isEqualTo("1.0");
         assertThat(template.maxDuration().toMinutes()).isEqualTo(15);
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-           assertThat(scenario.steps()).hasSize(1)
-           .anySatisfy(step -> {
-              assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
-              assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
-              assertThat(step.targets()).hasSize(1)
-                  .anySatisfy(target -> {
-                      assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
-                      assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
-                  });
-              assertThat(step.possibilities())
-                  .hasSize(1)
-                  .anySatisfy(possibility -> {
-                      assertThat(possibility.trigger())
-                              .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
-                      PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                      assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
-                      assertThat(possibility.consequences())
-                          .hasSize(1)
-                          .anySatisfy(consequence -> {
-                              assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                              Consequence.DisplayMessage displayMessage = (Consequence.DisplayMessage) consequence;
-                              assertThat(displayMessage.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
-                              assertThat(displayMessage.value().value(Language.EN)).isEqualTo("Welcome to the game !");
-                          });
-                  });
+        assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
+        .anySatisfy(step -> {
+           assertThat(step.label().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
+           assertThat(step.label().value(Language.EN)).isEqualTo("The office (tutorial)");
+           assertThat(step.targets()).hasSize(1)
+               .anySatisfy(target -> {
+                   assertThat(target.label().value(Language.FR)).isEqualTo("Aller dans le bureau");
+                   assertThat(target.label().value(Language.EN)).isEqualTo("Go to the office");
+               });
+           assertThat(step.possibilities())
+               .hasSize(1)
+               .anySatisfy(possibility -> {
+                   assertThat(possibility.trigger())
+                           .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
+                   PossibilityTrigger.AbsoluteTime absoluteTime = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
+                   assertThat(absoluteTime.value()).isEqualTo(new GameSessionTimeUnit(0));
+                   assertThat(possibility.consequences())
+                       .hasSize(1)
+                       .anySatisfy(consequence -> {
+                           assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
+                           Consequence.DisplayMessage displayMessage = (Consequence.DisplayMessage) consequence;
+                           assertThat(displayMessage.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                           assertThat(displayMessage.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                       });
+               });
 
-           });
-        });
+        }));
     }
 
     @Test
@@ -101,12 +99,12 @@ class TemplateGeneratorUseCaseComplexeTest {
 
         assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
                 .anySatisfy(step -> {
-                    assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
-                    assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("The office (tutorial)");
+                    assertThat(step.label().value(Language.FR)).isEqualTo("Le bureau (tutorial)");
+                    assertThat(step.label().value(Language.EN)).isEqualTo("The office (tutorial)");
                     assertThat(step.targets()).hasSize(1)
                             .anySatisfy(target -> {
-                                assertThat(target.label().orElseThrow().value(Language.FR)).isEqualTo("Aller dans le bureau");
-                                assertThat(target.label().orElseThrow().value(Language.EN)).isEqualTo("Go to the office");
+                                assertThat(target.label().value(Language.FR)).isEqualTo("Aller dans le bureau");
+                                assertThat(target.label().value(Language.EN)).isEqualTo("Go to the office");
                             });
                     assertThat(step.possibilities())
                             .hasSize(1)
@@ -169,30 +167,28 @@ class TemplateGeneratorUseCaseComplexeTest {
         assertThat(template.version()).isEqualTo("1.0");
         assertThat(template.maxDuration().toMinutes()).isEqualTo(30);
 
-        assertThat(template.scenario()).satisfies(scenario -> {
-            assertThat(scenario.steps()).hasSize(1)
-                    .anySatisfy(step -> {
-                        assertThat(step.label().orElseThrow().value(Language.FR)).isEqualTo("Étape tutorial");
-                        assertThat(step.label().orElseThrow().value(Language.EN)).isEqualTo("Tutorial step");
-                        
-                        assertThat(step.targets()).hasSize(2);
-                        
-                        assertThat(step.possibilities()).hasSize(2)
-                            .anySatisfy(possibility -> {
-                                // Test du trigger CLICKMAPOBJECT avec condition StepTarget
-                                if (possibility.trigger() instanceof PossibilityTrigger.ClickMapObject clickMapObject) {
-                                    assertThat(clickMapObject.objectReference()).isEqualTo("DESK_POSITION");
-                                    
-                                    assertThat(possibility.conditions()).hasSize(1)
-                                        .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.StepTarget.class);
-                                            PossibilityCondition.StepTarget stepTarget = (PossibilityCondition.StepTarget) condition;
-                                            assertThat(stepTarget.targetId().value()).isEqualTo("ENTER_OFFICE");
-                                        });
-                                }
-                            });
-                    });
-        });
+        assertThat(template.scenario()).satisfies(scenario -> assertThat(scenario.steps()).hasSize(1)
+                .anySatisfy(step -> {
+                    assertThat(step.label().value(Language.FR)).isEqualTo("Étape tutorial");
+                    assertThat(step.label().value(Language.EN)).isEqualTo("Tutorial step");
+
+                    assertThat(step.targets()).hasSize(2);
+
+                    assertThat(step.possibilities()).hasSize(2)
+                        .anySatisfy(possibility -> {
+                            // Test du trigger CLICKMAPOBJECT avec condition StepTarget
+                            if (possibility.trigger() instanceof PossibilityTrigger.ClickMapObject clickMapObject) {
+                                assertThat(clickMapObject.objectReference()).isEqualTo("DESK_POSITION");
+
+                                assertThat(possibility.optCondition())
+                                    .hasValueSatisfying(condition -> {
+                                        assertThat(condition).isInstanceOf(Condition.Target.class);
+                                        Condition.Target target = (Condition.Target) condition;
+                                        assertThat(target.targetId().value()).isEqualTo("ENTER_OFFICE");
+                                    });
+                            }
+                        });
+                }));
         
         // Test de la carte
         assertThat(template.map()).satisfies(mapConfig -> {

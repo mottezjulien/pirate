@@ -6,13 +6,18 @@ import java.util.Map;
 
 public record I18n(I18n.Id id, String description, Map<Language, String> values) {
 
+    public I18n() {
+        this(Map.of());
+    }
+
     public I18n(Map<Language, String> values) {
-        this(new Id(), "", values);
+        this( "", values);
     }
 
     public I18n(String description, Map<Language, String> values) {
         this(new Id(), description, values);
     }
+
 
     public record Id(String value) {
         public Id() {

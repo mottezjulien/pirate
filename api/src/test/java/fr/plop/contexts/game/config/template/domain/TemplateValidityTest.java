@@ -1,31 +1,22 @@
 package fr.plop.contexts.game.config.template.domain;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
-import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class TemplateValidityTest {
-
-    private static I18n i18n(String fr) {
-        return new I18n(Map.of(Language.FR, fr, Language.EN, fr + " en anglais"));
-    }
 
     @Test
     void isValid_should_be_false_when_displayTalk_references_missing_talk() {
@@ -34,7 +25,6 @@ public class TemplateValidityTest {
         Possibility possibility = new Possibility(
                 new PossibilityRecurrence.Always(),
                 new PossibilityTrigger.StepActive(new PossibilityTrigger.Id()),
-                List.of(),
                 List.of(displayTalk)
         );
         ScenarioConfig.Step step = new ScenarioConfig.Step(List.of(possibility));

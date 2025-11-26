@@ -1,11 +1,13 @@
 package fr.plop.contexts.game.session.event.adapter.action;
 
+import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.session.time.GameSessionTimerRemove;
 import fr.plop.subs.i18n.domain.I18n;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,9 @@ public class GameEventActionGameTest {
 
     private final GameOverUseCase.OutputPort outputPort = mock(GameOverUseCase.OutputPort.class);
     private final PushPort pushPort = mock(PushPort.class);
-    private final GameOverUseCase event = new GameOverUseCase(outputPort, pushPort);
+    private final GameSessionTimerRemove timerRemove = mock(GameSessionTimerRemove.class);
+    private final GameConfigCache cache = mock(GameConfigCache.class);
+    private final GameOverUseCase event = new GameOverUseCase(outputPort, pushPort, timerRemove, cache);
     private final GameSession.Id sessionId = new GameSession.Id();
     private final GamePlayer.Id playerId = new GamePlayer.Id();
     private final GamePlayer.Id otherPlayerId1 = new GamePlayer.Id();
@@ -94,9 +98,7 @@ public class GameEventActionGameTest {
         verify(pushPort).push(captor.capture());
         List<PushEvent.GameStatus> events = captor.getAllValues();
         assertThat(events).hasSize(1)
-                .anySatisfy(push -> {
-                    assertThat(push.playerId()).isEqualTo(playerId);
-                });
+                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId));
     }
 
 }

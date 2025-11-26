@@ -1,30 +1,31 @@
 package fr.plop.contexts.game.config.template.domain;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
-import fr.plop.contexts.game.config.scenario.domain.model.PossibilityCondition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.generic.position.Point;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
-import fr.plop.generic.enumerate.AndOrOr;
-import fr.plop.generic.position.Point;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TemplateGeneratorUseCaseTest {
 
@@ -106,7 +107,7 @@ public class TemplateGeneratorUseCaseTest {
                 --------- C'est une belle chambre.
                 --------- EN:This is my room.
                 --------- It's a beautiful room.
-                ------ Target
+                ------ Target:FR:Autre:EN:Other
                 --------- EN:This is another space.
                 --------- It's an other space.
                 --------- It's an other space.
@@ -127,25 +128,24 @@ public class TemplateGeneratorUseCaseTest {
                 anySatisfy(step -> {
                     assertThat(step.id()).isNotNull();
                     assertThat(step.label())
-                            .isPresent()
-                            .hasValueSatisfying(withoutId(i18n("Chez Moi 123", "At Home 456")));
+                            .satisfies(withoutId(i18n("Chez Moi 123", "At Home 456")));
                     assertThat(step.targets())
                             .hasSize(4)
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Cuisine", "Kitchen")));
+                                assertThat(target.label()).satisfies(withoutId(i18n("Cuisine", "Kitchen")));
                                 assertThat(target.desc()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Bureau", "Office")));
+                                assertThat(target.label()).satisfies(withoutId(i18n("Bureau", "Office")));
                                 assertThat(target.desc()).isEmpty();
                                 assertThat(target.optional()).isTrue();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Chambre", "Room")));
+                                assertThat(target.label()).satisfies(withoutId(i18n("Chambre", "Room")));
                                 assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est ma chambre.
                                         C'est une belle chambre.""", """
@@ -155,7 +155,7 @@ public class TemplateGeneratorUseCaseTest {
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isEmpty();
+                                assertThat(target.label()).satisfies(withoutId(i18n("Autre", "Other")));
                                 assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est mon bureau.
                                         Ceci est ma chambre.
@@ -204,18 +204,18 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(template.scenario().steps()).hasSize(1).
                 anySatisfy(step -> {
                     assertThat(step.id()).isNotNull();
-                    assertThat(step.label()).isPresent().hasValueSatisfying(withoutId(i18n("Chez Moi", "At Home")));
+                    assertThat(step.label()).satisfies(withoutId(i18n("Chez Moi", "At Home")));
                     assertThat(step.targets())
                             .hasSize(2)
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Cuisine", "Kitchen")));
+                                assertThat(target.label()).satisfies(withoutId(i18n("Cuisine", "Kitchen")));
                                 assertThat(target.desc()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isPresent().hasValueSatisfying(withoutId(i18n("Bureau", "Office")));
+                                assertThat(target.label()).satisfies(withoutId(i18n("Bureau", "Office")));
                                 assertThat(target.desc()).isEmpty();
                                 assertThat(target.optional()).isTrue();
                             });
@@ -224,20 +224,23 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(possibility -> {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
-                                assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
                                 PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
                                 assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
-                                assertThat(possibility.conditions())
-                                        .hasSize(2)
-                                        .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.OutsideSpace.class);
-                                            assertThat(((PossibilityCondition.OutsideSpace) condition).spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
-                                        })
-                                        .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.AbsoluteTime.class);
-                                            assertThat(((PossibilityCondition.AbsoluteTime) condition).duration()).isEqualTo(Duration.ofMinutes(27));
+                                assertThat(possibility.optCondition())
+                                        .hasValueSatisfying(condition -> {
+                                            assertThat(condition).isInstanceOf(Condition.And.class);
+                                            assertThat(((Condition.And) condition).conditions()).hasSize(2)
+                                                    .anySatisfy(subCondition -> {
+                                                        assertThat(subCondition).isInstanceOf(Condition.OutsideSpace.class);
+                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
+                                                    })
+                                                    .anySatisfy(subCondition -> {
+                                                        assertThat(subCondition).isInstanceOf(Condition.AbsoluteTime.class);
+                                                        assertThat(((Condition.AbsoluteTime) subCondition).value()).isEqualTo(GameSessionTimeUnit.ofMinutes(27));
+                                                    });
                                         });
+
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
@@ -251,7 +254,7 @@ public class TemplateGeneratorUseCaseTest {
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
                                             assertThat(goalTarget.stepId()).isEqualTo(new ScenarioConfig.Step.Id("EFG"));
                                             assertThat(goalTarget.targetId()).isEqualTo(new ScenarioConfig.Target.Id("9876"));
-                                            assertThat(goalTarget.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE);
+                                            assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.FAILURE);
                                         });
 
                             })
@@ -259,38 +262,51 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Times.class);
                                 assertThat(((PossibilityRecurrence.Times) possibility.recurrence()).value()).isEqualTo(4);
-                                assertThat(possibility.conditionType()).isEqualTo(AndOrOr.OR);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
                                 assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(42));
-                                assertThat(possibility.conditions())
-                                        .hasSize(2)
-                                        .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.StepIn.class);
-                                            assertThat(((PossibilityCondition.StepIn) condition).stepId()).isEqualTo(new ScenarioConfig.Step.Id("0987"));
-                                        })
-                                        .anySatisfy(condition -> {
-                                            assertThat(condition).isInstanceOf(PossibilityCondition.OutsideSpace.class);
-                                            assertThat(((PossibilityCondition.OutsideSpace) condition).spaceId()).isEqualTo(new BoardSpace.Id("9823"));
+                                assertThat(possibility.optCondition())
+                                        .hasValueSatisfying(condition -> {
+                                            assertThat(condition).isInstanceOf(Condition.And.class);
+                                            assertThat(((Condition.And) condition).conditions()).hasSize(2)
+                                                    .anySatisfy(subCondition -> {
+                                                        assertThat(subCondition).isInstanceOf(Condition.Step.class);
+                                                        assertThat(((Condition.Step) subCondition).stepId()).isEqualTo(new ScenarioConfig.Step.Id("0987"));
+                                                    })
+                                                    .anySatisfy(subCondition -> {
+                                                        assertThat(subCondition).isInstanceOf(Condition.OutsideSpace.class);
+                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(new BoardSpace.Id("9823"));
+                                                    });
                                         });
+
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioStep.class);
                                             Consequence.ScenarioStep goal = (Consequence.ScenarioStep) consequence;
                                             assertThat(goal.stepId()).isEqualTo(new ScenarioConfig.Step.Id("KLM"));
-                                            assertThat(goal.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.SUCCESS);
+                                            assertThat(goal.state()).isEqualTo(ScenarioSessionState.SUCCESS);
                                         })
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
                                             assertThat(goalTarget.stepId()).isEqualTo(new ScenarioConfig.Step.Id("EFG123"));
                                             assertThat(goalTarget.targetId()).isEqualTo(new ScenarioConfig.Target.Id("9876"));
-                                            assertThat(goalTarget.state()).isEqualTo(fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.ACTIVE);
+                                            assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
                                         });
 
                             });
                 });
+    }
+
+    @Test
+    public void stepNoLabel() {
+        TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
+                Two StepNoLabel:4:Hello:50
+                --- Step
+                """);
+        assertThatThrownBy(() -> generator.apply(script))
+                .isInstanceOf(NoSuchElementException.class); //TODO
     }
 
 
@@ -298,12 +314,12 @@ public class TemplateGeneratorUseCaseTest {
     public void twoSteps() {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 Two Step:4:Hello:50
-                --- Step
+                --- Step:FR:Premier:EN:First
                 
-                ------ Target
+                ------ Target:FR:Mon objectif:EN:My target
                 ------ Possibility
                 --------- Trigger:goinSPACE:EFG
-                --- Step
+                --- Step:FR:Deuxième:EN:Second
                 ------ Possibility
                 
                 --------- RECURRENCE:tiMes:5
@@ -323,12 +339,12 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(template.scenario().steps()).hasSize(2).
                 anySatisfy(step -> {
                     assertThat(step.id()).isNotNull();
-                    assertThat(step.label()).isEmpty();
+                    assertThat(step.label()).satisfies(withoutId(i18n("Premier", "First")));
                     assertThat(step.targets())
                             .hasSize(1)
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
-                                assertThat(target.label()).isEmpty();
+                                assertThat(target.label()).satisfies(withoutId(i18n("Mon objectif", "My target")));
                                 assertThat(target.desc()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             });
@@ -337,17 +353,16 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(possibility -> {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
-                                assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
                                 PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
                                 assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("EFG"));
-                                assertThat(possibility.conditions()).isEmpty();
+                                assertThat(possibility.optCondition()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });
                 })
                 .anySatisfy(step -> {
                     assertThat(step.id()).isNotNull();
-                    assertThat(step.label()).isEmpty();
+                    assertThat(step.label()).satisfies(withoutId(i18n("Deuxième", "Second")));
                     assertThat(step.targets()).isEmpty();
                     assertThat(step.possibilities())
                             .hasSize(1)
@@ -355,11 +370,10 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.id()).isNotNull();
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Times.class);
                                 assertThat(((PossibilityRecurrence.Times) possibility.recurrence()).value()).isEqualTo(5);
-                                assertThat(possibility.conditionType()).isEqualTo(AndOrOr.AND);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
                                 assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(51));
-                                assertThat(possibility.conditions()).isEmpty();
+                                assertThat(possibility.optCondition()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });
                 });
@@ -520,7 +534,7 @@ public class TemplateGeneratorUseCaseTest {
                 --------- 1:2:3:4
                 ------ Space:Mars:HIGH
                 --------- 5:6:7:8
-                --- Step
+                --- Step:FR:Aucun:EN:None
                 ------ Possibility
                 --------- Trigger:GoInSpace:SpaceId:La lune
                 ------ Possibility
@@ -558,7 +572,7 @@ public class TemplateGeneratorUseCaseTest {
                 --- Board
                 ------ Space:La lune:HIGH
                 --------- 1:2:3:4
-                --- Step
+                --- Step:FR:Aucun:EN:None
                 ------ Possibility
                 --------- Trigger:GoInSpace:SpaceId:La lune
                 --------- consequence:TalkOptions:OPTIONS_ABCD
@@ -627,9 +641,9 @@ public class TemplateGeneratorUseCaseTest {
 
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 addRef:0.0.0:Ajout de la notion de Reférénce - optimisation step id
-                --- Step
+                --- Step:FR:Aucun:EN:None
                 ------ Target:FR:Réparer la station:EN:Réparer la station en anglais
-                --- Step
+                --- Step:FR:Aucun:EN:None
                 ------ Target (ref TARGET_ATTERRIR):FR:Atterrir sur la lune:EN:Atterrir sur la lune en anglais
                 ------ Possibility
                 --------- Trigger:ABSOLUTETIME:51
@@ -642,13 +656,13 @@ public class TemplateGeneratorUseCaseTest {
 
         ScenarioConfig.Step stepFirst = steps.getFirst();
         assertThat(stepFirst.targets().getFirst().id()).isNotNull();
-        assertThat(stepFirst.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Réparer la station");
-        assertThat(stepFirst.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Réparer la station en anglais");
+        assertThat(stepFirst.targets().getFirst().label().value(Language.FR)).isEqualTo("Réparer la station");
+        assertThat(stepFirst.targets().getFirst().label().value(Language.EN)).isEqualTo("Réparer la station en anglais");
 
         ScenarioConfig.Step stepSecond = steps.get(1);
         assertThat(stepSecond.targets().getFirst().id()).isNotNull();
-        assertThat(stepSecond.targets().getFirst().label().orElseThrow().value(Language.FR)).isEqualTo("Atterrir sur la lune");
-        assertThat(stepSecond.targets().getFirst().label().orElseThrow().value(Language.EN)).isEqualTo("Atterrir sur la lune en anglais");
+        assertThat(stepSecond.targets().getFirst().label().value(Language.FR)).isEqualTo("Atterrir sur la lune");
+        assertThat(stepSecond.targets().getFirst().label().value(Language.EN)).isEqualTo("Atterrir sur la lune en anglais");
 
 
         Possibility possibility = stepSecond.possibilities().getFirst();
@@ -664,7 +678,7 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(scenarioTarget.id()).isNotNull();
         assertThat(scenarioTarget.stepId()).isEqualTo(stepSecond.id());
         assertThat(scenarioTarget.targetId()).isEqualTo(stepSecond.targets().getFirst().id());
-        assertThat(scenarioTarget.state()).isEqualTo(ScenarioGoal.State.ACTIVE);
+        assertThat(scenarioTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
     }
 
     private Consumer<I18n> withoutId(I18n compareTo) {

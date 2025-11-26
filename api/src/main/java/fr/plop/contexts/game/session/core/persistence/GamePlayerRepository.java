@@ -9,24 +9,32 @@ import java.util.Optional;
 
 public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, String> {
 
-    @Query("FROM GamePlayerEntity player" +
-            " LEFT JOIN FETCH player.lastPosition position" +
+    String FROM = "FROM GamePlayerEntity player";
+    String FETCH_FULL = "LEFT JOIN FETCH player.lastPosition position" +
             " LEFT JOIN FETCH position.spaces spaces" +
             " LEFT JOIN FETCH player.goals goal" +
-            " LEFT JOIN FETCH goal.step step" +
+            " LEFT JOIN FETCH goal.step step";
+    String W_PLAYER_ID_EQUALS = "player.id = :playerId";
+    String W_SESSION_ID_EQUALS = "player.session.id = :sessionId";
+    String W_PLAYER_IS_ACTIVE = "player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE";
+
+    @Query(FROM + " " + FETCH_FULL + " WHERE " + W_PLAYER_ID_EQUALS)
+    Optional<GamePlayerEntity> fullById(@Param("playerId") String playerId);
+
+    @Query(FROM + " " + FETCH_FULL +
             " WHERE player.user.id = :userId" +
-            " AND player.session.id = :sessionId" +
-            " AND player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE")
+            " AND " + W_SESSION_ID_EQUALS +
+            " AND " + W_PLAYER_IS_ACTIVE)
     Optional<GamePlayerEntity> fullBySessionIdAndUserId(@Param("sessionId") String sessionId, @Param("userId") String userId);
 
-    @Query("SELECT player.id FROM GamePlayerEntity player" +
-            " WHERE player.session.id = :sessionId" +
-            " AND player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE")
+    @Query("SELECT player.id " + FROM +
+            " WHERE " + W_SESSION_ID_EQUALS +
+            " AND " + W_PLAYER_IS_ACTIVE)
     List<String> activeIdsBySessionId(@Param("sessionId") String sessionId);
 
-    @Query("FROM GamePlayerEntity player" +
-            " LEFT JOIN FETCH player.user user" +
-            " WHERE player.id = :id")
-    Optional<GamePlayerEntity> findByIdFetchUser(@Param("id") String id);
+    @Query(FROM + " LEFT JOIN FETCH player.user user" +
+            " WHERE " + W_PLAYER_ID_EQUALS)
+    Optional<GamePlayerEntity> findByIdFetchUser(@Param("playerId") String playerId);
+
 
 }

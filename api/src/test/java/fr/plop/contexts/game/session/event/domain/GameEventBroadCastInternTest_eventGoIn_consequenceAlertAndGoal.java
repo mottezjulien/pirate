@@ -6,63 +6,67 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
+import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.subs.i18n.domain.I18n;
-import fr.plop.generic.enumerate.AndOrOr;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
 
-    private final GameEventBroadCastIntern.OutPort outputPort = mock(GameEventBroadCastIntern.OutPort.class);
-    private final GameEventBroadCastIntern broadCast = new GameEventBroadCastIntern(outputPort);
+    private final GameEventBroadCastIntern.Port port = mock(GameEventBroadCastIntern.Port.class);
+    private final GameEventActionPushAdapter pushAdapter = mock(GameEventActionPushAdapter.class);
+    private final GameEventActionScenarioAdapter scenarioAdapter = mock(GameEventActionScenarioAdapter.class);
+    private final GameEventBroadCastIntern broadCast = new GameEventBroadCastIntern(port, pushAdapter, scenarioAdapter);
 
     private final GameSession.Id sessionId = new GameSession.Id();
     private final GamePlayer.Id playerId = new GamePlayer.Id();
+    private final GameContext context = new GameContext(sessionId, playerId);
     private final BoardSpace.Id spaceId = new BoardSpace.Id();
+
 
     @Test
     public void emptyPossibility() {
-        when(outputPort.findPossibilities(sessionId, playerId)).thenReturn(Stream.empty());
-        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
-        verify(outputPort, never()).doMessage(any(), any(), any());
-        verify(outputPort, never()).doGoal(any(), any(), any());
+        when(port.findPossibilities(context)).thenReturn(Stream.empty());
+        broadCast.fire(goInEvent(), context);
+        verify(pushAdapter, never()).message(any(), any(), any());
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(any(), any());
     }
 
     @Test
     public void fireEvent_ifSameSpace() {
         List<Consequence> consequences = consequences();
-        when(outputPort.findPossibilities(sessionId, playerId))
-                .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), triggerGoIn(spaceId), List.of(), AndOrOr.AND, consequences)));
-        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
+        when(port.findPossibilities(context))
+                .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), triggerGoIn(spaceId), consequences)));
+        broadCast.fire(goInEvent(), new GameContext(sessionId, playerId));
 
-        verify(outputPort).doMessage(sessionId, playerId, ((Consequence.DisplayMessage) consequences.getFirst()));
-        verify(outputPort).doGoal(sessionId, playerId, ((Consequence.ScenarioStep) consequences.get(1)));
+        verify(pushAdapter).message(sessionId, playerId, ((Consequence.DisplayMessage) consequences.getFirst()).value());
+        verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, ((Consequence.ScenarioStep) consequences.get(1)));
     }
 
     @Test
     public void nothing_ifDifferentSpace() {
         PossibilityTrigger trigger = triggerGoIn(new BoardSpace.Id("other space"));
-        when(outputPort.findPossibilities(sessionId, playerId))
-                .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), trigger, List.of(), AndOrOr.AND, consequences())));
-        broadCast.fire(goInEvent(), new GameEventContext(sessionId, playerId));
+        when(port.findPossibilities(context))
+                .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), trigger, consequences())));
+        broadCast.fire(goInEvent(), new GameContext(sessionId, playerId));
 
-        verify(outputPort, never()).doMessage(any(), any(), any());
-        verify(outputPort, never()).doGoal(any(), any(), any());
+        verify(pushAdapter, never()).message(any(), any(), any());
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(any(), any());
     }
 
     private List<Consequence> consequences() {
         Consequence.DisplayMessage message = new Consequence.DisplayMessage(new Consequence.Id(), mock(I18n.class));
-        Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), fr.plop.contexts.game.session.scenario.domain.model.ScenarioGoal.State.FAILURE);
+        Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), new ScenarioConfig.Step.Id(), ScenarioSessionState.FAILURE);
         return List.of(message, goal);
     }
 
