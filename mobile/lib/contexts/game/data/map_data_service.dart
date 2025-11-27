@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../domain/model/map_models.dart';
 
 class MapDataService {
+
   static const String _jsonPath = 'assets/game/tres/test-config.json';
 
   /// Charge les données des cartes depuis le fichier JSON

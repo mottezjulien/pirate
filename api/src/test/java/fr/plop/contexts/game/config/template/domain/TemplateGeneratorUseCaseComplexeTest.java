@@ -204,8 +204,8 @@ class TemplateGeneratorUseCaseComplexeTest {
                                     assertThat(position.priority()).isEqualTo(MapItem.Priority.HIGH);
                                     assertThat(position).isInstanceOf(MapItem.Position.Point.class);
                                     MapItem.Position.Point point = (MapItem.Position.Point) position;
-                                    assertThat(point.x()).isCloseTo(0.2, Offset.offset(0.01));
-                                    assertThat(point.y()).isCloseTo(0.8, Offset.offset(0.01));
+                                    assertThat(point.top()).isCloseTo(0.2, Offset.offset(0.01));
+                                    assertThat(point.left()).isCloseTo(0.8, Offset.offset(0.01));
                                 });
                     });
         });

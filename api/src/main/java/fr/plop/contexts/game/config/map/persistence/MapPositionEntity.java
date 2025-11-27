@@ -4,6 +4,7 @@ package fr.plop.contexts.game.config.map.persistence;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
 import fr.plop.contexts.game.config.map.domain.MapItem;
+import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -15,7 +16,7 @@ import java.util.Set;
 public class MapPositionEntity {
 
     public enum Type {
-        ZONE, POINT
+        POINT, IMAGE
     }
 
 
@@ -31,17 +32,18 @@ public class MapPositionEntity {
     private Type type;
 
     private double top;
-
-
     @Column(name = "_left")
     private double left;
-    private double bottom;
-    @Column(name = "_right")
-    private double right;
 
-    private double x;
+    @Column(name = "point_color")
+    private String pointColor;
 
-    private double y;
+    @Column(name = "image_type")
+    @Enumerated(EnumType.STRING)
+    private Image.Type imageType;
+
+    @Column(name = "image_value")
+    private String imageValue;
 
     @Enumerated(EnumType.STRING)
     private MapItem.Priority priority;
@@ -100,36 +102,16 @@ public class MapPositionEntity {
         this.left = left;
     }
 
-    public double getBottom() {
-        return bottom;
+    public void setPointColor(String pointColor) {
+        this.pointColor = pointColor;
     }
 
-    public void setBottom(double bottom) {
-        this.bottom = bottom;
+    public void setImageType(Image.Type imageType) {
+        this.imageType = imageType;
     }
 
-    public double getRight() {
-        return right;
-    }
-
-    public void setRight(double right) {
-        this.right = right;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(double x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
+    public void setImageValue(String imageValue) {
+        this.imageValue = imageValue;
     }
 
     public MapItem.Priority getPriority() {
@@ -154,8 +136,8 @@ public class MapPositionEntity {
                 .toList();
         MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(id), label, priority, spaceIds);
         return switch (type) {
-            case ZONE -> new MapItem.Position.Zone(atom, top, left, bottom, right);
-            case POINT -> new MapItem.Position.Point(atom, x, y);
+            case POINT -> new MapItem.Position.Point(atom, top, left, pointColor);
+            case IMAGE -> new MapItem.Position._Image(atom, top, left, new Image(imageType, imageValue));
         };
     }
 }

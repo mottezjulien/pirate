@@ -1,0 +1,72 @@
+[
+
+  {
+    "id": "SDKJFHSDF56484",
+    "label": "Général",
+    "image": {
+      "type": "ASSET",
+      "path": "assets/pouet/1.jpg"
+    },
+    "items": []
+  },
+
+  {
+    "id": "map_123",
+    "label": "quartier A",
+    "image": {
+      "type": "ASSET",
+      "path": "assets/pouet/2.jpg"
+    },
+    "items": [
+      {
+        "id": "point_1756399286397",
+        "label": "Point 1",
+        "type": "POINT",
+        "point": {
+          "color": "red"
+        },
+        "position": {
+          "top": 0.125,
+          "left": 0.05
+        }
+      },
+      {
+        "id": "point_1756399289344",
+        "label": "Point 2",
+        "type": "POINT",
+        "point": {
+          "color": "blue"
+        },
+        "position": {
+          "top": 0.15,
+          "left": 0.575
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "map_456",
+    "label": "ile Pouet",
+    "image": {
+      "type": "ASSET",
+      "path": "assets/pouet/3.jpg"
+    },
+    "items": [
+      {
+        "id": "Pouet 56481561654",
+        "label": "Le phare de l'ile",
+        "type": "IMAGE",
+        "image": {
+          "type": "ASSET",
+          "path": "assets/pouet/phare.jpg"
+        },
+        "position": {
+          "top": 0.15,
+          "left": 0.575
+        }
+      }
+    ]
+  }
+
+]

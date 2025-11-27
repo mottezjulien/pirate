@@ -23,6 +23,7 @@ import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 
 import java.time.Duration;
 import java.util.*;
@@ -139,8 +140,8 @@ public class TemplateGeneratorUseCase {
                 priority = MapItem.Priority.valueOf(child.params().getFirst().toUpperCase());
             } else if ("POSITION".equalsIgnoreCase(child.header()) && child.params().size() >= 2) {
                 // Format: "position:89.09:10.064"
-                float x = Float.parseFloat(child.params().get(0));
-                float y = Float.parseFloat(child.params().get(1));
+                float top = Float.parseFloat(child.params().get(0));
+                float left = Float.parseFloat(child.params().get(1));
 
                 // Parse priority and step IDs from position children
                 MapItem.Priority positionPriority = MapItem.Priority.LOW; // default
@@ -153,7 +154,7 @@ public class TemplateGeneratorUseCase {
                 }
 
                 MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(), "", positionPriority, List.of());
-                MapItem.Position position = new MapItem.Position.Point(atom, x, y);
+                MapItem.Position position = new MapItem.Position.Point(atom, top, left, "red");
                 positions.add(position);
             }
         }
@@ -161,14 +162,7 @@ public class TemplateGeneratorUseCase {
         // Convertir Set<ScenarioConfig.Step.Id> en List<ScenarioConfig.Step.Id>
         List<ScenarioConfig.Step.Id> stepIdsList = new ArrayList<>(stepIds);
 
-        return new MapItem(
-                new MapItem.Id(),
-                new I18n(Map.of()), // value I18n vide
-                new MapItem.Image(MapItem.Image.Type.ASSET, imagePath, new MapItem.Image.Size(0, 0)),
-                priority,
-                positions,
-                stepIdsList
-        );
+        return new MapItem(new MapItem.Id(), new I18n(Map.of()), new Image(Image.Type.ASSET, imagePath), priority, positions, stepIdsList);
     }
 
     // ============ ANCIENNES METHODES (à conserver pour le moment) ============

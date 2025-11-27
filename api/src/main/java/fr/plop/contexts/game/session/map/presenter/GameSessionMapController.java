@@ -10,6 +10,7 @@ import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -49,29 +50,26 @@ public class GameSessionMapController {
 
     }
 
-    public record GameMapResponseDTO(String id, String label, int priority, ImageResponseDTO image, List<Position> positions) {
 
-        public record Position(String type, String id, String label, Bounds bounds, Point point) {
+    public record GameMapResponseDTO(String id, String label, ImageResponseDTO image, List<Item> items) {
 
-            static Position fromModel(MapItem.Position model) {
+        public record Item(String id, String label, String type, Position position, Point point, ImageResponseDTO image) {
+
+            static Item fromModel(MapItem.Position model) {
                 return switch (model) {
                     case MapItem.Position.Point point ->
-                            new Position("POINT", model.id().value(), model.label(), null, Point.fromModel(point));
-                    case MapItem.Position.Zone zone ->
-                            new Position("ZONE", model.id().value(), model.label(), Bounds.fromModel(zone), null);
+                            new Item(model.id().value(), model.label(),  "POINT", new Position(point.top(), point.left()), new Point(point.color()), null);
+                    case MapItem.Position._Image image ->
+                            new Item(model.id().value(), model.label(), "IMAGE", new Position(image.top(), image.left()), null, imageResponseDTOFromModel(image.value()));
                 };
             }
 
-            public record Bounds(double left, double top, double right, double bottom) {
-                public static Bounds fromModel(MapItem.Position.Zone zone) {
-                    return new Bounds(zone.left(), zone.top(), zone.right(), zone.bottom());
-                }
+            public record Position(double top, double left) {
+
             }
 
-            public record Point(double x, double y) {
-                public static Point fromModel(MapItem.Position.Point model) {
-                    return new Point(model.x(), model.y());
-                }
+            public record Point(String color) {
+
             }
 
         }
@@ -80,15 +78,12 @@ public class GameSessionMapController {
             return new GameMapResponseDTO(
                     map.id().value(),
                     map.label().value(language),
-                    map.priority().value(),
                     imageResponseDTOFromModel(map.image()),
-                    map.positions().stream().map(Position::fromModel).toList());
+                    map.positions().stream().map(Item::fromModel).toList());
         }
 
-        private static ImageResponseDTO imageResponseDTOFromModel(MapItem.Image image) {
-            MapItem.Image.Size sizeModel = image.size();
-            ImageResponseDTO.Size sizeDTO = new ImageResponseDTO.Size(sizeModel.width(), sizeModel.height());
-            return new ImageResponseDTO(image.type().name(), image.value(), sizeDTO);
+        private static ImageResponseDTO imageResponseDTOFromModel(Image image) {
+            return new ImageResponseDTO(image.type().name(), image.value());
         }
 
     }

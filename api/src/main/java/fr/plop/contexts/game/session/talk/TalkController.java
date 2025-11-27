@@ -17,6 +17,7 @@ import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -134,7 +135,8 @@ public class TalkController {
             }
         }
         public static ResponseDTO fromModel(TalkItem item, Language language) {
-            ImageResponseDTO image = new ImageResponseDTO(item.characterReference().image().type().name(), item.characterReference().image().value(), null);
+            Image imageCharacter = item.characterReference().image();
+            ImageResponseDTO image = ImageResponseDTO.fromModel(imageCharacter);
             ResponseDTO.Character character = new Character(item.character().name(), image);
             List<Result.Option> options = List.of();
             String nextId = null;

@@ -4,16 +4,13 @@ import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.image.Image;
 
 import java.util.List;
 
 public record MapItem(Id id, I18n label, Image image,
                       Priority priority, List<Position> positions, List<ScenarioConfig.Step.Id> stepIds) {
 
-
-    public MapItem(I18n label, Image image, Priority priority, List<Position> positions) {
-        this(new Id(), label, image, priority, positions, List.of());
-    }
 
     public boolean isSteps(List<ScenarioConfig.Step.Id> stepIds) {
         return stepIds.stream().anyMatch(this::isStep);
@@ -28,7 +25,7 @@ public record MapItem(Id id, I18n label, Image image,
     }
 
     public String imagePath() {
-        return image.value;
+        return image.value();
     }
 
     public record Id(String value) {
@@ -37,22 +34,7 @@ public record MapItem(Id id, I18n label, Image image,
         }
     }
 
-    public record Image(Type type, String value, Size size) {
-        public boolean isAsset() {
-            return type == Type.ASSET;
-        }
-
-        public enum Type {
-            ASSET, WEB
-        }
-
-        public record Size(int width, int height) {
-
-        }
-
-    }
-
-    public sealed interface Position permits Position.Zone, Position.Point {
+    public sealed interface Position permits Position.Point, Position._Image {
 
         record Atom(Id id, String label, Priority priority, List<BoardSpace.Id> spaceIds) {
             public Atom(String label, Priority priority, List<BoardSpace.Id> spaceIds) {
@@ -84,11 +66,11 @@ public record MapItem(Id id, I18n label, Image image,
             return atom().spaceIds();
         }
 
-        record Zone(Atom atom, double top, double left, double bottom, double right) implements Position {
+        record Point(Atom atom, double top, double left, String color) implements Position {
 
         }
 
-        record Point(Atom atom, double x, double y) implements Position {
+        record _Image(Atom atom, double top, double left, Image value) implements Position {
 
         }
 

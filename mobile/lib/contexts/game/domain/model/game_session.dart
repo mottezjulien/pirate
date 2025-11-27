@@ -130,7 +130,6 @@ class GameEventListener {
       },
       onDone: () => running ? connect(sessionId): () {}, // Reconnexion automatique
       onError: (e) {
-        print('Erreur WebSocket: $e');
         if (!connectionCompleter.isCompleted) {
           connectionCompleter.completeError(e);
         }

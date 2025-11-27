@@ -88,7 +88,11 @@ ChezWamGene:1.0::15
 --------- Priority:HIGH
 
 --- Talk
+------ Character
+--------- Bob
+------------ default:ASSET:/pouet/bobdefault.jpg
 ------ Options(ref TALK_WELCOME)
+--------- Character:Bob:default
 --------- Label
 ------------ FR:Bonjour, bienvenu dans le jeu d'entrainement. Est ce que tu veux faire le tutorial ?
 ------------ EN:Hello, welcome to the training game. Do you want to do the tutorial?
@@ -99,6 +103,7 @@ ChezWamGene:1.0::15
 ------------ FR:Non, passer au chapitre suivant
 ------------ EN:No, skip to next chapter
 ------ Options(ref TALK_STOP_TUTO)
+--------- Character:Bob:default
 --------- Label
 ------------ FR:Veux-tu arrêter le tutorial ?
 ------------ EN:Do you want to stop the tutorial?

@@ -26,6 +26,7 @@ import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import fr.plop.subs.i18n.persistence.I18nRepository;
+import fr.plop.subs.image.Image;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -190,11 +191,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
             MapItemEntity mapItemEntity = new MapItemEntity();
             mapItemEntity.setId(item.id().value());
             mapItemEntity.setLabel(createI18n(item.label()));
-            MapItem.Image image = item.image();
+            Image image = item.image();
             mapItemEntity.setImageType(image.type());
             mapItemEntity.setImageValue(image.value());
-            mapItemEntity.setImageSizeWidth(image.size().width());
-            mapItemEntity.setImageSizeHeight(image.size().height());
 
             mapItemEntity.setPriority(item.priority());
             mapItemRepository.save(mapItemEntity);
@@ -206,17 +205,18 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
                 entity.setMap(mapItemEntity);
 
                 switch (position) {
-                    case MapItem.Position.Zone zone -> {
-                        entity.setType(MapPositionEntity.Type.ZONE);
-                        entity.setTop(zone.top());
-                        entity.setLeft(zone.left());
-                        entity.setBottom(zone.bottom());
-                        entity.setRight(zone.right());
-                    }
                     case MapItem.Position.Point point -> {
                         entity.setType(MapPositionEntity.Type.POINT);
-                        entity.setX(point.x());
-                        entity.setY(point.y());
+                        entity.setTop(point.top());
+                        entity.setLeft(point.left());
+                        entity.setPointColor(point.color());
+                    }
+                    case MapItem.Position._Image _image -> {
+                        entity.setType(MapPositionEntity.Type.IMAGE);
+                        entity.setTop(_image.top());
+                        entity.setLeft(_image.left());
+                        entity.setImageType(_image.value().type());
+                        entity.setImageValue(_image.value().value());
                     }
                 }
                 mapPositionRepository.save(entity);

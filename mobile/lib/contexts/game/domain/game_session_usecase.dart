@@ -26,7 +26,7 @@ class GameSessionUseCase {
   }
 
   startSession() async {
-    Dialog dialog = new Dialog();
+    Dialog dialog = Dialog();
     dialog.showMessage(
         message: "Session de jeux en cours de preparation :)",
         isClosable: false

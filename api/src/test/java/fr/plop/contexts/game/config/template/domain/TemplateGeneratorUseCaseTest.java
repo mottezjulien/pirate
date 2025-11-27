@@ -507,8 +507,9 @@ public class TemplateGeneratorUseCaseTest {
 
                                 assertThat(position).isInstanceOf(MapItem.Position.Point.class);
                                 MapItem.Position.Point point = (MapItem.Position.Point) position;
-                                assertThat(point.x()).isEqualTo(89.09F);
-                                assertThat(point.y()).isEqualTo(10.064F);
+                                assertThat(point.top()).isEqualTo(89.09F);
+                                assertThat(point.left()).isEqualTo(10.064F);
+                                assertThat(point.color()).isEqualTo("red");
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
@@ -516,8 +517,9 @@ public class TemplateGeneratorUseCaseTest {
 
                                 assertThat(position).isInstanceOf(MapItem.Position.Point.class);
                                 MapItem.Position.Point point = (MapItem.Position.Point) position;
-                                assertThat(point.x()).isEqualTo(78.865F);
-                                assertThat(point.y()).isEqualTo(23.9887F);
+                                assertThat(point.top()).isEqualTo(78.865F);
+                                assertThat(point.left()).isEqualTo(23.9887F);
+                                assertThat(point.color()).isEqualTo("red");
                             });
                     assertThat(item.isStep(new ScenarioConfig.Step.Id("Id1"))).isTrue();
                     assertThat(item.isStep(new ScenarioConfig.Step.Id("Id2"))).isFalse();

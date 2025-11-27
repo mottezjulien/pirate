@@ -15,8 +15,8 @@ class GameSessionRepository {
     return sessionToModel(await genericRepository.post(
         path: resourcePath,
         body: {
-      'templateCode': 'TEST_DISCUSSION'
-      //'templateCode': 'ChezWamGene' //TODO 'templateCode': 'pirate_lyon'
+      //'templateCode': 'TEST_DISCUSSION'
+      'templateCode': 'ChezWamGene' //TODO 'templateCode': 'pirate_lyon'
     }));
   }
 

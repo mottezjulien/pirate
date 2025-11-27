@@ -3,6 +3,7 @@ package fr.plop.contexts.game.config.map.persistence;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.subs.i18n.persistence.I18nEntity;
+import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -26,16 +27,10 @@ public class MapItemEntity {
 
     @Column(name = "image_type")
     @Enumerated(EnumType.STRING)
-    private MapItem.Image.Type imageType;
+    private Image.Type imageType;
 
     @Column(name = "image_value")
     private String imageValue;
-
-    @Column(name = "image_size_width")
-    private int imageSizeWidth;
-
-    @Column(name = "image_size_height")
-    private int imageSizeHeight;
 
     @Enumerated(EnumType.STRING)
     private MapItem.Priority priority;
@@ -68,11 +63,11 @@ public class MapItemEntity {
         this.label = label;
     }
 
-    public MapItem.Image.Type getImageType() {
+    public Image.Type getImageType() {
         return imageType;
     }
 
-    public void setImageType(MapItem.Image.Type imageType) {
+    public void setImageType(Image.Type imageType) {
         this.imageType = imageType;
     }
 
@@ -82,22 +77,6 @@ public class MapItemEntity {
 
     public void setImageValue(String imageValue) {
         this.imageValue = imageValue;
-    }
-
-    public int getImageSizeWidth() {
-        return imageSizeWidth;
-    }
-
-    public void setImageSizeWidth(int imageSizeWidth) {
-        this.imageSizeWidth = imageSizeWidth;
-    }
-
-    public int getImageSizeHeight() {
-        return imageSizeHeight;
-    }
-
-    public void setImageSizeHeight(int imageSizeHeight) {
-        this.imageSizeHeight = imageSizeHeight;
     }
 
     public MapItem.Priority getPriority() {
@@ -117,8 +96,7 @@ public class MapItemEntity {
     }
 
     public MapItem toModel() {
-        MapItem.Image.Size size = new MapItem.Image.Size(imageSizeWidth, imageSizeHeight);
-        MapItem.Image image = new MapItem.Image(imageType, imageValue, size);
+        Image image = new Image(imageType, imageValue);
         List<MapItem.Position> positions = this.positions.stream().map(MapPositionEntity::toModel).toList();
         List<ScenarioConfig.Step.Id> stepIds = List.of(); //TODO
         return new MapItem(new MapItem.Id(id), label.toModel(), image, priority, positions, stepIds);
