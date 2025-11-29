@@ -11,6 +11,12 @@ public record TalkConfig(Id id, List<TalkItem> items) {
         return items.stream().filter(item -> item.is(talkId)).findFirst();
     }
 
+    public Optional<TalkItem.Id> findByIdByOptionId(TalkItem.Options.Option.Id optId) {
+        return items.stream()
+                .filter(item -> item instanceof TalkItem.Options opt && opt.contains(optId))
+                .findFirst().map(TalkItem::id);
+    }
+
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());

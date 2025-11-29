@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../data/game_map_repository.dart';
 import '../../game_current.dart';
-import 'game_map_repository.dart';
 
 class GameMapView extends StatefulWidget {
 

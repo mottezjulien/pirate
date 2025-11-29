@@ -18,16 +18,16 @@ public class BoardRectEntity {
     private BoardSpaceEntity space;
 
     @Column(name = "top_right_latitude")
-    private float topRightLatitude;
+    private double topRightLatitude;
 
     @Column(name = "top_right_longitude")
-    private float topRightLongitude;
+    private double topRightLongitude;
 
     @Column(name = "bottom_left_latitude")
-    private float bottomLeftLatitude;
+    private double bottomLeftLatitude;
 
     @Column(name = "bottom_left_longitude")
-    private float bottomLeftLongitude;
+    private double bottomLeftLongitude;
 
     public String getId() {
         return id;
@@ -45,35 +45,19 @@ public class BoardRectEntity {
         this.space = space;
     }
 
-    public float getTopRightLatitude() {
-        return topRightLatitude;
-    }
-
-    public void setTopRightLatitude(float topRightLatitude) {
+    public void setTopRightLatitude(double topRightLatitude) {
         this.topRightLatitude = topRightLatitude;
     }
 
-    public float getTopRightLongitude() {
-        return topRightLongitude;
-    }
-
-    public void setTopRightLongitude(float topRightLongitude) {
+    public void setTopRightLongitude(double topRightLongitude) {
         this.topRightLongitude = topRightLongitude;
     }
 
-    public float getBottomLeftLatitude() {
-        return bottomLeftLatitude;
-    }
-
-    public void setBottomLeftLatitude(float bottomLeftLatitude) {
+    public void setBottomLeftLatitude(double bottomLeftLatitude) {
         this.bottomLeftLatitude = bottomLeftLatitude;
     }
 
-    public float getBottomLeftLongitude() {
-        return bottomLeftLongitude;
-    }
-
-    public void setBottomLeftLongitude(float bottomLeftLongitude) {
+    public void setBottomLeftLongitude(double bottomLeftLongitude) {
         this.bottomLeftLongitude = bottomLeftLongitude;
     }
 

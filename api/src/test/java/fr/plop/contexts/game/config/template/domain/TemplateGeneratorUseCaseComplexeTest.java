@@ -7,6 +7,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.subs.i18n.domain.Language;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
@@ -134,7 +135,7 @@ class TemplateGeneratorUseCaseComplexeTest {
                 TutorialGame:1.0::30
                 
                 --- Board
-                ------ Space:Office:HIGH
+                ------ Space (ref Office):Office:HIGH
                 --------- bottomLeft:45.77806:4.80351:topRight:45.77820:4.80367
                 
                 --- Step (ref TUTORIAL_STEP):FR:Étape tutorial:EN:Tutorial step
@@ -155,7 +156,7 @@ class TemplateGeneratorUseCaseComplexeTest {
                 
                 --- Map:Asset:assets/office.png
                 ------ Priority:LOWEST
-                ------ Position:0.2:0.8
+                ------ object:point:0.2:0.8
                 --------- Priority:HIGH
                 """;
 
@@ -197,13 +198,13 @@ class TemplateGeneratorUseCaseComplexeTest {
             assertThat(mapConfig.items())
                     .hasSize(1)
                     .anySatisfy(item -> {
-                        assertThat(item.priority()).isEqualTo(MapItem.Priority.LOWEST);
-                        assertThat(item.positions())
+                        assertThat(item.priority()).isEqualTo(Priority.LOWEST);
+                        assertThat(item.objects())
                                 .hasSize(1)
                                 .anySatisfy(position -> {
-                                    assertThat(position.priority()).isEqualTo(MapItem.Priority.HIGH);
-                                    assertThat(position).isInstanceOf(MapItem.Position.Point.class);
-                                    MapItem.Position.Point point = (MapItem.Position.Point) position;
+                                    assertThat(position.priority()).isEqualTo(Priority.HIGH);
+                                    assertThat(position).isInstanceOf(MapItem._Object.Point.class);
+                                    MapItem._Object.Point point = (MapItem._Object.Point) position;
                                     assertThat(point.top()).isCloseTo(0.2, Offset.offset(0.01));
                                     assertThat(point.left()).isCloseTo(0.8, Offset.offset(0.01));
                                 });

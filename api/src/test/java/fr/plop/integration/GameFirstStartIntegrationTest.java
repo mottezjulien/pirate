@@ -4,6 +4,7 @@ import fr.plop.contexts.connect.presenter.ConnectionController;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
+import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,10 +35,14 @@ public class GameFirstStartIntegrationTest {
     int randomServerPort;
 
     @Autowired
+    private GameSessionClearPort sessionClear;
+
+    @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
     @BeforeEach
     void setUp() {
+        sessionClear.clearAll();
         templateInitUseCase.deleteAll();
         Template.Code code = new Template.Code("TEST_FIRST");
         ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));

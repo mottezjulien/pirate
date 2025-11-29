@@ -4,7 +4,9 @@ import fr.plop.generic.tools.StringTools;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public record Tree(String originalHeader, String _header, String reference, List<String> params, List<Tree> children) {
 
@@ -108,5 +110,23 @@ public record Tree(String originalHeader, String _header, String reference, List
 
     public boolean hasParams() {
         return !params.isEmpty();
+    }
+
+    public Optional<String> childByKeyOneParam(String key) {
+        return childByKey(key).map(child -> child.param(0));
+    }
+
+    public Optional<Tree> childByKey(String key) {
+        return children.stream()
+                .filter(child -> child.isHeader(key))
+                .findFirst();
+    }
+
+    public Stream<Tree> childrenByKey(String key) {
+        return children.stream().filter(child -> child.isHeader(key));
+    }
+
+    private boolean isHeader(String key) {
+        return key.equals(header());
     }
 }

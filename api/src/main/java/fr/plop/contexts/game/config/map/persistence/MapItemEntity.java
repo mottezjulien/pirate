@@ -1,13 +1,15 @@
 package fr.plop.contexts.game.config.map.persistence;
 
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.subs.i18n.persistence.I18nEntity;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -21,9 +23,7 @@ public class MapItemEntity {
     @JoinColumn(name = "config_id")
     private MapConfigEntity config;
 
-    @ManyToOne
-    @JoinColumn(name = "label_i18n_id")
-    private I18nEntity label;
+    private String label;
 
     @Column(name = "image_type")
     @Enumerated(EnumType.STRING)
@@ -33,10 +33,15 @@ public class MapItemEntity {
     private String imageValue;
 
     @Enumerated(EnumType.STRING)
-    private MapItem.Priority priority;
+    private Priority priority;
 
     @OneToMany(mappedBy = "map")
-    private Set<MapPositionEntity> positions = new HashSet<>();
+    private final Set<MapItemObjectEntity> objects = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "condition_id")
+    private ConditionEntity nullableCondition;
+
 
     public String getId() {
         return id;
@@ -44,6 +49,18 @@ public class MapItemEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public void setImageType(Image.Type imageType) {
+        this.imageType = imageType;
+    }
+
+    public void setImageValue(String imageValue) {
+        this.imageValue = imageValue;
     }
 
     public MapConfigEntity getConfig() {
@@ -54,51 +71,23 @@ public class MapItemEntity {
         this.config = config;
     }
 
-
-    public I18nEntity getLabel() {
-        return label;
-    }
-
-    public void setLabel(I18nEntity label) {
-        this.label = label;
-    }
-
-    public Image.Type getImageType() {
-        return imageType;
-    }
-
-    public void setImageType(Image.Type imageType) {
-        this.imageType = imageType;
-    }
-
-    public String getImageValue() {
-        return imageValue;
-    }
-
-    public void setImageValue(String imageValue) {
-        this.imageValue = imageValue;
-    }
-
-    public MapItem.Priority getPriority() {
+    public Priority getPriority() {
         return priority;
     }
 
-    public void setPriority(MapItem.Priority priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 
-    public Set<MapPositionEntity> getPositions() {
-        return positions;
-    }
-
-    public void setPositions(Set<MapPositionEntity> positions) {
-        this.positions = positions;
+    public void setNullableCondition(ConditionEntity nullableCondition) {
+        this.nullableCondition = nullableCondition;
     }
 
     public MapItem toModel() {
         Image image = new Image(imageType, imageValue);
-        List<MapItem.Position> positions = this.positions.stream().map(MapPositionEntity::toModel).toList();
-        List<ScenarioConfig.Step.Id> stepIds = List.of(); //TODO
-        return new MapItem(new MapItem.Id(id), label.toModel(), image, priority, positions, stepIds);
+        Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
+        List<MapItem._Object> objects = this.objects.stream().map(MapItemObjectEntity::toModel).toList();
+        return new MapItem(new MapItem.Id(id), label, image, priority, objects, optCondition);
     }
+
 }

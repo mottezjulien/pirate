@@ -73,11 +73,13 @@ public class ScenarioStepEntity {
         this.possibilities = possibilities;
     }
 
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
     public ScenarioConfig.Step toModel() {
-        return new ScenarioConfig.Step(
-                new ScenarioConfig.Step.Id(id),
-                label.toModel(),
-                targets.stream().map(ScenarioTargetEntity::toModel).toList(),
+        return new ScenarioConfig.Step(new ScenarioConfig.Step.Id(id),
+                label.toModel(), order, targets.stream().map(ScenarioTargetEntity::toModel).toList(),
                 possibilities.stream().map(ScenarioPossibilityEntity::toModel).toList()
         );
 

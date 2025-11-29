@@ -9,6 +9,7 @@ import fr.plop.generic.enumerate.TrueOrFalse;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
+import java.util.Optional;
 
 public sealed interface Condition permits
         Condition.And,
@@ -25,11 +26,25 @@ public sealed interface Condition permits
             this(StringTools.generate());
         }
     }
+
+    static Optional<Condition> buildAndFromList(List<Condition> conditions) {
+        if(conditions.isEmpty()) {
+            return Optional.empty();
+        }
+        if(conditions.size() == 1) {
+            return Optional.of(conditions.getFirst());
+        }
+        return Optional.of(new And(conditions));
+    }
     Id id();
 
     TrueOrFalse accept(GameSessionSituation situation);
 
     record And(Id id, List<Condition> conditions) implements Condition {
+        public And(List<Condition> conditions) {
+            this(new Id(), conditions);
+        }
+
         @Override
         public TrueOrFalse accept(GameSessionSituation situation) {
             return conditions.stream()

@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface TalkConfigRepository extends JpaRepository<TalkConfigEntity, String> {
     String FETCH_ALL = " LEFT JOIN FETCH talk.items talk_item" +
-            " LEFT JOIN FETCH talk_item.value";
+            " LEFT JOIN FETCH talk_item.value talk_value";
     @Query("SELECT DISTINCT talk FROM TalkConfigEntity talk"
              + FETCH_ALL + " WHERE talk.id = :id")
     Optional<TalkConfigEntity> fullById(@Param("id") String id);

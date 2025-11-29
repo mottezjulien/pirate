@@ -73,6 +73,10 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
             return withOptions(selected);
         }
 
+        public boolean contains(Option.Id optId) {
+            return _options.stream().anyMatch(_opt -> _opt.is(optId));
+        }
+
         public record Option(Option.Id id, Integer order, I18n value, Optional<TalkItem.Id> optNextId, Optional<Condition> optCondition) {
 
             public Option(Id id, int order, I18n value) {

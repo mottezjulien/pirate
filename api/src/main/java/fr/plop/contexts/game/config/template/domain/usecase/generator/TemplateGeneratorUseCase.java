@@ -6,7 +6,6 @@ import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
-import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -20,10 +19,8 @@ import fr.plop.contexts.game.config.template.domain.usecase.TreeGenerator;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
-import fr.plop.subs.image.Image;
 
 import java.time.Duration;
 import java.util.*;
@@ -58,12 +55,13 @@ public class TemplateGeneratorUseCase {
     }
 
     private final TreeGenerator treeGenerator = new TreeGenerator();
-    private final TemplateGeneratorCache context = new TemplateGeneratorCache();
-
-    private final TemplateGeneratorBoardUseCase boardGenerator = new TemplateGeneratorBoardUseCase();
-    private final TemplateGeneratorTalkUseCase talkGenerator = new TemplateGeneratorTalkUseCase(context);
+    private final TemplateGeneratorGlobalCache globalCache = new TemplateGeneratorGlobalCache();
+    private final TemplateGeneratorBoardUseCase boardGenerator = new TemplateGeneratorBoardUseCase(globalCache);
+    private final TemplateGeneratorTalkUseCase talkGenerator = new TemplateGeneratorTalkUseCase(globalCache);
     private final TemplateGeneratorImageUseCase imageGenerator = new TemplateGeneratorImageUseCase();
+    private final TemplateGeneratorConditionUseCase conditionGenerator = new TemplateGeneratorConditionUseCase(globalCache);
     private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
+    private final TemplateGeneratorMapUseCase mapGenerator = new TemplateGeneratorMapUseCase(globalCache);
 
     public Template apply(Script script) {
         // Parse avec TreeGenerator pour avoir une structure d'arbre
@@ -77,18 +75,20 @@ public class TemplateGeneratorUseCase {
 
         BoardConfig board = boardGenerator.apply(rootTree);
 
-        TalkConfig talk = talkGenerator.apply(rootTree);
+        TalkConfig talkConfig = talkGenerator.apply(rootTree);
 
         ImageConfig image = imageGenerator.apply(rootTree);
 
-        // 3. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
-        ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, board, context));
+        MapConfig map = mapGenerator.apply(rootTree);
 
-        MapConfig map = new MapConfig(parseMapItemsFromTrees(rootTree.children()));
+        // 3. Parse les Steps en utilisant la map pour résoudre les SpaceId et le context pour les références
+        ScenarioConfig scenario = new ScenarioConfig(parseSteps(rootTree, globalCache, talkConfig));
+
+
 
         // 4. Vérifier qu'il n'y a pas de références non résolues
-        if (context.hasUnresolvedReferences()) {
-            throw new TemplateException("Unresolved references: " + context.getUnresolvedReferences());
+        if (globalCache.hasUnresolvedReferences()) {
+            throw new TemplateException("Unresolved references: " + globalCache.getUnresolvedReferences());
         }
 
         String version = rootTree.hasParams() ? rootTree.param(0) : DEFAULT_VERSION;
@@ -98,87 +98,25 @@ public class TemplateGeneratorUseCase {
             duration = Duration.ofMinutes(Long.parseLong(rootTree.param(2)));
         }
         Template.Atom templateAtom = new Template.Atom(new Template.Id(), new Template.Code(rootTree.headerKeepCase()));
-        return new Template(templateAtom, label, version, duration, scenario, board, map, talk, image);
+        return new Template(templateAtom, label, version, duration, scenario, board, map, talkConfig, image);
     }
 
     // ============ NOUVELLES METHODES BASEES SUR TREEGENERATOR ============
 
-    private BoardSpace.Id findSpaceId(BoardConfig board, String value) {
-        Optional<BoardSpace> optSpace = board.findByLabel(value);
-        return optSpace.map(BoardSpace::id)
-                .orElseGet(() -> new BoardSpace.Id(value));
-    }
-
-    private List<MapItem> parseMapItemsFromTrees(List<Tree> trees) {
-        List<MapItem> mapItems = new ArrayList<>();
-        for (Tree tree : trees) {
-            if ("MAP".equalsIgnoreCase(tree.header())) {
-                MapItem item = parseMapItemFromTree(tree);
-                mapItems.add(item);
-            }
-        }
-        return mapItems;
-    }
-
-    private MapItem parseMapItemFromTree(Tree mapTree) {
-        List<String> params = mapTree.params();
-        if (params.size() < 2) {
-            throw new TemplateException("Invalid map format in tree: " + mapTree);
-        }
-
-        // Format: "Map:Asset:imgs/first/map.png"
-        //String type = params.get(0); // "Asset"
-        String imagePath = params.get(1); // "imgs/first/map.png"
-
-        // Parse priority and positions from children
-        MapItem.Priority priority = MapItem.Priority.LOW; // default
-        List<MapItem.Position> positions = new ArrayList<>();
-        Set<ScenarioConfig.Step.Id> stepIds = new HashSet<>();
-
-        for (Tree child : mapTree.children()) {
-            if ("PRIORITY".equalsIgnoreCase(child.header()) && !child.params().isEmpty()) {
-                priority = MapItem.Priority.valueOf(child.params().getFirst().toUpperCase());
-            } else if ("POSITION".equalsIgnoreCase(child.header()) && child.params().size() >= 2) {
-                // Format: "position:89.09:10.064"
-                float top = Float.parseFloat(child.params().get(0));
-                float left = Float.parseFloat(child.params().get(1));
-
-                // Parse priority and step IDs from position children
-                MapItem.Priority positionPriority = MapItem.Priority.LOW; // default
-                for (Tree posChild : child.children()) {
-                    if ("PRIORITY".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
-                        positionPriority = MapItem.Priority.valueOf(posChild.params().getFirst().toUpperCase());
-                    } else if ("SPACE".equalsIgnoreCase(posChild.header()) && !posChild.params().isEmpty()) {
-                        stepIds.add(new ScenarioConfig.Step.Id(posChild.params().getFirst()));
-                    }
-                }
-
-                MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(), "", positionPriority, List.of());
-                MapItem.Position position = new MapItem.Position.Point(atom, top, left, "red");
-                positions.add(position);
-            }
-        }
-
-        // Convertir Set<ScenarioConfig.Step.Id> en List<ScenarioConfig.Step.Id>
-        List<ScenarioConfig.Step.Id> stepIdsList = new ArrayList<>(stepIds);
-
-        return new MapItem(new MapItem.Id(), new I18n(Map.of()), new Image(Image.Type.ASSET, imagePath), priority, positions, stepIdsList);
-    }
-
     // ============ ANCIENNES METHODES (à conserver pour le moment) ============
 
-    private List<ScenarioConfig.Step> parseSteps(Tree root, BoardConfig board, TemplateGeneratorCache context) {
+    private List<ScenarioConfig.Step> parseSteps(Tree root, TemplateGeneratorGlobalCache globalCache, TalkConfig talkConfig) {
         List<ScenarioConfig.Step> steps = new ArrayList<>();
         root.children().forEach(child -> {
             if (child.header().startsWith(STEP_KEY)) {
-                ScenarioConfig.Step step = parseStep(child, board, context);
+                ScenarioConfig.Step step = parseStep(child, globalCache, talkConfig);
                 steps.add(step);
             }
         });
         return steps;
     }
 
-    private ScenarioConfig.Step parseStep(Tree root, BoardConfig board, TemplateGeneratorCache context) {
+    private ScenarioConfig.Step parseStep(Tree root, TemplateGeneratorGlobalCache globalCache, TalkConfig talkConfig) {
         // Extraire la référence du header si elle existe : "Step(ref REF_STEP_A)"
         String referenceName = root.reference();
 
@@ -193,7 +131,7 @@ public class TemplateGeneratorUseCase {
         root.children().forEach(child -> {
             switch (child.header()) {
                 case TARGET_KEY:
-                    ScenarioConfig.Target target = parseTarget(child, context);
+                    ScenarioConfig.Target target = parseTarget(child, globalCache);
                     targets.add(target);
                     break;
                 case POSSIBILITY_KEY:
@@ -202,7 +140,7 @@ public class TemplateGeneratorUseCase {
                 default:
                     // Vérifions si c'est un Target qui commence par TARGET mais avec du texte après
                     if (child.header().startsWith(TARGET_KEY)) {
-                        ScenarioConfig.Target extendedTarget = parseTarget(child, context);
+                        ScenarioConfig.Target extendedTarget = parseTarget(child, globalCache);
                         targets.add(extendedTarget);
                     }
                     break;
@@ -210,35 +148,35 @@ public class TemplateGeneratorUseCase {
         });
 
         // Créer le step d'abord (sans les possibilités)
-        ScenarioConfig.Step step = new ScenarioConfig.Step(new ScenarioConfig.Step.Id(), stepLabel, targets, new ArrayList<>());
+        ScenarioConfig.Step step = new ScenarioConfig.Step(new ScenarioConfig.Step.Id(), stepLabel, 0, targets, new ArrayList<>()); //TODO order
 
         // Enregistrer la référence immédiatement si elle existe
         if (referenceName != null) {
-            context.registerReference(referenceName, step);
+            globalCache.registerReference(referenceName, step);
         }
 
         // Enregistrer le step actuel comme "CURRENT_STEP" AVANT de parser les possibilités
-        context.registerReference("CURRENT_STEP", step);
+        globalCache.registerReference("CURRENT_STEP", step);
 
         // Parse toutes les possibilités maintenant que CURRENT_STEP est disponible
         for (Tree possibilityTree : possibilityTrees) {
-            Possibility possibility = parsePossibility(possibilityTree, board, context);
+            Possibility possibility = parsePossibility(possibilityTree, globalCache, talkConfig);
             possibilities.add(possibility);
         }
 
         // Mettre à jour le step avec les possibilités
-        ScenarioConfig.Step finalStep = new ScenarioConfig.Step(step.id(), stepLabel, targets, possibilities);
+        ScenarioConfig.Step finalStep = new ScenarioConfig.Step(step.id(), stepLabel,0, targets, possibilities); //TODO order
 
         // Mettre à jour les références avec le step final
         if (referenceName != null) {
-            context.registerReference(referenceName, finalStep);
+            globalCache.registerReference(referenceName, finalStep);
         }
-        context.registerReference("CURRENT_STEP", finalStep);
+        globalCache.registerReference("CURRENT_STEP", finalStep);
 
         return finalStep;
     }
 
-    private ScenarioConfig.Target parseTarget(Tree tree, TemplateGeneratorCache context) {
+    private ScenarioConfig.Target parseTarget(Tree tree, TemplateGeneratorGlobalCache globalCache) {
         // Extraire la référence du header si elle existe : "Target (ref TARGET_ATTERRIR):FR:..."
         String referenceName = tree.reference();
 
@@ -281,7 +219,7 @@ public class TemplateGeneratorUseCase {
 
         // Enregistrer la référence si elle existe
         if (referenceName != null) {
-            context.registerReference(referenceName, target);
+            globalCache.registerReference(referenceName, target);
         }
         return target;
     }
@@ -300,7 +238,7 @@ public class TemplateGeneratorUseCase {
         return Optional.empty();
     }
 
-    private Possibility parsePossibility(Tree tree, BoardConfig board, TemplateGeneratorCache context) {
+    private Possibility parsePossibility(Tree tree, TemplateGeneratorGlobalCache globalCache, TalkConfig talkConfig) {
         // Format: "------" + " Possibility:ALWAYS" ou "------" + " Possibility:times:4:OR" ou "------" + " Possibility"
         AtomicReference<PossibilityRecurrence> recurrence = new AtomicReference<>(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id())); // Par défaut
 
@@ -322,10 +260,9 @@ public class TemplateGeneratorUseCase {
         }
 
         // Parse les conditions, conséquences et trigger qui suivent
-        //AtomicReference<Condition> condition = new AtomicReference<>(null);
+        AtomicReference<PossibilityTrigger> trigger = new AtomicReference<>();
         List<Condition> conditions = new ArrayList<>();
         List<Consequence> consequences = new ArrayList<>();
-        AtomicReference<PossibilityTrigger> trigger = new AtomicReference<>();
 
         // Parse en deux passes : d'abord les conséquences pour enregistrer les références, puis les triggers
         // Première passe : conséquences et conditions
@@ -333,11 +270,10 @@ public class TemplateGeneratorUseCase {
             String actionStr = child.header().trim();
             switch (actionStr) {
                 case POSSIBILITY_CONDITION_KEY:
-                    //condition.set(parseCondition(child, board));
-                    conditions.add(parseCondition(child, board));
+                    conditions.add(conditionGenerator.apply(child));
                     break;
                 case POSSIBILITY_CONSEQUENCE_KEY:
-                    consequences.add(parseConsequence(child, context));
+                    consequences.add(parseConsequence(child, globalCache));
                     break;
                 case POSSIBILITY_RECURRENCE_KEY:
                     recurrence.set(parseRecurrence(child));
@@ -354,108 +290,15 @@ public class TemplateGeneratorUseCase {
         tree.children().forEach(child -> {
             String actionStr = child.header().trim();
             if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
-                trigger.set(parseTrigger(child, board, context));
+                trigger.set(parseTrigger(child, globalCache, talkConfig));
             }
         });
 
         if (trigger.get() == null) {
             throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
         }
-        if (!conditions.isEmpty()) {
-            if (conditions.size() > 1) {
-                Condition.And and = new Condition.And(new Condition.Id(), conditions);
-                return new Possibility(recurrence.get(), trigger.get(), and, consequences);
-            }
-            return new Possibility(recurrence.get(), trigger.get(), conditions.getFirst(), consequences);
-        }
-        return new Possibility(recurrence.get(), trigger.get(), consequences);
-    }
-
-    private Condition parseCondition(Tree tree, BoardConfig board) {
-
-        String type = tree.params().getFirst().toLowerCase();
-        switch (type) {
-            case "insidespace" -> {
-                // Format: "CONDITION:InsideSpace:spaceId:LABEL" ou "CONDITION:InsideSpace:LABEL" (legacy)
-                Tree subTree = tree.sub();
-                String spaceLabel;
-                if (subTree.hasUniqueParam()) {
-                    spaceLabel = subTree.uniqueParam();
-                } else if (subTree.hasParamKey("spaceId")) {
-                    spaceLabel = subTree.paramValue("spaceId");
-                } else {
-                    throw new TemplateException("InsideSpace missing required parameter: spaceId");
-                }
-
-                BoardSpace.Id spaceId = findSpaceId(board, spaceLabel);
-                return new Condition.InsideSpace(
-                        new Condition.Id(),
-                        spaceId
-                );
-            }
-            case "outsidespace" -> {
-                if (tree.params().size() == 2) {
-                    BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(1));
-                    return new Condition.OutsideSpace(
-                            new Condition.Id(),
-                            spaceId
-                    );
-                }
-                BoardSpace.Id spaceId = findSpaceId(board, tree.params().get(2));
-                return new Condition.OutsideSpace(new Condition.Id(), spaceId);
-            }
-            case "absolutetime" -> {
-                // Format: "CONDITION:ABSOLUTETIME:Duration:27" -> params=[ABSOLUTETIME, Duration, 27] 
-                // ou "condition:ABSOLUTETIME:27" -> params=[ABSOLUTETIME, 27]
-                Tree subTree = tree.sub();
-                String durationStr;
-                if (subTree.hasUniqueParam()) {
-                    durationStr = subTree.uniqueParam();
-                } else if (subTree.hasParamKey("Duration")) {
-                    durationStr = subTree.paramValue("Duration");
-                } else {
-                    throw new TemplateException("AbsoluteTime condition missing required parameter: Duration");
-                }
-                return new Condition.AbsoluteTime(new Condition.Id(), GameSessionTimeUnit.ofMinutes(Integer.parseInt(durationStr)), BeforeOrAfter.BEFORE);
-            }
-            case "instep" -> {
-                // Format: "CONDITION:InStep:stepId:0987" ou "CONDITION:InStep:0987" (legacy)
-                Tree subTree = tree.sub();
-                String stepIdStr;
-                if (subTree.hasUniqueParam()) {
-                    stepIdStr = subTree.uniqueParam();
-                } else if (subTree.hasParamKey("stepId")) {
-                    stepIdStr = subTree.paramValue("stepId");
-                } else {
-                    throw new TemplateException("InStep missing required parameter: stepId");
-                }
-
-                return new Condition.Step(
-                        new Condition.Id(),
-                        new ScenarioConfig.Step.Id(stepIdStr)
-                );
-            }
-
-            case "steptarget" -> {
-                // Format: "CONDITION:StepTarget:targetId:TARGET_REF" ou "CONDITION:StepTarget:TARGET_REF" (legacy)
-                Tree subTree = tree.sub();
-                String targetIdStr;
-                if (subTree.hasUniqueParam()) {
-                    targetIdStr = subTree.uniqueParam();
-                } else if (subTree.hasParamKey("targetId")) {
-                    targetIdStr = subTree.paramValue("targetId");
-                } else {
-                    throw new TemplateException("StepTarget missing required parameter: targetId");
-                }
-
-                return new Condition.Target(
-                        new Condition.Id(),
-                        new ScenarioConfig.Target.Id(targetIdStr)
-                );
-            }
-        }
-
-        throw new TemplateException("Invalid condition format: " + String.join(SEPARATOR, tree.params()));
+        return new Possibility(new Possibility.Id(), recurrence.get(), trigger.get(),
+                Condition.buildAndFromList(conditions), consequences);
     }
 
     private PossibilityRecurrence parseRecurrence(Tree tree) {
@@ -476,7 +319,7 @@ public class TemplateGeneratorUseCase {
         throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
     }
 
-    private Consequence parseConsequence(Tree tree, TemplateGeneratorCache context) {
+    private Consequence parseConsequence(Tree tree, TemplateGeneratorGlobalCache globalCache) {
         // Format: "---------" + " consequence:Alert" ou "---------" + " consequence:GoalTarget:stepId:EFG:targetId:9876:state:FAILURE"
 
         if (tree.params().isEmpty()) {
@@ -492,7 +335,7 @@ public class TemplateGeneratorUseCase {
                 return new Consequence.DisplayMessage(new Consequence.Id(), message);
             }
             case "GOALTARGET" -> {
-                return parseGoalTargetConsequence(tree, context);
+                return parseGoalTargetConsequence(tree, globalCache);
             }
             case "GOAL" -> {
                 // Format: "Goal:state:SUCCESS:stepId:KLM" ou autre ordre
@@ -544,10 +387,10 @@ public class TemplateGeneratorUseCase {
                 return new Consequence.UpdatedMetadata(new Consequence.Id(), metadataId, value);
             }
             case "TALKOPTIONS" -> {
-                return parseTalkOptionsConsequence(tree, context);
+                return parseTalkOptionsConsequence(tree, globalCache);
             }
             case "TALK" -> {
-                return parseTalkConsequence(tree, context);
+                return parseTalkConsequence(tree, globalCache);
             }
             case "GAMEOVER" -> {
                 return parseGameOverConsequence(tree);
@@ -555,70 +398,24 @@ public class TemplateGeneratorUseCase {
         }
         throw new TemplateException("Invalid consequence format: " + type);
     }
-/*
-    private I18n parseAlertMessage(String[] allLines, int startIndex) {
-        Map<Language, String> messages = new HashMap<>();
-        StringBuilder currentMessage = new StringBuilder();
-        Language currentLang = null;
-
-        for (int i = startIndex; i < allLines.length; i++) {
-            String line = allLines[i].trim();
-
-            if (line.startsWith(SPACE_3 + " EN:")) {
-                // Sauvegarder le value précédent
-                if (currentLang != null && !currentMessage.isEmpty()) {
-                    messages.put(currentLang, currentMessage.toString().trim());
-                }
-                currentLang = Language.EN;
-                currentMessage = new StringBuilder(line.substring((SPACE_3 + " EN:").length()).trim());
-            } else if (line.startsWith(SPACE_3 + " FR:")) {
-                // Sauvegarder le value précédent
-                if (currentLang != null && !currentMessage.isEmpty()) {
-                    messages.put(currentLang, currentMessage.toString().trim());
-                }
-                currentLang = Language.FR;
-                currentMessage = new StringBuilder(line.substring((SPACE_3 + " FR:").length()).trim());
-            } else if (line.startsWith(SPACE_3 + " ") && currentLang != null) {
-                // Suite du value
-                String content = line.substring((SPACE_3 + " ").length()).trim();
-                if (!currentMessage.isEmpty()) {
-                    currentMessage.append("\n");
-                }
-                currentMessage.append(content);
-            } else if (line.startsWith(SPACE_2)) {
-                // Sauvegarder le dernier value et arrêter
-                if (currentLang != null && !currentMessage.isEmpty()) {
-                    messages.put(currentLang, currentMessage.toString().trim());
-                }
-                break;
-            }
-        }
-
-        // Sauvegarder le dernier value si on arrive à la fin
-        if (currentLang != null && !currentMessage.isEmpty()) {
-            messages.put(currentLang, currentMessage.toString().trim());
-        }
-
-        return new I18n(messages);
-    }*/
-
-    private PossibilityTrigger parseTrigger(Tree tree, BoardConfig board, TemplateGeneratorCache context) {
+    
+    private PossibilityTrigger parseTrigger(Tree tree, TemplateGeneratorGlobalCache globalCache, TalkConfig talkConfig) {
 
         String type = tree.params().getFirst().toLowerCase();
         switch (type) {
             case "goinspace" -> {
                 // Format: "Trigger:GoInSpace:SpaceId:ABCD" ou "Trigger:GoInSpace:EFG" (legacy)
                 Tree subTree = tree.sub();
-                String spaceValue;
+                String spaceRef;
                 if (subTree.hasUniqueParam()) {
-                    spaceValue = subTree.uniqueParam();
+                    spaceRef = subTree.uniqueParam();
                 } else if (subTree.hasParamKey("SpaceId")) {
-                    spaceValue = subTree.paramValue("SpaceId");
+                    spaceRef = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoInSpace missing required parameter: SpaceId");
                 }
 
-                BoardSpace.Id spaceId = findSpaceId(board, spaceValue);
+                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
                 return new PossibilityTrigger.SpaceGoIn(
                         new PossibilityTrigger.Id(),
                         spaceId
@@ -627,20 +424,17 @@ public class TemplateGeneratorUseCase {
             case "gooutspace" -> {
                 // Format: "Trigger:GoOutSpace:SpaceId:ABCD" ou "Trigger:GoOutSpace:EFG" (legacy)
                 Tree subTree = tree.sub();
-                String spaceValue;
+                String spaceRef;
                 if (subTree.hasUniqueParam()) {
-                    spaceValue = subTree.uniqueParam();
+                    spaceRef = subTree.uniqueParam();
                 } else if (subTree.hasParamKey("SpaceId")) {
-                    spaceValue = subTree.paramValue("SpaceId");
+                    spaceRef = subTree.paramValue("SpaceId");
                 } else {
                     throw new TemplateException("GoOutSpace missing required parameter: SpaceId");
                 }
 
-                BoardSpace.Id spaceId = findSpaceId(board, spaceValue);
-                return new PossibilityTrigger.SpaceGoOut(
-                        new PossibilityTrigger.Id(),
-                        spaceId
-                );
+                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                return new PossibilityTrigger.SpaceGoOut(new PossibilityTrigger.Id(), spaceId);
             }
             case "absolutetime" -> {
                 // Format: "Trigger:AbsoluteTime:value:42" ou "Trigger:AbsoluteTime:42" (legacy)
@@ -660,7 +454,7 @@ public class TemplateGeneratorUseCase {
                 );
             }
             case "talkoptionselect", "selecttalkoption" -> {
-                return createTalkOptionSelect(tree, context);
+                return createTalkOptionSelect(tree, globalCache, talkConfig);
             }
             case "talkend" -> {
                 // Format: "Trigger:TalkEnd:TALK002" ou "Trigger:TalkEnd:talkId:TALK002" (format clé-valeur)
@@ -678,7 +472,7 @@ public class TemplateGeneratorUseCase {
                 AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
 
                 // Demander la résolution de la référence
-                context.requestReference(talkIdStr, talkItemObj -> {
+                globalCache.requestReference(talkIdStr, talkItemObj -> {
                     if (talkItemObj instanceof TalkItem talkItem) {
                         resolvedTalkItemId.set(talkItem.id());
                     }
@@ -754,7 +548,7 @@ public class TemplateGeneratorUseCase {
      * Format: "GoalTarget:stepId:EFG123:targetId:TARGET_ATTERRIR:state:active" ou ordre différent
      * Format simplifié: "GoalTarget:targetId:TARGET_ATTERRIR:state:active" (stepId déduit automatiquement)
      */
-    private Consequence parseGoalTargetConsequence(Tree tree, TemplateGeneratorCache context) {
+    private Consequence parseGoalTargetConsequence(Tree tree, TemplateGeneratorGlobalCache globalCache) {
         // Paramètres attendus: ["goaltarget", puis des paires clé:valeur]
         // Minimum: targetId + state (stepId optionnel)
         if (tree.params().size() < 5) {
@@ -783,12 +577,12 @@ public class TemplateGeneratorUseCase {
             // stepId explicitement fourni
             if (stepIdParam.equals("CURRENT_STEP")) {
                 // Cas particulier du test : utiliser le step actuel
-                Optional<ScenarioConfig.Step> currentStep = context.getReference("CURRENT_STEP", ScenarioConfig.Step.class);
+                Optional<ScenarioConfig.Step> currentStep = globalCache.getReference("CURRENT_STEP", ScenarioConfig.Step.class);
                 if (currentStep.isPresent()) {
                     resolvedStepId.set(currentStep.get().id());
                 } else {
                     // Si pas disponible immédiatement, utiliser la logique asynchrone
-                    context.requestReference("CURRENT_STEP", stepObj -> {
+                    globalCache.requestReference("CURRENT_STEP", stepObj -> {
                         if (stepObj instanceof ScenarioConfig.Step step) {
                             resolvedStepId.set(step.id());
                         }
@@ -796,12 +590,12 @@ public class TemplateGeneratorUseCase {
                 }
             } else {
                 // Essayer d'abord de résoudre de manière synchrone comme référence
-                Optional<ScenarioConfig.Step> referencedStep = context.getReference(stepIdParam, ScenarioConfig.Step.class);
+                Optional<ScenarioConfig.Step> referencedStep = globalCache.getReference(stepIdParam, ScenarioConfig.Step.class);
                 if (referencedStep.isPresent()) {
                     resolvedStepId.set(referencedStep.get().id());
                 } else {
                     // Si pas trouvé, essayer la résolution asynchrone sans marquer comme "non résolue"
-                    context.tryRequestReference(stepIdParam, stepObj -> {
+                    globalCache.tryRequestReference(stepIdParam, stepObj -> {
                         if (stepObj instanceof ScenarioConfig.Step step) {
                             resolvedStepId.set(step.id());
                         }
@@ -816,12 +610,12 @@ public class TemplateGeneratorUseCase {
         // Si stepId n'est pas fourni, on le déduira après avoir résolu le targetId
 
         // Résoudre le targetId (peut être une référence ou un ID direct)
-        Optional<ScenarioConfig.Target> referencedTarget = context.getReference(targetIdParam, ScenarioConfig.Target.class);
+        Optional<ScenarioConfig.Target> referencedTarget = globalCache.getReference(targetIdParam, ScenarioConfig.Target.class);
         if (referencedTarget.isPresent()) {
             resolvedTargetId.set(referencedTarget.get().id());
         } else {
             // Si pas trouvé, essayer la résolution asynchrone sans marquer comme "non résolue"
-            context.tryRequestReference(targetIdParam, targetObj -> {
+            globalCache.tryRequestReference(targetIdParam, targetObj -> {
                 if (targetObj instanceof ScenarioConfig.Target target) {
                     resolvedTargetId.set(target.id());
                 }
@@ -835,7 +629,7 @@ public class TemplateGeneratorUseCase {
         // Si stepId n'est pas fourni, le déduire à partir du target
         if (stepIdParam == null && resolvedStepId.get() == null) {
             // Trouver le step qui contient ce target
-            Optional<ScenarioConfig.Step.Id> deducedStepId = findStepContainingTarget(targetIdParam, context);
+            Optional<ScenarioConfig.Step.Id> deducedStepId = findStepContainingTarget(targetIdParam, globalCache);
             if (deducedStepId.isPresent()) {
                 resolvedStepId.set(deducedStepId.get());
             } else {
@@ -846,22 +640,22 @@ public class TemplateGeneratorUseCase {
         return new Consequence.ScenarioTarget(new Consequence.Id(), resolvedStepId.get(), resolvedTargetId.get(), state);
     }
 
-    private Consequence parseTalkOptionsConsequence(Tree tree, TemplateGeneratorCache context) {
+    private Consequence parseTalkOptionsConsequence(Tree tree, TemplateGeneratorGlobalCache globalCache) {
         // Cas 1: TalkOptions avec référence (ex: "TalkOptions:OPTIONS_ABCD")
         if (tree.params().size() >= 2) {
             String reference = tree.params().get(1); // "OPTIONS_ABCD"
-            return parseTalkOptionsWithReference(reference, context);
+            return parseTalkOptionsWithReference(reference, globalCache);
         }
 
         throw new TemplateException("TalkOptions consequence without reference");
     }
 
-    private Consequence parseTalkOptionsWithReference(String reference, TemplateGeneratorCache context) {
+    private Consequence parseTalkOptionsWithReference(String reference, TemplateGeneratorGlobalCache globalCache) {
         // Créer une référence atomique pour stocker l'ID résolu
         AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
 
         // Demander la résolution de la référence
-        context.requestReference(reference, referencedObject -> {
+        globalCache.requestReference(reference, referencedObject -> {
             if (referencedObject instanceof TalkItem.Options multipleOptions) {
                 resolvedTalkId.set(multipleOptions.id());
             } else {
@@ -879,7 +673,7 @@ public class TemplateGeneratorUseCase {
     }
 
 
-    private Consequence parseTalkConsequence(Tree tree, TemplateGeneratorCache context) {
+    private Consequence parseTalkConsequence(Tree tree, TemplateGeneratorGlobalCache globalCache) {
         // Format: "Consequence:Talk:TALK000"
         // tree.params() contient ["Talk", "TALK000"]
 
@@ -893,7 +687,7 @@ public class TemplateGeneratorUseCase {
         AtomicReference<TalkItem.Id> resolvedTalkId = new AtomicReference<>();
 
         // Demander la résolution de la référence
-        context.requestReference(talkReference, referencedObject -> {
+        globalCache.requestReference(talkReference, referencedObject -> {
             if (referencedObject instanceof TalkItem talkItem) {
                 resolvedTalkId.set(talkItem.id());
             } else {
@@ -931,33 +725,23 @@ public class TemplateGeneratorUseCase {
     }
 
 
-    /**
-     * Trouve le TalkItem qui contient une option donnée.
-     * Cette méthode sera appelée plus tard quand les références seront résolues.
-     */
-    private TalkItem.Id findTalkItemContainingOption(TalkItem.Options.Option.Id optionId, TemplateGeneratorCache context) {
-        // Cette méthode sera implémentée si nécessaire, mais l'approche optimale 
-        // est d'enregistrer cette relation lors du parsing
-        return context.getOptionToTalkItemMapping(optionId);
-    }
 
     /**
      * Trouve le step qui contient un target donné (par référence ou par ID).
      *
      * @param targetParam Le nom de la référence ou l'ID du target à chercher
-     * @param context     Le contexte de parsing contenant les références
      * @return L'ID du step qui contient ce target, ou Optional.empty() si non trouvé
      */
-    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, TemplateGeneratorCache context) {
+    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, TemplateGeneratorGlobalCache globalCache) {
         // D'abord essayer de résoudre le target comme une référence
-        Optional<ScenarioConfig.Target> referencedTarget = context.getReference(targetParam, ScenarioConfig.Target.class);
+        Optional<ScenarioConfig.Target> referencedTarget = globalCache.getReference(targetParam, ScenarioConfig.Target.class);
 
         if (referencedTarget.isPresent()) {
             // Si on a trouvé le target par référence, chercher dans quel step il se trouve
             ScenarioConfig.Target target = referencedTarget.get();
 
             // Parcourir tous les steps enregistrés pour trouver celui qui contient ce target
-            return context.getAllReferences(ScenarioConfig.Step.class)
+            return globalCache.getAllReferences(ScenarioConfig.Step.class)
                     .stream()
                     .filter(step -> step.targets().stream()
                             .anyMatch(stepTarget -> stepTarget.id().equals(target.id())))
@@ -968,7 +752,7 @@ public class TemplateGeneratorUseCase {
         // Si pas trouvé par référence, chercher par ID dans tous les steps
         ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetParam);
 
-        return context.getAllReferences(ScenarioConfig.Step.class)
+        return globalCache.getAllReferences(ScenarioConfig.Step.class)
                 .stream()
                 .filter(step -> step.targets().stream()
                         .anyMatch(stepTarget -> stepTarget.id().equals(targetId)))
@@ -980,7 +764,7 @@ public class TemplateGeneratorUseCase {
     /// Refacto
 
 
-    private PossibilityTrigger createTalkOptionSelect(Tree tree, TemplateGeneratorCache context) {
+    private PossibilityTrigger createTalkOptionSelect(Tree tree, TemplateGeneratorGlobalCache globalCache, TalkConfig talkConfig) {
         // Format: "Trigger:SelectTalkOption:option:REF_CHOIX_A" ou "Trigger:SelectTalkOption:REF_CHOIX_A" (legacy)
 
         Tree subTree = tree.sub();
@@ -994,36 +778,12 @@ public class TemplateGeneratorUseCase {
             throw new TemplateException("TalkOptionSelect missing required parameter: option");
         }
 
-        // Créer des références atomiques pour l'option et son TalkItem parent
-        AtomicReference<TalkItem.Options.Option.Id> resolvedOptionId = new AtomicReference<>();
-        AtomicReference<TalkItem.Id> resolvedTalkItemId = new AtomicReference<>();
+        TalkItem.Options.Option.Id optId = globalCache.getReference(optionReference, TalkItem.Options.Option.Id.class)
+                    .orElseThrow(); //TODO
+        TalkItem.Id talkId = talkConfig.findByIdByOptionId(optId)
+                .orElseThrow(); //TODO
 
-        // Demander la résolution de la référence
-        context.requestReference(optionReference, optionObj -> {
-            if (optionObj instanceof TalkItem.Options.Option option) {
-                resolvedOptionId.set(option.id());
-                // Trouver le TalkItem parent qui contient cette option
-                TalkItem.Id parentTalkItemId = findTalkItemContainingOption(option.id(), context);
-                if (parentTalkItemId != null) {
-                    resolvedTalkItemId.set(parentTalkItemId);
-                }
-            }
-        });
-
-        // Si la référence n'est pas encore résolue, créer des IDs temporaires
-        if (resolvedOptionId.get() == null) {
-            resolvedOptionId.set(new TalkItem.Options.Option.Id(optionReference));
-        }
-        if (resolvedTalkItemId.get() == null) {
-            resolvedTalkItemId.set(new TalkItem.Id(optionReference + "_parent"));
-        }
-
-        return new PossibilityTrigger.TalkOptionSelect(
-                new PossibilityTrigger.Id(),
-                resolvedTalkItemId.get(),
-                resolvedOptionId.get()
-        );
+        return new PossibilityTrigger.TalkOptionSelect(new PossibilityTrigger.Id(), talkId, optId);
     }
-
 
 }

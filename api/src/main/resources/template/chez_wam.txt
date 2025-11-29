@@ -1,8 +1,8 @@
 ChezWamGene:1.0::15
 --- Board
------- Space:Bureau:HIGH
+------ Space (ref SPACE_BUREAU):Le bureau:HIGH
 --------- bottomLeft:45.77806:4.80351:topRight:45.77820:4.80367
------- Space:Cuisine:MEDIUM
+------ Space (ref SPACE_KITCHEN):La cuisine:MEDIUM
 --------- bottomLeft:45.77798:4.8037:topRight:45.77812:4.80384
 
 --- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
@@ -26,7 +26,7 @@ ChezWamGene:1.0::15
 ------------ EN:To start, enter the office
 
 ------ Possibility
---------- Trigger:GOINSPACE:Bureau
+--------- Trigger:GOINSPACE:SPACE_BUREAU
 --------- Condition:INSTEP:CHAPITRE_BUREAU
 --------- Consequence:GoalTarget:targetId:ALLER_BUREAU:state:success
 --------- Consequence:Alert
@@ -52,7 +52,7 @@ ChezWamGene:1.0::15
 --------- Consequence:Goal:stepId:CHAPITRE_CUISINE:state:active
 
 ------ Possibility
---------- Trigger:GOOUTSPACE:Bureau
+--------- Trigger:GOOUTSPACE:SPACE_BUREAU
 --------- Condition:INSTEP:CHAPITRE_BUREAU
 --------- Consequence:TalkOptions:TALK_STOP_TUTO
 

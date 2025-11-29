@@ -15,13 +15,13 @@ public class TemplateGeneratorTalkUseCase {
     private static final String PARAM_KEY_TALK_OPTION = "OPTION";
     private static final String KEY_TALK_CHARACTER = "CHARACTER";
 
-    private final TemplateGeneratorCache globalCache;
+    private final TemplateGeneratorGlobalCache globalCache;
 
     private final Map<String, TalkItem.Id> localCacheRefToId = new HashMap<>();
     private final Map<String, String> localCacheGenIdToRefNext = new HashMap<>();
     private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
 
-    public TemplateGeneratorTalkUseCase(TemplateGeneratorCache globalCache) {
+    public TemplateGeneratorTalkUseCase(TemplateGeneratorGlobalCache globalCache) {
         this.globalCache = globalCache;
     }
 
@@ -221,9 +221,8 @@ public class TemplateGeneratorTalkUseCase {
 
                 // Enregistrer la référence si elle existe
                 if (child.reference() != null) {
-                    globalCache.registerReference(child.reference(), option);
+                    globalCache.registerReference(child.reference(), option.id());
                 }
-                globalCache.registerOptionToTalkItemMapping(option.id(), id);
             }
         }
 

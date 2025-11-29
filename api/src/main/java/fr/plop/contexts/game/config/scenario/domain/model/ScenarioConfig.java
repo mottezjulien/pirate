@@ -3,8 +3,10 @@ package fr.plop.contexts.game.config.scenario.domain.model;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public record ScenarioConfig(Id id, String label, List<Step> steps) {
 
@@ -14,7 +16,7 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
         }
     }
 
-    public record Step(Id id, I18n label, List<Target> targets, List<Possibility> possibilities) {
+    public record Step(Id id, I18n label, Integer order, List<Target> targets, List<Possibility> possibilities) {
 
 
         public record Id(String value) {
@@ -32,7 +34,7 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
         }
 
         public Step(List<Target> targets, List<Possibility> possibilities) {
-            this(new Id(), new I18n(), targets, possibilities);
+            this(new Id(), new I18n(), 0, targets, possibilities);
         }
 
     }
@@ -54,7 +56,11 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
     }
 
     public Step firstStep() {
-        return steps.getFirst();
+        return orderedSteps().findFirst().orElseThrow();
+    }
+
+    private Stream<Step> orderedSteps() {
+        return steps.stream().sorted(Comparator.comparing(o -> o.order));
     }
 
 }

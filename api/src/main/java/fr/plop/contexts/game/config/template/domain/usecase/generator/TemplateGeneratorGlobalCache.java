@@ -1,7 +1,5 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
-import fr.plop.contexts.game.config.talk.domain.TalkItem;
-
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -9,13 +7,11 @@ import java.util.function.Consumer;
  * Context pour gérer les références pendant le parsing du template.
  * Permet de définir des références et de les résoudre plus tard.
  */
-public class TemplateGeneratorCache {
+public class TemplateGeneratorGlobalCache {
 
     private final Map<String, Object> references = new HashMap<>();
     private final Map<String, List<Consumer<Object>>> pendingResolvers = new HashMap<>();
     private final Set<String> unresolvedReferences = new HashSet<>();
-    // Relation option ID → TalkItem ID
-    private final Map<TalkItem.Options.Option.Id, TalkItem.Id> optionToTalkItemMapping = new HashMap<>();
 
     /**
      * Enregistre une référence avec son objet associé.
@@ -94,7 +90,7 @@ public class TemplateGeneratorCache {
      */
     public <T> Optional<T> getReference(String referenceName, Class<T> type) {
         Object ref = references.get(referenceName);
-        if (ref != null && type.isInstance(ref)) {
+        if (type.isInstance(ref)) {
             return Optional.of(type.cast(ref));
         }
         return Optional.empty();
@@ -110,17 +106,4 @@ public class TemplateGeneratorCache {
                 .toList();
     }
 
-    /**
-     * Enregistre la relation entre une option et son TalkItem parent.
-     */
-    public void registerOptionToTalkItemMapping(TalkItem.Options.Option.Id optionId, TalkItem.Id talkItemId) {
-        optionToTalkItemMapping.put(optionId, talkItemId);
-    }
-
-    /**
-     * Obtient l'ID du TalkItem qui contient une option donnée.
-     */
-    public TalkItem.Id getOptionToTalkItemMapping(TalkItem.Options.Option.Id optionId) {
-        return optionToTalkItemMapping.get(optionId);
-    }
 }

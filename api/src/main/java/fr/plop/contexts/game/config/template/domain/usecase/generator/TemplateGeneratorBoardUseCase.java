@@ -4,6 +4,7 @@ import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import fr.plop.generic.tools.ListTools;
@@ -17,6 +18,12 @@ public class TemplateGeneratorBoardUseCase {
     private static final String SPACE_KEY = "SPACE";
     private static final String BOTTOM_LEFT = "bottomLeft";
     private static final String TOP_RIGHT = "topRight";
+
+    private final TemplateGeneratorGlobalCache globalCache;
+
+    public TemplateGeneratorBoardUseCase(TemplateGeneratorGlobalCache globalCache) {
+        this.globalCache = globalCache;
+    }
 
     public BoardConfig apply(Tree root) {
         return new BoardConfig(generateSpaces(root.children()));
@@ -43,11 +50,15 @@ public class TemplateGeneratorBoardUseCase {
         }
 
         String label = params.get(0);
-        BoardSpace.Priority priority = parsePriority(params.get(1));
+        Priority priority = parsePriority(params.get(1));
 
         List<Rect> rects = parseRectsFromTrees(spaceTree.children());
 
-        return new BoardSpace(label, priority, rects);
+        BoardSpace.Id id = new BoardSpace.Id();
+        if (spaceTree.reference() != null) {
+            globalCache.registerReference(spaceTree.reference(), id);
+        }
+        return new BoardSpace(id, label, priority, rects);
     }
 
     private List<Rect> parseRectsFromTrees(List<Tree> trees) {
@@ -127,15 +138,12 @@ public class TemplateGeneratorBoardUseCase {
         return null;
     }
 
-    private BoardSpace.Priority parsePriority(String priorityStr) {
-        return switch (priorityStr.toUpperCase()) {
-            case "HIGHEST" -> BoardSpace.Priority.HIGHEST;
-            case "HIGH" -> BoardSpace.Priority.HIGH;
-            case "MEDIUM" -> BoardSpace.Priority.MEDIUM;
-            case "LOW" -> BoardSpace.Priority.LOW;
-            case "LOWEST" -> BoardSpace.Priority.LOWEST;
-            default -> BoardSpace.Priority.MEDIUM;
-        };
+    private Priority parsePriority(String priorityStr) {
+        try {
+            return Priority.valueOf(priorityStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Priority.MEDIUM;
+        }
     }
 
 

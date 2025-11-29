@@ -13,9 +13,11 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -172,6 +174,9 @@ public class TemplateGeneratorUseCaseTest {
     public void oneStepWithTargetAndPossibilities() {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 With Possibility:3:Hello:45
+                --- Board
+                ------ Space (REF ABCD):Office:HIGH
+                ------ Space (REF XYZ):Kitchen:LOW
                 --- Step:FR:Chez Moi:EN:At Home
                 ------ Target:FR:Cuisine:EN:Kitchen
                 ------ Target(Opt):EN:Office:FR:Bureau
@@ -187,7 +192,7 @@ public class TemplateGeneratorUseCaseTest {
                 ------ Possibility:times:4:OR
                 --------- Trigger:ABSOLUTETIME:42
                 --------- CONDITION:InStep:0987
-                --------- CONDITION:outSidespace:9823
+                --------- CONDITION:outSidespace:XYZ
                 --------- consequence:Goal:state:SUCCESS:stepId:KLM
                 --------- consequence:GoalTarget:targetId:9876:state:active:stepId:EFG123
                 
@@ -226,14 +231,14 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
                                 PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
-                                assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
+                                assertThat(trigger.spaceId()).isEqualTo(template.board().spaces().getFirst().id());
                                 assertThat(possibility.optCondition())
                                         .hasValueSatisfying(condition -> {
                                             assertThat(condition).isInstanceOf(Condition.And.class);
                                             assertThat(((Condition.And) condition).conditions()).hasSize(2)
                                                     .anySatisfy(subCondition -> {
                                                         assertThat(subCondition).isInstanceOf(Condition.OutsideSpace.class);
-                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(new BoardSpace.Id("ABCD"));
+                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(template.board().spaces().getFirst().id());
                                                     })
                                                     .anySatisfy(subCondition -> {
                                                         assertThat(subCondition).isInstanceOf(Condition.AbsoluteTime.class);
@@ -275,11 +280,11 @@ public class TemplateGeneratorUseCaseTest {
                                                     })
                                                     .anySatisfy(subCondition -> {
                                                         assertThat(subCondition).isInstanceOf(Condition.OutsideSpace.class);
-                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(new BoardSpace.Id("9823"));
+                                                        assertThat(((Condition.OutsideSpace) subCondition).spaceId()).isEqualTo(template.board().spaces().get(1).id());
                                                     });
                                         });
 
-                                assertThat(possibility.consequences())
+                               assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioStep.class);
@@ -314,11 +319,15 @@ public class TemplateGeneratorUseCaseTest {
     public void twoSteps() {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 Two Step:4:Hello:50
+                
+                --- Board
+                ------ Space (REF monespace):Mon premier espace:LOW
+                
                 --- Step:FR:Premier:EN:First
                 
                 ------ Target:FR:Mon objectif:EN:My target
                 ------ Possibility
-                --------- Trigger:goinSPACE:EFG
+                --------- Trigger:goinSPACE:monespace
                 --- Step:FR:Deuxième:EN:Second
                 ------ Possibility
                 
@@ -355,7 +364,7 @@ public class TemplateGeneratorUseCaseTest {
                                 assertThat(possibility.recurrence()).isInstanceOf(PossibilityRecurrence.Always.class);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.SpaceGoIn.class);
                                 PossibilityTrigger.SpaceGoIn trigger = (PossibilityTrigger.SpaceGoIn) possibility.trigger();
-                                assertThat(trigger.spaceId()).isEqualTo(new BoardSpace.Id("EFG"));
+                                assertThat(trigger.spaceId()).isEqualTo(template.board().spaces().getFirst().id());
                                 assertThat(possibility.optCondition()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });
@@ -403,7 +412,7 @@ public class TemplateGeneratorUseCaseTest {
                 .anySatisfy(board -> {
                     assertThat(board.id()).isNotNull();
                     assertThat(board.label()).isEqualTo("Mon premier espace");
-                    assertThat(board.priority()).isEqualTo(BoardSpace.Priority.LOW);
+                    assertThat(board.priority()).isEqualTo(Priority.LOW);
                     assertThat(board.rects())
                             .hasSize(2)
                             .anySatisfy(rect -> {
@@ -442,7 +451,7 @@ public class TemplateGeneratorUseCaseTest {
                 .anySatisfy(board -> {
                     assertThat(board.id()).isNotNull();
                     assertThat(board.label()).isEqualTo("Mon deuxième espace");
-                    assertThat(board.priority()).isEqualTo(BoardSpace.Priority.MEDIUM);
+                    assertThat(board.priority()).isEqualTo(Priority.MEDIUM);
                     assertThat(board.rects())
                             .hasSize(2)
                             .anySatisfy(rect -> {
@@ -457,7 +466,7 @@ public class TemplateGeneratorUseCaseTest {
                 .anySatisfy(board -> {
                     assertThat(board.id()).isNotNull();
                     assertThat(board.label()).isEqualTo("Mon 3eme espace");
-                    assertThat(board.priority()).isEqualTo(BoardSpace.Priority.LOWEST);
+                    assertThat(board.priority()).isEqualTo(Priority.LOWEST);
                     assertThat(board.rects())
                             .hasSize(1)
                             .anySatisfy(rect -> {
@@ -476,13 +485,13 @@ public class TemplateGeneratorUseCaseTest {
                 --- Map:Asset:imgs/first/map.png
                 ------ Priority:HIGH
                 
-                ------ position:89.09:10.064
+                ------ object:point:89.09:10.064
                 --------- Priority:HIGHest
                 
-                ------ POSITION:78.865:23.9887
+                ------ ObJect:PoInT:78.865:23.9887
                 --------- Priority:LOW
-                --------- Space:Id1
-                --------- Space:Id3
+                --------- condition:absolutetime:41
+                --------- color:yellow
                 """);
         Template template = generator.apply(script);
         assertThat(template).isNotNull();
@@ -498,32 +507,34 @@ public class TemplateGeneratorUseCaseTest {
                     assertThat(item.id()).isNotNull();
                     assertThat(item.isImageAsset()).isEqualTo(true);
                     assertThat(item.imagePath()).isEqualTo("imgs/first/map.png");
-                    assertThat(item.priority()).isEqualTo(MapItem.Priority.HIGH);
-                    assertThat(item.positions())
+                    assertThat(item.priority()).isEqualTo(Priority.HIGH);
+                    assertThat(item.objects())
                             .hasSize(2)
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
-                                assertThat(position.priority()).isEqualTo(MapItem.Priority.HIGHEST);
+                                assertThat(position.priority()).isEqualTo(Priority.HIGHEST);
 
-                                assertThat(position).isInstanceOf(MapItem.Position.Point.class);
-                                MapItem.Position.Point point = (MapItem.Position.Point) position;
-                                assertThat(point.top()).isEqualTo(89.09F);
-                                assertThat(point.left()).isEqualTo(10.064F);
-                                assertThat(point.color()).isEqualTo("red");
+                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
+                                MapItem._Object.Point point = (MapItem._Object.Point) position;
+                                assertThat(point.top()).isCloseTo(89.09F, Offset.offset(0.001));
+                                assertThat(point.left()).isCloseTo(10.064F, Offset.offset(0.001));
+                                assertThat(point.color()).isEqualTo("");
+                                assertThat(point.atom().optCondition()).isEmpty();
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
-                                assertThat(position.priority()).isEqualTo(MapItem.Priority.LOW);
+                                assertThat(position.priority()).isEqualTo(Priority.LOW);
 
-                                assertThat(position).isInstanceOf(MapItem.Position.Point.class);
-                                MapItem.Position.Point point = (MapItem.Position.Point) position;
-                                assertThat(point.top()).isEqualTo(78.865F);
-                                assertThat(point.left()).isEqualTo(23.9887F);
-                                assertThat(point.color()).isEqualTo("red");
+                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
+                                MapItem._Object.Point point = (MapItem._Object.Point) position;
+                                assertThat(point.top()).isCloseTo(78.865F, Offset.offset(0.001));
+                                assertThat(point.left()).isCloseTo(23.9887F, Offset.offset(0.001));
+                                assertThat(point.color()).isEqualTo("yellow");
+                                assertThat(point.atom().optCondition()).hasValueSatisfying(condition -> {
+                                    assertThat(condition).isInstanceOf(Condition.AbsoluteTime.class);
+                                    assertThat(((Condition.AbsoluteTime) condition).value()).isEqualTo(new GameSessionTimeUnit(41));
+                                });
                             });
-                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id1"))).isTrue();
-                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id2"))).isFalse();
-                    assertThat(item.isStep(new ScenarioConfig.Step.Id("Id3"))).isTrue();
                 });
     }
 
@@ -532,9 +543,9 @@ public class TemplateGeneratorUseCaseTest {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 linkBoardScenario:0.0.0:Link Board Scenario
                 --- Board
-                ------ Space:La lune:HIGH
+                ------ Space (Ref La lune):La lune:HIGH
                 --------- 1:2:3:4
-                ------ Space:Mars:HIGH
+                ------ Space (Ref Mars):Mars:HIGH
                 --------- 5:6:7:8
                 --- Step:FR:Aucun:EN:None
                 ------ Possibility
@@ -572,7 +583,7 @@ public class TemplateGeneratorUseCaseTest {
         TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script("""
                 linkBoardScenario:0.0.0:Link Board Scenario
                 --- Board
-                ------ Space:La lune:HIGH
+                ------ Space (ref La lune):La lune:HIGH
                 --------- 1:2:3:4
                 --- Step:FR:Aucun:EN:None
                 ------ Possibility

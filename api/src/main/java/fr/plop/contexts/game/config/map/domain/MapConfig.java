@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.map.domain;
 
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
@@ -22,8 +22,9 @@ public record MapConfig(Id id, List<MapItem> items) {
         this(new Id(), items);
     }
 
-    public Stream<MapItem> byStepIds(List<ScenarioConfig.Step.Id> ids) {
-        return items.stream().filter(item -> item.isSteps(ids));
+    public Stream<MapItem> select(GameSessionSituation situation) {
+        return items.stream()
+                .filter(item -> item.optCondition().isEmpty() || item.optCondition().get().accept(situation).toBoolean());
     }
 
 }

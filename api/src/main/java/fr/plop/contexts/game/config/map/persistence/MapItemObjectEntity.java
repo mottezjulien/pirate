@@ -1,19 +1,18 @@
 package fr.plop.contexts.game.config.map.persistence;
 
 
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.map.domain.MapItem;
+import fr.plop.generic.ImagePoint;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 @Entity
-@Table(name = "TEST2_MAP_POSITION")
-public class MapPositionEntity {
+@Table(name = "TEST2_MAP_ITEM_OBJECT")
+public class MapItemObjectEntity {
 
     public enum Type {
         POINT, IMAGE
@@ -46,13 +45,11 @@ public class MapPositionEntity {
     private String imageValue;
 
     @Enumerated(EnumType.STRING)
-    private MapItem.Priority priority;
+    private Priority priority;
 
-    @ManyToMany
-    @JoinTable(name = "TEST2_MAP_POSITION_SPACE",
-            joinColumns = @JoinColumn(name = "position_id"),
-            inverseJoinColumns = @JoinColumn(name = "space_id"))
-    private Set<BoardSpaceEntity> spaces = new HashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "condition_id")
+    private ConditionEntity nullableCondition;
 
     public String getId() {
         return id;
@@ -86,16 +83,8 @@ public class MapPositionEntity {
         this.type = type;
     }
 
-    public double getTop() {
-        return top;
-    }
-
     public void setTop(double top) {
         this.top = top;
-    }
-
-    public double getLeft() {
-        return left;
     }
 
     public void setLeft(double left) {
@@ -114,30 +103,26 @@ public class MapPositionEntity {
         this.imageValue = imageValue;
     }
 
-    public MapItem.Priority getPriority() {
+    public Priority getPriority() {
         return priority;
     }
 
-    public void setPriority(MapItem.Priority priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 
-    public Set<BoardSpaceEntity> getSpaces() {
-        return spaces;
+    public void setNullableCondition(ConditionEntity nullableCondition) {
+        this.nullableCondition = nullableCondition;
     }
 
-    public void setSpaces(Set<BoardSpaceEntity> spaces) {
-        this.spaces = spaces;
-    }
-
-    public MapItem.Position toModel() {
-        List<BoardSpace.Id> spaceIds = spaces.stream()
-                .map(entity -> new BoardSpace.Id(entity.getId()))
-                .toList();
-        MapItem.Position.Atom atom = new MapItem.Position.Atom(new MapItem.Position.Id(id), label, priority, spaceIds);
+    public MapItem._Object toModel() {
+        ImagePoint center = new ImagePoint(top, left);
+        Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
+        MapItem._Object.Atom atom = new MapItem._Object.Atom(new MapItem._Object.Id(id), label, center, priority, optCondition);
         return switch (type) {
-            case POINT -> new MapItem.Position.Point(atom, top, left, pointColor);
-            case IMAGE -> new MapItem.Position._Image(atom, top, left, new Image(imageType, imageValue));
+            case POINT -> new MapItem._Object.Point(atom, pointColor);
+            case IMAGE -> new MapItem._Object._Image(atom, new Image(imageType, imageValue));
         };
     }
+
 }

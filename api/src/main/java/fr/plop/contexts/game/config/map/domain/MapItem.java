@@ -1,23 +1,19 @@
 package fr.plop.contexts.game.config.map.domain;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.generic.ImagePoint;
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.tools.StringTools;
-import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.image.Image;
 
 import java.util.List;
+import java.util.Optional;
 
-public record MapItem(Id id, I18n label, Image image,
-                      Priority priority, List<Position> positions, List<ScenarioConfig.Step.Id> stepIds) {
+public record MapItem(Id id, String label, Image image,
+                      Priority priority, List<_Object> objects, Optional<Condition> optCondition) {
 
-
-    public boolean isSteps(List<ScenarioConfig.Step.Id> stepIds) {
-        return stepIds.stream().anyMatch(this::isStep);
-    }
-
-    public boolean isStep(ScenarioConfig.Step.Id stepId) {
-        return stepIds.contains(stepId);
+    public MapItem(String label, Image image, Priority priority, List<_Object> objects, Optional<Condition> optCondition) {
+        this(new Id(), label, image, priority, objects, optCondition);
     }
 
     public boolean isImageAsset() {
@@ -34,11 +30,11 @@ public record MapItem(Id id, I18n label, Image image,
         }
     }
 
-    public sealed interface Position permits Position.Point, Position._Image {
+    public sealed interface _Object permits _Object.Point, _Object._Image {
 
-        record Atom(Id id, String label, Priority priority, List<BoardSpace.Id> spaceIds) {
-            public Atom(String label, Priority priority, List<BoardSpace.Id> spaceIds) {
-                this(new Id(), label, priority, spaceIds);
+        record Atom(Id id, String label, ImagePoint center, Priority priority, Optional<Condition> optCondition) {
+            public Atom(String label, ImagePoint center, Priority priority, Optional<Condition> optCondition) {
+                this(new Id(), label, center, priority, optCondition);
             }
         }
 
@@ -62,32 +58,22 @@ public record MapItem(Id id, I18n label, Image image,
             return atom().label();
         }
 
-        default List<BoardSpace.Id> spaceIds() {
-            return atom().spaceIds();
+        default double top() {
+            return atom().center().top();
         }
 
-        record Point(Atom atom, double top, double left, String color) implements Position {
+        default double left() {
+            return atom().center().left();
+        }
+
+        record Point(Atom atom, String color) implements _Object {
 
         }
 
-        record _Image(Atom atom, double top, double left, Image value) implements Position {
+        record _Image(Atom atom, Image value) implements _Object {
 
         }
 
     }
 
-
-    public enum Priority {
-        HIGHEST, HIGH, MEDIUM, LOW, LOWEST;
-
-        public int value() {
-            return switch (this) {
-                case LOWEST -> 1;
-                case LOW -> 2;
-                case MEDIUM -> 3;
-                case HIGH -> 4;
-                case HIGHEST -> 5;
-            };
-        }
-    }
 }

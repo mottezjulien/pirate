@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.board.persistence.entity;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.generic.enumerate.Priority;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -15,14 +16,15 @@ public class BoardSpaceEntity {
 
     private String label;
 
-    private int priority;
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
 
     @ManyToOne
     @JoinColumn(name = "board_id")
     private BoardConfigEntity board;
 
     @OneToMany(mappedBy = "space")
-    private Set<BoardRectEntity> rects = new HashSet<>();
+    private final Set<BoardRectEntity> rects = new HashSet<>();
 
     public String getId() {
         return id;
@@ -40,11 +42,11 @@ public class BoardSpaceEntity {
         this.label = label;
     }
 
-    public int getPriority() {
+    public Priority getPriority() {
         return priority;
     }
 
-    public void setPriority(int priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 
@@ -56,15 +58,7 @@ public class BoardSpaceEntity {
         this.board = board;
     }
 
-    public Set<BoardRectEntity> getRects() {
-        return rects;
-    }
-
-    public void setRects(Set<BoardRectEntity> rects) {
-        this.rects = rects;
-    }
-
     public BoardSpace toModel() {
-        return new BoardSpace(new BoardSpace.Id(id), label, BoardSpace.Priority.values()[priority], rects.stream().map(BoardRectEntity::toModel).toList());
+        return new BoardSpace(new BoardSpace.Id(id), label, priority, rects.stream().map(BoardRectEntity::toModel).toList());
     }
 }

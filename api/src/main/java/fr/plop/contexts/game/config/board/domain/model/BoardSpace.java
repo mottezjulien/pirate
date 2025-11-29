@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.board.domain.model;
 
+import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import fr.plop.generic.tools.StringTools;
@@ -7,10 +8,6 @@ import fr.plop.generic.tools.StringTools;
 import java.util.List;
 
 public record BoardSpace(Id id, String label, Priority priority, List<Rect> rects) {
-
-    public enum Priority {
-        HIGHEST, HIGH, MEDIUM, LOW, LOWEST
-    }
 
     public record Id(String value) {
         public Id() {

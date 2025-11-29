@@ -2,13 +2,21 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../generic/repository/generic_repository.dart';
+import '../game_current.dart';
+
 class GameMapRepository {
-  static const String _assetPath = 'assets/pouet/map.json';
+
+  static const resourcePath = '/sessions';
 
   Future<List<GameMap>> get() async {
-    final String jsonString = await rootBundle.loadString(_assetPath);
-    final List<dynamic> jsonList = jsonDecode(jsonString);
-    return jsonList.map((json) => GameMap.fromJson(json)).toList();
+    GenericRepository genericRepository = GenericRepository();
+    final response = await genericRepository.get(path: "$resourcePath/${GameCurrent.sessionId}/maps/");
+    final List<GameMap> maps = [];
+    response.forEach((jsonMap) {
+      maps.add(GameMap.fromJson(jsonMap));
+    });
+    return maps;
   }
 }
 
