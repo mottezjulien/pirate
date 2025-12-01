@@ -5,13 +5,12 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
 import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
@@ -30,47 +29,34 @@ import java.util.Optional;
 @RequestMapping("/sessions/{sessionId}/talks")
 public class TalkController {
 
+
     private final ConnectUseCase connectUseCase;
-    private final GameSessionRepository gameSessionRepository;
-    private final TalkConfigRepository talkConfigRepository;
-    private final GameEventBroadCast broadCast;
+    private final GameConfigCache cache;
     private final GameSessionSituationGetPort situationGetPort;
+    private final GameEventBroadCast broadCast;
 
-    public TalkController(ConnectUseCase connectUseCase, GameSessionRepository gameSessionRepository, TalkConfigRepository talkConfigRepository, GameEventBroadCast broadCast, GameSessionSituationGetPort situationGetPort) {
+    public TalkController(ConnectUseCase connectUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventBroadCast broadCast) {
         this.connectUseCase = connectUseCase;
-        this.gameSessionRepository = gameSessionRepository;
-        this.talkConfigRepository = talkConfigRepository;
-        this.broadCast = broadCast;
+        this.cache = cache;
         this.situationGetPort = situationGetPort;
+        this.broadCast = broadCast;
     }
-
     @GetMapping({"/{talkId}", "/{talkId}/"})
     public ResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
                               @RequestHeader("Language") String languageStr,
                               @PathVariable("sessionId") String sessionIdStr,
                               @PathVariable("talkId") String talkIdStr) {
-        Language language = Language.valueOf(languageStr.toUpperCase());
-        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
-
+        final Language language = Language.valueOf(languageStr.toUpperCase());
+        final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             final GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
-
-            final TalkConfig.Id talkConfigId = new TalkConfig.Id(gameSessionRepository.talkId(sessionId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found")));
-
-            final TalkConfig talkConfig = talkConfigRepository.fullById(talkConfigId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"))
-                    .toModel();
-            TalkItem item = talkConfig.byId(talkId)
+            final TalkConfig talkConfig = cache.talk(sessionId);
+            final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-
-            GameSessionSituation situation = situationGetPort.get(sessionId, player);
-
-            item = item.select(situation);
-
-            return ResponseDTO.fromModel(item, language);
+            final GameSessionSituation situation = situationGetPort.get(sessionId, player);
+            return ResponseDTO.fromModel(item.select(situation), language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
@@ -83,25 +69,15 @@ public class TalkController {
                              @PathVariable("sessionId") String sessionIdStr,
                              @PathVariable("talkId") String talkIdStr,
                              @PathVariable("optionId") String optionIdStr) {
-        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        TalkItem.Id taklId = new TalkItem.Id(talkIdStr);
-        TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(optionIdStr);
-
+        final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        final TalkItem.Id taklId = new TalkItem.Id(talkIdStr);
+        final TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(optionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));//TODO
-
-            TalkConfig.Id talkConfigId = new TalkConfig.Id(gameSessionRepository.talkId(sessionId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found")));
-
-            TalkConfig talkConfig = talkConfigRepository.fullById(talkConfigId.value())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"))
-                    .toModel();
-
-            TalkItem item = talkConfig.byId(taklId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-
-            GameContext context = new GameContext(sessionId, player.id());
+            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            final GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
+            final TalkConfig talkConfig = cache.talk(sessionId);
+            final TalkItem item = talkConfig.byId(taklId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
+            final GameContext context = new GameContext(sessionId, player.id());
 
             if(item instanceof TalkItem.Options multipleOptions) {
                 Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);
@@ -135,12 +111,12 @@ public class TalkController {
             }
         }
         public static ResponseDTO fromModel(TalkItem item, Language language) {
-            Image imageCharacter = item.characterReference().image();
-            ImageResponseDTO image = ImageResponseDTO.fromModel(imageCharacter);
-            ResponseDTO.Character character = new Character(item.character().name(), image);
+            final Image imageCharacter = item.characterReference().image();
+            final ImageResponseDTO image = ImageResponseDTO.fromModel(imageCharacter);
+            final ResponseDTO.Character character = new Character(item.character().name(), image);
             List<Result.Option> options = List.of();
             String nextId = null;
-            String resultType = switch (item) {
+            final String resultType = switch (item) {
                 case TalkItem.Options multipleOptions -> {
                     options = multipleOptions.options()
                             .map(option -> Result.Option.fromModel(option, language))

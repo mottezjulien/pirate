@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
+import fr.plop.contexts.game.config.Image.domain.ImageGeneric;
 import fr.plop.contexts.game.config.Image.domain.ImageItem;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.subs.image.Image;
@@ -23,6 +24,7 @@ public class TemplateGeneratorImageUseCase {
         //Image:ASSET:pouet/img.jpg
         Image.Type type = Image.Type.valueOf(tree.param(0).toUpperCase());
         Image value = new Image(type, tree.param(1));
-        return new ImageItem(value);
+        ImageGeneric generic = new ImageGeneric("", value, List.of());
+        return new ImageItem(generic);
     }
 }

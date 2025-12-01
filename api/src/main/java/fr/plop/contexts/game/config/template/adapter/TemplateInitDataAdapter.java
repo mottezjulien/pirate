@@ -1,5 +1,7 @@
 package fr.plop.contexts.game.config.template.adapter;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageGenericRepository;
+import fr.plop.contexts.game.config.Image.persistence.ImageObjectRepository;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -41,7 +43,10 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final TemplateInitDataImageAdapter imageAdapter;
     private final TemplateInitDataConditionAdapter conditionAdapter;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataMapAdapter mapAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter, TemplateInitDataConditionAdapter conditionAdapter) {
+    private final ImageGenericRepository imageGenericRepository;
+    private final ImageObjectRepository imageObjectRepository;
+
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataMapAdapter mapAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter, TemplateInitDataConditionAdapter conditionAdapter, ImageGenericRepository imageGenericRepository, ImageObjectRepository imageObjectRepository) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.scenarioRepository = scenarioRepository;
@@ -56,6 +61,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.talkAdapter = talkAdapter;
         this.imageAdapter = imageAdapter;
         this.conditionAdapter = conditionAdapter;
+        this.imageGenericRepository = imageGenericRepository;
+        this.imageObjectRepository = imageObjectRepository;
     }
 
 
@@ -85,6 +92,9 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         scenarioRepository.deleteAll();
 
         boardAdapter.deleteAll();
+
+        imageObjectRepository.deleteAll();
+        imageGenericRepository.deleteAll();
 
         i18nRepository.deleteAll();
     }

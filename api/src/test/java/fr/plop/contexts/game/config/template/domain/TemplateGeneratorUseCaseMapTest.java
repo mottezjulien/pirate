@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.domain;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
@@ -29,8 +30,8 @@ public class TemplateGeneratorUseCaseMapTest {
         assertThat(template.map().items()).hasSize(1)
             .anySatisfy(mapItem -> {
                 assertThat(mapItem.id()).isNotNull();
-                assertThat(mapItem.image().type()).isEqualTo(Image.Type.ASSET);
-                assertThat(mapItem.image().value()).isEqualTo("game/tres/map/port.png");
+                assertThat(mapItem.imageGeneric().imageType()).isEqualTo(Image.Type.ASSET);
+                assertThat(mapItem.imageGeneric().imageValue()).isEqualTo("game/tres/map/port.png");
             });
     }
 
@@ -59,27 +60,25 @@ public class TemplateGeneratorUseCaseMapTest {
         assertThat(template.map().items()).hasSize(1)
                 .anySatisfy(mapItem -> {
                     assertThat(mapItem.id()).isNotNull();
-                    assertThat(mapItem.image().type()).isEqualTo(Image.Type.WEB);
-                    assertThat(mapItem.image().value()).isEqualTo("toto.fr/plop.jpg");
+                    assertThat(mapItem.imageGeneric().imageType()).isEqualTo(Image.Type.WEB);
+                    assertThat(mapItem.imageGeneric().imageValue()).isEqualTo("toto.fr/plop.jpg");
                     assertThat(mapItem.priority()).isEqualTo(Priority.HIGH);
-                    assertThat(mapItem.objects())
+                    assertThat(mapItem.imageObjects())
                             .hasSize(2)
                             .anySatisfy(position -> {
                                 assertThat(position.label()).isEqualTo("Bateau rouge");
-                                assertThat(position.priority()).isEqualTo(Priority.HIGHEST);
                                 assertThat(position.top()).isEqualTo(0.4711538461538462);
                                 assertThat(position.left()).isEqualTo(0.51762815622183);
-                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
-                                assertThat(((MapItem._Object.Point) position).color()).isEqualTo("yellow");
+                                assertThat(position).isInstanceOf(ImageObject.Point.class);
+                                assertThat(((ImageObject.Point) position).color()).isEqualTo("yellow");
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.label()).isEqualTo("Le bar");
-                                assertThat(position.priority()).isEqualTo(Priority.MEDIUM);
                                 assertThat(position.top()).isEqualTo(0.9158653112558219);
                                 assertThat(position.left()).isEqualTo(0.2900640047513522);
-                                assertThat(position).isInstanceOf(MapItem._Object._Image.class);
-                                assertThat(((MapItem._Object._Image) position).value().type()).isEqualTo(Image.Type.ASSET);
-                                assertThat(((MapItem._Object._Image) position).value().value()).isEqualTo("pouet/img.jpg");
+                                assertThat(position).isInstanceOf(ImageObject._Image.class);
+                                assertThat(((ImageObject._Image) position).value().type()).isEqualTo(Image.Type.ASSET);
+                                assertThat(((ImageObject._Image) position).value().value()).isEqualTo("pouet/img.jpg");
                             });
                 });
     }
@@ -109,27 +108,25 @@ public class TemplateGeneratorUseCaseMapTest {
         assertThat(template.map().items()).hasSize(1)
                 .anySatisfy(mapItem -> {
                     assertThat(mapItem.id()).isNotNull();
-                    assertThat(mapItem.image().type()).isEqualTo(Image.Type.WEB);
-                    assertThat(mapItem.image().value()).isEqualTo("toto.fr/plop.jpg");
+                    assertThat(mapItem.imageGeneric().imageType()).isEqualTo(Image.Type.WEB);
+                    assertThat(mapItem.imageGeneric().imageValue()).isEqualTo("toto.fr/plop.jpg");
                     assertThat(mapItem.priority()).isEqualTo(Priority.HIGH);
-                    assertThat(mapItem.objects())
+                    assertThat(mapItem.imageObjects())
                             .hasSize(2)
                             .anySatisfy(position -> {
                                 assertThat(position.label()).isEqualTo("Bateau rouge");
-                                assertThat(position.priority()).isEqualTo(Priority.HIGHEST);
                                 assertThat(position.top()).isEqualTo(0.4711538461538462);
                                 assertThat(position.left()).isEqualTo(0.51762815622183);
-                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
-                                assertThat(((MapItem._Object.Point) position).color()).isEqualTo("yellow");
+                                assertThat(position).isInstanceOf(ImageObject.Point.class);
+                                assertThat(((ImageObject.Point) position).color()).isEqualTo("yellow");
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.label()).isEqualTo("Le bar");
-                                assertThat(position.priority()).isEqualTo(Priority.MEDIUM);
                                 assertThat(position.top()).isEqualTo(0.9158653112558219);
                                 assertThat(position.left()).isEqualTo(0.2900640047513522);
-                                assertThat(position).isInstanceOf(MapItem._Object._Image.class);
-                                assertThat(((MapItem._Object._Image) position).value().type()).isEqualTo(Image.Type.ASSET);
-                                assertThat(((MapItem._Object._Image) position).value().value()).isEqualTo("pouet/img.jpg");
+                                assertThat(position).isInstanceOf(ImageObject._Image.class);
+                                assertThat(((ImageObject._Image) position).value().type()).isEqualTo(Image.Type.ASSET);
+                                assertThat(((ImageObject._Image) position).value().value()).isEqualTo("pouet/img.jpg");
                             });
                 });
     }

@@ -4,6 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MapConfigRepository extends JpaRepository<MapConfigEntity, String> {
 
-    String FETCH_ALL = " LEFT JOIN FETCH map.items map_item";
+    String FETCH_ALL = " LEFT JOIN FETCH map.items map_item" + " LEFT JOIN FETCH map_item.imageGeneric map_item_image";
 
 }

@@ -1,23 +1,22 @@
-package fr.plop.contexts.game.config.map.persistence;
+package fr.plop.contexts.game.config.Image.persistence;
 
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
-import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.generic.ImagePoint;
-import fr.plop.generic.enumerate.Priority;
 import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
+
 import java.util.Optional;
 
 @Entity
-@Table(name = "TEST2_MAP_ITEM_OBJECT")
-public class MapItemObjectEntity {
+@Table(name = "TEST2_IMAGE_OBJECT")
+public class ImageObjectEntity {
 
     public enum Type {
         POINT, IMAGE
     }
-
 
     @Id
     private String id;
@@ -25,12 +24,14 @@ public class MapItemObjectEntity {
     private String label;
 
     @ManyToOne
-    @JoinColumn(name = "map_id")
-    private MapItemEntity map;
+    @JoinColumn(name = "image_id")
+    private ImageGenericEntity image;
 
+    @Enumerated(EnumType.STRING)
     private Type type;
 
     private double top;
+
     @Column(name = "_left")
     private double left;
 
@@ -44,39 +45,21 @@ public class MapItemObjectEntity {
     @Column(name = "image_value")
     private String imageValue;
 
-    @Enumerated(EnumType.STRING)
-    private Priority priority;
-
     @ManyToOne
     @JoinColumn(name = "condition_id")
     private ConditionEntity nullableCondition;
 
-    public String getId() {
-        return id;
-    }
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getLabel() {
-        return label;
     }
 
     public void setLabel(String label) {
         this.label = label;
     }
 
-    public MapItemEntity getMap() {
-        return map;
-    }
-
-    public void setMap(MapItemEntity map) {
-        this.map = map;
-    }
-
-    public Type getType() {
-        return type;
+    public void setImage(ImageGenericEntity image) {
+        this.image = image;
     }
 
     public void setType(Type type) {
@@ -103,25 +86,17 @@ public class MapItemObjectEntity {
         this.imageValue = imageValue;
     }
 
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-
     public void setNullableCondition(ConditionEntity nullableCondition) {
         this.nullableCondition = nullableCondition;
     }
 
-    public MapItem._Object toModel() {
+    public ImageObject toModel() {
         ImagePoint center = new ImagePoint(top, left);
         Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
-        MapItem._Object.Atom atom = new MapItem._Object.Atom(new MapItem._Object.Id(id), label, center, priority, optCondition);
+        ImageObject.Atom atom = new ImageObject.Atom(new ImageObject.Id(id), label, center, optCondition);
         return switch (type) {
-            case POINT -> new MapItem._Object.Point(atom, pointColor);
-            case IMAGE -> new MapItem._Object._Image(atom, new Image(imageType, imageValue));
+            case POINT -> new ImageObject.Point(atom, pointColor);
+            case IMAGE -> new ImageObject._Image(atom, new Image(imageType, imageValue));
         };
     }
 

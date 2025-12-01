@@ -1,9 +1,9 @@
 package fr.plop.contexts.game.config.template.domain;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -17,6 +17,7 @@ import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
@@ -505,17 +506,16 @@ public class TemplateGeneratorUseCaseTest {
                 .hasSize(1)
                 .anySatisfy(item -> {
                     assertThat(item.id()).isNotNull();
-                    assertThat(item.isImageAsset()).isEqualTo(true);
-                    assertThat(item.imagePath()).isEqualTo("imgs/first/map.png");
+                    assertThat(item.imageType()).isEqualTo(Image.Type.ASSET);
+                    assertThat(item.imageValue()).isEqualTo("imgs/first/map.png");
                     assertThat(item.priority()).isEqualTo(Priority.HIGH);
-                    assertThat(item.objects())
+                    assertThat(item.imageObjects())
                             .hasSize(2)
-                            .anySatisfy(position -> {
-                                assertThat(position.id()).isNotNull();
-                                assertThat(position.priority()).isEqualTo(Priority.HIGHEST);
+                            .anySatisfy(object -> {
+                                assertThat(object.id()).isNotNull();
 
-                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
-                                MapItem._Object.Point point = (MapItem._Object.Point) position;
+                                assertThat(object).isInstanceOf(ImageObject.Point.class);
+                                ImageObject.Point point = (ImageObject.Point) object;
                                 assertThat(point.top()).isCloseTo(89.09F, Offset.offset(0.001));
                                 assertThat(point.left()).isCloseTo(10.064F, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("");
@@ -523,10 +523,9 @@ public class TemplateGeneratorUseCaseTest {
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
-                                assertThat(position.priority()).isEqualTo(Priority.LOW);
 
-                                assertThat(position).isInstanceOf(MapItem._Object.Point.class);
-                                MapItem._Object.Point point = (MapItem._Object.Point) position;
+                                assertThat(position).isInstanceOf(ImageObject.Point.class);
+                                ImageObject.Point point = (ImageObject.Point) position;
                                 assertThat(point.top()).isCloseTo(78.865F, Offset.offset(0.001));
                                 assertThat(point.left()).isCloseTo(23.9887F, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("yellow");

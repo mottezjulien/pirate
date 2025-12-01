@@ -27,8 +27,8 @@ public class TemplateGeneratorUseCaseImageTest {
         assertThat(template.image().items()).hasSize(1)
             .anySatisfy(imageItem -> {
                 assertThat(imageItem.id()).isNotNull();
-                assertThat(imageItem.value().type()).isEqualTo(Image.Type.ASSET);
-                assertThat(imageItem.value().value()).isEqualTo("pouet/img.jpg");
+                assertThat(imageItem.generic().value().type()).isEqualTo(Image.Type.ASSET);
+                assertThat(imageItem.generic().value().value()).isEqualTo("pouet/img.jpg");
             });
     }
 }

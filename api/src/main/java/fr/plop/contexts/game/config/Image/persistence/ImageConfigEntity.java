@@ -19,6 +19,7 @@ public class ImageConfigEntity {
     @OneToMany(mappedBy = "config")
     private Set<ImageItemEntity> items = new HashSet<>();
 
+
     public String getId() {
         return id;
     }
@@ -33,6 +34,14 @@ public class ImageConfigEntity {
 
     public void setItems(Set<ImageItemEntity> items) {
         this.items = items;
+    }
+
+
+
+    public static ImageConfigEntity fromModelId(ImageConfig.Id configId) {
+        ImageConfigEntity entity = new ImageConfigEntity();
+        entity.setId(configId.value());
+        return entity;
     }
 
     public ImageConfig toModel() {

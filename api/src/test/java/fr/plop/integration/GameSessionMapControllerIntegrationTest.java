@@ -1,6 +1,7 @@
 package fr.plop.integration;
 
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.config.Image.domain.ImageGeneric;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
@@ -13,11 +14,11 @@ import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
 import fr.plop.contexts.game.session.core.presenter.GameSessionMoveController;
-import fr.plop.contexts.game.session.map.presenter.GameSessionMapController;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import fr.plop.subs.image.Image;
+import fr.plop.subs.image.ImageDetailsResponseDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,8 +33,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -68,10 +67,10 @@ public class GameSessionMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpace() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("No Step, not space", new Image(Image.Type.WEB, "siteABC"), Priority.HIGH, List.of(), Optional.empty());
+        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
-        List<GameSessionMapController.GameMapResponseDTO> maps = createSessionAndFindMaps();
+        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -79,12 +78,12 @@ public class GameSessionMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceAndOneActiveStep_firstStepActiveInBeginning() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("No Step, not space", new Image(Image.Type.WEB, "siteABC"), Priority.HIGH, List.of(), Optional.empty());
+        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
         final Condition inFirstStep = new Condition.Step(new Condition.Id(), scenario.steps().getFirst().id());
-        final MapItem firstStep = new MapItem("FirstStep", new Image(Image.Type.ASSET, "asset/plop.png"), Priority.MEDIUM, List.of(), Optional.of(inFirstStep));
+        final MapItem firstStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
-        List<GameSessionMapController.GameMapResponseDTO> maps = createSessionAndFindMaps();
+        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(2)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()))
@@ -93,12 +92,12 @@ public class GameSessionMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceButNotNotInvalideStep() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("No Step, not space", new Image(Image.Type.WEB, "siteABC"), Priority.HIGH, List.of(), Optional.empty());
+        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
         final Condition inSecondStep = new Condition.Step(new Condition.Id(), scenario.steps().get(1).id());
-        final MapItem secondStep = new MapItem("Second Step", new Image(Image.Type.ASSET, "asset/plop.png"), Priority.MEDIUM, List.of(), Optional.of(inSecondStep));
+        final MapItem secondStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
-        List<GameSessionMapController.GameMapResponseDTO> maps = createSessionAndFindMaps();
+        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -108,10 +107,10 @@ public class GameSessionMapControllerIntegrationTest {
     @Test
     public void getMapsNotActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem inSpaceMap = new MapItem("isSpace", new Image(Image.Type.ASSET, "asset/plop.png"), Priority.MEDIUM, List.of(), Optional.of(inSpace));
+        final MapItem inSpaceMap = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
-        List<GameSessionMapController.GameMapResponseDTO> maps = createSessionAndFindMaps();
+        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(0);
     }
@@ -120,7 +119,7 @@ public class GameSessionMapControllerIntegrationTest {
     @Test
     public void getMapActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem inSpaceMap = new MapItem("isSpace", new Image(Image.Type.ASSET, "asset/plop.png"), Priority.MEDIUM, List.of(), Optional.of(inSpace));
+        final MapItem inSpaceMap = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
         ConnectionController.ResponseDTO connection = connect();
@@ -128,7 +127,7 @@ public class GameSessionMapControllerIntegrationTest {
 
         move(connection.token(), session.id());
 
-        List<GameSessionMapController.GameMapResponseDTO> maps = getMaps(connection.token(), session.id());
+        List<ImageDetailsResponseDTO> maps = getMaps(connection.token(), session.id());
 
         assertThat(maps)
                 .hasSize(1)
@@ -160,13 +159,13 @@ public class GameSessionMapControllerIntegrationTest {
         templateInitUseCase.create(template);
     }
 
-    private List<GameSessionMapController.GameMapResponseDTO> createSessionAndFindMaps() throws URISyntaxException {
+    private List<ImageDetailsResponseDTO> createSessionAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
         GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
         return getMaps(connection.token(), session.id());
     }
 
-    private List<GameSessionMapController.GameMapResponseDTO> getMaps(String token, String sessionId) throws URISyntaxException {
+    private List<ImageDetailsResponseDTO> getMaps(String token, String sessionId) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/" + sessionId + "/maps";
         URI uri = new URI(baseUrl);
 
@@ -175,8 +174,8 @@ public class GameSessionMapControllerIntegrationTest {
         headers.add("Authorization", token);
         headers.add("Language", "FR");
 
-        ResponseEntity<GameSessionMapController.GameMapResponseDTO[]> result = this.restTemplate
-                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), GameSessionMapController.GameMapResponseDTO[].class);
+        ResponseEntity<ImageDetailsResponseDTO[]> result = this.restTemplate
+                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), ImageDetailsResponseDTO[].class);
         Assertions.assertNotNull(result.getBody());
         return List.of(result.getBody());
     }
@@ -193,6 +192,10 @@ public class GameSessionMapControllerIntegrationTest {
         GameSessionMoveController.GameMoveRequestDTO request = new GameSessionMoveController.GameMoveRequestDTO(10, 10);
 
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), Void.class);
+    }
+
+    private ImageGeneric imageGeneric(Image.Type type, String imageValue) {
+        return new ImageGeneric("", new Image(type, imageValue), List.of());
     }
 
 }

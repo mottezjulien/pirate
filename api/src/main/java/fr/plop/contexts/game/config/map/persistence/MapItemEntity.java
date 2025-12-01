@@ -1,16 +1,13 @@
 package fr.plop.contexts.game.config.map.persistence;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageGenericEntity;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.generic.enumerate.Priority;
-import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_MAP_ITEM")
@@ -23,20 +20,12 @@ public class MapItemEntity {
     @JoinColumn(name = "config_id")
     private MapConfigEntity config;
 
-    private String label;
-
-    @Column(name = "image_type")
-    @Enumerated(EnumType.STRING)
-    private Image.Type imageType;
-
-    @Column(name = "image_value")
-    private String imageValue;
+    @ManyToOne
+    @JoinColumn(name = "image_generic_id")
+    private ImageGenericEntity imageGeneric;
 
     @Enumerated(EnumType.STRING)
     private Priority priority;
-
-    @OneToMany(mappedBy = "map")
-    private final Set<MapItemObjectEntity> objects = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "condition_id")
@@ -51,24 +40,16 @@ public class MapItemEntity {
         this.id = id;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public void setImageType(Image.Type imageType) {
-        this.imageType = imageType;
-    }
-
-    public void setImageValue(String imageValue) {
-        this.imageValue = imageValue;
-    }
-
     public MapConfigEntity getConfig() {
         return config;
     }
 
     public void setConfig(MapConfigEntity config) {
         this.config = config;
+    }
+
+    public void setImageGeneric(ImageGenericEntity imageGeneric) {
+        this.imageGeneric = imageGeneric;
     }
 
     public Priority getPriority() {
@@ -84,10 +65,8 @@ public class MapItemEntity {
     }
 
     public MapItem toModel() {
-        Image image = new Image(imageType, imageValue);
         Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
-        List<MapItem._Object> objects = this.objects.stream().map(MapItemObjectEntity::toModel).toList();
-        return new MapItem(new MapItem.Id(id), label, image, priority, objects, optCondition);
+        return new MapItem(new MapItem.Id(id), imageGeneric.toModel(), priority, optCondition);
     }
 
 }

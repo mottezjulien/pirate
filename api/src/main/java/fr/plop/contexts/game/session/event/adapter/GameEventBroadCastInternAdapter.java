@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern.Port {
 
     //TODO split ?? -> Split findAction & doAction
-
     private final GameConfigCache cache;
 
     private final ScenarioSessionPlayerGetUseCase scenarioSessionPlayerGetUseCase;

@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.template.domain;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
@@ -199,12 +199,11 @@ class TemplateGeneratorUseCaseComplexeTest {
                     .hasSize(1)
                     .anySatisfy(item -> {
                         assertThat(item.priority()).isEqualTo(Priority.LOWEST);
-                        assertThat(item.objects())
+                        assertThat(item.imageObjects())
                                 .hasSize(1)
                                 .anySatisfy(position -> {
-                                    assertThat(position.priority()).isEqualTo(Priority.HIGH);
-                                    assertThat(position).isInstanceOf(MapItem._Object.Point.class);
-                                    MapItem._Object.Point point = (MapItem._Object.Point) position;
+                                    assertThat(position).isInstanceOf(ImageObject.Point.class);
+                                    ImageObject.Point point = (ImageObject.Point) position;
                                     assertThat(point.top()).isCloseTo(0.2, Offset.offset(0.01));
                                     assertThat(point.left()).isCloseTo(0.8, Offset.offset(0.01));
                                 });

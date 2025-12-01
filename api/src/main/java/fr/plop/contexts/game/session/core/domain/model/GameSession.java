@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.core.domain.model;
 
+import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -13,10 +14,12 @@ import java.util.List;
 
 //TODO USEFULL ?? (Cache && ScenarioSession by player)
 public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
-                          BoardConfig board, MapConfig map, TalkConfig talk) {
+                          BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
 
-    public static GameSession buildWithoutPlayer(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig, MapConfig mapConfig, TalkConfig talkConfig) {
-        return new GameSession(atom, state, new ArrayList<>(), ScenarioSession.build(scenarioConfig), boardConfig, mapConfig, talkConfig);
+    public static GameSession buildWithoutPlayer(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig,
+                                                 MapConfig mapConfig, TalkConfig talkConfig, ImageConfig imageConfig) {
+        return new GameSession(atom, state, new ArrayList<>(), ScenarioSession.build(scenarioConfig),
+                boardConfig, mapConfig, talkConfig, imageConfig);
     }
 
     public record Id(String value) {

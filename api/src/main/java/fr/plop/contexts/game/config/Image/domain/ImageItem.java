@@ -1,9 +1,12 @@
 package fr.plop.contexts.game.config.Image.domain;
 
+import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.generic.tools.StringTools;
-import fr.plop.subs.image.Image;
 
-public record ImageItem(Id id, Image value) {
+public record ImageItem(Id id, ImageGeneric generic) {
+
+
+
 
     public record Id(String value) {
         public Id() {
@@ -11,8 +14,26 @@ public record ImageItem(Id id, Image value) {
         }
     }
 
-    public ImageItem(Image value) {
-        this(new Id(), value);
+    public ImageItem(ImageGeneric generic) {
+        this(new Id(), generic);
     }
+
+    public ImageItem select(GameSessionSituation situation) {
+        return new ImageItem(id(),generic.select(situation));
+    }
+
+
+/*
+    public ImageItem(String label, Image value, List<ImageObject> objects) {
+        this(new Id(), new ImageGeneric(label, value, objects));
+    }
+
+    public String imageValue() {
+        return generic.imageValue();
+    }
+
+    public Image.Type imageType() {
+        return generic.imageType();
+    }*/
 
 }

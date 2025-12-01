@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.cache;
 
+import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
@@ -15,7 +16,8 @@ import java.util.Map;
 @Component
 public class GameConfigCacheAdapter implements GameConfigCache {
 
-    private record Data(List<GamePlayer.Id> playerIds, ScenarioConfig scenario, BoardConfig board, MapConfig map, TalkConfig talk) {
+    private record Data(List<GamePlayer.Id> playerIds, ScenarioConfig scenario,
+                        BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
 
     }
 
@@ -24,7 +26,7 @@ public class GameConfigCacheAdapter implements GameConfigCache {
     @Override
     public void insert(GameSession session) {
         sessions.put(session.id(), new Data(session.players().stream().map(GamePlayer::id).toList(),
-                session.scenario().config(), session.board(), session.map(), session.talk()));
+                session.scenario().config(), session.board(), session.map(), session.talk(), session.image()));
     }
 
     @Override
@@ -40,6 +42,16 @@ public class GameConfigCacheAdapter implements GameConfigCache {
     @Override
     public MapConfig map(GameSession.Id sessionId) {
         return sessions.get(sessionId).map;
+    }
+
+    @Override
+    public TalkConfig talk(GameSession.Id sessionId) {
+        return sessions.get(sessionId).talk;
+    }
+
+    @Override
+    public ImageConfig image(GameSession.Id sessionId) {
+        return sessions.get(sessionId).image;
     }
 
 }

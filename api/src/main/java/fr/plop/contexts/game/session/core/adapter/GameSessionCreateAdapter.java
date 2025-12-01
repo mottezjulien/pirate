@@ -98,7 +98,8 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
         entity = sessionRepository.save(entity);
 
         GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-        return GameSession.buildWithoutPlayer(atom, state, template.scenario(), template.board(), template.map(), template.talk());
+        return GameSession.buildWithoutPlayer(atom, state, template.scenario(), template.board(), template.map(),
+                template.talk(), template.image());
     }
 
     @Override
