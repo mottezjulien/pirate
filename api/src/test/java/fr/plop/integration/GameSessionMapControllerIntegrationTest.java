@@ -14,11 +14,11 @@ import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
 import fr.plop.contexts.game.session.core.presenter.GameSessionMoveController;
+import fr.plop.contexts.game.session.map.presenter.GameSessionMapController;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import fr.plop.subs.image.Image;
-import fr.plop.subs.image.ImageDetailsResponseDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +70,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
-        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -83,7 +83,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem firstStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
-        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(2)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()))
@@ -97,7 +97,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem secondStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
-        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -110,7 +110,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem inSpaceMap = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
-        List<ImageDetailsResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(0);
     }
@@ -127,7 +127,7 @@ public class GameSessionMapControllerIntegrationTest {
 
         move(connection.token(), session.id());
 
-        List<ImageDetailsResponseDTO> maps = getMaps(connection.token(), session.id());
+        List<GameSessionMapController.ResponseDTO> maps = getMaps(connection.token(), session.id());
 
         assertThat(maps)
                 .hasSize(1)
@@ -159,13 +159,13 @@ public class GameSessionMapControllerIntegrationTest {
         templateInitUseCase.create(template);
     }
 
-    private List<ImageDetailsResponseDTO> createSessionAndFindMaps() throws URISyntaxException {
+    private List<GameSessionMapController.ResponseDTO> createSessionAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
         GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
         return getMaps(connection.token(), session.id());
     }
 
-    private List<ImageDetailsResponseDTO> getMaps(String token, String sessionId) throws URISyntaxException {
+    private List<GameSessionMapController.ResponseDTO> getMaps(String token, String sessionId) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/" + sessionId + "/maps";
         URI uri = new URI(baseUrl);
 
@@ -174,8 +174,8 @@ public class GameSessionMapControllerIntegrationTest {
         headers.add("Authorization", token);
         headers.add("Language", "FR");
 
-        ResponseEntity<ImageDetailsResponseDTO[]> result = this.restTemplate
-                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), ImageDetailsResponseDTO[].class);
+        ResponseEntity<GameSessionMapController.ResponseDTO[]> result = this.restTemplate
+                .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers), GameSessionMapController.ResponseDTO[].class);
         Assertions.assertNotNull(result.getBody());
         return List.of(result.getBody());
     }

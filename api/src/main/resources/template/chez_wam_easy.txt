@@ -1,0 +1,47 @@
+ChezWamEasy:1.0::10
+--- Board
+------ Space (ref SPACE_BUREAU):Le bureau:HIGH
+--------- bottomLeft:45.77806:4.80351:topRight:45.77820:4.80367
+------ Space (ref SPACE_KITCHEN):La cuisine:HIGH
+--------- bottomLeft:45.77798:4.8037:topRight:45.77812:4.80384
+
+--- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
+------ Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
+------ Target (ref FOUILLER_BUREAU):FR:Fouiller le bureau:EN:Search the office
+------ Target (ref OUVRIR_CASSIER):FR:Ouvrir le cassier:EN:Open the drawer
+
+------ Possibility
+
+------ Possibility
+--------- Trigger:GOINSPACE:SPACE_BUREAU
+--------- Consequence:Alert
+------------ FR:Vous êtes au bureau
+------------ EN:You are in the office
+
+------ Possibility
+--------- Trigger:GOOUTSPACE:SPACE_BUREAU
+--------- Consequence:Alert
+------------ FR:Vous êtes sortie du bureau
+------------ EN:You are out the office
+
+------ Possibility
+--------- Trigger:GOINSPACE:SPACE_KITCHEN
+--------- Consequence:Alert
+------------ FR:Vous êtes dans la cuisine
+------------ EN:You are in the kitchen
+
+------ Possibility
+--------- Trigger:GOOUTSPACE:SPACE_KITCHEN
+--------- Consequence:Alert
+------------ FR:Vous êtes sortie de la cuisine
+------------ EN:You are out the kitchen
+
+--- Map:Asset:assets/game/tres/map/ile.png
+------ Priority:HIGH
+------ Position:0.4711538461538462:0.51762815622183
+--------- Priority:HIGHEST
+--------- Space:Bureau
+------ Position (ref BUREAU):0.9158653112558219:0.2900640047513522
+--------- Priority:HIGH
+------ Position (ref CASIER):0.48317300356351417:0.8541666177602916
+--------- Priority:HIGH

@@ -79,13 +79,9 @@ ChezWamGene:1.0::15
 
 --- Map:Asset:assets/game/tres/map/port.png
 ------ Priority:HIGH
------- Position:0.4711538461538462:0.51762815622183
---------- Priority:HIGHEST
---------- Space:Bureau
------- Position (ref BUREAU):0.9158653112558219:0.2900640047513522
---------- Priority:HIGH
------- Position (ref CASIER):0.48317300356351417:0.8541666177602916
---------- Priority:HIGH
+------ Position:TOP:0.4711538461538462:LEFT:0.51762815622183:SPACE:SPACE_BUREAU:PRIORITY:HIGH
+------ Position (ref BUREAU):TOP:0.9158653112558219:LEFT:0.2900640047513522:SPACE:SPACE_BUREAU
+------ Position (ref CASIER):TOP:0.48317300356351417:LEFT:0.8541666177602916:SPACE:SPACE_BUREAU
 
 --- Talk
 ------ Character

@@ -33,7 +33,7 @@ public class ImageController {
     }
 
     @GetMapping({"/{imageId}", "/{imageId}/"})
-    public ImageDetailsResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
+    public ResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
                               @RequestHeader("Language") String languageStr,
                               @PathVariable("sessionId") String sessionIdStr,
                               @PathVariable("imageId") String imageIdStr) {
@@ -48,9 +48,15 @@ public class ImageController {
             final ImageItem item = imageConfig.byItemId(imageId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
             final GameSessionSituation situation = situationGetPort.get(sessionId, player);
-            return ImageDetailsResponseDTO.fromImageItemModel(item.select(situation));
+            return ResponseDTO.fromModel(item.select(situation));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+        }
+    }
+
+    public record ResponseDTO(String id, ImageDetailsResponseDTO image) {
+        public static ResponseDTO fromModel(ImageItem model) {
+            return new ResponseDTO(model.id().value(), ImageDetailsResponseDTO.fromModel(model.generic()));
         }
     }
 

@@ -12,13 +12,15 @@ public class TemplateInitDataMapAdapter {
 
     private final MapConfigRepository mapConfigRepository;
     private final MapItemRepository mapItemRepository;
+    private final MapItemPositionRepository mapItemPositionRepository;
     private final ImageObjectRepository imageObjectRepository;
     private final ImageGenericRepository imageGenericRepository;
     private final TemplateInitDataConditionAdapter conditionAdapter;
 
-    public TemplateInitDataMapAdapter(MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, ImageObjectRepository imageObjectRepository, ImageGenericRepository imageGenericRepository, TemplateInitDataConditionAdapter conditionAdapter) {
+    public TemplateInitDataMapAdapter(MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapItemPositionRepository mapItemPositionRepository, ImageObjectRepository imageObjectRepository, ImageGenericRepository imageGenericRepository, TemplateInitDataConditionAdapter conditionAdapter) {
         this.mapConfigRepository = mapConfigRepository;
         this.mapItemRepository = mapItemRepository;
+        this.mapItemPositionRepository = mapItemPositionRepository;
         this.imageObjectRepository = imageObjectRepository;
         this.imageGenericRepository = imageGenericRepository;
         this.conditionAdapter = conditionAdapter;
@@ -26,6 +28,7 @@ public class TemplateInitDataMapAdapter {
 
     public void deleteAll() {
         //imageObjectRepository.deleteAll();
+        mapItemPositionRepository.deleteAll();
         mapItemRepository.deleteAll();
         mapConfigRepository.deleteAll();
     }
@@ -49,9 +52,24 @@ public class TemplateInitDataMapAdapter {
             itemEntity.setConfig(configEntity);
             itemEntity.setImageGeneric(imageGenericEntity);
             itemEntity.setPriority(item.priority());
+            item.optPointer().ifPresent(pointer -> {
+                itemEntity.setNullableImagePointerType(pointer.type());
+                itemEntity.setNullableImagePointerValue(pointer.value());
+            });
             item.optCondition()
                     .ifPresent(condition -> itemEntity.setNullableCondition(conditionAdapter.create(condition)));
             mapItemRepository.save(itemEntity);
+
+            item.positions().forEach(position -> {
+                MapItemPositionEntity positionEntity = new MapItemPositionEntity();
+                positionEntity.setId(position.id().value());
+                positionEntity.setSpaceId(position.spaceId().value());
+                positionEntity.setTop(position.point().top());
+                positionEntity.setLeft(position.point().left());
+                positionEntity.setPriority(position.priority());
+                mapItemPositionRepository.save(positionEntity);
+            });
+
 
         });
         return configEntity;
