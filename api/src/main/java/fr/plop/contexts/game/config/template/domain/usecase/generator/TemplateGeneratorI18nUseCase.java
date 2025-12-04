@@ -18,7 +18,7 @@ public class TemplateGeneratorI18nUseCase {
         final Map<Language, String> values = new HashMap<>();
         currentLang = Language.byDefault();
         for (Tree child : children) {
-            if(child.hasUniqueParam()) {
+            if(child.params().size() == 1) {
                 Language.safeValueOf(child.header())
                         .ifPresent(language -> {
                             currentLang = language;

@@ -6,13 +6,11 @@ import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.subs.image.Image;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,56 +31,46 @@ public class TemplateGeneratorMapUseCase {
     }
 
     public MapConfig apply(Tree root) {
-        List<MapItem> mapItems = new ArrayList<>();
-        for (Tree tree : root.children()) {
-            if ("MAP".equalsIgnoreCase(tree.header())) {
-                MapItem item = parseMapItemFromTree(tree);
-                mapItems.add(item);
-            }
-        }
-        return new MapConfig(mapItems);
+        return new MapConfig(root.children().stream()
+                .filter(child -> child.header().equals("MAP"))
+                .map(this::parseMapItemFromTree)
+                .toList());
     }
 
     private MapItem parseMapItemFromTree(Tree tree) {
-        if (tree.paramSize() < 2) {
-            throw new TemplateException("Invalid map format in tree: " + tree);
-        }
-        String label = tree.childByKeyOneParam(KEY_LABEL).orElse("");
-        Image image = new Image(Image.Type.valueOf(tree.param(0).toUpperCase()), tree.param(1));
-        Priority priority = tree.childByKeyOneParam(KEY_PRIORITY).map(Priority::valueOf).orElse(Priority.LOWEST);
+        String label = tree.findByKeyOrValue(KEY_LABEL, "");
+        Priority priority = tree.findByKey(KEY_PRIORITY).map(Priority::valueOf).orElse(Priority.byDefault());
 
         List<ImageObject> objects = tree.childrenByKey("OBJECT").map(this::parseObject).toList();
-        ImageGeneric imageGeneric = new ImageGeneric(label, image, objects);
+        ImageGeneric imageGeneric = new ImageGeneric(label, toImage(tree), objects);
 
         List<Condition> conditions = tree.childrenByKey("CONDITION").map(conditionGenerator::apply).toList();
         Optional<Condition> optCondition = Condition.buildAndFromList(conditions);
 
-        Optional<Image> optPointer = Optional.empty();
-        Optional<Tree> pointerChild = tree.childByKey("POINTER");
-        if(pointerChild.isPresent()) {
-            Image pointer = new Image(Image.Type.valueOf(tree.param(0).toUpperCase()), tree.param(1));
-            optPointer = Optional.of(pointer);
-        }
+        Optional<Image> optPointer = tree.findChildKey("POINTER")
+                .map(TemplateGeneratorMapUseCase::toImage);
+
         List<MapItem.Position> positions = tree.childrenByKey("POSITION").map(this::parsePosition).toList();
         return new MapItem(imageGeneric, priority, optCondition, optPointer, positions);
     }
 
-    private ImageObject parseObject(Tree tree) {
-        String type = tree.param(0).toUpperCase();
-        String top = tree.param(1);
-        String lat = tree.param(2);
-        ImagePoint center = new ImagePoint(Double.parseDouble(top), Double.parseDouble(lat));
 
-        String label = tree.childByKeyOneParam(KEY_LABEL).orElse("");
+
+    private ImageObject parseObject(Tree tree) {
+        String type = tree.findByKeyOrParamIndexOrThrow("TYPE", 0).toUpperCase();
+        String top =  tree.findByKeyOrParamIndexOrThrow("TOP", 1);
+        String left =  tree.findByKeyOrParamIndexOrThrow("LEFT", 2);
+        ImagePoint center = new ImagePoint(Double.parseDouble(top), Double.parseDouble(left));
+
+        String label = tree.findByKeyOrValue(KEY_LABEL, "");
         List<Condition> conditions = tree.childrenByKey("CONDITION").map(conditionGenerator::apply).toList();
         Optional<Condition> optCondition = Condition.buildAndFromList(conditions);
         ImageObject.Atom atom = new ImageObject.Atom(label, center, optCondition);
-
         return switch (type) {
-            case KEY_POINT -> new ImageObject.Point(atom, tree.childByKeyOneParam("COLOR").orElse(""));
+            case KEY_POINT -> new ImageObject.Point(atom, tree.findByKeyOrValue("COLOR", ""));
             case KEY_IMAGE -> {
-                Tree imagePosition = tree.childByKey(KEY_IMAGE).orElseThrow();
-                Image image = new Image(Image.Type.valueOf(imagePosition.param(0).toUpperCase()), imagePosition.param(1));
+                Tree imagePosition = tree.findChildKey(KEY_IMAGE).orElseThrow();
+                Image image = toImage(imagePosition);
                 yield new ImageObject._Image(atom, image);
             }
             default -> throw new IllegalStateException("Unexpected value: " + type);
@@ -112,20 +100,21 @@ public class TemplateGeneratorMapUseCase {
 
         //BoardSpace.Id spaceId, ImagePoint point, Priority priority
 
-        String refSpaceId = tree.paramValue("SPACE").toUpperCase();
+        String refSpaceId = tree.findByKeyOrThrow("SPACE");
         BoardSpace.Id spaceId = globalCache.getReference(refSpaceId, BoardSpace.Id.class).orElseThrow();
 
-        String top = tree.paramValue("TOP");
-        String lat = tree.paramValue("LEFT");
+        String top = tree.findByKeyOrParamIndexOrThrow("TOP",0);
+        String lat = tree.findByKeyOrParamIndexOrThrow("LEFT",1);
         ImagePoint point = new ImagePoint(Double.parseDouble(top), Double.parseDouble(lat));
 
-        Priority priority = Priority.LOWEST;
-        if(tree.hasParamKey("PRIORITY")) {
-            priority = Priority.valueOf(tree.paramValue("PRIORITY").toUpperCase());
-        }
-
+        Priority priority = tree.findByKey(KEY_PRIORITY).map(Priority::valueOf).orElse(Priority.byDefault());
         return new MapItem.Position(spaceId, point, priority);
     }
 
+    private static Image toImage(Tree child) {
+        String type =  child.findByKeyOrParamIndexOrThrow("TYPE", 0).toUpperCase();
+        String value =  child.findByKeyOrParamIndexOrThrow("VALUE", 1);
+        return new Image(Image.Type.valueOf(type), value);
+    }
 
 }

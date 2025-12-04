@@ -2,12 +2,10 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
-import fr.plop.generic.tools.ListTools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,40 +41,44 @@ public class TemplateGeneratorBoardUseCase {
         return spaces;
     }
 
-    private BoardSpace generateSpace(Tree spaceTree) {
-        List<String> params = spaceTree.params();
-        if (params.size() < 2) {
-            throw new TemplateException("Invalid space format in tree: " + spaceTree);
+    private BoardSpace generateSpace(Tree tree) {
+
+        String label = tree.findByKeyOrParamIndexOrValue("LABEL", 0, "");
+        Priority priority = Priority.valueOf(tree.findByKeyOrParamIndexOrValue("PRIORITY", 1, Priority.byDefault().name()));
+
+        List<Rect> rects = new ArrayList<>();
+        for (Tree child : tree.children()) {
+            rects.add(parseRectFromTree(child));
         }
 
-        String label = params.get(0);
-        Priority priority = parsePriority(params.get(1));
-
-        List<Rect> rects = parseRectsFromTrees(spaceTree.children());
-
         BoardSpace.Id id = new BoardSpace.Id();
-        if (spaceTree.reference() != null) {
-            globalCache.registerReference(spaceTree.reference(), id);
+        if (tree.reference() != null) {
+            globalCache.registerReference(tree.reference(), id);
         }
         return new BoardSpace(id, label, priority, rects);
     }
 
-    private List<Rect> parseRectsFromTrees(List<Tree> trees) {
-        List<Rect> rects = new ArrayList<>();
-
-        for (Tree tree : trees) {
-            // Les rectangles sont des arbres avec header et params
-            Rect rect = parseRectFromTree(tree);
-            if (rect != null) {
-                rects.add(rect);
-            }
-        }
-
-        return rects;
-    }
 
     private Rect parseRectFromTree(Tree tree) {
+        List<String> params = tree.params();
+        if (tree.isHeader(BOTTOM_LEFT)) {
+            Point bottomLeft = new Point(Float.parseFloat(params.get(0)), Float.parseFloat(params.get(1)));
+            Point topRight = new Point(Float.parseFloat(params.get(3)), Float.parseFloat(params.get(4)));
+            return new Rect(bottomLeft, topRight);
+        }
+        if (tree.isHeader(TOP_RIGHT)) {
+            Point bottomLeft = new Point(Float.parseFloat(params.get(3)), Float.parseFloat(params.get(4)));
+            Point topRight = new Point(Float.parseFloat(params.get(0)), Float.parseFloat(params.get(1)));
+            return new Rect(bottomLeft, topRight);
+        }
+        if (params.size() == 3) {
+            Point bottomLeft = new Point(Float.parseFloat(tree.headerKeepCase()), Float.parseFloat(params.get(0)));
+            Point topRight = new Point(Float.parseFloat(params.get(1)), Float.parseFloat(params.get(2)));
+            return new Rect(bottomLeft, topRight);
+        }
+        throw new RuntimeException("Impossible de parser le rectangle");
 
+/*
         if(tree.paramSize() == 3) {
             List<String> headerAndParams = ListTools.concat(List.of(tree.header()), tree.params());
             if(headerAndParams.stream().allMatch(this::isNumeric)){
@@ -135,14 +137,14 @@ public class TemplateGeneratorBoardUseCase {
             return new Rect(bottomLeft, topRight);
         }
 
-        return null;
+        return null;*/
     }
 
-    private Priority parsePriority(String priorityStr) {
+    /*private Priority parsePriority(String priorityStr) {
         try {
             return Priority.valueOf(priorityStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return Priority.MEDIUM;
+            return Priority.byDefault();
         }
     }
 
@@ -154,6 +156,6 @@ public class TemplateGeneratorBoardUseCase {
         } catch (NumberFormatException e) {
             return false;
         }
-    }
+    }*/
 
 }

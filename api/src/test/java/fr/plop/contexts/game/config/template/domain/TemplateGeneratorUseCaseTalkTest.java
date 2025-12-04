@@ -290,7 +290,7 @@ TEST_DISCUSSION3
             --- Step (ref ETAPE_DEBUT):FR:Démarrage:EN:Start
             ------ Possibility
             --------- Trigger:ABSOLUTETIME:0
-            --------- Consequence:TalkOptions:TALK_LETS_GO
+            --------- Consequence:Talk:TALK_LETS_GO
             
             ------ Possibility
             --------- Trigger:TalkEnd:TALK002

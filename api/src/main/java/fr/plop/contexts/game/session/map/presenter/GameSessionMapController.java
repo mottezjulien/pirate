@@ -5,6 +5,7 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
@@ -42,13 +43,9 @@ public class GameSessionMapController {
             GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
             GameSessionSituation situation = situationGetPort.get(sessionId, player);
             MapConfig map = cache.map(sessionId);
-            return map.select(situation).map(mapItem -> {
-                ResponseDTO.Pointer pointerDTO = mapItem.optPointer()
-                        .flatMap(pointer -> mapItem.selectPosition(situation.board().spaceIds())
-                                .map(position -> ResponseDTO.Pointer.fromModel(pointer, position)))
-                        .orElse(null);
-                return new ResponseDTO(mapItem.id().value(), ImageDetailsResponseDTO.fromModel(mapItem.imageGeneric()), pointerDTO);
-            }).toList();
+            return map.select(situation)
+                    .map(mapItem -> ResponseDTO.fromModel(mapItem, situation.board().spaceIds()))
+                    .toList();
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
@@ -60,6 +57,15 @@ public class GameSessionMapController {
                 return new Pointer(ImageResponseDTO.fromModel(pointer), new ImagePositionDTO(position.top(), position.left()));
             }
         }
+
+        public static ResponseDTO fromModel(MapItem mapItem, List<BoardSpace.Id> spaceIds) {
+            Pointer pointerDTO = mapItem.optPointer()
+                    .flatMap(pointer -> mapItem.selectPosition(spaceIds)
+                            .map(position -> Pointer.fromModel(pointer, position)))
+                    .orElse(null);
+            return new ResponseDTO(mapItem.id().value(), ImageDetailsResponseDTO.fromModel(mapItem.imageGeneric()), pointerDTO);
+        }
+
     }
 
 

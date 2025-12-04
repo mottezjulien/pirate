@@ -10,6 +10,11 @@ import java.util.stream.Stream;
 
 public record Tree(String originalHeader, String _header, String reference, List<String> params, List<Tree> children) {
 
+
+    public Tree(String header, List<String> params) {
+        this(header, params, List.of());
+    }
+
     public Tree(String header, List<String> params, List<Tree> children) {
         this(header, clearHeader(header), findReference(header), params, children);
         if(StringTools.isEmpty(header)) {
@@ -26,11 +31,6 @@ public record Tree(String originalHeader, String _header, String reference, List
         return rawHeader.substring(0, refStart).trim();
     }
 
-    /**
-     * Extrait une référence du header au format "(ref REFERENCE_NAME)" ou "(REF REFERENCE_NAME)".
-     * Exemple: "Step(ref REF_STEP_A)" -> "REF_STEP_A"
-     * Exemple: "Option (REF CHOIX_A)" -> "CHOIX_A"
-     */
     private static String findReference(String rawHeader) {
         // Chercher le pattern "(ref XXXX)" ou "(REF XXXX)"
         int refStart = rawHeader.toUpperCase().indexOf("(REF ");
@@ -60,28 +60,87 @@ public record Tree(String originalHeader, String _header, String reference, List
         return _header;
     }
 
-    public boolean hasUniqueParam() {
+    boolean hasUniqueParam() {
         return params.size() == 1;
     }
 
-    public String uniqueParam() {
+    private String uniqueParam() {
         return params.getFirst();
     }
 
-    public boolean hasParamKey(String paramKey) {
-        return paramsKeys().contains(paramKey);
+    public Stream<String> keys() {
+        if(!params.isEmpty()) {
+            return paramsUpperKeys().stream();
+        }
+        return children.stream()
+                .filter(Tree::hasUniqueParam)
+                .map(child -> child.params.getFirst());
     }
 
-    public String paramValue(String paramKey) {
-        return paramValues().get(paramsKeys().indexOf(paramKey));
+    public String findByKeyWithUnique(String key) {
+        if(params.size() == 1) {
+            return params.getFirst();
+        }
+        return findByKeyOrThrow(key);
     }
 
-    private List<String> paramsKeys() {
+    public String findByKeyOrThrow(String key) {
+        return findByKey(key)
+                .orElseThrow(() -> new RuntimeException("key " + key + " not found in tree " + originalHeader));
+    }
+    public String findByKeyOrValue(String key, String orElse) {
+        return findByKey(key).orElse(orElse);
+    }
+
+    public String findByKeyOrParamIndexOrValue(String key, int index, String orElse) {
+        return findByKey(key)
+                .orElseGet(() -> {
+                    if(params.size()-1 >= index) {
+                        return params.get(index);
+                    }
+                    return orElse;
+        });
+    }
+
+    public String findByKeyOrParamIndexOrThrow(String key, int index) {
+        Optional<String> optValue = findByKey(key);
+        if(optValue.isPresent()) {
+            return optValue.get();
+        }
+        if(params.size()-1 >= index) {
+            return params.get(index);
+        }
+        throw new RuntimeException("key " + key + " not found in tree " + originalHeader);
+    }
+
+
+    public Optional<String> findByKey(String key) {
+        String upperKey = key.toUpperCase();
+        if(hasParamKey(upperKey)) {
+            return Optional.of(paramValue(upperKey));
+        }
+        Optional<Tree> optChildByKey = findChildKey(upperKey);
+        if(optChildByKey.isPresent() && optChildByKey.get().hasUniqueParam()){
+            return Optional.of(optChildByKey.get().uniqueParam());
+        }
+        return Optional.empty();
+    }
+
+
+    boolean hasParamKey(String upperKey) {
+        return paramsUpperKeys().contains(upperKey);
+    }
+
+    String paramValue(String upperKey) {
+        return paramValues().get(paramsUpperKeys().indexOf(upperKey));
+    }
+
+    private List<String> paramsUpperKeys() {
         if(params.size() % 2 == 0 && !params.isEmpty()) {
             List<String> result = IntStream
                     .range(0, params.size())
                     .filter(i -> i % 2 == 0)
-                    .mapToObj(params::get).toList();
+                    .mapToObj(index -> params.get(index).toUpperCase()).toList();
             if(result.size() == new HashSet<>(result).size()) {
                 return result;
             }
@@ -99,34 +158,17 @@ public record Tree(String originalHeader, String _header, String reference, List
         return List.of();
     }
 
-
-    public int paramSize() {
-        return params.size();
+    public Optional<Tree> findChildKey(String key) {
+        return childrenByKey(key.toUpperCase()).findFirst();
     }
 
-    public String param(int index) {
-        return params.get(index);
-    }
-
-    public boolean hasParams() {
-        return !params.isEmpty();
-    }
-
-    public Optional<String> childByKeyOneParam(String key) {
-        return childByKey(key).map(child -> child.param(0));
-    }
-
-    public Optional<Tree> childByKey(String key) {
+    public Stream<Tree> childrenByKey(String upperKey) {
         return children.stream()
-                .filter(child -> child.isHeader(key))
-                .findFirst();
+                .filter(child -> child.isHeader(upperKey));
     }
 
-    public Stream<Tree> childrenByKey(String key) {
-        return children.stream().filter(child -> child.isHeader(key));
+    public boolean isHeader(String key) {
+        return key.toUpperCase().equals(header());
     }
 
-    private boolean isHeader(String key) {
-        return key.equals(header());
-    }
 }

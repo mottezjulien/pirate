@@ -31,6 +31,9 @@ public sealed interface ImageObject permits ImageObject.Point, ImageObject._Imag
     default String label() {
         return atom().label();
     }
+    default Optional<Condition> optCondition() {
+        return atom().optCondition();
+    }
 
     default double top() {
         return atom().center().top();

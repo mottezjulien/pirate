@@ -104,32 +104,11 @@ class _GameMapViewState extends State<GameMapView> {
             return Stack(
               fit: StackFit.passthrough,
               children: [
-                Image.asset(map.image.value, fit: BoxFit.contain),
-                for (final item in map.items)
-                  if (item.type == 'POINT')
-                    Positioned(
-                      top: item.position.top * constraints.maxHeight,
-                      left: item.position.left * constraints.maxWidth,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: item.point!.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                  else if (item.type == 'IMAGE')
-                    Positioned(
-                      top: item.position.top * constraints.maxHeight,
-                      left: item.position.left * constraints.maxWidth,
-                      child: Image.asset(
-                        item.image!.value,
-                        width: 30,
-                        height: 30,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                Image.asset(map.imageValue, fit: BoxFit.contain),
+                if(map.pointer != null)
+                  Pouet(imageObject: map.pointer!, constraints: constraints),
+                for (final imageObject in map.imageObjects)
+                  Pouet(imageObject: imageObject, constraints: constraints),
               ],
             );
           },
@@ -137,6 +116,8 @@ class _GameMapViewState extends State<GameMapView> {
       ),
     );
   }
+
+
 
   AppBar appBar() {
     return AppBar(
@@ -159,8 +140,6 @@ class _GameMapViewState extends State<GameMapView> {
     );
   }
 }
-
-
 
 class ImageZoomDialog extends StatefulWidget {
   final GameMap map;
@@ -221,31 +200,14 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
                           widget.map.image.value,
                           fit: BoxFit.contain,
                         ),
-                        for (final item in widget.map.items)
-                          if (item.type == 'POINT')
-                            Positioned(
-                              top: item.position.top * constraints.maxHeight,
-                              left: item.position.left * constraints.maxWidth,
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: item.point!.color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            )
-                          else if (item.type == 'IMAGE')
-                            Positioned(
-                              top: item.position.top * constraints.maxHeight,
-                              left: item.position.left * constraints.maxWidth,
-                              child: Image.asset(
-                                item.image!.value,
-                                width: 30,
-                                height: 30,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                        if(widget.map.pointer != null)
+                          Pouet(imageObject: widget.map.pointer!, constraints: constraints),
+                        for (final imageObject in widget.map.imageObjects)
+                          Pouet(imageObject: imageObject, constraints: constraints)
+                          /*if (imageObject.type == 'POINT')
+                            pouet1(imageObject, constraints)
+                          else if (imageObject.type == 'IMAGE')
+                            pouet2(imageObject, constraints)*/
                       ],
                     );
                   },
@@ -274,6 +236,78 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
         ),
       ),
     );
+  }
+
+
+  //REFACTOR
+
+  /*Positioned pouet2(ImageObject imageObject, BoxConstraints constraints) {
+    return Positioned(
+      top: imageObject.position.top * constraints.maxHeight,
+      left: imageObject.position.left * constraints.maxWidth,
+      child: Image.asset(
+        imageObject.image!.value,
+        width: 30,
+        height: 30,
+        fit: BoxFit.contain));
+  }
+
+  Positioned pouet1(ImageObject imageObject, BoxConstraints constraints) {
+    return Positioned(
+      top: imageObject.position.top * constraints.maxHeight,
+      left: imageObject.position.left * constraints.maxWidth,
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          color: imageObject.point!.color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }*/
+}
+
+
+//TODO rename
+class Pouet extends StatelessWidget {
+
+  final ImageObject imageObject;
+  final BoxConstraints constraints;
+
+  const Pouet({Key? key,
+    required this.imageObject,
+    required this.constraints}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageObject.type == 'POINT') {
+      return Positioned(
+        top: imageObject.position.top * constraints.maxHeight,
+        left: imageObject.position.left * constraints.maxWidth,
+        child: Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: imageObject.point!.color,
+            shape: BoxShape.circle,
+          ),
+        ),
+      );
+    }
+    if (imageObject.type == 'IMAGE') {
+      return Positioned(
+        top: imageObject.position.top * constraints.maxHeight,
+        left: imageObject.position.left * constraints.maxWidth,
+        child: Image.asset(
+          imageObject.image!.value,
+          width: 30,
+          height: 30,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+    return SizedBox.shrink();
   }
 }
 

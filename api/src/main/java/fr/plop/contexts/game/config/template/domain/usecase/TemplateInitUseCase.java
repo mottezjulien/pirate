@@ -47,7 +47,8 @@ public class TemplateInitUseCase {
 
     private Template chezWamTemplate() {
         try {
-            String scriptContent = loadScriptFromResources("template/chez_wam.txt");
+            //String scriptContent = loadScriptFromResources("template/chez_wam.txt");
+            String scriptContent = loadScriptFromResources("template/chez_wam_easy.txt");
             TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
             TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
             return generator.apply(script);

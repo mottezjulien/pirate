@@ -65,7 +65,7 @@ public class TemplateGeneratorTalkUseCase {
                 Optional<TalkItem> optItem = parseItem(child, characterReferences);
                 if (child.reference() != null) {
                     optItem.ifPresent(talkItem -> {
-                        globalCache.registerReference(child.reference(), talkItem);
+                        globalCache.registerReference(child.reference(), talkItem.id());
                         localCacheRefToId.put(child.reference(), talkItem.id());
                     });
                 }
@@ -86,10 +86,9 @@ public class TemplateGeneratorTalkUseCase {
         List<TalkCharacter.Reference> result = new ArrayList<>();
         for (Tree characterChild : characterTree.children()) {
             TalkCharacter character = new TalkCharacter(characterChild.headerKeepCase());
-
             for (Tree avatarTree : characterChild.children()) {
                 List<String> params = avatarTree.params();
-                if(avatarTree.hasUniqueParam()) {
+                if(avatarTree.params().size() == 1) {
                     result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage("ASSET", params.getFirst())));
                 } else if (params.size() >= 2) {
                     result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage(params.getFirst(), params.get(1))));
@@ -122,7 +121,7 @@ public class TemplateGeneratorTalkUseCase {
         I18n message = messageOpt.orElse(new I18n(Map.of()));
 
         TalkItem.Id id = new TalkItem.Id();
-        localCacheGenIdToRefNext.put(id.value(), continueTree.uniqueParam());
+        localCacheGenIdToRefNext.put(id.value(), continueTree.params().getFirst());
         return new TalkItem.Continue(id, message, talkCharacterReference, null);
     }
 

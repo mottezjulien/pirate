@@ -4,7 +4,7 @@ TEST_DISCUSSION:1.0:Test de discussion:10
 --- Step (ref ETAPE_DEBUT):FR:Démarrage:EN:Start
 ------ Possibility
 --------- Trigger:ABSOLUTETIME:0
---------- Consequence:TalkOptions:TALK_LETS_GO
+--------- Consequence:Talk:TALK_LETS_GO
 
 ------ Possibility
 --------- Trigger:TalkEnd:TALK002

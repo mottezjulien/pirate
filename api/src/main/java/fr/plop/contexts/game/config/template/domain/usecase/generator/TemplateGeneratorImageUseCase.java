@@ -21,10 +21,8 @@ public class TemplateGeneratorImageUseCase {
     }
 
     private ImageItem generateItem(Tree tree) {
-        //Image:ASSET:pouet/img.jpg
-        Image.Type type = Image.Type.valueOf(tree.param(0).toUpperCase());
-        Image value = new Image(type, tree.param(1));
-        ImageGeneric generic = new ImageGeneric("", value, List.of());
-        return new ImageItem(generic);
+        Image.Type type = Image.Type.valueOf(tree.findByKeyOrParamIndexOrThrow("TYPE", 0).toUpperCase());
+        Image value = new Image(type, tree.findByKeyOrParamIndexOrThrow("VALUE", 1));
+        return new ImageItem(new ImageGeneric("", value, List.of()));
     }
 }

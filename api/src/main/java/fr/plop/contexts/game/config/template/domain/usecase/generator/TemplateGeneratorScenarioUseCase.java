@@ -1,0 +1,367 @@
+package fr.plop.contexts.game.config.template.domain.usecase.generator;
+
+import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.template.domain.TemplateException;
+import fr.plop.contexts.game.config.template.domain.model.Tree;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.Language;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
+
+public class TemplateGeneratorScenarioUseCase {
+
+    private static final String SEPARATOR = ":";
+    public static final String SCENARIO_KEY = "SCENARIO";
+    private static final String STEP_KEY = "STEP";
+    private static final String TARGET_KEY = "TARGET";
+    private static final String POSSIBILITY_KEY = "POSSIBILITY";
+    private static final String POSSIBILITY_CONDITION_KEY = "CONDITION";
+    private static final String POSSIBILITY_CONSEQUENCE_KEY = "CONSEQUENCE";
+    private static final String POSSIBILITY_TRIGGER_KEY = "TRIGGER";
+    private static final String POSSIBILITY_RECURRENCE_KEY = "RECURRENCE";
+    private static final String PARAM_KEY_TALK_OPTION = "option";
+
+    private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
+    private final TemplateGeneratorGlobalCache globalCache;
+    private final TemplateGeneratorConditionUseCase conditionGenerator;
+
+    public TemplateGeneratorScenarioUseCase(TemplateGeneratorGlobalCache globalCache) {
+        this.globalCache = globalCache;
+        this.conditionGenerator = new TemplateGeneratorConditionUseCase(globalCache);
+    }
+
+    public ScenarioConfig apply(Tree rootTree, TalkConfig talkConfig) {
+        Stream<Tree> withoutScenarioLevel = rootTree.children().stream()
+                .filter(child -> child.header().startsWith(STEP_KEY));
+        Stream<Tree> withScenarioLevel = rootTree.children().stream()
+                .filter(child -> child.isHeader(SCENARIO_KEY))
+                .flatMap(child -> child.children().stream())
+                .filter(child -> child.header().startsWith(STEP_KEY));
+        List<ScenarioConfig.Step> list = Stream.concat(withScenarioLevel, withoutScenarioLevel)
+                .map(child -> parseStep(child, talkConfig))
+                .toList();
+        return new ScenarioConfig(list);
+    }
+
+
+    private ScenarioConfig.Step parseStep(Tree root, TalkConfig talkConfig) {
+        ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
+        if (root.reference() != null) {
+            globalCache.registerReference(root.reference(), stepId);
+        }
+
+        I18n stepLabel = parseI18nFromLine(root).orElseThrow();
+
+        //Step before possibility (keep foreach)
+        List<ScenarioConfig.Target> targets = new ArrayList<>();
+        for(Tree child: root.children()){
+            if(child.header().equals(TARGET_KEY)) {
+                targets.add((parseTarget(child)));
+            }
+        }
+
+        /*default:
+        // Vérifions si c'est un Target qui commence par TARGET mais avec du texte après
+        if (child.header().startsWith(TARGET_KEY)) {
+            ScenarioConfig.Target extendedTarget = parseTarget(child);
+            targets.add(extendedTarget);
+        }
+        break;*/
+
+        List<Possibility> possibilities = root.children().stream()
+                .filter(child -> child.header().equals(POSSIBILITY_KEY))
+                .map(child -> parsePossibility(child, stepId, talkConfig))
+                .toList();
+
+        return new ScenarioConfig.Step(stepId, stepLabel,0, targets, possibilities); //TODO order
+    }
+
+
+    private ScenarioConfig.Target parseTarget(Tree tree) {
+        ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id();
+        if (tree.reference() != null) {
+            globalCache.registerReference(tree.reference(), targetId);
+        }
+        I18n label = parseI18nFromLine(tree).orElseThrow();
+        boolean optional = tree.findByKey("OPTIONAL").map(Boolean::parseBoolean).orElse(false);
+        return new ScenarioConfig.Target(targetId, label, i18nGenerator.apply(tree.children()), optional);
+    }
+
+    private Optional<I18n> parseI18nFromLine(Tree tree) {
+        // Format: "FR:Chez Moi:EN:At Home" ou "EN:Office:FR:Bureau"
+        Map<Language, String> i18nMap = new HashMap<>();
+        tree.keys().forEach(key -> Language.safeValueOf(key.trim())
+                .ifPresent(language -> i18nMap.put(language, tree.findByKeyOrThrow(key).trim())));
+        if (!i18nMap.isEmpty()) {
+            return Optional.of(new I18n(i18nMap));
+        }
+        return Optional.empty();
+    }
+
+    private Possibility parsePossibility(Tree tree, ScenarioConfig.Step.Id currentStepId, TalkConfig talkConfig) {
+        // Format: "------" + " Possibility:ALWAYS" ou "------" + " Possibility:times:4:OR" ou "------" + " Possibility"
+        AtomicReference<PossibilityRecurrence> recurrence = new AtomicReference<>(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id())); // Par défaut
+
+        if (!tree.params().isEmpty()) {
+            String typeStr = tree.params().getFirst().trim().toUpperCase();
+            switch (typeStr) {
+                case "ALWAYS":
+                    recurrence.set(new PossibilityRecurrence.Always(new PossibilityRecurrence.Id()));
+                    break;
+                case "TIMES":
+                    int times = Integer.parseInt(tree.params().get(1));
+                    recurrence.set(new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(), times));
+                    break;
+                default:
+                    throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
+            }
+        }
+
+        // Parse les conditions, conséquences et trigger qui suivent
+        AtomicReference<PossibilityTrigger> trigger = new AtomicReference<>();
+        List<Condition> conditions = new ArrayList<>();
+        List<Consequence> consequences = new ArrayList<>();
+
+        // Parse en deux passes : d'abord les conséquences pour enregistrer les références, puis les triggers
+        // Première passe : conséquences et conditions
+        tree.children().forEach(child -> {
+            String actionStr = child.header().trim();
+            switch (actionStr) {
+                case POSSIBILITY_CONDITION_KEY:
+                    conditions.add(conditionGenerator.apply(child));
+                    break;
+                case POSSIBILITY_CONSEQUENCE_KEY:
+                    consequences.add(parseConsequence(child, currentStepId));
+                    break;
+                case POSSIBILITY_RECURRENCE_KEY:
+                    recurrence.set(parseRecurrence(child));
+                    break;
+                case POSSIBILITY_TRIGGER_KEY:
+                    // Ignorer pour l'instant, sera traité dans la deuxième passe
+                    break;
+                default:
+                    throw new TemplateException("Invalid format: " + child.header() + SEPARATOR + String.join(SEPARATOR, child.params()));
+            }
+        });
+
+        // Deuxième passe : triggers (après que les références des conséquences soient enregistrées)
+        tree.children().forEach(child -> {
+            String actionStr = child.header().trim();
+            if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
+                trigger.set(parseTrigger(child, talkConfig));
+            }
+        });
+
+        if (trigger.get() == null) {
+            throw new TemplateException("Invalid format: " + tree.header() + SEPARATOR + String.join(SEPARATOR, tree.params()));
+        }
+        return new Possibility(new Possibility.Id(), recurrence.get(), trigger.get(),
+                Condition.buildAndFromList(conditions), consequences);
+    }
+
+    private PossibilityRecurrence parseRecurrence(Tree tree) {
+        // Format: "---------" + " Recurrency:tiMes:5" ou "---------" + " Recurrence:ALWAYS"
+
+        String type = tree.params().getFirst().toLowerCase();
+        if ("always".equals(type)) {
+            return new PossibilityRecurrence.Always(new PossibilityRecurrence.Id());
+        } else if ("times".equals(type)) {
+            try {
+                int times = Integer.parseInt(tree.params().get(1));
+                return new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(), times);
+            } catch (NumberFormatException e) {
+                throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
+            }
+        }
+
+        throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
+    }
+
+    private Consequence parseConsequence(Tree tree, ScenarioConfig.Step.Id currentStepId) {
+        Tree sub = tree.sub();
+        switch (sub.header()) {
+            case "ALERT" -> {
+                // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
+                Optional<I18n> messageOpt = i18nGenerator.apply(tree.children());
+                I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
+                return new Consequence.DisplayMessage(new Consequence.Id(), message);
+            }
+            case "GOALTARGET" -> {
+                return parseGoalTargetConsequence(sub, currentStepId);
+            }
+            case "GOAL" -> {
+                // Format: "Goal:state:SUCCESS:stepId:KLM" ou autre ordre
+                String stateParam = sub.findByKeyOrThrow("STATE");
+                String stepIdParam = sub.findByKeyOrThrow("STEPID");
+
+                ScenarioSessionState state = parseState(stateParam);
+                ScenarioConfig.Step.Id stepId = globalCache.getReference(stepIdParam, ScenarioConfig.Step.Id.class)
+                        .orElseThrow();
+
+                return new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
+            }
+            case "ADDOBJECT" -> {
+                String objetId = sub.findByKeyOrThrow("objetid");
+                return new Consequence.ObjetAdd(new Consequence.Id(), objetId);
+            }
+            case "UPDATEDMETADATA" -> {
+                String metadataId = sub.findByKeyOrThrow("metadataid");
+                String valueStr = sub.findByKeyOrThrow("value");
+                float value = Float.parseFloat(valueStr);
+                return new Consequence.UpdatedMetadata(new Consequence.Id(), metadataId, value);
+            }
+            case "TALK" -> {
+                String talkReference = sub.findByKeyWithUnique("talkId");
+                TalkItem.Id talkId = globalCache.getReference(talkReference, TalkItem.Id.class).orElseThrow();
+                return new Consequence.DisplayTalk(new Consequence.Id(), talkId);
+            }
+            case "GAMEOVER" -> {
+                return parseGameOverConsequence(tree);
+            }
+        }
+        throw new TemplateException("Invalid consequence format: " + sub.header());
+    }
+
+    private PossibilityTrigger parseTrigger(Tree tree, TalkConfig talkConfig) {
+
+        String type = tree.params().getFirst().toLowerCase();
+        Tree subTree = tree.sub();
+        switch (type) {
+            case "goinspace" -> {
+                String spaceRef = subTree.findByKeyWithUnique("SpaceId");
+                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                return new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), spaceId);
+            }
+            case "gooutspace" -> {
+                String spaceRef = subTree.findByKeyWithUnique("SpaceId");
+                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                return new PossibilityTrigger.SpaceGoOut(new PossibilityTrigger.Id(), spaceId);
+            }
+            case "absolutetime" -> {
+                String valueStr = subTree.findByKeyWithUnique("value");
+                return new PossibilityTrigger.AbsoluteTime(
+                        new PossibilityTrigger.Id(),
+                        GameSessionTimeUnit.ofMinutes(Integer.parseInt(valueStr)));
+            }
+            case "talkoptionselect", "selecttalkoption" -> {
+                String optionReference = subTree.findByKeyWithUnique(PARAM_KEY_TALK_OPTION);
+                TalkItem.Options.Option.Id optId = globalCache.getReference(optionReference, TalkItem.Options.Option.Id.class)
+                        .orElseThrow(); //TODO
+                TalkItem.Id talkId = talkConfig.findByIdByOptionId(optId).orElseThrow(); //TODO
+                return new PossibilityTrigger.TalkOptionSelect(new PossibilityTrigger.Id(), talkId, optId);
+            }
+            case "talkend" -> {
+                String refTalkId = subTree.findByKeyWithUnique("talkId");
+                return new PossibilityTrigger.TalkEnd(new PossibilityTrigger.Id(),
+                        globalCache.getReference(refTalkId, TalkItem.Id.class).orElseThrow()
+                );
+            }
+            case "clickmapobject" -> {
+                return new PossibilityTrigger.ClickMapObject(
+                        new PossibilityTrigger.Id(),
+                        subTree.findByKeyWithUnique("objectReference"));
+            }
+        }
+        return null;
+    }
+
+    private ScenarioSessionState parseState(String state) {
+        return switch (state.toLowerCase()) {
+            case "success" -> ScenarioSessionState.SUCCESS;
+            case "failure" -> ScenarioSessionState.FAILURE;
+            default -> ScenarioSessionState.ACTIVE;
+        };
+    }
+
+    private Consequence parseGoalTargetConsequence(Tree sub, ScenarioConfig.Step.Id currentStepId) {
+
+        Optional<String> optStepIdParam = sub.findByKey("stepid");
+        String targetIdParam = sub.findByKeyOrThrow("targetid");
+        String stateParam = sub.findByKeyOrThrow("state");
+
+        ScenarioConfig.Step.Id stepId;
+        if (optStepIdParam.isEmpty() || optStepIdParam.get().equals("CURRENT_STEP")) {
+            stepId = currentStepId;
+        } else {
+            stepId = globalCache.getReference(optStepIdParam.get(), ScenarioConfig.Step.Id.class)
+                    .orElseThrow();
+        }
+        ScenarioConfig.Target.Id targetId = globalCache.getReference(targetIdParam, ScenarioConfig.Target.Id.class)
+                .orElseThrow();
+        return new Consequence.ScenarioTarget(new Consequence.Id(), stepId, targetId, parseState(stateParam));
+    }
+
+
+
+    private Consequence parseGameOverConsequence(Tree tree) {
+        // Format: "Consequence:GameOver:FAILURE_ONE_CONTINUE"
+        // tree.params() contient ["GameOver", "FAILURE_ONE_CONTINUE"]
+
+        if (tree.params().size() < 2) {
+            throw new TemplateException("GameOver consequence must specify a game over type");
+        }
+
+        String gameOverTypeStr = tree.params().get(1); // "FAILURE_ONE_CONTINUE"
+
+        try {
+            SessionGameOver.Type gameOverType = SessionGameOver.Type.valueOf(gameOverTypeStr);
+            SessionGameOver gameOver = new SessionGameOver(gameOverType, Optional.empty());
+            return new Consequence.SessionEnd(new Consequence.Id(), gameOver);
+        } catch (IllegalArgumentException e) {
+            throw new TemplateException("Invalid GameOver type: '" + gameOverTypeStr + "'. Valid types are: " +
+                    java.util.Arrays.toString(SessionGameOver.Type.values()));
+        }
+    }
+
+
+
+    /**
+     * Trouve le step qui contient un target donné (par référence ou par ID).
+     *
+     * @param targetParam Le nom de la référence ou l'ID du target à chercher
+     * @return L'ID du step qui contient ce target, ou Optional.empty() si non trouvé
+     */
+    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, TemplateGeneratorGlobalCache globalCache) {
+        // D'abord essayer de résoudre le target comme une référence
+        Optional<ScenarioConfig.Target> referencedTarget = globalCache.getReference(targetParam, ScenarioConfig.Target.class);
+
+        if (referencedTarget.isPresent()) {
+            // Si on a trouvé le target par référence, chercher dans quel step il se trouve
+            ScenarioConfig.Target target = referencedTarget.get();
+
+            // Parcourir tous les steps enregistrés pour trouver celui qui contient ce target
+            return globalCache.getAllReferences(ScenarioConfig.Step.class)
+                    .stream()
+                    .filter(step -> step.targets().stream()
+                            .anyMatch(stepTarget -> stepTarget.id().equals(target.id())))
+                    .map(ScenarioConfig.Step::id)
+                    .findFirst();
+        }
+
+        // Si pas trouvé par référence, chercher par ID dans tous les steps
+        ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetParam);
+
+        return globalCache.getAllReferences(ScenarioConfig.Step.class)
+                .stream()
+                .filter(step -> step.targets().stream()
+                        .anyMatch(stepTarget -> stepTarget.id().equals(targetId)))
+                .map(ScenarioConfig.Step::id)
+                .findFirst();
+    }
+
+
+
+}

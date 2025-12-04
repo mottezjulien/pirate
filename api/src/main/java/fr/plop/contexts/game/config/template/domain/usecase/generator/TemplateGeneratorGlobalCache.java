@@ -52,24 +52,6 @@ public class TemplateGeneratorGlobalCache {
         }
     }
 
-    /**
-     * Essaie de résoudre une référence sans la marquer comme "non résolue" si elle n'existe pas.
-     * Utile pour les cas où on n'est pas sûr que c'est une vraie référence.
-     */
-    public void tryRequestReference(String referenceName, Consumer<Object> onResolved) {
-        if (referenceName == null || onResolved == null) {
-            return;
-        }
-
-        if (references.containsKey(referenceName)) {
-            // Référence déjà disponible
-            onResolved.accept(references.get(referenceName));
-        } else {
-            // Mettre en attente sans marquer comme "non résolue"
-            pendingResolvers.computeIfAbsent(referenceName, k -> new ArrayList<>()).add(onResolved);
-            // Ne pas ajouter à unresolvedReferences
-        }
-    }
 
     /**
      * Vérifie s'il reste des références non résolues.
