@@ -1,12 +1,15 @@
 package fr.plop.contexts.game.session.core.adapter;
 
+import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.function.Function;
 
 @Component
 public class GamePlayerGetAdapter implements GamePlayerGetPort {
@@ -18,9 +21,15 @@ public class GamePlayerGetAdapter implements GamePlayerGetPort {
     }
 
     @Override
-    public Optional<GamePlayer> findById(GamePlayer.Id playerId) {
-        return repository.fullById(playerId.value())
-                .map(GamePlayerEntity::toModel);
+    public List<BoardSpace.Id> findSpaceIdsByPlayerId(GamePlayer.Id playerId) {
+        Function<GamePlayerEntity, List<BoardSpace.Id>> toModelFct = gamePlayerEntity -> {
+            if (gamePlayerEntity.getLastPosition() != null) {
+                return gamePlayerEntity.getLastPosition().getSpaces().stream().map(BoardSpaceEntity::toModelId).toList();
+            }
+            return List.of();
+        };
+        return repository.findByIdFetchLastPosition(playerId.value())
+                .map(toModelFct).orElse(List.of());
     }
 
 }

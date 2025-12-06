@@ -1,11 +1,9 @@
 ChezWamEasy:1.0::10
 --- Board
------- Space (ref SPACE_BUREAU):Le bureau:HIGH
---------- bottomLeft:45.7780:4.80351:topRight:45.7782:4.8037
+------ Space (ref PLACE_PARIS):Place de Paris:HIGH
+--------- bottomLeft:45.778678:4.80435:topRight:45.779257:4.805453
 ------ Space (ref SPACE_KITCHEN):La cuisine:HIGH
 --------- bottomLeft:45.77798:4.8037:topRight:45.77812:4.80384
------- Space (ref SPACE_MILIEU):Au milieu:MEDIUM
---------- bottomLeft:45.77805:4.80365:topRight:45.77815:4.80375
 
 --- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
 ------ Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
@@ -38,18 +36,11 @@ ChezWamEasy:1.0::10
 
 --- Map:Asset:assets/game/tres/ile.png
 ------ Priority:HIGH
------- Pointer:ASSET:assets/game/tres/pointer.png
------- Object:Point:0.5:0.5
---------- Label:Point jaune
---------- Color:yellow
------- Object:Image:0.7:0.3
---------- Image:ASSET:assets/game/tres/phare.png
 ------ Position:0.4711538461538462:0.51762815622183
+--------- Priority:HIGHEST
+--------- Image:ASSET:assets/game/tres/encre.png
 --------- Space:SPACE_BUREAU
---------- PRIORITY:MEDIUM
------- Position:0.9158653112558219:0.2900640047513522
---------- Space:SPACE_KITCHEN
------- Position:0.2:0.2
---------- Space:SPACE_MILIEU
-
-
+------ Object:Image:0.9158653112558219:0.2900640047513522
+--------- Priority:MEDIUM
+--------- Image:ASSET:assets/game/tres/phare.png
+--------- Space:SPACE_BUREAU

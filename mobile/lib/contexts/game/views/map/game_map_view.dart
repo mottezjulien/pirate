@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../data/game_map_repository.dart';
+import '../../domain/model/game_session.dart';
 import '../../game_current.dart';
+
+import '../../../../generic/dialog.dart' as CustomDialog;
 
 class GameMapView extends StatefulWidget {
 
@@ -11,22 +14,38 @@ class GameMapView extends StatefulWidget {
 
 }
 
-class _GameMapViewState extends State<GameMapView> {
-  late PageController _pageController;
+class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
+
+  final PageController _pageController = PageController();
   final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
+  final ValueNotifier<List<GameMap>> _valueNotifierMaps = ValueNotifier<List<GameMap>>([]);
   final GameMapRepository _repository = GameMapRepository();
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    GameCurrent.addOnMoveListener(this);
+    findMaps();
   }
+
 
   @override
   void dispose() {
     _pageController.dispose();
     _currentIndex.dispose();
+    GameCurrent.removeOnMoveListener(this);
     super.dispose();
+  }
+
+  @override
+  void onMove() {
+    CustomDialog.Dialog dialog = CustomDialog.Dialog();
+    dialog.showMessage(message: "onMove");
+    findMaps();
+  }
+
+  void findMaps() {
+    _repository.get().then((maps) => _valueNotifierMaps.value = maps);
   }
 
   @override
@@ -34,65 +53,120 @@ class _GameMapViewState extends State<GameMapView> {
     return Scaffold(
       appBar: appBar(),
       body: SafeArea(
-        child: FutureBuilder<List<GameMap>>(
-          future: _repository.get(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              final maps = snapshot.data!;
+        //child: plop(),
+        child: ValueListenableBuilder<List<GameMap>>(
+            valueListenable: _valueNotifierMaps,
+            builder: (context, currentIndex, _) => plop2(context, currentIndex))
+      )
+    );
+  }
+
+  Widget plop2(BuildContext context, List<GameMap> maps) {
+    return Column(
+      children: [
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: maps.length,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: (index) {
+              _currentIndex.value = index;
+            },
+            itemBuilder: (context, index) {
+              return _buildMapSlide(maps[index]);
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            border: Border(top: BorderSide(color: Colors.grey.shade300)),
+          ),
+          child: ValueListenableBuilder<int>(
+            valueListenable: _currentIndex,
+            builder: (context, currentIndex, _) {
               return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: maps.length,
-                      physics: const BouncingScrollPhysics(),
-                      onPageChanged: (index) {
-                        _currentIndex.value = index;
-                      },
-                      itemBuilder: (context, index) {
-                        return _buildMapSlide(maps[index]);
-                      },
-                    ),
+                  CarouselDots(
+                    totalItems: maps.length,
+                    currentIndex: currentIndex,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      border: Border(top: BorderSide(color: Colors.grey.shade300)),
-                    ),
-                    child: ValueListenableBuilder<int>(
-                      valueListenable: _currentIndex,
-                      builder: (context, currentIndex, _) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CarouselDots(
-                              totalItems: maps.length,
-                              currentIndex: currentIndex,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${currentIndex + 1} / ${maps.length}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+                  const SizedBox(height: 8),
+                  Text(
+                    '${currentIndex + 1} / ${maps.length}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               );
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Erreur : ${snapshot.error}'));
-            } else {
-              return const Center(child: CircularProgressIndicator());
-            }
-          },
+            },
+          ),
         ),
-      ),
+      ],
     );
+  }
+
+  FutureBuilder<List<GameMap>> plop() {
+    return FutureBuilder<List<GameMap>>(
+        future: _repository.get(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final maps = snapshot.data!;
+            return Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: maps.length,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (index) {
+                      _currentIndex.value = index;
+                    },
+                    itemBuilder: (context, index) {
+                      return _buildMapSlide(maps[index]);
+                    },
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    border: Border(top: BorderSide(color: Colors.grey.shade300)),
+                  ),
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _currentIndex,
+                    builder: (context, currentIndex, _) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CarouselDots(
+                            totalItems: maps.length,
+                            currentIndex: currentIndex,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${currentIndex + 1} / ${maps.length}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erreur : ${snapshot.error}'));
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      );
   }
 
   Widget _buildMapSlide(GameMap map) {
@@ -106,9 +180,9 @@ class _GameMapViewState extends State<GameMapView> {
               children: [
                 Image.asset(map.imageValue, fit: BoxFit.contain),
                 if(map.pointer != null)
-                  Pouet(imageObject: map.pointer!, constraints: constraints),
+                  ImageObjectWidget(imageObject: map.pointer!.toImageObject(), constraints: constraints),
                 for (final imageObject in map.imageObjects)
-                  Pouet(imageObject: imageObject, constraints: constraints),
+                  ImageObjectWidget(imageObject: imageObject, constraints: constraints),
               ],
             );
           },
@@ -116,8 +190,6 @@ class _GameMapViewState extends State<GameMapView> {
       ),
     );
   }
-
-
 
   AppBar appBar() {
     return AppBar(
@@ -139,6 +211,7 @@ class _GameMapViewState extends State<GameMapView> {
       ),
     );
   }
+
 }
 
 class ImageZoomDialog extends StatefulWidget {
@@ -201,13 +274,9 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
                           fit: BoxFit.contain,
                         ),
                         if(widget.map.pointer != null)
-                          Pouet(imageObject: widget.map.pointer!, constraints: constraints),
+                          ImageObjectWidget(imageObject: widget.map.pointer!.toImageObject(), constraints: constraints),
                         for (final imageObject in widget.map.imageObjects)
-                          Pouet(imageObject: imageObject, constraints: constraints)
-                          /*if (imageObject.type == 'POINT')
-                            pouet1(imageObject, constraints)
-                          else if (imageObject.type == 'IMAGE')
-                            pouet2(imageObject, constraints)*/
+                          ImageObjectWidget(imageObject: imageObject, constraints: constraints)
                       ],
                     );
                   },
@@ -238,46 +307,16 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
     );
   }
 
-
-  //REFACTOR
-
-  /*Positioned pouet2(ImageObject imageObject, BoxConstraints constraints) {
-    return Positioned(
-      top: imageObject.position.top * constraints.maxHeight,
-      left: imageObject.position.left * constraints.maxWidth,
-      child: Image.asset(
-        imageObject.image!.value,
-        width: 30,
-        height: 30,
-        fit: BoxFit.contain));
-  }
-
-  Positioned pouet1(ImageObject imageObject, BoxConstraints constraints) {
-    return Positioned(
-      top: imageObject.position.top * constraints.maxHeight,
-      left: imageObject.position.left * constraints.maxWidth,
-      child: Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(
-          color: imageObject.point!.color,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }*/
 }
 
-
-//TODO rename
-class Pouet extends StatelessWidget {
+class ImageObjectWidget extends StatelessWidget {
 
   final ImageObject imageObject;
   final BoxConstraints constraints;
 
-  const Pouet({Key? key,
+  const ImageObjectWidget({super.key,
     required this.imageObject,
-    required this.constraints}) : super(key: key);
+    required this.constraints});
 
   @override
   Widget build(BuildContext context) {

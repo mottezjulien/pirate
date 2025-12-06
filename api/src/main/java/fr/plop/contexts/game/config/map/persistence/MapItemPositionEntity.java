@@ -17,7 +17,6 @@ public class MapItemPositionEntity {
     @JoinColumn(name = "item_id")
     private MapItemEntity item;
 
-
     @Column(name = "space_id")
     private String spaceId;
     private double top;

@@ -6,6 +6,7 @@ import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.persistence.entity.ConnectionAuthEntity;
 import fr.plop.contexts.connect.persistence.entity.ConnectionDeviceEntity;
 import fr.plop.contexts.connect.persistence.repository.ConnectionAuthRepository;
+import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
@@ -34,12 +35,26 @@ public class ConnectionAdapter implements ConnectUseCase.OutPort {
         return authRepository.findByTokenFetchs(token.value())
                 .map(entity -> {
                     ConnectionDeviceEntity connection = entity.getConnection();
-                    Optional<GamePlayerEntity> opt = playerRepository.fullBySessionIdAndUserId(sessionId.value(), connection.getUser().getId());
-                    if (opt.isPresent()) {
-                        return entity.toModelWithConnect(connection.toModel(opt.get().toModel()));
+                    Optional<GamePlayerEntity> optFullPlayerEntity = fullBySessionIdAndUserIdFetchLastPosition(sessionId, connection);
+                    if (optFullPlayerEntity.isPresent()) {
+                        return entity.toModelWithConnect(connection.toModel(optFullPlayerEntity.get().toModel()));
                     }
                     return entity.toModel();
                 });
+    }
+
+    private Optional<GamePlayerEntity> fullBySessionIdAndUserIdFetchLastPosition(GameSession.Id sessionId, ConnectionDeviceEntity connection){
+        //fetch space && goal bugs -> separate queries
+        Optional<GamePlayerEntity> optWithSpaceIds = playerRepository.findBySessionIdAndUserIdFetchLastPosition(sessionId.value(), connection.getUser().getId());
+        if (optWithSpaceIds.isPresent()) {
+            GamePlayerEntity withSpaceIds = optWithSpaceIds.get();
+            Optional<GamePlayerEntity> optWithGoals = playerRepository.findByIdFetchGoals(withSpaceIds.getId());
+            if (optWithGoals.isPresent()) {
+                withSpaceIds.setGoals(optWithGoals.get().getGoals());
+                return Optional.of(withSpaceIds);
+            }
+        }
+        return Optional.empty();
     }
 
 

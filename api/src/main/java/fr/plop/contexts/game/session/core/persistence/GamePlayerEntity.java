@@ -2,6 +2,7 @@ package fr.plop.contexts.game.session.core.persistence;
 
 import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
@@ -122,4 +123,5 @@ public class GamePlayerEntity {
                 .toList();
         return new GamePlayer(new GamePlayer.Id(id), stepActiveIds, spacesInIds);
     }
+
 }

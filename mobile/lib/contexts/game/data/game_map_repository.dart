@@ -25,7 +25,7 @@ class GameMap {
 
   final String id;
   final ImageDetails image;
-  final ImageObject? pointer;
+  final Pointer? pointer;
 
   GameMap({
     required this.id,
@@ -38,9 +38,9 @@ class GameMap {
   List<ImageObject> get imageObjects => image.objects;
 
   factory GameMap.fromJson(Map<String, dynamic> json) {
-    ImageObject? pointer;
+    Pointer? pointer;
     if(json['pointer'] != null) {
-     pointer = ImageObject.fromJson(json['pointer']);
+     pointer = Pointer.fromJson(json['pointer']);
     }
     return GameMap(
       id: json['id'] as String,
@@ -69,10 +69,27 @@ class ImageDetails {
     return ImageDetails(label: json['label'] as String,
         image: ImageData.fromJson(json['image'] as Map<String, dynamic>), objects: objectLists);
   }
-
-
 }
 
+
+class Pointer {
+
+  final ImagePosition position;
+  final ImageData image;
+
+  Pointer({required this.position, required this.image});
+
+  factory Pointer.fromJson(Map<String, dynamic> json) {
+    return Pointer(
+        position: ImagePosition.fromJson(json['position'] as Map<String,dynamic>),
+        image: ImageData.fromJson(json['image'] as Map<String,dynamic>));
+  }
+
+  ImageObject toImageObject() {
+    return ImageObject(id: "", label:"", type: "IMAGE", position: position, image: image);
+  }
+
+}
 
 class ImageData {
   final String type;
@@ -85,7 +102,6 @@ class ImageData {
 }
 
 class ImageObject {
-
   final String id;
   final String label;
   final String type;

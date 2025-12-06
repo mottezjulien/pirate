@@ -63,6 +63,7 @@ public class TemplateInitDataMapAdapter {
             item.positions().forEach(position -> {
                 MapItemPositionEntity positionEntity = new MapItemPositionEntity();
                 positionEntity.setId(position.id().value());
+                positionEntity.setItem(itemEntity);
                 positionEntity.setSpaceId(position.spaceId().value());
                 positionEntity.setTop(position.point().top());
                 positionEntity.setLeft(position.point().left());
@@ -86,7 +87,7 @@ public class TemplateInitDataMapAdapter {
             case ImageObject.Point point -> {
                 objectEntity.setType(ImageObjectEntity.Type.POINT);
                 objectEntity.setTop(point.top());
-                objectEntity.setTop(point.left());
+                objectEntity.setLeft(point.left());
                 objectEntity.setPointColor(point.color());
             }
             case ImageObject._Image _image -> {

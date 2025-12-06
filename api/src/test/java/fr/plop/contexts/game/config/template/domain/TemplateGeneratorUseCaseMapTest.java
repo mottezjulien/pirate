@@ -111,7 +111,6 @@ public class TemplateGeneratorUseCaseMapTest {
                 ------ Object:Image:0.9158653112558219:0.2900640047513522
                 --------- Label:Le bar
                 --------- Image:ASSET:pouet/img.jpg
-                --------- Space:SPACE_EFG
                 ------ Position:5.02:698547
                 --------- Space:SPACE_EFG
                 --------- PRIORITY:MEDIUM

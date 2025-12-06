@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.situation.adapter;
 
+import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GameContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
@@ -42,9 +43,9 @@ public class GameSessionSituationAdapter implements GameSessionSituationGetPort 
     }
 
     private GameSessionSituation.Board board(GamePlayer.Id playerId) {
-        return  gamePlayerGetPort.findById(playerId)
-                .map(player -> new GameSessionSituation.Board(player.spaceIds()))
-                .orElseGet(() -> new GameSessionSituation.Board(List.of()));
+        List<BoardSpace.Id> spaceIds = gamePlayerGetPort.findSpaceIdsByPlayerId(playerId);
+        return new GameSessionSituation.Board(spaceIds);
+
     }
 
     private GameSessionSituation.Scenario scenario(GamePlayer.Id playerId) {

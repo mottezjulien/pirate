@@ -16,7 +16,7 @@ class GameSessionRepository {
         path: resourcePath,
         body: {
       //'templateCode': 'TEST_DISCUSSION'
-      'templateCode': 'ChezWamGene' //TODO 'templateCode': 'pirate_lyon'
+      'templateCode': 'ChezWamEasy' //TODO 'templateCode': 'pirate_lyon'
     }));
   }
 
