@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
+
 import '../../data/game_map_repository.dart';
 import '../../domain/model/game_session.dart';
 import '../../game_current.dart';
 
-import '../../../../generic/dialog.dart' as CustomDialog;
-
 class GameMapView extends StatefulWidget {
-
   const GameMapView({super.key});
 
   @override
   State<GameMapView> createState() => _GameMapViewState();
-
 }
 
 class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
-
   final PageController _pageController = PageController();
   final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
-  final ValueNotifier<List<GameMap>> _valueNotifierMaps = ValueNotifier<List<GameMap>>([]);
+  final ValueNotifier<List<GameMap>> _valueNotifierMaps =
+      ValueNotifier<List<GameMap>>([]);
   final GameMapRepository _repository = GameMapRepository();
 
   @override
@@ -27,7 +24,6 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
     GameCurrent.addOnMoveListener(this);
     findMaps();
   }
-
 
   @override
   void dispose() {
@@ -39,9 +35,9 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
 
   @override
   void onMove() {
-    CustomDialog.Dialog dialog = CustomDialog.Dialog();
-    dialog.showMessage(message: "onMove");
-    findMaps();
+    //CustomDialog.Dialog dialog = CustomDialog.Dialog();
+    //dialog.showMessage(message: "onMove");
+    //findMaps();
   }
 
   void findMaps() {
@@ -51,17 +47,15 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(),
-      body: SafeArea(
-        //child: plop(),
-        child: ValueListenableBuilder<List<GameMap>>(
-            valueListenable: _valueNotifierMaps,
-            builder: (context, currentIndex, _) => plop2(context, currentIndex))
-      )
-    );
+        appBar: appBar(),
+        body: SafeArea(
+            child: ValueListenableBuilder<List<GameMap>>(
+                valueListenable: _valueNotifierMaps,
+                builder: (context, currentIndex, _) =>
+                    _buildWithMaps(context, currentIndex))));
   }
 
-  Widget plop2(BuildContext context, List<GameMap> maps) {
+  Widget _buildWithMaps(BuildContext context, List<GameMap> maps) {
     return Column(
       children: [
         Expanded(
@@ -69,122 +63,26 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
             controller: _pageController,
             itemCount: maps.length,
             physics: const BouncingScrollPhysics(),
-            onPageChanged: (index) {
-              _currentIndex.value = index;
-            },
-            itemBuilder: (context, index) {
-              return _buildMapSlide(maps[index]);
-            },
+            onPageChanged: (index) => _currentIndex.value = index,
+            itemBuilder: (context, index) => _buildOneMap(maps[index]),
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        if (maps.length > 1)
+          _GameMapWidgetFooter(
+            totalItems: maps.length,
+            currentIndex: _currentIndex,
           ),
-          child: ValueListenableBuilder<int>(
-            valueListenable: _currentIndex,
-            builder: (context, currentIndex, _) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CarouselDots(
-                    totalItems: maps.length,
-                    currentIndex: currentIndex,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${currentIndex + 1} / ${maps.length}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
       ],
     );
   }
 
-  FutureBuilder<List<GameMap>> plop() {
-    return FutureBuilder<List<GameMap>>(
-        future: _repository.get(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final maps = snapshot.data!;
-            return Column(
-              children: [
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: maps.length,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: (index) {
-                      _currentIndex.value = index;
-                    },
-                    itemBuilder: (context, index) {
-                      return _buildMapSlide(maps[index]);
-                    },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    border: Border(top: BorderSide(color: Colors.grey.shade300)),
-                  ),
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: _currentIndex,
-                    builder: (context, currentIndex, _) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CarouselDots(
-                            totalItems: maps.length,
-                            currentIndex: currentIndex,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${currentIndex + 1} / ${maps.length}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erreur : ${snapshot.error}'));
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      );
-  }
-
-  Widget _buildMapSlide(GameMap map) {
+  Widget _buildOneMap(GameMap map) {
     return GestureDetector(
       onDoubleTap: () => _showImageZoomDialog(map),
       child: Center(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return Stack(
-              fit: StackFit.passthrough,
-              children: [
-                Image.asset(map.imageValue, fit: BoxFit.contain),
-                if(map.pointer != null)
-                  ImageObjectWidget(imageObject: map.pointer!.toImageObject(), constraints: constraints),
-                for (final imageObject in map.imageObjects)
-                  ImageObjectWidget(imageObject: imageObject, constraints: constraints),
-              ],
-            );
+            return _MapWidget(constraints: constraints, map: map);
           },
         ),
       ),
@@ -193,13 +91,12 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
 
   AppBar appBar() {
     return AppBar(
-      title: Image.asset('assets/pouet/icon.png'),
-      centerTitle: true,
+        title: Image.asset('assets/pouet/icon.png'),
+        centerTitle: true,
         actions: [
-        IconButton(icon: Icon(Icons.support),
-          tooltip: 'Help :)',
-          onPressed: () { })
-    ]);
+          IconButton(
+              icon: Icon(Icons.support), tooltip: 'Help :)', onPressed: () {})
+        ]);
   }
 
   void _showImageZoomDialog(GameMap map) {
@@ -209,6 +106,31 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
       builder: (context) => ImageZoomDialog(
         map: map,
       ),
+    );
+  }
+}
+
+class _MapWidget extends StatelessWidget {
+
+  final BoxConstraints constraints;
+  final GameMap map;
+
+  const _MapWidget({required this.constraints, required this.map});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        Positioned.fill(
+            child: Image.asset(map.imageValue, fit: BoxFit.contain)),
+        if (map.pointer != null)
+          ImageObjectWidget(
+              imageObject: map.pointer!.toImageObject(),
+              constraints: constraints),
+        for (final imageObject in map.imageObjects)
+          ImageObjectWidget(imageObject: imageObject, constraints: constraints)
+      ],
     );
   }
 
@@ -227,7 +149,9 @@ class ImageZoomDialog extends StatefulWidget {
 }
 
 class _ImageZoomDialogState extends State<ImageZoomDialog> {
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
+  double _currentScale = 1.05;
 
   @override
   void initState() {
@@ -243,16 +167,20 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
     super.dispose();
   }
 
-  void _handleSwipe(DragEndDetails details) {
-    if (details.velocity.pixelsPerSecond.dy > 300) {
-      Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onVerticalDragEnd: _handleSwipe,
+      onScaleUpdate: (details) {
+        _currentScale = details.scale;
+        _transformationController.value = Matrix4.identity()
+          ..scale(details.scale);
+      },
+      onScaleEnd: (details) {
+        if (_currentScale < 1.0) {
+          _currentScale = 1.05;
+          _transformationController.value = Matrix4.identity()..scale(1.05);
+        }
+      },
       child: Dialog(
         insetPadding: EdgeInsets.zero,
         backgroundColor: Colors.black,
@@ -266,57 +194,46 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
               child: Center(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return Stack(
-                      fit: StackFit.passthrough,
-                      children: [
-                        Image.asset(
-                          widget.map.image.value,
-                          fit: BoxFit.contain,
-                        ),
-                        if(widget.map.pointer != null)
-                          ImageObjectWidget(imageObject: widget.map.pointer!.toImageObject(), constraints: constraints),
-                        for (final imageObject in widget.map.imageObjects)
-                          ImageObjectWidget(imageObject: imageObject, constraints: constraints)
-                      ],
-                    );
+                    return _MapWidget(constraints: constraints, map: widget.map);
                   },
                 ),
               ),
             ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+            _closeWidget(context)
           ],
         ),
       ),
     );
   }
 
+  Positioned _closeWidget(BuildContext context) {
+    return Positioned(
+      top: 16,
+      right: 16,
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          padding: const EdgeInsets.all(8),
+          child: const Icon(
+            Icons.close,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class ImageObjectWidget extends StatelessWidget {
-
   final ImageObject imageObject;
   final BoxConstraints constraints;
 
-  const ImageObjectWidget({super.key,
-    required this.imageObject,
-    required this.constraints});
+  const ImageObjectWidget(
+      {super.key, required this.imageObject, required this.constraints});
 
   @override
   Widget build(BuildContext context) {
@@ -350,8 +267,51 @@ class ImageObjectWidget extends StatelessWidget {
   }
 }
 
-class CarouselDots extends StatelessWidget {
-  const CarouselDots({
+class _GameMapWidgetFooter extends StatelessWidget {
+  final int totalItems;
+  final ValueNotifier<int> currentIndex;
+
+  const _GameMapWidgetFooter({
+    super.key,
+    required this.totalItems,
+    required this.currentIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: ValueListenableBuilder<int>(
+        valueListenable: currentIndex,
+        builder: (context, index, _) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CarouselDots(
+                totalItems: totalItems,
+                currentIndex: index,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${index + 1} / $totalItems',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CarouselDots extends StatelessWidget {
+  const _CarouselDots({
     super.key,
     required this.totalItems,
     required this.currentIndex,
@@ -369,17 +329,18 @@ class CarouselDots extends StatelessWidget {
         (index) => AnimatedContainer(
           duration: GameCurrent.style.duration.default_,
           height: 8,
-          margin: EdgeInsets.symmetric(horizontal: GameCurrent.style.dimension.small),
+          margin: EdgeInsets.symmetric(
+              horizontal: GameCurrent.style.dimension.small),
           width: currentIndex == index ? 16 : 8,
           decoration: BoxDecoration(
             color: currentIndex == index
                 ? GameCurrent.style.color.primary
                 : GameCurrent.style.color.lightGrey,
-            borderRadius: BorderRadius.circular(GameCurrent.style.dimension.extraLarge),
+            borderRadius:
+                BorderRadius.circular(GameCurrent.style.dimension.extraLarge),
           ),
         ),
       ),
     );
   }
 }
-
