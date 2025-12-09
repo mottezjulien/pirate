@@ -30,11 +30,21 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.0
+
+flutter_native_splash:
+  color: "#000000"
+  image: assets/logo_center.png
+  fullscreen: true
+  android_12:
+    image: assets/logo_center.png
+    color: "#000000"
 
 flutter:
   uses-material-design: true
 
   assets:
+    - assets/
     - assets/translations/
     - assets/pouet/
     - assets/generic/map/
