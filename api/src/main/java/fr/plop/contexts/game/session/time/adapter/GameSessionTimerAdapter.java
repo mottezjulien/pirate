@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.session.time.adapter;
 
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
@@ -39,7 +39,7 @@ public class GameSessionTimerAdapter implements GameSessionTimer {
     private void tick(GameSession.Id sessionId, GameSessionTimeUnit timeUnit) {
         final GameEvent.TimeClick event = new GameEvent.TimeClick(timeUnit);
         for (GamePlayer.Id playerId : findActivePlayerIdsBySessionId(sessionId)) {
-            broadCast.fire(event, new GameContext(sessionId, playerId));
+            broadCast.fire( new GameSessionContext(sessionId, playerId), event);
         }
     }
 

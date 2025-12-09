@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
@@ -44,7 +44,7 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public Stream<Possibility> findPossibilities(GameContext context) {
+    public Stream<Possibility> findPossibilities(GameSessionContext context) {
         List<ScenarioConfig.Step.Id> goalSteps = scenarioSessionPlayerGetUseCase.findActiveStepIdsByPlayerId(context.playerId());
         ScenarioConfig cacheScenario = cache.scenario(context.sessionId());
         return cacheScenario.steps().stream()
@@ -53,8 +53,8 @@ public class GameEventBroadCastInternAdapter implements GameEventBroadCastIntern
     }
 
     @Override
-    public void doGameOver(GameSession.Id sessionId, GamePlayer.Id playerId, Consequence.SessionEnd consequence) {
-        gameOverUseCase.apply(sessionId, playerId, consequence.gameOver());
+    public void doGameOver(GameSessionContext context, Consequence.SessionEnd consequence) {
+        gameOverUseCase.apply(context, consequence.gameOver());
     }
 
     @Override

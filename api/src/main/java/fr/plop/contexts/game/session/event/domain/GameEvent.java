@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.event.domain;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
@@ -29,6 +30,10 @@ public interface GameEvent {
     }
 
     record Talk(TalkItem.Id talkId, Optional<TalkItem.Options.Option.Id> optOptionId) implements GameEvent {
+
+    }
+
+    record ImageObjectClick(ImageObject.Id objectId) implements GameEvent {
 
     }
 

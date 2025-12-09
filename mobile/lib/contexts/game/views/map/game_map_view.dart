@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+//import '../../../../generic/dialog.dart' as CustomDialog;
+import '../../data/game_image_repository.dart';
 import '../../data/game_map_repository.dart';
 import '../../domain/model/game_session.dart';
 import '../../game_current.dart';
@@ -95,6 +97,7 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
         centerTitle: true,
         actions: [
           IconButton(
+              iconSize: 48, //TODO
               icon: Icon(Icons.support), tooltip: 'Help :)', onPressed: () {})
         ]);
   }
@@ -126,10 +129,10 @@ class _MapWidget extends StatelessWidget {
             child: Image.asset(map.imageValue, fit: BoxFit.contain)),
         if (map.pointer != null)
           ImageObjectWidget(
-              imageObject: map.pointer!.toImageObject(),
+              object: map.pointer!.toImageObject(),
               constraints: constraints),
         for (final imageObject in map.imageObjects)
-          ImageObjectWidget(imageObject: imageObject, constraints: constraints)
+          ImageObjectWidget(imageId: map.image.id, object: imageObject, constraints: constraints)
       ],
     );
   }
@@ -151,15 +154,7 @@ class ImageZoomDialog extends StatefulWidget {
 class _ImageZoomDialogState extends State<ImageZoomDialog> {
   final TransformationController _transformationController =
       TransformationController();
-  double _currentScale = 1.05;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      _transformationController.value = Matrix4.identity()..scale(1.05);
-    });
-  }
+  double _currentScale = 1;
 
   @override
   void dispose() {
@@ -173,12 +168,12 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
       onScaleUpdate: (details) {
         _currentScale = details.scale;
         _transformationController.value = Matrix4.identity()
-          ..scale(details.scale);
+          ..scaleByDouble(_currentScale, _currentScale, _currentScale, 1.0);
       },
       onScaleEnd: (details) {
         if (_currentScale < 1.0) {
-          _currentScale = 1.05;
-          _transformationController.value = Matrix4.identity()..scale(1.05);
+          _currentScale = 1.0;
+          _transformationController.value = Matrix4.identity()..scaleByDouble(_currentScale, _currentScale, _currentScale, 1.0);
         }
       },
       child: Dialog(
@@ -229,37 +224,52 @@ class _ImageZoomDialogState extends State<ImageZoomDialog> {
 }
 
 class ImageObjectWidget extends StatelessWidget {
-  final ImageObject imageObject;
+
+  final String? imageId;
+  final ImageObject object;
   final BoxConstraints constraints;
 
-  const ImageObjectWidget(
-      {super.key, required this.imageObject, required this.constraints});
+  const ImageObjectWidget({super.key, this.imageId,
+    required this.object,
+    required this.constraints});
 
   @override
   Widget build(BuildContext context) {
-    if (imageObject.type == 'POINT') {
+    void onAction() {
+      if(imageId != null) {
+        final GameImageRepository imageRepository = new GameImageRepository();
+        imageRepository.clickObject(object.id, object.id);
+      }
+    }
+    if (object.type == 'POINT') {
       return Positioned(
-        top: imageObject.position.top * constraints.maxHeight,
-        left: imageObject.position.left * constraints.maxWidth,
-        child: Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: imageObject.point!.color,
-            shape: BoxShape.circle,
+        top: object.position.top * constraints.maxHeight,
+        left: object.position.left * constraints.maxWidth,
+        child: GestureDetector(
+          onDoubleTap: onAction,
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: object.point!.color,
+              shape: BoxShape.circle,
+            ),
           ),
         ),
       );
     }
-    if (imageObject.type == 'IMAGE') {
+    if (object.type == 'IMAGE') {
       return Positioned(
-        top: imageObject.position.top * constraints.maxHeight,
-        left: imageObject.position.left * constraints.maxWidth,
-        child: Image.asset(
-          imageObject.image!.value,
-          width: 30,
-          height: 30,
-          fit: BoxFit.contain,
+        top: object.position.top * constraints.maxHeight,
+        left: object.position.left * constraints.maxWidth,
+        child: GestureDetector(
+          onDoubleTap: onAction,
+          child: Image.asset(
+            object.image!.value,
+            width: 30,
+            height: 30,
+            fit: BoxFit.contain,
+          ),
         ),
       );
     }
@@ -272,7 +282,6 @@ class _GameMapWidgetFooter extends StatelessWidget {
   final ValueNotifier<int> currentIndex;
 
   const _GameMapWidgetFooter({
-    super.key,
     required this.totalItems,
     required this.currentIndex,
   });
@@ -312,7 +321,6 @@ class _GameMapWidgetFooter extends StatelessWidget {
 
 class _CarouselDots extends StatelessWidget {
   const _CarouselDots({
-    super.key,
     required this.totalItems,
     required this.currentIndex,
   });

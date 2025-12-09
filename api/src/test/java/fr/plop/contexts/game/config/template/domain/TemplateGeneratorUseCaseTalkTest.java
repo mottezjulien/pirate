@@ -160,7 +160,7 @@ TEST_DISCUSSION3
 --------- Trigger:ABSOLUTETIME:0
 --------- Consequence:Talk:TALK001
 ------ Possibility
---------- Trigger:SelectTalkOption:WAHUP_YES
+--------- Trigger:TalkOptionSelect:WAHUP_YES
 --------- Consequence:Alert:TALK001
 ------------ FR:Tu vas bien !!
 ------------ EN:You're fine !!

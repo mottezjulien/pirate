@@ -11,6 +11,7 @@ import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.image.*;
@@ -39,9 +40,9 @@ public class GameSessionMapController {
                                               @PathVariable("sessionId") String sessionIdStr) {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            GameSessionSituation situation = situationGetPort.get(sessionId, player);
+            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            GameSessionSituation situation = situationGetPort.get(new GameSessionContext(sessionId, playerId));
             MapConfig map = cache.map(sessionId);
             return map.select(situation)
                     .map(mapItem -> ResponseDTO.fromModel(mapItem, situation.board().spaceIds()))
@@ -57,7 +58,6 @@ public class GameSessionMapController {
                 return new Pointer(ImageResponseDTO.fromModel(pointer), new ImagePositionDTO(position.top(), position.left()));
             }
         }
-
         public static ResponseDTO fromModel(MapItem mapItem, List<BoardSpace.Id> spaceIds) {
             Pointer pointerDTO = mapItem.optPointer()
                     .flatMap(pointer -> mapItem.selectPosition(spaceIds)
@@ -65,7 +65,6 @@ public class GameSessionMapController {
                     .orElse(null);
             return new ResponseDTO(mapItem.id().value(), ImageDetailsResponseDTO.fromModel(mapItem.imageGeneric()), pointerDTO);
         }
-
     }
 
 

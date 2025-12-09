@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.session.core.domain.usecase;
 
 import fr.plop.contexts.game.config.cache.GameConfigCache;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
@@ -37,52 +38,52 @@ public class GameOverUseCase {
         this.cache = cache;
     }
 
-    public void apply(GameSession.Id sessionId, GamePlayer.Id playerId, SessionGameOver gameOver) {
+    public void apply(GameSessionContext context, SessionGameOver gameOver) {
         switch (gameOver.type()) {
             case SUCCESS_ALL_ENDED -> {
-                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.sessionId()).toList();
                 playerIds.forEach(each -> output.win(each, gameOver.optReasonId()));
-                endSession(sessionId);
+                endSession(context.sessionId());
                 playerIds.forEach(each -> {
                     try {
-                        pushPort.push(new PushEvent.GameStatus(sessionId, each));
+                        pushPort.push(new PushEvent.GameStatus(new GameSessionContext(context.sessionId(), each)));
                     } catch (Exception ignored) {
                         //TODO
                     }
                 });
             }
             case FAILURE_ALL_ENDED -> {
-                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.sessionId()).toList();
                 playerIds.forEach(each -> output.lose(each, gameOver.optReasonId()));
-                endSession(sessionId);
+                endSession(context.sessionId());
                 playerIds.forEach(each -> {
                     try {
-                        pushPort.push(new PushEvent.GameStatus(sessionId, each));
+                        pushPort.push(new PushEvent.GameStatus(new GameSessionContext(context.sessionId(), each)));
                     } catch (Exception ignored) {
                         //TODO
                     }
                 });
             }
             case SUCCESS_ONE_CONTINUE -> {
-                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
-                output.win(playerId, gameOver.optReasonId());
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.sessionId()).toList();
+                output.win(context.playerId(), gameOver.optReasonId());
                 if (playerIds.size() == 1) {
-                    endSession(sessionId);
+                    endSession(context.sessionId());
                 }
                 try {
-                    pushPort.push(new PushEvent.GameStatus(sessionId, playerId));
+                    pushPort.push(new PushEvent.GameStatus(context));
                 } catch (Exception ignored) {
                     //TODO
                 }
             }
             case FAILURE_ONE_CONTINUE -> {
-                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(sessionId).toList();
-                output.lose(playerId, gameOver.optReasonId());
+                List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.sessionId()).toList();
+                output.lose(context.playerId(), gameOver.optReasonId());
                 if (playerIds.size() == 1) {
-                    endSession(sessionId);
+                    endSession(context.sessionId());
                 }
                 try {
-                    pushPort.push(new PushEvent.GameStatus(sessionId, playerId));
+                    pushPort.push(new PushEvent.GameStatus(context));
                 } catch (Exception ignored) {
                     //TODO
                 }

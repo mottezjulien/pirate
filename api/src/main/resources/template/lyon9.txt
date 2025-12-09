@@ -1,26 +1,35 @@
-ChezWamEasy:1.0::10
+LYON_9:1.0::10
 --- Board
 ------ Space (ref PLACE_PARIS):Place de Paris:HIGH
---------- bottomLeft:45.778678:4.80435:topRight:45.779257:4.805453
------- Space (ref SPACE_KITCHEN):La cuisine:HIGH
---------- bottomLeft:45.77798:4.8037:topRight:45.77812:4.80384
+--------- bottomLeft:45.778678:4.804497:topRight:45.779231:4.805454
+------ Space (ref CHEZ_WAM):Chez Moi:HIGH
+--------- bottomLeft:45.778075:4.803506:topRight:45.778353:4.803923
+------ Space (ref TNG):TNG:HIGH
+--------- bottomLeft:45.777163:4.803153:topRight:45.777446:4.803636
 
---- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
------- Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
------- Target (ref FOUILLER_BUREAU):FR:Fouiller le bureau:EN:Search the office
------- Target (ref OUVRIR_CASSIER):FR:Ouvrir le cassier:EN:Open the drawer
+--- Step (ref STEP_1):FR:Enquete au théatre:EN:Enquete au théatre (en)
+------ Target (ref TARGET_1A):FR:Aller devant le théatre:EN:Aller devant le théatre (en)
+------ Target (ref TARGET_1B):FR:Cliquer sur l'image:EN:Cliquer sur l'image (en)
 
------- Possibility
---------- Trigger:GOINSPACE:SPACE_BUREAU
---------- Consequence:Alert
------------- FR:Vous êtes au bureau
------------- EN:You are in the office
 
 ------ Possibility
---------- Trigger:GOOUTSPACE:SPACE_BUREAU
+--------- Trigger:GOINSPACE:CHEZ_WAM
 --------- Consequence:Alert
------------- FR:Vous êtes sortie du bureau
------------- EN:You are out the office
+------------ FR:Vous êtes chez moi
+------------ EN:Vous êtes chez moi (en)
+
+------ Possibility
+--------- Trigger:GOINSPACE:TNG
+--------- Consequence:Alert
+------------ FR:Vous êtes devant le TNG
+------------ EN:Vous êtes devant le TNG (en)
+
+
+
+
+
+
+
 
 ------ Possibility
 --------- Trigger:GOINSPACE:SPACE_KITCHEN

@@ -1,8 +1,7 @@
 package fr.plop.contexts.game.session.event.adapter.action;
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.push.PushEvent;
@@ -21,14 +20,14 @@ public class GameEventActionPushAdapter {
         this.playerRepository = playerRepository;
     }
 
-    public void message(GameSession.Id sessionId, GamePlayer.Id playerId, I18n message) {
-        GamePlayerEntity player = playerRepository.findByIdFetchUser(playerId.value()).orElseThrow();
-        PushEvent event = new PushEvent.Message(sessionId, playerId, message.value(player.getUser().getLanguage()));
+    public void message(GameSessionContext context, I18n message) {
+        GamePlayerEntity player = playerRepository.findByIdFetchUser(context.playerId().value()).orElseThrow();
+        PushEvent event = new PushEvent.Message(context, message.value(player.getUser().getLanguage()));
         pushPort.push(event);
     }
 
-    public void talk(GameSession.Id sessionId, GamePlayer.Id playerId, TalkItem.Id talkId) {
-        PushEvent event = new PushEvent.Talk(sessionId, playerId, talkId);
+    public void talk(GameSessionContext context, TalkItem.Id talkId) {
+        PushEvent event = new PushEvent.Talk(context, talkId);
         pushPort.push(event);
     }
 

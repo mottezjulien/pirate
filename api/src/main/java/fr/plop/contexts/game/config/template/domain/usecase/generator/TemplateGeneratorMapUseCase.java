@@ -57,6 +57,11 @@ public class TemplateGeneratorMapUseCase {
 
 
     private ImageObject parseObject(Tree tree) {
+        ImageObject.Id id = new ImageObject.Id();
+        if (tree.reference() != null) {
+            id =  globalCache.reference(tree.reference(), ImageObject.Id.class, id);
+        }
+
         String type = tree.findByKeyOrParamIndexOrThrow("TYPE", 0).toUpperCase();
         String top =  tree.findByKeyOrParamIndexOrThrow("TOP", 1);
         String left =  tree.findByKeyOrParamIndexOrThrow("LEFT", 2);
@@ -65,7 +70,7 @@ public class TemplateGeneratorMapUseCase {
         String label = tree.findByKeyOrValue(KEY_LABEL, "");
         List<Condition> conditions = tree.childrenByKey("CONDITION").map(conditionGenerator::apply).toList();
         Optional<Condition> optCondition = Condition.buildAndFromList(conditions);
-        ImageObject.Atom atom = new ImageObject.Atom(label, center, optCondition);
+        ImageObject.Atom atom = new ImageObject.Atom(id, label, center, optCondition);
         return switch (type) {
             case KEY_POINT -> new ImageObject.Point(atom, tree.findByKeyOrValue("COLOR", ""));
             case KEY_IMAGE -> {
@@ -78,30 +83,8 @@ public class TemplateGeneratorMapUseCase {
     }
 
     private MapItem.Position parsePosition(Tree tree) {
-        /*String type = tree.param(0).toUpperCase();
-        String top = tree.param(1);
-        String lat = tree.param(2);
-        ImagePoint center = new ImagePoint(Double.parseDouble(top), Double.parseDouble(lat));
-
-        String label = tree.childByKeyOneParam(KEY_LABEL).orElse("");
-        List<Condition> conditions = tree.childrenByKey("CONDITION").map(conditionGenerator::apply).toList();
-        Optional<Condition> optCondition = Condition.buildAndFromList(conditions);
-        ImageObject.Atom atom = new ImageObject.Atom(label, center, optCondition);
-
-        return switch (type) {
-            case KEY_POINT -> new ImageObject.Point(atom, tree.childByKeyOneParam("COLOR").orElse(""));
-            case KEY_IMAGE -> {
-                Tree imagePosition = tree.childByKey(KEY_IMAGE).orElseThrow();
-                Image image = new Image(Image.Type.valueOf(imagePosition.param(0).toUpperCase()), imagePosition.param(1));
-                yield new ImageObject._Image(atom, image);
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + type);
-        };*/
-
-        //BoardSpace.Id spaceId, ImagePoint point, Priority priority
-
         String refSpaceId = tree.findByKeyOrThrow("SPACE");
-        BoardSpace.Id spaceId = globalCache.getReference(refSpaceId, BoardSpace.Id.class).orElseThrow();
+        BoardSpace.Id spaceId = globalCache.reference(refSpaceId, BoardSpace.Id.class, new BoardSpace.Id());
 
         String top = tree.findByKeyOrParamIndexOrThrow("TOP",0);
         String lat = tree.findByKeyOrParamIndexOrThrow("LEFT",1);

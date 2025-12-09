@@ -44,9 +44,9 @@ public class GameSessionScenarioController {
         Language language = Language.valueOf(languageStr.toUpperCase());
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            ScenarioSessionPlayer scenarioSessionPlayer = getUseCase.findByPlayerId(player.id());
+            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            ScenarioSessionPlayer scenarioSessionPlayer = getUseCase.findByPlayerId(playerId);
             ScenarioConfig scenario = cache.scenario(sessionId);
             return scenarioSessionPlayer.bySteps()
                     .entrySet().stream()

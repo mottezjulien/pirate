@@ -147,7 +147,7 @@ class TemplateGeneratorUseCaseComplexeTest {
                 --------- Consequence:GoalTarget:targetId:ENTER_OFFICE:state:success
                 
                 ------ Possibility
-                --------- Trigger:CLICKMAPOBJECT:DESK_POSITION
+                --------- Trigger:IMAGEOBJECTCLICK:OBJECT_A
                 --------- Condition:StepTarget:ENTER_OFFICE
                 --------- Consequence:GoalTarget:targetId:SEARCH_DESK:state:success
                 --------- Consequence:Alert
@@ -156,7 +156,7 @@ class TemplateGeneratorUseCaseComplexeTest {
                 
                 --- Map:Asset:assets/office.png
                 ------ Priority:LOWEST
-                ------ object:point:0.2:0.8
+                ------ object (ref OBJECT_A):point:0.2:0.8
                 --------- Priority:HIGH
                 """;
 
@@ -178,8 +178,8 @@ class TemplateGeneratorUseCaseComplexeTest {
                     assertThat(step.possibilities()).hasSize(2)
                         .anySatisfy(possibility -> {
                             // Test du trigger CLICKMAPOBJECT avec condition StepTarget
-                            if (possibility.trigger() instanceof PossibilityTrigger.ClickMapObject clickMapObject) {
-                                assertThat(clickMapObject.objectReference()).isEqualTo("DESK_POSITION");
+                            if (possibility.trigger() instanceof PossibilityTrigger.ImageObjectClick imageObjectClick) {
+                                assertThat(imageObjectClick.objectId()).isEqualTo(template.map().items().getFirst().imageGeneric().objects().getFirst().id());
 
                                 assertThat(possibility.optCondition())
                                     .hasValueSatisfying(condition -> {

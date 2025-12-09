@@ -9,6 +9,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
@@ -66,8 +67,8 @@ public class GameSessionController {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            GameSession.Atom session = startUseCase.apply(sessionId, player.id());
+            GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            GameSession.Atom session = startUseCase.apply(sessionId, playerId);
             return GameSessionResponseDTO.fromModel(session);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
@@ -86,10 +87,10 @@ public class GameSessionController {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
 
             SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.FAILURE_ONE_CONTINUE);
-            gameOverUseCase.apply(sessionId, player.id(), gameOver);
+            gameOverUseCase.apply(new GameSessionContext(sessionId, playerId), gameOver);
             return GameSessionResponseDTO.fromModel(getPort.findById(sessionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         } catch (ConnectException e) {

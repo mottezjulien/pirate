@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
@@ -19,7 +20,7 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
         PossibilityTrigger.TalkOptionSelect,
         PossibilityTrigger.TalkEnd,
-        PossibilityTrigger.ClickMapObject {
+        PossibilityTrigger.ImageObjectClick {
 
 
     record Id(String value) {
@@ -93,11 +94,10 @@ public sealed interface PossibilityTrigger permits
 
     }
 
-    record ClickMapObject(Id id, String objectReference) implements PossibilityTrigger {
+    record ImageObjectClick(Id id, ImageObject.Id objectId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
-            // TODO: Implement when MapClick GameEvent is added
-            return false;
+            return event instanceof GameEvent.ImageObjectClick(ImageObject.Id objectIdEvent) && objectId.equals(objectIdEvent);
         }
     }
 

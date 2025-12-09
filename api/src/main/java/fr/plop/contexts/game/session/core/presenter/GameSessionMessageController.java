@@ -4,6 +4,7 @@ package fr.plop.contexts.game.session.core.presenter;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class GameSessionMessageController {
                             @RequestBody SendMessageRequest request) {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         GamePlayer.Id playerId = new GamePlayer.Id(playerIdStr);
-        pushPort.push(new PushEvent.Message(sessionId, playerId, request.value()));
+        pushPort.push(new PushEvent.Message(new GameSessionContext(sessionId, playerId), request.value()));
     }
 
     public record SendMessageRequest(String value) {

@@ -65,7 +65,7 @@ public class TemplateGeneratorTalkUseCase {
                 Optional<TalkItem> optItem = parseItem(child, characterReferences);
                 if (child.reference() != null) {
                     optItem.ifPresent(talkItem -> {
-                        globalCache.registerReference(child.reference(), talkItem.id());
+                        globalCache.reference(child.reference(), TalkItem.Id.class, talkItem.id());
                         localCacheRefToId.put(child.reference(), talkItem.id());
                     });
                 }
@@ -205,8 +205,12 @@ public class TemplateGeneratorTalkUseCase {
                 Optional<I18n> optionOpt = i18nGenerator.apply(childrenToParseI18n);
                 I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
 
-                // Create a reference that will be resolved later
-                TalkItem.Options.Option option = new TalkItem.Options.Option(new TalkItem.Options.Option.Id(), options.size(), optionMessage);
+                TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id();
+                if (child.reference() != null) {
+                    optionId = globalCache.reference(child.reference(), TalkItem.Options.Option.Id.class, optionId);
+                }
+
+                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, options.size(), optionMessage);
 
                 // Chercher la référence nextId via "next:TALK002"
                 Optional<String> nextIdRef = child.children().stream()
@@ -218,10 +222,6 @@ public class TemplateGeneratorTalkUseCase {
 
                 options.add(option);
 
-                // Enregistrer la référence si elle existe
-                if (child.reference() != null) {
-                    globalCache.registerReference(child.reference(), option.id());
-                }
             }
         }
 

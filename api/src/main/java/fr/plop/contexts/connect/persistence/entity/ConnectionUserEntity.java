@@ -2,7 +2,6 @@ package fr.plop.contexts.connect.persistence.entity;
 
 
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.subs.i18n.domain.Language;
 import jakarta.persistence.*;
@@ -22,7 +21,7 @@ public class ConnectionUserEntity {
     private Language language;
 
     @OneToMany(mappedBy = "user")
-    private Set<GamePlayerEntity> players = new HashSet<>();
+    private final Set<GamePlayerEntity> players = new HashSet<>();
 
     public String getId() {
         return id;
@@ -40,16 +39,12 @@ public class ConnectionUserEntity {
         this.language = language;
     }
 
-    public Set<GamePlayerEntity> getPlayers() {
-        return players;
+    public ConnectUser toModel() {
+        return new ConnectUser(new ConnectUser.Id(id), language, Optional.empty());
     }
 
-    public void setPlayers(Set<GamePlayerEntity> players) {
-        this.players = players;
-    }
-
-    public ConnectUser toModel(GamePlayer nullablePlayer) {
-        return new ConnectUser(new ConnectUser.Id(id), language, Optional.ofNullable(nullablePlayer));
-    }
+    /*public ConnectUser toModel(GamePlayer.Id nullablePlayerId) {
+        return new ConnectUser(new ConnectUser.Id(id), language, Optional.ofNullable(nullablePlayerId));
+    }*/
 
 }

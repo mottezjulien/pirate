@@ -8,7 +8,7 @@ import fr.plop.contexts.connect.domain.ConnectUser;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
@@ -51,11 +51,11 @@ public class TalkController {
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
+            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-            final GameSessionSituation situation = situationGetPort.get(sessionId, player);
+            final GameSessionSituation situation = situationGetPort.get(new GameSessionContext(sessionId, playerId));
             return ResponseDTO.fromModel(item.select(situation), language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
@@ -74,15 +74,15 @@ public class TalkController {
         final TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(optionIdStr);
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer player = user.player().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
+            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(taklId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-            final GameContext context = new GameContext(sessionId, player.id());
+            final GameSessionContext context = new GameSessionContext(sessionId, playerId);
 
             if(item instanceof TalkItem.Options multipleOptions) {
                 Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);
                 if(optOption.isPresent()) {
-                    broadCast.fire(new GameEvent.Talk(item.id(), Optional.of(optionId)), context);
+                    broadCast.fire(context, new GameEvent.Talk(item.id(), Optional.of(optionId)));
                     TalkItem.Options.Option option = optOption.get();
                     if(option.hasNext()) {
                         return getOne(rawToken, languageStr, sessionIdStr, option.nextId().value());

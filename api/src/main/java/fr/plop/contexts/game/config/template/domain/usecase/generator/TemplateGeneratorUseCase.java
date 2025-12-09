@@ -51,16 +51,14 @@ public class TemplateGeneratorUseCase {
 
         TalkConfig talkConfig = talkGenerator.apply(rootTree);
 
-        ScenarioConfig scenario = scenarioGenerator.apply(rootTree, talkConfig);
+
 
         ImageConfig image = imageGenerator.apply(rootTree);
 
+        ScenarioConfig scenario = scenarioGenerator.apply(rootTree, talkConfig);
+
         MapConfig map = mapGenerator.apply(rootTree);
 
-        // 4. Vérifier qu'il n'y a pas de références non résolues
-        if (globalCache.hasUnresolvedReferences()) {
-            throw new TemplateException("Unresolved references: " + globalCache.getUnresolvedReferences());
-        }
 
         String version = rootTree.findByKeyOrParamIndexOrValue("VERSION", 0, DEFAULT_VERSION);
         String label = rootTree.findByKeyOrParamIndexOrValue("LABEL", 1, "");

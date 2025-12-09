@@ -2,7 +2,7 @@ package fr.plop.contexts.game.session.event.adapter.action;
 
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.push.PushEvent;
@@ -18,11 +18,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class GameEventActionGameTest {
 
@@ -31,16 +27,15 @@ public class GameEventActionGameTest {
     private final GameSessionTimerRemove timerRemove = mock(GameSessionTimerRemove.class);
     private final GameConfigCache cache = mock(GameConfigCache.class);
     private final GameOverUseCase event = new GameOverUseCase(outputPort, pushPort, timerRemove, cache);
-    private final GameSession.Id sessionId = new GameSession.Id();
-    private final GamePlayer.Id playerId = new GamePlayer.Id();
+    private final GameSessionContext context = new GameSessionContext();
     private final GamePlayer.Id otherPlayerId1 = new GamePlayer.Id();
     private final GamePlayer.Id otherPlayerId2 = new GamePlayer.Id();
 
 
     @BeforeEach
     void setUp() {
-        when(outputPort.findActivePlayerIds(sessionId))
-                .thenReturn(Stream.of(playerId, otherPlayerId1, otherPlayerId2));
+        when(outputPort.findActivePlayerIds(context.sessionId()))
+                .thenReturn(Stream.of(context.playerId(), otherPlayerId1, otherPlayerId2));
     }
 
     @Test
@@ -48,20 +43,20 @@ public class GameEventActionGameTest {
 
         I18n.Id i18nId = new I18n.Id();
         SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ALL_ENDED, Optional.of(i18nId));
-        event.apply(sessionId, playerId, gameOver);
+        event.apply(context, gameOver);
 
-        verify(outputPort).win(playerId, Optional.of(i18nId));
+        verify(outputPort).win(context.playerId(), Optional.of(i18nId));
         verify(outputPort).win(otherPlayerId1, Optional.of(i18nId));
         verify(outputPort).win(otherPlayerId2, Optional.of(i18nId));
-        verify(outputPort).ended(sessionId);
+        verify(outputPort).ended(context.sessionId());
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);
         verify(pushPort, times(3)).push(captor.capture());
         List<PushEvent.GameStatus> pushs = captor.getAllValues();
         assertThat(pushs).hasSize(3)
-                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId))
-                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(otherPlayerId1))
-                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(otherPlayerId2));
+                .anySatisfy(push -> assertThat(push.context().playerId()).isEqualTo(context.playerId()))
+                .anySatisfy(push -> assertThat(push.context().playerId()).isEqualTo(otherPlayerId1))
+                .anySatisfy(push -> assertThat(push.context().playerId()).isEqualTo(otherPlayerId2));
 
     }
 
@@ -69,36 +64,36 @@ public class GameEventActionGameTest {
     public void oneSuccess() {
         I18n.Id i18nId = new I18n.Id();
         SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
-        event.apply(sessionId, playerId, gameOver);
+        event.apply(context, gameOver);
 
-        verify(outputPort).win(playerId, Optional.of(i18nId));
-        verify(outputPort, never()).ended(sessionId);
+        verify(outputPort).win(context.playerId(), Optional.of(i18nId));
+        verify(outputPort, never()).ended(context.sessionId());
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);
         verify(pushPort).push(captor.capture());
         List<PushEvent.GameStatus> events = captor.getAllValues();
         assertThat(events).hasSize(1)
-                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId));
+                .anySatisfy(push -> assertThat(push.context().playerId()).isEqualTo(context.playerId()));
     }
 
 
     @Test
     public void oneSuccessEndedGame() {
-        when(outputPort.findActivePlayerIds(sessionId))
-                .thenReturn(Stream.of(playerId));
+        when(outputPort.findActivePlayerIds(context.sessionId()))
+                .thenReturn(Stream.of(context.playerId()));
 
         I18n.Id i18nId = new I18n.Id();
         SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
-        event.apply(sessionId, playerId, gameOver);
+        event.apply(context, gameOver);
 
-        verify(outputPort).win(playerId, Optional.of(i18nId));
-        verify(outputPort).ended(sessionId);
+        verify(outputPort).win(context.playerId(), Optional.of(i18nId));
+        verify(outputPort).ended(context.sessionId());
 
         ArgumentCaptor<PushEvent.GameStatus> captor = ArgumentCaptor.forClass(PushEvent.GameStatus.class);
         verify(pushPort).push(captor.capture());
         List<PushEvent.GameStatus> events = captor.getAllValues();
         assertThat(events).hasSize(1)
-                .anySatisfy(push -> assertThat(push.playerId()).isEqualTo(playerId));
+                .anySatisfy(push -> assertThat(push.context().playerId()).isEqualTo(context.playerId()));
     }
 
 }

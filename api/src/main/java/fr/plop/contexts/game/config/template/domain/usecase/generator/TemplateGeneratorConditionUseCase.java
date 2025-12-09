@@ -29,19 +29,15 @@ public class TemplateGeneratorConditionUseCase {
         switch (type) {
             case "insidespace" -> {
                 String spaceRef = subTree.findByKeyWithUnique("spaceId");
-                BoardSpace.Id spaceId = context.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
-                return new Condition.InsideSpace(
-                        new Condition.Id(),
-                        spaceId
-                );
+                BoardSpace.Id spaceId = context.reference(spaceRef, BoardSpace.Id.class, new BoardSpace.Id());
+                return new Condition.InsideSpace(new Condition.Id(), spaceId);
             }
             case "outsidespace" -> {
                 String spaceRef = subTree.findByKeyWithUnique("spaceId");
-                BoardSpace.Id spaceId = context.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                BoardSpace.Id spaceId = context.reference(spaceRef, BoardSpace.Id.class, new BoardSpace.Id());
                 return new Condition.OutsideSpace(new Condition.Id(), spaceId);
             }
             case "absolutetime" -> {
-
                 int duration;
                 BeforeOrAfter beforeOrAfter = BeforeOrAfter.BEFORE;
                 Optional<String> optDuration = subTree.findByKey("Duration");
@@ -61,14 +57,12 @@ public class TemplateGeneratorConditionUseCase {
             }
             case "instep" -> {
                 String stepRef = subTree.findByKeyWithUnique("stepId");
-                ScenarioConfig.Step.Id stepId = context.getReference(stepRef, ScenarioConfig.Step.Id.class).orElseThrow();
+                ScenarioConfig.Step.Id stepId = context.reference(stepRef, ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id());
                 return new Condition.Step(new Condition.Id(),stepId);
             }
-
             case "steptarget" -> {
                 String targetRef = subTree.findByKeyWithUnique("targetId");
-                ScenarioConfig.Target.Id targetId = context.getReference(targetRef, ScenarioConfig.Target.Id.class)
-                        .orElseThrow();
+                ScenarioConfig.Target.Id targetId = context.reference(targetRef, ScenarioConfig.Target.Id.class, new ScenarioConfig.Target.Id());
                 return new Condition.Target(new Condition.Id(), targetId);
             }
         }

@@ -4,9 +4,7 @@ import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.persistence.entity.ConnectionAuthEntity;
-import fr.plop.contexts.connect.persistence.entity.ConnectionDeviceEntity;
 import fr.plop.contexts.connect.persistence.repository.ConnectionAuthRepository;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
@@ -32,30 +30,11 @@ public class ConnectionAdapter implements ConnectUseCase.OutPort {
 
     @Override
     public Optional<ConnectAuth> findBySessionIdAndToken(GameSession.Id sessionId, ConnectToken token) {
-        return authRepository.findByTokenFetchs(token.value())
-                .map(entity -> {
-                    ConnectionDeviceEntity connection = entity.getConnection();
-                    Optional<GamePlayerEntity> optFullPlayerEntity = fullBySessionIdAndUserIdFetchLastPosition(sessionId, connection);
-                    if (optFullPlayerEntity.isPresent()) {
-                        return entity.toModelWithConnect(connection.toModel(optFullPlayerEntity.get().toModel()));
-                    }
-                    return entity.toModel();
-                });
+        return findByToken(token)
+                .map(auth -> playerRepository.findBySessionIdAndUserId(sessionId.value(), auth.userId().value())
+                        .map(GamePlayerEntity::toModelId)
+                        .map(auth::withPlayerId)
+                        .orElse(auth));
     }
-
-    private Optional<GamePlayerEntity> fullBySessionIdAndUserIdFetchLastPosition(GameSession.Id sessionId, ConnectionDeviceEntity connection){
-        //fetch space && goal bugs -> separate queries
-        Optional<GamePlayerEntity> optWithSpaceIds = playerRepository.findBySessionIdAndUserIdFetchLastPosition(sessionId.value(), connection.getUser().getId());
-        if (optWithSpaceIds.isPresent()) {
-            GamePlayerEntity withSpaceIds = optWithSpaceIds.get();
-            Optional<GamePlayerEntity> optWithGoals = playerRepository.findByIdFetchGoals(withSpaceIds.getId());
-            if (optWithGoals.isPresent()) {
-                withSpaceIds.setGoals(optWithGoals.get().getGoals());
-                return Optional.of(withSpaceIds);
-            }
-        }
-        return Optional.empty();
-    }
-
 
 }

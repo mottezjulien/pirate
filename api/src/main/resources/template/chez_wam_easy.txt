@@ -7,6 +7,26 @@ ChezWamEasy:1.0::10
 ------ Space (ref SPACE_MILIEU):Au milieu:MEDIUM
 --------- bottomLeft:45.77805:4.80365:topRight:45.77815:4.80375
 
+--- Map:Asset:assets/game/tres/ile.png
+------ Priority:HIGH
+------ Pointer:ASSET:assets/game/tres/pointer.png
+------ Object:Point:0.7:0.7
+--------- Label:Point jaune
+--------- Color:yellow
+------ Position:0.9158653112558219:0.2900640047513522
+--------- Space:SPACE_KITCHEN
+------ Position:0.2:0.2
+--------- Space:SPACE_MILIEU
+
+--- Map:Asset:assets/game/tres/bureau.png
+------ Priority:HIGH
+------ Pointer:ASSET:assets/game/tres/pointer.png
+------ Object (ref IMAGE_OBJET_PHARE):Image:0.7:0.3
+--------- Image:ASSET:assets/game/tres/phare.png
+------ Position:0.5:0.5
+--------- Space:SPACE_BUREAU
+--------- PRIORITY:MEDIUM
+
 --- Step (ref CHAPITRE_BUREAU):FR:Le bureau (tutorial):EN:The office (tutorial)
 ------ Target (ref ALLER_BUREAU):FR:Aller dans le bureau:EN:Go to the office
 ------ Target (ref FOUILLER_BUREAU):FR:Fouiller le bureau:EN:Search the office
@@ -36,20 +56,11 @@ ChezWamEasy:1.0::10
 ------------ FR:Vous êtes sortie de la cuisine
 ------------ EN:You are out the kitchen
 
---- Map:Asset:assets/game/tres/ile.png
------- Priority:HIGH
------- Pointer:ASSET:assets/game/tres/pointer.png
------- Object:Point:0.5:0.5
---------- Label:Point jaune
---------- Color:yellow
------- Object:Image:0.7:0.3
---------- Image:ASSET:assets/game/tres/phare.png
------- Position:0.4711538461538462:0.51762815622183
---------- Space:SPACE_BUREAU
---------- PRIORITY:MEDIUM
------- Position:0.9158653112558219:0.2900640047513522
---------- Space:SPACE_KITCHEN
------- Position:0.2:0.2
---------- Space:SPACE_MILIEU
+------ Possibility
+--------- Trigger:IMAGEOBJECTCLICK:IMAGE_OBJET_PHARE
+--------- Consequence:Alert
+------------ FR:Clic sur le phare
+------------ EN:Clic sur le phare (en)
+
 
 

@@ -3,6 +3,7 @@ package fr.plop.config;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
+import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;
 import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
@@ -48,8 +49,8 @@ public class GameSpringConfig {
     }
 
     @Bean
-    public GameMoveUseCase gameMoveUseCase(GameMoveUseCase.OutPort outPort, GameEventBroadCast broadCast, PushPort pushPort) {
-        return new GameMoveUseCase(outPort, broadCast, pushPort);
+    public GameMoveUseCase gameMoveUseCase(GameMoveUseCase.OutPort outPort, GamePlayerGetPort gamePlayerGetPort, GameEventBroadCast broadCast, PushPort pushPort) {
+        return new GameMoveUseCase(outPort, gamePlayerGetPort, broadCast, pushPort);
     }
 
     @Bean

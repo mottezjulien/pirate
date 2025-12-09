@@ -61,26 +61,26 @@ public class GameSessionTimerAdapterIntegrationTest {
         GameSession.Atom session = createGameUseCase.apply(code, auth.connect().user().id());
 
         ConnectUser connectUser = connectUseCase.findUserIdBySessionIdAndRawToken(session.id(), auth.token());
-        GamePlayer player = connectUser.player().orElseThrow();
+        GamePlayer.Id playerId = connectUser.playerId().orElseThrow();
 
-        session = startUseCase.apply(session.id(), player.id());
+        session = startUseCase.apply(session.id(), playerId);
 
         List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
         Consequence.ScenarioStep consequence1 = (Consequence.ScenarioStep) possibilities.getFirst().consequences().getFirst();
         Consequence.ScenarioStep consequence2 = (Consequence.ScenarioStep) possibilities.get(1).consequences().getFirst();
 
-        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence1);
-        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence2);
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence1);
+        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence2);
 
         await().pollDelay(Duration.ofSeconds(2)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence1);
-            verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(player.id(), consequence2);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence1);
+            verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence2);
             return true;
         });
 
         await().pollDelay(Duration.ofSeconds(4)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence1);
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(player.id(), consequence2);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence1);
+            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence2);
             return true;
         });
 

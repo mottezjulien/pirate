@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger;
 
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -27,7 +28,7 @@ public class ScenarioPossibilityTriggerEntity {
     private static final String VALUE_TALK_TYPE_END = "END";
 
     public enum Type {
-        TIME, SPACE, STEP, TALK, MAP;
+        TIME, SPACE, STEP, TALK, OBJECT
     }
 
     @Id
@@ -97,7 +98,10 @@ public class ScenarioPossibilityTriggerEntity {
                     default -> throw new IllegalStateException("Unexpected value: " + keyValues.get(KEY_TALK_TYPE));
                 };
             }
-            case MAP -> new PossibilityTrigger.ClickMapObject(id, keyValues.get(KEY_PRIMARY));
+            case OBJECT ->{
+                ImageObject.Id objectId = new ImageObject.Id(keyValues.get(KEY_PRIMARY));
+                yield new PossibilityTrigger.ImageObjectClick(id, objectId);
+            }
         };
     }
 
@@ -138,67 +142,13 @@ public class ScenarioPossibilityTriggerEntity {
                 entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_END);
                 entity.getKeyValues().put(KEY_PRIMARY, talkEnd.talkId().value());
             }
-            case PossibilityTrigger.ClickMapObject clickMapObject -> {
-                entity.setType(Type.MAP);
-                entity.getKeyValues().put(KEY_PRIMARY, clickMapObject.objectReference());
+            case PossibilityTrigger.ImageObjectClick imageObjectClick -> {
+                entity.setType(Type.OBJECT);
+                entity.getKeyValues().put(KEY_PRIMARY, imageObjectClick.objectId().value());
             }
 
         }
         return entity;
     }
-
-    /*
-    public PossibilityTrigger toModel() {
-        return switch (this) {
-            case ScenarioPossibilityTriggerAbsoluteTimeEntity absoluteTime -> absoluteTime.toModel();
-            case ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity relativeTime -> relativeTime.toModel();
-            case ScenarioPossibilityTriggerGoInSpaceEntity goInSpace -> goInSpace.toModel();
-            case ScenarioPossibilityTriggerGoOutSpaceEntity goOutSpace -> goOutSpace.toModel();
-            default -> throw new IllegalStateException("Unknown type");
-        };
-    }
-
-    public static NewScenarioPossibilityTriggerAbstractEntity fromModel(PossibilityTrigger model) {
-        return switch (model) {
-            case PossibilityTrigger.AbsoluteTime absoluteTime -> {
-                ScenarioPossibilityTriggerAbsoluteTimeEntity entity = new ScenarioPossibilityTriggerAbsoluteTimeEntity();
-                entity.setId(absoluteTime.id().value());
-                entity.setMinutes(absoluteTime.value().toMinutes());
-                yield entity;
-            }
-            case PossibilityTrigger.RelativeTimeAfterOtherPossibility relativeTimeAfterOther -> {
-                ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity entity = new ScenarioPossibilityTriggerRelativeTimeAfterOtherTriggerEntity();
-                entity.setId(relativeTimeAfterOther.id().value());
-                entity.setMinutes(relativeTimeAfterOther.value().toMinutes());
-                entity.setOtherPossibilityId(relativeTimeAfterOther.otherPossibilityId().value());
-                yield entity;
-            }
-            case PossibilityTrigger.GoInSpace goInSpace -> {
-                ScenarioPossibilityTriggerGoInSpaceEntity entity = new ScenarioPossibilityTriggerGoInSpaceEntity();
-                entity.setId(goInSpace.id().value());
-                entity.setSpaceId(goInSpace.spaceId().value());
-                yield entity;
-            }
-            case PossibilityTrigger.GoOutSpace goOutSpace -> {
-                ScenarioPossibilityTriggerGoInSpaceEntity entity = new ScenarioPossibilityTriggerGoInSpaceEntity();
-                entity.setId(goOutSpace.id().value());
-                entity.setSpaceId(goOutSpace.spaceId().value());
-                yield entity;
-            }
-
-            case PossibilityTrigger.ActiveStep activeStep -> {
-                ScenarioPossibilityTriggerActiveStepEntity entity = new ScenarioPossibilityTriggerGoInSpaceEntity();
-                entity.setId(goOutSpace.id().value());
-                entity.setSpaceId(goOutSpace.spaceId().value());
-                yield entity;
-            }
-            case PossibilityTrigger.SelectTalkOption talkOption -> {
-                ScenarioPossibilityTalkOptionsEntity entity = new ScenarioPossibilityTalkOptionsEntity();
-                entity.setId(talkOption.id().value());
-                entity.setTalkOptionsId(talkOption.optionId().value());
-                yield entity;
-            }
-        };
-    }*/
 
 }

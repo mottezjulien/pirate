@@ -6,9 +6,10 @@ import java.util.Optional;
 
 public class ConnectUseCase {
 
+
+
     public interface OutPort {
         Optional<ConnectAuth> findBySessionIdAndToken(GameSession.Id sessionId, ConnectToken token);
-
         Optional<ConnectAuth> findByToken(ConnectToken token);
     }
 
@@ -19,13 +20,12 @@ public class ConnectUseCase {
     }
 
     public ConnectUser findUserIdBySessionIdAndRawToken(GameSession.Id sessionId, ConnectToken token) throws ConnectException {
-        Optional<ConnectAuth> opt = port.findBySessionIdAndToken(sessionId, token);
-        ConnectAuth auth = opt.orElseThrow(() -> new ConnectException(ConnectException.Type.EMPTY));
+        ConnectAuth auth = port.findBySessionIdAndToken(sessionId, token)
+                .orElseThrow(() -> new ConnectException(ConnectException.Type.EMPTY));
         if (auth.isExpiry()) {
             throw new ConnectException(ConnectException.Type.EXPIRED_TOKEN);
         }
-        DeviceConnect connect = auth.connect();
-        return connect.user();
+        return auth.connect().user();
     }
 
     public ConnectUser findUserIdByRawToken(ConnectToken token) throws ConnectException {
@@ -37,6 +37,8 @@ public class ConnectUseCase {
         DeviceConnect connect = auth.connect();
         return connect.user();
     }
+
+
 
 
 }

@@ -4,8 +4,8 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -22,13 +22,9 @@ import java.util.Optional;
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    public record Key(GameSession.Id sessionId, GamePlayer.Id playerId) {
-
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
 
-    private final Map<Key, WebSocketSession> playerIdsWithSession = new HashMap<>();
+    private final Map<GameSessionContext, WebSocketSession> playerIdsWithSession = new HashMap<>();
 
     private final ConnectUseCase connectUseCase;
 
@@ -39,10 +35,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         logger.info("Nouvelle connexion WebSocket établie: {}", session.getId());
-        Optional<Key> optionalKey = keyFromSession(session);
+        Optional<GameSessionContext> optionalKey = keyFromSession(session);
         optionalKey.ifPresent(key -> {
             playerIdsWithSession.put(key, session);
-            broadcastMessage(key.sessionId(), key.playerId(), WebSocketPushAdapter.MESSAGE_INIT);
+            broadcastMessage(key, WebSocketPushAdapter.MESSAGE_INIT);
         });
     }
 
@@ -52,7 +48,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         keyFromSession(session).ifPresent(playerIdsWithSession::remove);
     }
 
-    private Optional<Key> keyFromSession(WebSocketSession session) {
+    private Optional<GameSessionContext> keyFromSession(WebSocketSession session) {
         final String sessionIdPrefix = "sessionId=";
         final String tokenPrefix = "token=";
         Optional<GameSession.Id> optSessionId = Optional.empty();
@@ -74,8 +70,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
             GameSession.Id sessionId = optSessionId.get();
             try {
                 ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(tokenStr));
-                if (user.player().isPresent()) {
-                    return Optional.of(new Key(sessionId, user.player().get().id()));
+                if (user.playerId().isPresent()) {
+                    return Optional.of(new GameSessionContext(sessionId, user.playerId().get()));
                 }
             } catch (ConnectException e) {
                 logger.error("Erreur lors de la récupération du joueur {}", session.getId(), e);
@@ -84,8 +80,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         return Optional.empty();
     }
 
-    public void broadcastMessage(GameSession.Id sessionId, GamePlayer.Id playerId, String message) {
-        WebSocketSession session = playerIdsWithSession.get(new Key(sessionId, playerId));
+    public void broadcastMessage(GameSessionContext context, String message) {
+        WebSocketSession session = playerIdsWithSession.get(context);
         if (session != null && session.isOpen()) {
             try {
                 session.sendMessage(new TextMessage(message));

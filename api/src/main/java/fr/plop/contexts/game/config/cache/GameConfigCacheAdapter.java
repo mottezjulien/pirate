@@ -36,22 +36,31 @@ public class GameConfigCacheAdapter implements GameConfigCache {
 
     @Override
     public ScenarioConfig scenario(GameSession.Id sessionId) {
-        return sessions.get(sessionId).scenario;
+        return data(sessionId).scenario;
+    }
+
+    @Override
+    public BoardConfig board(GameSession.Id sessionId) {
+        return data(sessionId).board;
     }
 
     @Override
     public MapConfig map(GameSession.Id sessionId) {
-        return sessions.get(sessionId).map;
+        return data(sessionId).map;
     }
 
     @Override
     public TalkConfig talk(GameSession.Id sessionId) {
-        return sessions.get(sessionId).talk;
+        return data(sessionId).talk;
     }
 
     @Override
     public ImageConfig image(GameSession.Id sessionId) {
-        return sessions.get(sessionId).image;
+        return data(sessionId).image;
+    }
+
+    private Data data(GameSession.Id sessionId) {
+        return sessions.get(sessionId);
     }
 
 }

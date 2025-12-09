@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator;
 
+import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
@@ -58,10 +59,7 @@ public class TemplateGeneratorScenarioUseCase {
 
 
     private ScenarioConfig.Step parseStep(Tree root, TalkConfig talkConfig) {
-        ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
-        if (root.reference() != null) {
-            globalCache.registerReference(root.reference(), stepId);
-        }
+        final ScenarioConfig.Step.Id stepId = initStepId(root);
 
         I18n stepLabel = parseI18nFromLine(root).orElseThrow();
 
@@ -73,14 +71,6 @@ public class TemplateGeneratorScenarioUseCase {
             }
         }
 
-        /*default:
-        // Vérifions si c'est un Target qui commence par TARGET mais avec du texte après
-        if (child.header().startsWith(TARGET_KEY)) {
-            ScenarioConfig.Target extendedTarget = parseTarget(child);
-            targets.add(extendedTarget);
-        }
-        break;*/
-
         List<Possibility> possibilities = root.children().stream()
                 .filter(child -> child.header().equals(POSSIBILITY_KEY))
                 .map(child -> parsePossibility(child, stepId, talkConfig))
@@ -89,11 +79,18 @@ public class TemplateGeneratorScenarioUseCase {
         return new ScenarioConfig.Step(stepId, stepLabel,0, targets, possibilities); //TODO order
     }
 
+    private ScenarioConfig.Step.Id initStepId(Tree root) {
+        if (root.reference() != null) {
+            return globalCache.reference(root.reference(), ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id());
+        }
+        return new ScenarioConfig.Step.Id();
+    }
+
 
     private ScenarioConfig.Target parseTarget(Tree tree) {
         ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id();
         if (tree.reference() != null) {
-            globalCache.registerReference(tree.reference(), targetId);
+            targetId = globalCache.reference(tree.reference(), ScenarioConfig.Target.Id.class, targetId);
         }
         I18n label = parseI18nFromLine(tree).orElseThrow();
         boolean optional = tree.findByKey("OPTIONAL").map(Boolean::parseBoolean).orElse(false);
@@ -208,8 +205,8 @@ public class TemplateGeneratorScenarioUseCase {
                 String stepIdParam = sub.findByKeyOrThrow("STEPID");
 
                 ScenarioSessionState state = parseState(stateParam);
-                ScenarioConfig.Step.Id stepId = globalCache.getReference(stepIdParam, ScenarioConfig.Step.Id.class)
-                        .orElseThrow();
+
+                ScenarioConfig.Step.Id stepId = globalCache.reference(stepIdParam, ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id());
 
                 return new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
@@ -225,7 +222,7 @@ public class TemplateGeneratorScenarioUseCase {
             }
             case "TALK" -> {
                 String talkReference = sub.findByKeyWithUnique("talkId");
-                TalkItem.Id talkId = globalCache.getReference(talkReference, TalkItem.Id.class).orElseThrow();
+                TalkItem.Id talkId = globalCache.reference(talkReference, TalkItem.Id.class, new TalkItem.Id());
                 return new Consequence.DisplayTalk(new Consequence.Id(), talkId);
             }
             case "GAMEOVER" -> {
@@ -237,42 +234,39 @@ public class TemplateGeneratorScenarioUseCase {
 
     private PossibilityTrigger parseTrigger(Tree tree, TalkConfig talkConfig) {
 
-        String type = tree.params().getFirst().toLowerCase();
         Tree subTree = tree.sub();
-        switch (type) {
-            case "goinspace" -> {
+        switch (subTree.header()) {
+            case "GOINSPACE" -> {
                 String spaceRef = subTree.findByKeyWithUnique("SpaceId");
-                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                BoardSpace.Id spaceId = globalCache.reference(spaceRef, BoardSpace.Id.class, new BoardSpace.Id());
                 return new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), spaceId);
             }
-            case "gooutspace" -> {
+            case "GOOUTSPACE" -> {
                 String spaceRef = subTree.findByKeyWithUnique("SpaceId");
-                BoardSpace.Id spaceId = globalCache.getReference(spaceRef, BoardSpace.Id.class).orElseThrow();
+                BoardSpace.Id spaceId = globalCache.reference(spaceRef, BoardSpace.Id.class, new BoardSpace.Id());
                 return new PossibilityTrigger.SpaceGoOut(new PossibilityTrigger.Id(), spaceId);
             }
-            case "absolutetime" -> {
+            case "ABSOLUTETIME" -> {
                 String valueStr = subTree.findByKeyWithUnique("value");
                 return new PossibilityTrigger.AbsoluteTime(
                         new PossibilityTrigger.Id(),
                         GameSessionTimeUnit.ofMinutes(Integer.parseInt(valueStr)));
             }
-            case "talkoptionselect", "selecttalkoption" -> {
+            case "TALKOPTIONSELECT" -> {
                 String optionReference = subTree.findByKeyWithUnique(PARAM_KEY_TALK_OPTION);
-                TalkItem.Options.Option.Id optId = globalCache.getReference(optionReference, TalkItem.Options.Option.Id.class)
-                        .orElseThrow(); //TODO
+                TalkItem.Options.Option.Id optId = globalCache.reference(optionReference, TalkItem.Options.Option.Id.class, new TalkItem.Options.Option.Id());
                 TalkItem.Id talkId = talkConfig.findByIdByOptionId(optId).orElseThrow(); //TODO
                 return new PossibilityTrigger.TalkOptionSelect(new PossibilityTrigger.Id(), talkId, optId);
             }
-            case "talkend" -> {
-                String refTalkId = subTree.findByKeyWithUnique("talkId");
-                return new PossibilityTrigger.TalkEnd(new PossibilityTrigger.Id(),
-                        globalCache.getReference(refTalkId, TalkItem.Id.class).orElseThrow()
-                );
+            case "TALKEND" -> {
+                String talkReference = subTree.findByKeyWithUnique("talkId");
+                TalkItem.Id talkId = globalCache.reference(talkReference, TalkItem.Id.class, new TalkItem.Id());
+                return new PossibilityTrigger.TalkEnd(new PossibilityTrigger.Id(), talkId);
             }
-            case "clickmapobject" -> {
-                return new PossibilityTrigger.ClickMapObject(
-                        new PossibilityTrigger.Id(),
-                        subTree.findByKeyWithUnique("objectReference"));
+            case "IMAGEOBJECTCLICK" -> {
+                String objectReference = subTree.findByKeyWithUnique("objectId");
+                ImageObject.Id objectId = globalCache.reference(objectReference, ImageObject.Id.class, new ImageObject.Id());
+                return new PossibilityTrigger.ImageObjectClick(new PossibilityTrigger.Id(), objectId);
             }
         }
         return null;
@@ -287,20 +281,16 @@ public class TemplateGeneratorScenarioUseCase {
     }
 
     private Consequence parseGoalTargetConsequence(Tree sub, ScenarioConfig.Step.Id currentStepId) {
-
         Optional<String> optStepIdParam = sub.findByKey("stepid");
         String targetIdParam = sub.findByKeyOrThrow("targetid");
         String stateParam = sub.findByKeyOrThrow("state");
-
         ScenarioConfig.Step.Id stepId;
         if (optStepIdParam.isEmpty() || optStepIdParam.get().equals("CURRENT_STEP")) {
             stepId = currentStepId;
         } else {
-            stepId = globalCache.getReference(optStepIdParam.get(), ScenarioConfig.Step.Id.class)
-                    .orElseThrow();
+            stepId = globalCache.reference(optStepIdParam.get(), ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id());
         }
-        ScenarioConfig.Target.Id targetId = globalCache.getReference(targetIdParam, ScenarioConfig.Target.Id.class)
-                .orElseThrow();
+        ScenarioConfig.Target.Id targetId = globalCache.reference(targetIdParam, ScenarioConfig.Target.Id.class, new ScenarioConfig.Target.Id());
         return new Consequence.ScenarioTarget(new Consequence.Id(), stepId, targetId, parseState(stateParam));
     }
 
@@ -325,43 +315,6 @@ public class TemplateGeneratorScenarioUseCase {
                     java.util.Arrays.toString(SessionGameOver.Type.values()));
         }
     }
-
-
-
-    /**
-     * Trouve le step qui contient un target donné (par référence ou par ID).
-     *
-     * @param targetParam Le nom de la référence ou l'ID du target à chercher
-     * @return L'ID du step qui contient ce target, ou Optional.empty() si non trouvé
-     */
-    private Optional<ScenarioConfig.Step.Id> findStepContainingTarget(String targetParam, TemplateGeneratorGlobalCache globalCache) {
-        // D'abord essayer de résoudre le target comme une référence
-        Optional<ScenarioConfig.Target> referencedTarget = globalCache.getReference(targetParam, ScenarioConfig.Target.class);
-
-        if (referencedTarget.isPresent()) {
-            // Si on a trouvé le target par référence, chercher dans quel step il se trouve
-            ScenarioConfig.Target target = referencedTarget.get();
-
-            // Parcourir tous les steps enregistrés pour trouver celui qui contient ce target
-            return globalCache.getAllReferences(ScenarioConfig.Step.class)
-                    .stream()
-                    .filter(step -> step.targets().stream()
-                            .anyMatch(stepTarget -> stepTarget.id().equals(target.id())))
-                    .map(ScenarioConfig.Step::id)
-                    .findFirst();
-        }
-
-        // Si pas trouvé par référence, chercher par ID dans tous les steps
-        ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetParam);
-
-        return globalCache.getAllReferences(ScenarioConfig.Step.class)
-                .stream()
-                .filter(step -> step.targets().stream()
-                        .anyMatch(stepTarget -> stepTarget.id().equals(targetId)))
-                .map(ScenarioConfig.Step::id)
-                .findFirst();
-    }
-
 
 
 }

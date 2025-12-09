@@ -3,7 +3,6 @@ package fr.plop.contexts.connect.persistence.entity;
 import fr.plop.contexts.connect.domain.ConnectAuth;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.DeviceConnect;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -57,15 +56,12 @@ public class ConnectionAuthEntity {
         this.token = token;
     }
 
+    public ConnectAuth toModel() {
+        return new ConnectAuth(new ConnectToken(token), connection.toModel(), createdAt);
+    }
+
     public ConnectAuth toModelWithConnect(DeviceConnect connect) {
         return new ConnectAuth(new ConnectToken(token), connect, createdAt);
     }
 
-    public ConnectAuth toModel(GamePlayer nullablePlayer) {
-        return new ConnectAuth(new ConnectToken(token), connection.toModel(nullablePlayer), createdAt);
-    }
-
-    public ConnectAuth toModel() {
-        return new ConnectAuth(new ConnectToken(token), connection.toModel(null), createdAt);
-    }
 }

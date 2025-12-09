@@ -1,7 +1,6 @@
 package fr.plop.contexts.connect.persistence.entity;
 
 import fr.plop.contexts.connect.domain.DeviceConnect;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
@@ -48,8 +47,8 @@ public class ConnectionDeviceEntity {
         this.deviceId = deviceId;
     }
 
-    public DeviceConnect toModel(GamePlayer nullablePlayer) {
-        return new DeviceConnect(new DeviceConnect.Id(id), user.toModel(nullablePlayer), deviceId);
+    public DeviceConnect toModel() {
+        return new DeviceConnect(new DeviceConnect.Id(id), user.toModel(), deviceId);
     }
 
 }

@@ -53,7 +53,7 @@ public class TemplateGeneratorBoardUseCase {
 
         BoardSpace.Id id = new BoardSpace.Id();
         if (tree.reference() != null) {
-            globalCache.registerReference(tree.reference(), id);
+            id = globalCache.reference(tree.reference(), BoardSpace.Id.class, id);
         }
         return new BoardSpace(id, label, priority, rects);
     }

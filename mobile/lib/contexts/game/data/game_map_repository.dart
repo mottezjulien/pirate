@@ -48,25 +48,23 @@ class GameMap {
       pointer: pointer,
     );
   }
-
 }
 
-
-
 class ImageDetails {
-
+  final String id;
   final String label;
   final ImageData image;
   final List<ImageObject> objects;
 
-  ImageDetails({required this.label, required this.image, required this.objects});
+  ImageDetails({required this.id, required this.label,
+    required this.image, required this.objects});
 
   String get type => image.type;
   String get value => image.value;
 
   factory ImageDetails.fromJson(Map<String, dynamic> json) {
     final objectLists = (json['objects'] as List<dynamic>).map((object) => ImageObject.fromJson(object)).toList();
-    return ImageDetails(label: json['label'] as String,
+    return ImageDetails(id: json['id'] as String, label: json['label'] as String,
         image: ImageData.fromJson(json['image'] as Map<String, dynamic>), objects: objectLists);
   }
 }
@@ -155,76 +153,3 @@ class ImagePoint {
   ImagePoint({required this.color});
 }
 
-
-/*class MapItem {
-  final String id;
-  final String label;
-  final String type;
-  final Position position;
-  final PointData? point;
-  final ImageData? image;
-
-  MapItem({
-    required this.id,
-    required this.label,
-    required this.type,
-    required this.position,
-    this.point,
-    this.image,
-  });
-
-  factory MapItem.fromJson(Map<String, dynamic> json) {
-    final type = json['type'] as String;
-    return MapItem(
-      id: json['id'] as String,
-      label: json['label'] as String,
-      type: type,
-      position: Position.fromJson(json['position'] as Map<String, dynamic>),
-      point: type == 'POINT' ? PointData.fromJson(json['point'] as Map<String, dynamic>) : null,
-      image: type == 'IMAGE' ? ImageData.fromJson(json['image'] as Map<String, dynamic>) : null,
-    );
-  }
-}
-
-class Position {
-  final double top;
-  final double left;
-
-  Position({required this.top, required this.left});
-
-  factory Position.fromJson(Map<String, dynamic> json) {
-    return Position(
-      top: (json['top'] as num).toDouble(),
-      left: (json['left'] as num).toDouble(),
-    );
-  }
-}
-
-class PointData {
-  final Color color;
-
-  PointData({required this.color});
-
-  factory PointData.fromJson(Map<String, dynamic> json) {
-    final colorString = (json['color'] as String).toLowerCase();
-    return PointData(
-      color: _parseColor(colorString),
-    );
-  }
-}
-
-class ImageData {
-  final String type;
-  final String value;
-
-  ImageData({required this.type, required this.value});
-
-  factory ImageData.fromJson(Map<String, dynamic> json) {
-    return ImageData(
-      type: json['type'] as String,
-      value: json['value'] as String,
-    );
-  }
-}
-
-*/

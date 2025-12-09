@@ -35,7 +35,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
     public Optional<DeviceConnect> findByDeviceId(String deviceId) {
         return repository.findByDeviceIdFetchUser(deviceId)
                 .stream().findFirst()
-                .map(entity -> entity.toModel(null));
+                .map(ConnectionDeviceEntity::toModel);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         entity.setDeviceId(deviceId);
         entity.setUser(userRepository.save(userEntity));
         repository.save(entity);
-        return entity.toModel(null);
+        return entity.toModel();
     }
 
     @Override
@@ -72,7 +72,7 @@ public class ConnectionCreateAuthAdapter implements ConnectionCreateAuthUseCase.
         if (list.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(list.getFirst().toModel(null));
+        return Optional.of(list.getFirst().toModel());
 
     }
 

@@ -2,9 +2,8 @@ package fr.plop.contexts.game.session.situation.adapter;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
@@ -31,15 +30,9 @@ public class GameSessionSituationAdapter implements GameSessionSituationGetPort 
     }
 
     @Override
-    public GameSessionSituation get(GameContext context) {
+    public GameSessionSituation get(GameSessionContext context) {
         GameSessionSituation.Time time = new GameSessionSituation.Time(timerProvider.current(context.sessionId()));
         return new GameSessionSituation(board(context.playerId()), scenario(context.playerId()), time);
-    }
-
-    @Override
-    public GameSessionSituation get(GameSession.Id sessionId, GamePlayer player) {
-        GameSessionSituation.Time time = new GameSessionSituation.Time(timerProvider.current(sessionId));
-        return new GameSessionSituation(new GameSessionSituation.Board(player.spaceIds()), scenario(player.id()), time);
     }
 
     private GameSessionSituation.Board board(GamePlayer.Id playerId) {

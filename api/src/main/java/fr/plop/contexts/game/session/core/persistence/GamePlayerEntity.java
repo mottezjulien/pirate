@@ -2,7 +2,6 @@ package fr.plop.contexts.game.session.core.persistence;
 
 import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.board.persistence.entity.BoardSpaceEntity;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
@@ -121,7 +120,10 @@ public class GamePlayerEntity {
         List<ScenarioConfig.Step.Id> stepActiveIds = goals.stream()
                 .map(entity -> new ScenarioConfig.Step.Id(entity.getStep().getId()))
                 .toList();
-        return new GamePlayer(new GamePlayer.Id(id), stepActiveIds, spacesInIds);
+        return new GamePlayer(toModelId(), stepActiveIds, spacesInIds);
     }
 
+    public GamePlayer.Id toModelId() {
+        return new GamePlayer.Id(id);
+    }
 }

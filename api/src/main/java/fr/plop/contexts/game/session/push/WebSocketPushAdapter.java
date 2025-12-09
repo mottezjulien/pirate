@@ -18,7 +18,7 @@ public class WebSocketPushAdapter implements PushPort {
 
     @Override
     public void push(PushEvent event) {
-        webSocketHandler.broadcastMessage(event.sessionId(), event.playerId(), message(event));
+        webSocketHandler.broadcastMessage(event.context(), message(event));
     }
 
     private String message(PushEvent event) {

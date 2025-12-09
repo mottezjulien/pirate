@@ -6,9 +6,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.session.core.domain.model.GameContext;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionPushAdapter;
 import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
@@ -29,18 +27,15 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
     private final GameEventActionPushAdapter pushAdapter = mock(GameEventActionPushAdapter.class);
     private final GameEventActionScenarioAdapter scenarioAdapter = mock(GameEventActionScenarioAdapter.class);
     private final GameEventBroadCastIntern broadCast = new GameEventBroadCastIntern(port, situationGetPort, pushAdapter, scenarioAdapter);
-
-    private final GameSession.Id sessionId = new GameSession.Id();
-    private final GamePlayer.Id playerId = new GamePlayer.Id();
-    private final GameContext context = new GameContext(sessionId, playerId);
+    private final GameSessionContext context = new GameSessionContext();
     private final BoardSpace.Id spaceId = new BoardSpace.Id();
 
 
     @Test
     public void emptyPossibility() {
         when(port.findPossibilities(context)).thenReturn(Stream.empty());
-        broadCast.fire(goInEvent(), context);
-        verify(pushAdapter, never()).message(any(), any(), any());
+        broadCast.fire(context, goInEvent());
+        verify(pushAdapter, never()).message(any(), any());
         verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(any(), any());
     }
 
@@ -49,10 +44,10 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         List<Consequence> consequences = consequences();
         when(port.findPossibilities(context))
                 .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), triggerGoIn(spaceId), consequences)));
-        broadCast.fire(goInEvent(), new GameContext(sessionId, playerId));
+        broadCast.fire(context, goInEvent());
 
-        verify(pushAdapter).message(sessionId, playerId, ((Consequence.DisplayMessage) consequences.getFirst()).value());
-        verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, ((Consequence.ScenarioStep) consequences.get(1)));
+        verify(pushAdapter).message(context, ((Consequence.DisplayMessage) consequences.getFirst()).value());
+        verify(scenarioAdapter).updateStateOrCreateGoalStep(context.playerId(), ((Consequence.ScenarioStep) consequences.get(1)));
     }
 
     @Test
@@ -60,9 +55,9 @@ public class GameEventBroadCastInternTest_eventGoIn_consequenceAlertAndGoal {
         PossibilityTrigger trigger = triggerGoIn(new BoardSpace.Id("other space"));
         when(port.findPossibilities(context))
                 .thenReturn(Stream.of(new Possibility(new PossibilityRecurrence.Always(), trigger, consequences())));
-        broadCast.fire(goInEvent(), new GameContext(sessionId, playerId));
+        broadCast.fire(context, goInEvent());
 
-        verify(pushAdapter, never()).message(any(), any(), any());
+        verify(pushAdapter, never()).message(any(), any());
         verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(any(), any());
     }
 
