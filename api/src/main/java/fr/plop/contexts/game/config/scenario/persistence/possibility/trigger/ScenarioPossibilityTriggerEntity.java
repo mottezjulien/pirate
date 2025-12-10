@@ -5,6 +5,7 @@ import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import jakarta.persistence.*;
@@ -63,10 +64,6 @@ public class ScenarioPossibilityTriggerEntity {
         return keyValues;
     }
 
-    public void setKeyValues(Map<String, String> keyValues) {
-        this.keyValues = keyValues;
-    }
-
     public PossibilityTrigger toModel() {
         final PossibilityTrigger.Id id = new PossibilityTrigger.Id(this.id);
         return switch (type) {
@@ -86,7 +83,10 @@ public class ScenarioPossibilityTriggerEntity {
                     default -> throw new IllegalStateException("Unexpected value: " + keyValues.get(KEY_SPACE_TYPE));
                 };
             }
-            case STEP -> new PossibilityTrigger.StepActive(id);
+            case STEP ->{
+                ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id(keyValues.get(KEY_PRIMARY));
+                yield new PossibilityTrigger.StepActive(id, stepId);
+            }
             case TALK -> {
                 TalkItem.Id talkItemId = new TalkItem.Id(keyValues.get(KEY_PRIMARY));
                 yield switch (keyValues.get(KEY_TALK_TYPE)) {
@@ -130,6 +130,7 @@ public class ScenarioPossibilityTriggerEntity {
             }
             case PossibilityTrigger.StepActive stepActive -> {
                 entity.setType(Type.STEP);
+                entity.getKeyValues().put(KEY_PRIMARY, stepActive.stepId().value());
             }
             case PossibilityTrigger.TalkOptionSelect selectTalkOption -> {
                 entity.setType(Type.TALK);

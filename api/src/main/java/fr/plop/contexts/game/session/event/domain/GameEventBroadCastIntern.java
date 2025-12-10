@@ -43,7 +43,7 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
     public void fire(GameSessionContext context, GameEvent event) {
         //TODO Game in cache ?? In repo cache ?? Utile ??
         Stream<Possibility> possibilities = select(event, context);
-        possibilities.forEach(possibility -> doAction(event, context, possibility));
+        possibilities.forEach(possibility -> doAction(context, possibility));
     }
 
     private Stream<Possibility> select(GameEvent event, GameSessionContext context) {
@@ -53,13 +53,13 @@ public class GameEventBroadCastIntern implements GameEventBroadCast {
                 .filter(possibility -> possibility.accept(event, previousActions, situation));
     }
 
-    private void doAction(GameEvent event, GameSessionContext context, Possibility possibility) {
+    private void doAction(GameSessionContext context, Possibility possibility) {
         possibility.consequences()
-                .forEach(consequence -> _do(event, context, consequence));
+                .forEach(consequence -> _do(context, consequence));
         port.saveAction(context.playerId(), possibility.id(), port.current(context.sessionId()));
     }
 
-    private void _do(GameEvent event, GameSessionContext context, Consequence consequence) {
+    private void _do(GameSessionContext context, Consequence consequence) {
         switch (consequence) {
             case Consequence.ScenarioStep goal -> {
                 scenarioAdapter.updateStateOrCreateGoalStep(context.playerId(), goal);

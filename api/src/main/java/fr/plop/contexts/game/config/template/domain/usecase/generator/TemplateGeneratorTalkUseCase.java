@@ -8,7 +8,6 @@ import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.image.Image;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class TemplateGeneratorTalkUseCase {
 
@@ -19,6 +18,9 @@ public class TemplateGeneratorTalkUseCase {
 
     private final Map<String, TalkItem.Id> localCacheRefToId = new HashMap<>();
     private final Map<String, String> localCacheGenIdToRefNext = new HashMap<>();
+
+    private final List<TalkCharacter.Reference> characterReferences = new ArrayList<>();
+
     private final TemplateGeneratorI18nUseCase i18nGenerator = new TemplateGeneratorI18nUseCase();
 
     public TemplateGeneratorTalkUseCase(TemplateGeneratorGlobalCache globalCache) {
@@ -27,15 +29,17 @@ public class TemplateGeneratorTalkUseCase {
 
 
     public TalkConfig apply(Tree root) {
+        List<TalkItem> items = new ArrayList<>();
         for (Tree child : root.children()) {
             if ("TALK".equalsIgnoreCase(child.header())) {
-                return new TalkConfig(generateItems(child));
+                items.addAll(generateItems(child));
             }
         }
-        return new TalkConfig();
+        return new TalkConfig(items);
     }
 
     private List<TalkItem> generateItems(Tree tree) {
+        generateCharacterReferences(tree);
         List<TalkItem> items = generateItemsWithoutOtherItemReference(tree);
         return items.stream().map(item -> {
             if (item instanceof TalkItem.Continue _continue) {
@@ -55,31 +59,12 @@ public class TemplateGeneratorTalkUseCase {
         }).toList();
     }
 
-
-
-
-    private List<TalkItem> generateItemsWithoutOtherItemReference(Tree tree) {
-        List<TalkCharacter.Reference> characterReferences = characterReferences(tree);
-        return tree.children().stream()
-            .flatMap(child -> {
-                Optional<TalkItem> optItem = parseItem(child, characterReferences);
-                if (child.reference() != null) {
-                    optItem.ifPresent(talkItem -> {
-                        globalCache.reference(child.reference(), TalkItem.Id.class, talkItem.id());
-                        localCacheRefToId.put(child.reference(), talkItem.id());
-                    });
-                }
-                return optItem.stream();
-            }).toList();
-    }
-
-    private List<TalkCharacter.Reference> characterReferences(Tree tree) {
-        return tree.children().stream().flatMap(child -> {
+    private void generateCharacterReferences(Tree tree) {
+        tree.children().forEach(child -> {
             if (child.header().contains(KEY_TALK_CHARACTER)) {
-                return parseCharacterReferences(child).stream();
+                characterReferences.addAll(parseCharacterReferences(child));
             }
-            return Stream.empty();
-        }).toList();
+        });
     }
 
     private List<TalkCharacter.Reference> parseCharacterReferences(Tree characterTree) {
@@ -88,7 +73,7 @@ public class TemplateGeneratorTalkUseCase {
             TalkCharacter character = new TalkCharacter(characterChild.headerKeepCase());
             for (Tree avatarTree : characterChild.children()) {
                 List<String> params = avatarTree.params();
-                if(avatarTree.params().size() == 1) {
+                if (avatarTree.params().size() == 1) {
                     result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage("ASSET", params.getFirst())));
                 } else if (params.size() >= 2) {
                     result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage(params.getFirst(), params.get(1))));
@@ -98,11 +83,26 @@ public class TemplateGeneratorTalkUseCase {
         return result;
     }
 
-    private Optional<TalkItem> parseItem(Tree child, List<TalkCharacter.Reference> characterReferences) {
+    private List<TalkItem> generateItemsWithoutOtherItemReference(Tree tree) {
+        return tree.children().stream()
+                .flatMap(child -> {
+                    Optional<TalkItem> optItem = parseItem(child);
+                    if (child.reference() != null) {
+                        optItem.ifPresent(talkItem -> {
+                            globalCache.reference(child.reference(), TalkItem.Id.class, talkItem.id());
+                            localCacheRefToId.put(child.reference(), talkItem.id());
+                        });
+                    }
+                    return optItem.stream();
+                }).toList();
+    }
+
+
+    private Optional<TalkItem> parseItem(Tree child) {
         return switch (child.header()) {
-            case "SIMPLE" -> Optional.of(parseSimpleFromTree(child, parseCharacterReference(child, characterReferences)));
-            case "CONTINUE" -> Optional.of(parseContinueFromTree(child, parseCharacterReference(child, characterReferences)));
-            case "OPTIONS" -> Optional.of(parseMultipleOptionsFromTree(child, parseCharacterReference(child, characterReferences)));
+            case "SIMPLE" -> Optional.of(parseSimpleFromTree(child, parseCharacterReference(child)));
+            case "CONTINUE" -> Optional.of(parseContinueFromTree(child, parseCharacterReference(child)));
+            case "OPTIONS" -> Optional.of(parseMultipleOptionsFromTree(child, parseCharacterReference(child)));
             default -> Optional.empty();
         };
     }
@@ -126,31 +126,31 @@ public class TemplateGeneratorTalkUseCase {
     }
 
 
-    private TalkCharacter.Reference parseCharacterReference(Tree tree, List<TalkCharacter.Reference> characterReferences) {
+    private TalkCharacter.Reference parseCharacterReference(Tree tree) {
         Optional<TalkCharacter.Reference> characterReference = tree.children().stream().filter(child -> child.header()
                         .equals(KEY_TALK_CHARACTER))
                 .findFirst()
                 .map(child -> {
                     List<String> parts = child.params();
                     if (parts.size() >= 2) {
-                        return parseCharacterReferenceFromParams(parts.get(0), parts.get(1), characterReferences);
+                        return parseCharacterReferenceFromParams(parts.get(0), parts.get(1));
                     }
-                    if(!child.children().isEmpty() && !child.children().getFirst().children().isEmpty()) {
+                    if (!child.children().isEmpty() && !child.children().getFirst().children().isEmpty()) {
                         String characterName = child.children().getFirst().headerKeepCase();
                         String reference = child.children().getFirst().children().getFirst().headerKeepCase();
-                        return parseCharacterReferenceFromParams(characterName, reference, characterReferences);
+                        return parseCharacterReferenceFromParams(characterName, reference);
                     }
                     throw new RuntimeException("Character not found");
-        });
+                });
         return characterReference.orElseGet(() -> {
-            if(tree.params().size() == 2) {
-                return parseCharacterReferenceFromParams(tree.params().get(0), tree.params().get(1), characterReferences);
+            if (tree.params().size() == 2) {
+                return parseCharacterReferenceFromParams(tree.params().get(0), tree.params().get(1));
             }
             throw new RuntimeException("Character not found");
         });
     }
 
-    private TalkCharacter.Reference parseCharacterReferenceFromParams(String characterName, String reference, List<TalkCharacter.Reference> characterReferences) {
+    private TalkCharacter.Reference parseCharacterReferenceFromParams(String characterName, String reference) {
         if (!characterName.isEmpty()) {
             return characterReferences.stream()
                     .filter(r -> r.character().name().equalsIgnoreCase(characterName))
@@ -165,7 +165,6 @@ public class TemplateGeneratorTalkUseCase {
         Image.Type imageType = "WEB".equalsIgnoreCase(typeStr) ? Image.Type.WEB : Image.Type.ASSET;
         return new Image(imageType, imagePath);
     }
-
 
 
     private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
@@ -218,7 +217,7 @@ public class TemplateGeneratorTalkUseCase {
                         .flatMap(t -> t.params().stream())
                         .findFirst();
 
-                nextIdRef.ifPresent(nextId -> localCacheGenIdToRefNext.put(option.id().value(),  nextId));
+                nextIdRef.ifPresent(nextId -> localCacheGenIdToRefNext.put(option.id().value(), nextId));
 
                 options.add(option);
 

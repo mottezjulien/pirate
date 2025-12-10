@@ -158,7 +158,7 @@ public class TemplateGeneratorScenarioUseCase {
         tree.children().forEach(child -> {
             String actionStr = child.header().trim();
             if (POSSIBILITY_TRIGGER_KEY.equals(actionStr)) {
-                trigger.set(parseTrigger(child, talkConfig));
+                trigger.set(parseTrigger(child, currentStepId, talkConfig));
             }
         });
 
@@ -232,7 +232,7 @@ public class TemplateGeneratorScenarioUseCase {
         throw new TemplateException("Invalid consequence format: " + sub.header());
     }
 
-    private PossibilityTrigger parseTrigger(Tree tree, TalkConfig talkConfig) {
+    private PossibilityTrigger parseTrigger(Tree tree, ScenarioConfig.Step.Id currentStepId, TalkConfig talkConfig) {
 
         Tree subTree = tree.sub();
         switch (subTree.header()) {
@@ -245,6 +245,9 @@ public class TemplateGeneratorScenarioUseCase {
                 String spaceRef = subTree.findByKeyWithUnique("SpaceId");
                 BoardSpace.Id spaceId = globalCache.reference(spaceRef, BoardSpace.Id.class, new BoardSpace.Id());
                 return new PossibilityTrigger.SpaceGoOut(new PossibilityTrigger.Id(), spaceId);
+            }
+            case "STEPACTIVE" -> {
+                return new PossibilityTrigger.StepActive(new PossibilityTrigger.Id(), currentStepId);
             }
             case "ABSOLUTETIME" -> {
                 String valueStr = subTree.findByKeyWithUnique("value");

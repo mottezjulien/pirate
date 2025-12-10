@@ -27,19 +27,23 @@ public class TemplateInitUseCase {
     public void apply() {
 
         //TODO: On supprime tout comme des gros bourrins ???
-        /*if (outPort.isEmpty()) {
-            outPort.create(firstTemplate());
-        }*/
         outPort.deleteAll();
+
         Template chezWam = chezWamTemplate();
         if (!chezWam.isValid()) {
-            throw new IllegalStateException("Template chez_wam invalide: Talks référencés manquants");
+            throw new IllegalStateException("Template chezWam invalide");
         }
         outPort.create(chezWam);
 
+        Template lyon9 = lyon9Template();
+        if (!lyon9.isValid()) {
+            throw new IllegalStateException("Template lyon9 invalide");
+        }
+        outPort.create(lyon9);
+
         Template testDiscussionTemplate = testDiscussionTemplate();
         if (!testDiscussionTemplate.isValid()) {
-            throw new IllegalStateException("Template test_discution invalide: Talks référencés manquants");
+            throw new IllegalStateException("Template test_discution invalide");
         }
         outPort.create(testDiscussionTemplate);
     }
@@ -48,6 +52,17 @@ public class TemplateInitUseCase {
         try {
             //String scriptContent = loadScriptFromResources("template/chez_wam.txt");
             String scriptContent = loadScriptFromResources("template/chez_wam_easy.txt");
+            TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
+            TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+            return generator.apply(script);
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
+        }
+    }
+
+    private Template lyon9Template() {
+        try {
+            String scriptContent = loadScriptFromResources("template/lyon9.txt");
             TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
             TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
             return generator.apply(script);

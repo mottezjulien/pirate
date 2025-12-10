@@ -10,8 +10,9 @@ import java.util.Optional;
 public class TreeGenerator {
 
     private static final String SEPARATOR_CHILDREN = "---";
-    public static final String LINE_BREAK = "\n";
-    public static final String SEPARATOR_INLINE = ":";
+    private static final String LINE_BREAK = "\n";
+    private static final String SEPARATOR_INLINE = ":";
+    private static final String COMMENT = "#";
 
     public List<Tree> generate(String str) {
         String[] lines = str.split(LINE_BREAK);
@@ -23,15 +24,19 @@ public class TreeGenerator {
         Optional<String> currentRoot = Optional.empty();
         for (String s : lines) {
             String line = s.trim();
-            if (!line.isBlank()) {
-                if (line.startsWith(SEPARATOR_CHILDREN)) {
-                    children.add(line.substring(SEPARATOR_CHILDREN.length()));
+            if (!line.isBlank() && !line.startsWith(COMMENT)) {
+                String cleanLine = line.trim();
+                if(line.contains(COMMENT)) {
+                    cleanLine = line.substring(0, line.indexOf(COMMENT)).trim();
+                }
+                if (cleanLine.startsWith(SEPARATOR_CHILDREN)) {
+                    children.add(cleanLine.substring(SEPARATOR_CHILDREN.length()));
                 } else {
                     if (currentRoot.isPresent()) {
-                        roots.add(generateOneLine(currentRoot.orElseThrow(), children));
+                        roots.add(generateOneLine(currentRoot.get(), children));
                         children.clear();
                     }
-                    currentRoot = Optional.of(line);
+                    currentRoot = Optional.of(cleanLine);
                 }
             }
         }

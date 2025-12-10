@@ -49,8 +49,11 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record StepActive(Id id) implements PossibilityTrigger {
-
+    record StepActive(Id id, ScenarioConfig.Step.Id stepId) implements PossibilityTrigger {
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            return event instanceof GameEvent.GoalActive(ScenarioConfig.Step.Id actualStepId) && stepId.equals(actualStepId);
+        }
     }
 
     record AbsoluteTime(Id id, GameSessionTimeUnit value) implements PossibilityTrigger {

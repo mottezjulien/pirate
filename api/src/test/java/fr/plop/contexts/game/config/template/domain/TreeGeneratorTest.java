@@ -103,5 +103,38 @@ public class TreeGeneratorTest {
 
     }
 
+    @Test
+    public void multiplesWithComments() {
+        String str = """
+                 Bonjour : Pouet:   Pouet2
+                --- Hello
+                ------ Test:Other
+                # Commentaire 1
+                ------Test2:Other2
+                --- Alors:ça:va  # Commentaire 2
+                --- Alors2:oui ça va !!
+                """;
+
+        TreeGenerator treeGenerator = new TreeGenerator();
+        List<Tree> roots = treeGenerator.generate(str);
+        assertThat(roots).containsExactlyInAnyOrder(new Tree("Bonjour",
+                List.of("Pouet", "Pouet2"),
+                List.of(
+                        new Tree("Hello",
+                                List.of(),
+                                List.of(
+                                        new Tree("Test",
+                                                List.of("Other"),
+                                                List.of()),
+                                        new Tree("Test2",
+                                                List.of("Other2"),
+                                                List.of()))),
+                        new Tree("Alors", List.of("ça", "va"), List.of()),
+                        new Tree("Alors2", List.of("oui ça va !!"), List.of())
+                )));
+
+    }
+
+
 
 }

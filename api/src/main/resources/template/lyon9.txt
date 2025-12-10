@@ -1,55 +1,90 @@
 LYON_9:1.0::10
 --- Board
------- Space (ref PLACE_PARIS):Place de Paris:HIGH
+------ Space (ref SPACE_PLACE_PARIS):Place de Paris:HIGH
 --------- bottomLeft:45.778678:4.804497:topRight:45.779231:4.805454
------- Space (ref CHEZ_WAM):Chez Moi:HIGH
+------ Space (ref SPACE_CHEZ_WAM):Chez Moi:HIGH
 --------- bottomLeft:45.778075:4.803506:topRight:45.778353:4.803923
------- Space (ref TNG):TNG:HIGH
+------ Space (ref SPACE_TNG):TNG:HIGH
 --------- bottomLeft:45.777163:4.803153:topRight:45.777446:4.803636
 
---- Step (ref STEP_1):FR:Enquete au théatre:EN:Enquete au théatre (en)
------- Target (ref TARGET_1A):FR:Aller devant le théatre:EN:Aller devant le théatre (en)
------- Target (ref TARGET_1B):FR:Cliquer sur l'image:EN:Cliquer sur l'image (en)
-
-
------- Possibility
---------- Trigger:GOINSPACE:CHEZ_WAM
---------- Consequence:Alert
------------- FR:Vous êtes chez moi
------------- EN:Vous êtes chez moi (en)
-
------- Possibility
---------- Trigger:GOINSPACE:TNG
---------- Consequence:Alert
------------- FR:Vous êtes devant le TNG
------------- EN:Vous êtes devant le TNG (en)
-
-
-
-
-
-
-
-
------- Possibility
---------- Trigger:GOINSPACE:SPACE_KITCHEN
---------- Consequence:Alert
------------- FR:Vous êtes dans la cuisine
------------- EN:You are in the kitchen
-
------- Possibility
---------- Trigger:GOOUTSPACE:SPACE_KITCHEN
---------- Consequence:Alert
------------- FR:Vous êtes sortie de la cuisine
------------- EN:You are out the kitchen
-
---- Map:Asset:assets/game/tres/ile.png
+--- Map:Asset:assets/game/lyon9/map_lyon9_0.png
+------ Label:Lyon 9
 ------ Priority:HIGH
------- Position:0.4711538461538462:0.51762815622183
---------- Priority:HIGHEST
---------- Image:ASSET:assets/game/tres/encre.png
---------- Space:SPACE_BUREAU
------- Object:Image:0.9158653112558219:0.2900640047513522
+------ Pointer:ASSET:assets/game/tres/pointer.png
+------ Position:0.2:0.8
+--------- Space:SPACE_PLACE_PARIS
+------ Position:0.5:0.5
+--------- Space:SPACE_CHEZ_WAM
+------ Position:0.7:0.3
+--------- Space:SPACE_TNG
+
+
+--- Map:Asset:assets/game/lyon9/map_lyon9_1.png
+------ Label:TNG
+------ Priority:HIGH
+------ Condition:AND
+--------- Condition:instep:STEP_TNG
+--------- Condition:insidespace:SPACE_TNG
+------ Object:Image:0.6:0.2
 --------- Priority:MEDIUM
---------- Image:ASSET:assets/game/tres/phare.png
---------- Space:SPACE_BUREAU
+--------- Image:ASSET:assets/game/lyon9/coco.png
+
+
+--- Talk
+------ Character
+--------- Robototo
+------------ default:ASSET:/game/lyon9/robotot_default.png
+--------- Coco
+------------ happy1:ASSET:/game/lyon9/perroquet_happy1.png
+------------ happy2:ASSET:/game/lyon9/perroquet_happy2.png
+------------ mad2:ASSET:/game/lyon9/perroquet_mad1.png
+------------ mad2:ASSET:/game/lyon9/perroquet_mad2.png
+
+
+--- Step (ref STEP_INTRO):FR:Introduction
+
+------ Possibility
+--------- Trigger:ABSOLUTETIME:0
+--------- Consequence:Talk:TALK_LETS_GO1
+
+------ Possibility
+--------- Trigger:TalkOptionSelect:TALK_LETS_GO3_OPTION_INTRO
+--------- Consequence:Alert
+------------ FR:Petit tour à construire ...
+
+------ Possibility
+--------- Trigger:TalkOptionSelect:TALK_LETS_GO3_OPTION_ACTION
+--------- Consequence:Goal:stepId:STEP_INTRO:state:SUCCESS
+--------- Consequence:Goal:stepId:STEP_TNG:state:ACTIVE
+
+
+--- Talk
+------ Continue (ref TALK_LETS_GO1):TALK_LETS_GO2
+--------- Character:Robototo:default
+--------- FR:Et c'est parti, bienvenu dans la partie d'exemple !
+------ Continue (ref TALK_LETS_GO2):TALK_LETS_GO3
+--------- Character:Robototo:default
+--------- FR:Nous allons faire une petite aventure afin de que tu puisses voir les différentes possibilités des l'applications.
+------ Options (ref TALK_LETS_GO3)
+--------- Character:Robototo:default
+ --------- FR:Pour commencer, est ce que tu veux que je te présente l'application, les différentes actions possible (conseiller pour la première partie) ou bien veux tu rentrer directement de l'action ?
+--------- Option (ref TALK_LETS_GO3_OPTION_INTRO)
+------------ FR:Je veux bien un peu d'explication de l'application
+--------- Option (ref TALK_LETS_GO3_OPTION_ACTION)
+------------ FR:Je veux rentrer directement dans l'action
+
+
+--- Step (ref STEP_TNG):FR:Retrouver la loupe mystère
+------ Target (ref TARGET_TNG_A):FR:Aller devant le TNG
+------ Target (ref TARGET_TNG_B):FR:Cliquer sur l'image
+
+------ Possibility
+--------- Trigger:STEPACTIVE
+--------- Consequence:Alert
+------------ FR:C'est parti pour l'aventure !!!
+
+------ Possibility:times:1
+--------- Trigger:GOINSPACE:SPACE_TNG
+--------- Consequence:Goal:stepId:TARGET_TNG_A:state:success
+--------- Consequence:Alert
+------------ FR:Bravo, vous avez trouver le TNG. Maintenant, il reste plus qu'à trouver la loupe mystère.
