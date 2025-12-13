@@ -32,8 +32,8 @@ LYON_9:1.0::10
 
 --- Talk
 ------ Character
---------- Robototo
------------- default:ASSET:/game/lyon9/robotot_default.png
+--------- Roboto
+------------ default:ASSET:/game/lyon9/roboto_default.png
 --------- Coco
 ------------ happy1:ASSET:/game/lyon9/perroquet_happy1.png
 ------------ happy2:ASSET:/game/lyon9/perroquet_happy2.png
@@ -42,9 +42,11 @@ LYON_9:1.0::10
 
 
 --- Step (ref STEP_INTRO):FR:Introduction
+------ Target (ref TARGET_INTRO_1):FR:Lancer l'application
+------ Target (ref TARGET_INTRO_2):FR:Faire une démo de l'application
 
 ------ Possibility
---------- Trigger:ABSOLUTETIME:0
+--------- Trigger:STEPACTIVE
 --------- Consequence:Talk:TALK_LETS_GO1
 
 ------ Possibility
@@ -60,14 +62,14 @@ LYON_9:1.0::10
 
 --- Talk
 ------ Continue (ref TALK_LETS_GO1):TALK_LETS_GO2
---------- Character:Robototo:default
+--------- Character:Roboto:default
 --------- FR:Et c'est parti, bienvenu dans la partie d'exemple !
 ------ Continue (ref TALK_LETS_GO2):TALK_LETS_GO3
---------- Character:Robototo:default
+--------- Character:Roboto:default
 --------- FR:Nous allons faire une petite aventure afin de que tu puisses voir les différentes possibilités des l'applications.
 ------ Options (ref TALK_LETS_GO3)
---------- Character:Robototo:default
- --------- FR:Pour commencer, est ce que tu veux que je te présente l'application, les différentes actions possible (conseiller pour la première partie) ou bien veux tu rentrer directement de l'action ?
+--------- Character:Roboto:default
+--------- FR:Pour commencer, est ce que tu veux que je te présente l'application, les différentes actions possible (conseiller pour la première partie) ou bien veux tu rentrer directement de l'action ?
 --------- Option (ref TALK_LETS_GO3_OPTION_INTRO)
 ------------ FR:Je veux bien un peu d'explication de l'application
 --------- Option (ref TALK_LETS_GO3_OPTION_ACTION)

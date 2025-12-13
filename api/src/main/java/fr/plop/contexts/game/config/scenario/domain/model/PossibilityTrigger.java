@@ -90,11 +90,23 @@ public sealed interface PossibilityTrigger permits
 
 
     record TalkEnd(Id id, TalkItem.Id talkId) implements PossibilityTrigger {
-
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            if (event instanceof GameEvent.Talk talkEvent) {
+                return talkEvent.talkId().equals(talkId);
+            }
+            return false;
+        }
     }
 
     record TalkOptionSelect(Id id, TalkItem.Id talkId, TalkItem.Options.Option.Id optionId) implements PossibilityTrigger {
-
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            if (event instanceof GameEvent.Talk(TalkItem.Id eventTalkId, Optional<TalkItem.Options.Option.Id> eventOptOptionId)) {
+                return eventTalkId.equals(talkId) && eventOptOptionId.map(optionIdEvent -> optionIdEvent.equals(optionId)).orElse(false);
+            }
+            return false;
+        }
     }
 
     record ImageObjectClick(Id id, ImageObject.Id objectId) implements PossibilityTrigger {

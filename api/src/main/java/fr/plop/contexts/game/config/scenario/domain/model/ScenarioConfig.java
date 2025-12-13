@@ -63,7 +63,7 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
         return orderedSteps().findFirst().orElseThrow();
     }
 
-    private Stream<Step> orderedSteps() {
+    public Stream<Step> orderedSteps() {
         return steps.stream().sorted(Comparator.comparing(o -> o.order));
     }
 

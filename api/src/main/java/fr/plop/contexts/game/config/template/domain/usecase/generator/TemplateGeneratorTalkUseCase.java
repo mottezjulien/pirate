@@ -108,22 +108,65 @@ public class TemplateGeneratorTalkUseCase {
     }
 
     private TalkItem.Simple parseSimpleFromTree(Tree simpleTree, TalkCharacter.Reference talkCharacterReference) {
-        Optional<I18n> messageOpt = i18nGenerator.apply(simpleTree.children().stream()
-                .filter(child -> !child.header().equals(KEY_TALK_CHARACTER)).toList());
-        I18n message = messageOpt.orElse(new I18n(Map.of()));
-
-        return new TalkItem.Simple(new TalkItem.Id(), message, talkCharacterReference);
+        return new TalkItem.Simple(new TalkItem.Id(), parseValue(simpleTree), talkCharacterReference);
     }
+
 
     private TalkItem.Continue parseContinueFromTree(Tree continueTree, TalkCharacter.Reference talkCharacterReference) {
-        Optional<I18n> messageOpt = i18nGenerator.apply(continueTree.children().stream()
-                .filter(child -> !child.header().equals(KEY_TALK_CHARACTER)).toList());
-        I18n message = messageOpt.orElse(new I18n(Map.of()));
-
         TalkItem.Id id = new TalkItem.Id();
         localCacheGenIdToRefNext.put(id.value(), continueTree.params().getFirst());
-        return new TalkItem.Continue(id, message, talkCharacterReference, null);
+        return new TalkItem.Continue(id, parseValue(continueTree), talkCharacterReference, null);
     }
+
+    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
+
+        TalkItem.Id id = new TalkItem.Id();
+
+        List<TalkItem.Options.Option> options = new ArrayList<>();
+
+        for (Tree child : optionsTree.children()) {
+            String header = child.header();
+            if (header.equals(PARAM_KEY_TALK_OPTION)) {
+
+                List<Tree> childrenToParseI18n = child.children();
+                Optional<Tree> valueTree = child.children().stream()
+                        .filter(t -> t.header().equals("VALUE"))
+                        .findFirst();
+
+                if (valueTree.isPresent()) {
+                    childrenToParseI18n = valueTree.get().children();
+                }
+
+                Optional<I18n> optionOpt = i18nGenerator.apply(childrenToParseI18n);
+                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
+
+                TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id();
+                if (child.reference() != null) {
+                    optionId = globalCache.reference(child.reference(), TalkItem.Options.Option.Id.class, optionId);
+                }
+
+                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, options.size(), optionMessage);
+
+                // Chercher la référence nextId via "next:TALK002"
+                Optional<String> nextIdRef = child.children().stream()
+                        .filter(t -> t.header().equals("NEXT"))
+                        .flatMap(t -> t.params().stream())
+                        .findFirst();
+
+                nextIdRef.ifPresent(nextId -> localCacheGenIdToRefNext.put(option.id().value(), nextId));
+
+                options.add(option);
+            }
+        }
+        return new TalkItem.Options(id, parseValue(optionsTree), talkCharacterReference, options);
+    }
+
+    private I18n parseValue(Tree item) {
+        return item.findChildKey("LABEL")
+                .map(this::parseValue)
+                .orElseGet(() -> i18nGenerator.apply(item.children()).orElse(new I18n(Map.of())));
+    }
+
 
 
     private TalkCharacter.Reference parseCharacterReference(Tree tree) {
@@ -167,65 +210,7 @@ public class TemplateGeneratorTalkUseCase {
     }
 
 
-    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
-        // Extraire la référence du header si elle existe : "Options(ref OPTIONS_ABCD)"
-        //String referenceName = optionsTree.reference();
 
-        TalkItem.Id id = new TalkItem.Id();
-
-        I18n label = new I18n(Map.of()); // label par défaut
-        List<TalkItem.Options.Option> options = new ArrayList<>();
-
-        for (Tree child : optionsTree.children()) {
-            String header = child.header();
-            if (header.equals("LABEL")) {
-                // Parse l'I18n pour le label
-                Optional<I18n> labelOpt = i18nGenerator.apply(child.children());
-                label = labelOpt.orElse(new I18n(Map.of()));
-            } else if (header.equals(PARAM_KEY_TALK_OPTION)) {
-
-
-                // Parse l'I18n pour chaque option
-                // Structure:
-                // Option (ref WAHUP_YES)
-                //   value
-                //     FR:Oui
-                //     EN:Yes
-                //   next:TALK002
-                List<Tree> childrenToParseI18n = child.children();
-                Optional<Tree> valueTree = child.children().stream()
-                        .filter(t -> t.header().equals("VALUE"))
-                        .findFirst();
-
-                if (valueTree.isPresent()) {
-                    childrenToParseI18n = valueTree.get().children();
-                }
-
-                Optional<I18n> optionOpt = i18nGenerator.apply(childrenToParseI18n);
-                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
-
-                TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id();
-                if (child.reference() != null) {
-                    optionId = globalCache.reference(child.reference(), TalkItem.Options.Option.Id.class, optionId);
-                }
-
-                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, options.size(), optionMessage);
-
-                // Chercher la référence nextId via "next:TALK002"
-                Optional<String> nextIdRef = child.children().stream()
-                        .filter(t -> t.header().equals("NEXT"))
-                        .flatMap(t -> t.params().stream())
-                        .findFirst();
-
-                nextIdRef.ifPresent(nextId -> localCacheGenIdToRefNext.put(option.id().value(), nextId));
-
-                options.add(option);
-
-            }
-        }
-
-        return new TalkItem.Options(id, label, talkCharacterReference, options);
-    }
 
 
 }

@@ -37,8 +37,7 @@ class GameSessionRepository {
 
   GameSession sessionToModel(Map<String, dynamic> json) {
     return GameSession(
-      id: json['id'],
-      label: json['label'],
+      id: json['id']
     );
   }
 

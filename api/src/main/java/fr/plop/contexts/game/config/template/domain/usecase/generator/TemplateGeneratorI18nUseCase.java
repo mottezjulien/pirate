@@ -13,7 +13,6 @@ public class TemplateGeneratorI18nUseCase {
 
     Language currentLang;
 
-
     public Optional<I18n> apply(List<Tree> children) {
         final Map<Language, String> values = new HashMap<>();
         currentLang = Language.byDefault();

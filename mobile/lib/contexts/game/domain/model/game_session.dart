@@ -13,16 +13,14 @@ import '../../session/talk/views/game_session_talk_dialog.dart';
 
 class GameSession {
 
-  final String _id, _label;
+  final String _id;
   final GameLocation gameLocation = GameLocation();
   final GameEventListener eventListener = GameEventListener();
 
-  GameSession({required String id, required String label})
-      : _id = id, _label = label;
+  GameSession({required String id})
+      : _id = id;
 
   String get id => _id;
-
-  String get label => _label;
 
   Future<void> init() async {
     await Future.wait([

@@ -10,14 +10,13 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.scenario.domain.GameSessionScenarioGoalPort;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.subs.i18n.domain.Language;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/sessions/{sessionId}")
@@ -37,48 +36,41 @@ public class GameSessionScenarioController {
 
 
     @GetMapping({"/goals", "/goals/"})
-    public List<GameGoalResponseDTO> goals(@RequestHeader("Authorization") String rawToken,
-                                           @RequestHeader("Language") String languageStr,
-                                           @PathVariable("sessionId") String sessionIdStr) {
+    public Stream<GameGoalResponseDTO> goals(@RequestHeader("Authorization") String rawToken,
+                                             @RequestHeader("Language") String languageStr,
+                                             @PathVariable("sessionId") String sessionIdStr) {
 
-        Language language = Language.valueOf(languageStr.toUpperCase());
-        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        final Language language = Language.valueOf(languageStr.toUpperCase());
+        final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            ScenarioSessionPlayer scenarioSessionPlayer = scenarioGoalPort.findByPlayerId(playerId);
-            ScenarioConfig scenario = cache.scenario(sessionId);
-            return scenarioSessionPlayer.bySteps()
-                    .entrySet().stream()
-                    .flatMap(entry -> scenario.steps().stream()
-                            .filter(step -> step.id().equals(entry.getKey()))
-                            .findFirst()
-                            .map(step -> GameGoalResponseDTO.fromModel(step, entry.getValue(),
-                                    scenarioSessionPlayer.byTargets(), language))
-                            .stream()).toList();
+            final ScenarioSessionPlayer scenarioSessionPlayer = scenarioGoalPort.findByPlayerId(playerId);
+            final ScenarioConfig scenario = cache.scenario(sessionId);
+
+            return scenario.orderedSteps()
+                    .filter(step -> scenarioSessionPlayer.isStepPresent(step.id()))
+                    .map(step -> GameGoalResponseDTO.fromModel(step, scenarioSessionPlayer, language));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
     }
 
     public record GameGoalResponseDTO(String id, String label, String state, List<GameTargetSimpleResponseDTO> targets) {
-        public static GameGoalResponseDTO fromModel(ScenarioConfig.Step step,
-                                                    ScenarioSessionState state,
-                                                    Map<ScenarioConfig.Target.Id, ScenarioSessionState> byTargets,
-                                                    Language language) {
-            List<GameTargetSimpleResponseDTO> targetDTOs = step.targets().stream()
-                    .map(target -> GameTargetSimpleResponseDTO.fromModel(target, byTargets, language)).toList();
-            return new GameGoalResponseDTO(step.id().value(), step.label().value(language), state.name(), targetDTOs);
+        public static GameGoalResponseDTO fromModel(ScenarioConfig.Step step, ScenarioSessionPlayer scenarioSessionPlayer, Language language) {
+            List<GameTargetSimpleResponseDTO> targets = step.targets().stream()
+                    .map(target -> GameTargetSimpleResponseDTO.fromModel(target, scenarioSessionPlayer, language)).toList();
+             return new GameGoalResponseDTO(step.id().value(), step.label().value(language),
+                     scenarioSessionPlayer.optStepState(step.id()).orElseThrow().name(), targets);
         }
     }
 
     public record GameTargetSimpleResponseDTO(String id, String label, boolean done, boolean optional) {
-        public static GameTargetSimpleResponseDTO fromModel(ScenarioConfig.Target target, Map<ScenarioConfig.Target.Id,
-                                                                    ScenarioSessionState> byTargets,
+        public static GameTargetSimpleResponseDTO fromModel(ScenarioConfig.Target target, ScenarioSessionPlayer scenarioSessionPlayer,
                                                             Language language) {
-            ScenarioSessionState nullableState = byTargets.get(target.id());
             return new GameTargetSimpleResponseDTO(target.id().value(),
-                    target.label().value(language),nullableState == ScenarioSessionState.SUCCESS,
+                    target.label().value(language),
+                    scenarioSessionPlayer.isTargetDone(target.id()),
                     target.optional());
         }
     }

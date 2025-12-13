@@ -80,38 +80,7 @@ class GameSessionTalkDialog {
     return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: image.toWidget(fit: BoxFit.cover));
-    //return Image.asset("assets/pouet/bobdefault.jpg", fit: BoxFit.cover);
-    /*
-    if (characterImage.type.toString() == 'ImageType.ASSET') {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(
-          characterImage.value,
-          fit: BoxFit.cover,
-        ),
-      );
-    } else {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          characterImage.value,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Center(
-              child: Icon(Icons.broken_image, size: 40),
-            );
-          },
-        ),
-      );
-    }
-     */
-
   }
-
-  /*
-  Widget _buildCharacterImage(dynamic characterImage) {
-
-  }*/
 
   List<Widget> buttons(GameTalk talk, BuildContext context) {
     List<Widget> buttonChildren = [];
