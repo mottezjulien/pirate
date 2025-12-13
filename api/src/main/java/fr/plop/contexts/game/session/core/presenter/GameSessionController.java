@@ -48,8 +48,8 @@ public class GameSessionController {
         try {
             ConnectUser user = connectUseCase.findUserIdByRawToken(new ConnectToken(rawToken));
             Template.Code templateCode = new Template.Code(request.templateCode());
-            GameSession.Atom session = createUseCase.apply(templateCode, user.id());
-            return GameSessionResponseDTO.fromModel(session);
+            GameSessionContext context = createUseCase.apply(templateCode, user.id());
+            return GameSessionResponseDTO.fromModel(context.sessionId());
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
@@ -68,8 +68,8 @@ public class GameSessionController {
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            GameSession.Atom session = startUseCase.apply(sessionId, playerId);
-            return GameSessionResponseDTO.fromModel(session);
+            startUseCase.apply(new GameSessionContext(sessionId, playerId));
+            return GameSessionResponseDTO.fromModel(sessionId);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
@@ -97,27 +97,14 @@ public class GameSessionController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
     }
-    @PostMapping({"/{sessionId}", "/{sessionId}/"})
-    private GameSessionResponseDTO get(@RequestHeader("Authorization") String rawToken,
-                                       String sessionIdStr) {
-        GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        try {
-            connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            return GameSessionResponseDTO.fromModel(getPort.findById(sessionId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
-        } catch (ConnectException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
-        }
-
-    }
 
     public record GameSessionCreateRequest(String templateCode) {
 
     }
 
-    public record GameSessionResponseDTO(String id, String label) {
-        public static GameSessionResponseDTO fromModel(GameSession.Atom session) {
-            return new GameSessionResponseDTO(session.id().value(), session.label());
+    public record GameSessionResponseDTO(String id) {
+        public static GameSessionResponseDTO fromModel(GameSession.Id sessionId) {
+            return new GameSessionResponseDTO(sessionId.value());
         }
     }
 

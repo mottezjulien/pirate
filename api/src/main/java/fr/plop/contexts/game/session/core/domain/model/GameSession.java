@@ -6,19 +6,18 @@ import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSession;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
+import fr.plop.generic.tools.ListTools;
 import fr.plop.generic.tools.StringTools;
 
-import java.util.ArrayList;
 import java.util.List;
 
 //TODO USEFULL ?? (Cache && ScenarioSession by player)
-public record GameSession(Atom atom, State state, List<GamePlayer> players, ScenarioSession scenario,
+public record GameSession(Id id, String label, State state, List<GamePlayer> players, ScenarioSession scenario,
                           BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
 
-    public static GameSession buildWithoutPlayer(Atom atom, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig,
+    public static GameSession buildWithoutPlayer(Id id, String label, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig,
                                                  MapConfig mapConfig, TalkConfig talkConfig, ImageConfig imageConfig) {
-        return new GameSession(atom, state, new ArrayList<>(), ScenarioSession.build(scenarioConfig),
+        return new GameSession(id, label, state, List.of(), ScenarioSession.build(scenarioConfig),
                 boardConfig, mapConfig, talkConfig, imageConfig);
     }
 
@@ -28,20 +27,16 @@ public record GameSession(Atom atom, State state, List<GamePlayer> players, Scen
         }
     }
 
-    public record Atom(Id id, String label) {
-
-    }
-
     public enum State {
         INIT, ACTIVE, PAUSE, OVER
     }
 
-    public Id id() {
-        return atom.id();
+    public GameSession insertPlayerId(GamePlayer.Id playerId) {
+        return withPlayers(ListTools.concat(players, List.of(new GamePlayer(playerId))));
     }
 
-    public ScenarioSessionPlayer scenarioPlayer(GamePlayer.Id playerId) {
-        return scenario.player(playerId);
+    private GameSession withPlayers(List<GamePlayer> players) {
+        return new GameSession(id, label, state, players, scenario, board, map, talk, image);
     }
 
 }

@@ -61,7 +61,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case Consequence.ScenarioTarget goalTarget -> {
                 ScenarioPossibilityConsequenceGoalTargetEntity entity = new ScenarioPossibilityConsequenceGoalTargetEntity();
                 entity.setId(goalTarget.id().value());
-                entity.setStepId(goalTarget.stepId().value());
+                //entity.setStepId(goalTarget.stepId().value());
                 entity.setTargetId(goalTarget.targetId().value());
                 entity.setState(goalTarget.state());
                 yield entity;

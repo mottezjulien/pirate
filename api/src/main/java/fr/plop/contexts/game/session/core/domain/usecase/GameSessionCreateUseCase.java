@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 
 import java.util.Optional;
 
@@ -15,15 +15,14 @@ public class GameSessionCreateUseCase {
 
 
     public interface Port {
-        Optional<GameSession.Atom> findCurrentGameSession(ConnectUser.Id userId);
+        Optional<GameSessionContext> findCurrentGameSession(ConnectUser.Id userId);
 
         Optional<Template> findTemplateByCode(Template.Code code);
 
         GameSession create(Template template);
 
-        GamePlayer.Id insert(GameSession.Id gameId, ConnectUser.Id userId);
+        GamePlayer.Id insertUserId(GameSession.Id gameId, ConnectUser.Id userId);
 
-        void insertScenarioSessionPlayer(GamePlayer.Id playerId, ScenarioSessionPlayer sessionPlayer);
     }
 
     private final Port port;
@@ -34,8 +33,8 @@ public class GameSessionCreateUseCase {
         this.cache = cache;
     }
 
-    public GameSession.Atom apply(Template.Code code, ConnectUser.Id userId) throws GameException {
-        Optional<GameSession.Atom> findInGame = port.findCurrentGameSession(userId);
+    public GameSessionContext apply(Template.Code code, ConnectUser.Id userId) throws GameException {
+        Optional<GameSessionContext> findInGame = port.findCurrentGameSession(userId);
         if (findInGame.isPresent()) {
             return findInGame.get();
         }
@@ -43,17 +42,17 @@ public class GameSessionCreateUseCase {
     }
 
 
-    private GameSession.Atom createNewGame(Template.Code code, ConnectUser.Id userId) throws GameException {
+    private GameSessionContext createNewGame(Template.Code code, ConnectUser.Id userId) throws GameException {
         Template template = port.findTemplateByCode(code)
                 .orElseThrow(() -> new GameException(GameException.Type.TEMPLATE_NOT_FOUND));
 
         GameSession session = port.create(template);
-        GamePlayer.Id playerId = port.insert(session.id(), userId);
+        GamePlayer.Id playerId = port.insertUserId(session.id(), userId);
 
-        ScenarioSessionPlayer sessionPlayer = session.scenarioPlayer(playerId);
-        port.insertScenarioSessionPlayer(playerId, sessionPlayer);
+        session = session.insertPlayerId(playerId);
         cache.insert(session);
-        return session.atom();
+
+        return new GameSessionContext(session.id(), playerId);
     }
 
 }

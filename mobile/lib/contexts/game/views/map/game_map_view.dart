@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-//import '../../../../generic/dialog.dart' as CustomDialog;
 import '../../data/game_image_repository.dart';
 import '../../data/game_map_repository.dart';
 import '../../domain/model/game_session.dart';
@@ -37,9 +36,7 @@ class _GameMapViewState extends State<GameMapView> implements OnMoveListener {
 
   @override
   void onMove() {
-    //CustomDialog.Dialog dialog = CustomDialog.Dialog();
-    //dialog.showMessage(message: "onMove");
-    //findMaps();
+    findMaps();
   }
 
   void findMaps() {

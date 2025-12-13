@@ -6,6 +6,7 @@ import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGe
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 public class TemplateInitUseCase {
 

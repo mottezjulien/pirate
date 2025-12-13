@@ -37,6 +37,10 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
             this(new Id(), new I18n(), 0, targets, possibilities);
         }
 
+        public Step(Id id, List<Possibility> possibilities) {
+            this(id, new I18n(), 0, List.of(), possibilities);
+        }
+
     }
 
     public record Target(Id id, I18n label, Optional<I18n> desc, boolean optional) {

@@ -58,7 +58,6 @@ public class GameFirstStartIntegrationTest {
         GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
 
         assertThat(session.id()).isNotNull();
-        assertThat(session.label()).isEqualTo("Mon premier jeu");
 
         //TODO -> Get Session ? Get User one ??
 

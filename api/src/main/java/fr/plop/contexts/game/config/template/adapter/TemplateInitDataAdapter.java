@@ -98,7 +98,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         i18nRepository.deleteAll();
     }
-
     @Override
     public void create(Template template) {
         TemplateEntity templateEntity = new TemplateEntity();

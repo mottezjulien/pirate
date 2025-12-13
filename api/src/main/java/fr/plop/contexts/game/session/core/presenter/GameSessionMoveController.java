@@ -5,7 +5,6 @@ import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.domain.ConnectUseCase;
 import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
@@ -22,12 +21,10 @@ public class GameSessionMoveController {
 
     private final ConnectUseCase connectUseCase;
     private final GameMoveUseCase moveUseCase;
-    private final GameConfigCache cache;
 
-    public GameSessionMoveController(ConnectUseCase connectUseCase, GameMoveUseCase moveUseCase, GameConfigCache cache) {
+    public GameSessionMoveController(ConnectUseCase connectUseCase, GameMoveUseCase moveUseCase) {
         this.connectUseCase = connectUseCase;
         this.moveUseCase = moveUseCase;
-        this.cache = cache;
     }
 
     @PostMapping({"", "/"})
@@ -40,7 +37,7 @@ public class GameSessionMoveController {
         try {
             ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            moveUseCase.apply(new GameSessionContext(sessionId, playerId), cache.board(sessionId), request.toModel());
+            moveUseCase.apply(new GameSessionContext(sessionId, playerId), request.toModel());
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {

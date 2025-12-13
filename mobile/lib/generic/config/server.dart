@@ -7,6 +7,9 @@ class Server {
   //static const String httpAPI = 'https://app-63bb8b44-e760-4d5e-8337-b9f7689d76c2.cleverapps.io';
   //static const String wsAPI = 'ws://app-63bb8b44-e760-4d5e-8337-b9f7689d76c2.cleverapps.io';
 
+  //static const String httpAPI = 'https://api.lockedout.fr';
+  //static const String wsAPI = 'ws://api.lockedout.fr';
+
   static Uri uri(String resourcePath) {
     return Uri.parse('$httpAPI$resourcePath');
   }

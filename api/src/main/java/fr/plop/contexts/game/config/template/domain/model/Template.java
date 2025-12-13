@@ -22,6 +22,10 @@ public record Template(Atom atom, String label, String version, Duration maxDura
         this(code, "", scenario);
     }
 
+    public Template(Code code, ScenarioConfig scenario, BoardConfig board) {
+        this(code, "", scenario, board, new MapConfig());
+    }
+
     public Template(Code code, String label, ScenarioConfig scenario) {
         this(code, label, scenario, new BoardConfig(), new MapConfig());
     }

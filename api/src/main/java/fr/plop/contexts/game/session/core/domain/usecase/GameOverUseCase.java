@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 
 public class GameOverUseCase {
 
+
+
     public interface OutputPort {
         Stream<GamePlayer.Id> findActivePlayerIds(GameSession.Id sessionId);
 

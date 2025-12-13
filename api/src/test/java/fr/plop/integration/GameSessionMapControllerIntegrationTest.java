@@ -21,8 +21,6 @@ import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rect;
 import fr.plop.subs.image.Image;
-import fr.plop.subs.image.ImagePositionDTO;
-import fr.plop.subs.image.ImageResponseDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +73,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
-        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = startSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -88,7 +86,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem firstStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
-        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = startSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(2)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()))
@@ -102,7 +100,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem secondStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
-        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = startSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -115,7 +113,7 @@ public class GameSessionMapControllerIntegrationTest {
         final MapItem inSpaceMap = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
-        List<GameSessionMapController.ResponseDTO> maps = createSessionAndFindMaps();
+        List<GameSessionMapController.ResponseDTO> maps = startSessionAndFindMaps();
         assertThat(maps)
                 .hasSize(0);
     }
@@ -237,14 +235,26 @@ public class GameSessionMapControllerIntegrationTest {
         return result.getBody();
     }
 
+    private void startGameSession(String token, String sessionId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort +  "/sessions/" + sessionId + "/start";
+
+        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(TEMPLATE_CODE);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.add("Authorization", token);
+
+        restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionResponseDTO.class);
+    }
+
     private void createTemplateWithMaps(MapConfig map) {
         Template template = new Template(new Template.Code(TEMPLATE_CODE), "Test Maps Game", scenario, board, map);
         templateInitUseCase.create(template);
     }
 
-    private List<GameSessionMapController.ResponseDTO> createSessionAndFindMaps() throws URISyntaxException {
+    private List<GameSessionMapController.ResponseDTO> startSessionAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
         GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
+        startGameSession(connection.token(), session.id());
         return getMaps(connection.token(), session.id());
     }
 

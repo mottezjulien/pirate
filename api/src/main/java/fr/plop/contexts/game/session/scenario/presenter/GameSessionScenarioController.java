@@ -8,9 +8,9 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.scenario.domain.GameSessionScenarioGoalPort;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
-import fr.plop.contexts.game.session.scenario.domain.usecase.ScenarioSessionPlayerGetUseCase;
 import fr.plop.subs.i18n.domain.Language;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,13 +25,13 @@ public class GameSessionScenarioController {
 
     private final ConnectUseCase connectUseCase;
 
-    private final ScenarioSessionPlayerGetUseCase getUseCase;
+    private final GameSessionScenarioGoalPort scenarioGoalPort;
 
     private final GameConfigCache cache;
 
-    public GameSessionScenarioController(ConnectUseCase connectUseCase, ScenarioSessionPlayerGetUseCase getUseCase, GameConfigCache cache) {
+    public GameSessionScenarioController(ConnectUseCase connectUseCase, GameSessionScenarioGoalPort scenarioGoalPort, GameConfigCache cache) {
         this.connectUseCase = connectUseCase;
-        this.getUseCase = getUseCase;
+        this.scenarioGoalPort = scenarioGoalPort;
         this.cache = cache;
     }
 
@@ -46,7 +46,7 @@ public class GameSessionScenarioController {
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            ScenarioSessionPlayer scenarioSessionPlayer = getUseCase.findByPlayerId(playerId);
+            ScenarioSessionPlayer scenarioSessionPlayer = scenarioGoalPort.findByPlayerId(playerId);
             ScenarioConfig scenario = cache.scenario(sessionId);
             return scenarioSessionPlayer.bySteps()
                     .entrySet().stream()

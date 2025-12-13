@@ -11,22 +11,11 @@ import jakarta.persistence.*;
 public final class ScenarioPossibilityConsequenceGoalTargetEntity extends
         ScenarioPossibilityConsequenceAbstractEntity {
 
-    @Column(name = "step_id")
-    private String stepId;
-
     @Column(name = "target_id")
     private String targetId;
 
     @Enumerated(EnumType.STRING)
     private ScenarioSessionState state;
-
-    public String getStepId() {
-        return stepId;
-    }
-
-    public void setStepId(String stepId) {
-        this.stepId = stepId;
-    }
 
     public String getTargetId() {
         return targetId;
@@ -45,8 +34,7 @@ public final class ScenarioPossibilityConsequenceGoalTargetEntity extends
     }
 
     public Consequence toModel() {
-        return new Consequence.ScenarioTarget(new Consequence.Id(id), new ScenarioConfig.Step.Id(stepId),
-                new ScenarioConfig.Target.Id(targetId), state);
+        return new Consequence.ScenarioTarget(new Consequence.Id(id), new ScenarioConfig.Target.Id(targetId), state);
     }
 
 }

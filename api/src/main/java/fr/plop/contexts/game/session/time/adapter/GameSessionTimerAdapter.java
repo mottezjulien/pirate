@@ -5,7 +5,7 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.contexts.game.session.time.GameSessionTimer;
 import fr.plop.contexts.game.session.time.persistence.GameSessionTimerMemoryRepository;
@@ -18,13 +18,14 @@ public class GameSessionTimerAdapter implements GameSessionTimer {
     private static final String ONE_MINUTE_IN_MILLISECONDS = "60000";
     private final GameSessionTimerMemoryRepository repository;
     private final GamePlayerRepository gamePlayerRepository;
-    private final GameEventBroadCast broadCast;
+    private final GameEventOrchestrator eventOrchestrator;
 
-    public GameSessionTimerAdapter(GameSessionTimerMemoryRepository repository, GamePlayerRepository gamePlayerRepository, GameEventBroadCast broadCast) {
+    public GameSessionTimerAdapter(GameSessionTimerMemoryRepository repository, GamePlayerRepository gamePlayerRepository, GameEventOrchestrator eventOrchestrator) {
         this.repository = repository;
         this.gamePlayerRepository = gamePlayerRepository;
-        this.broadCast = broadCast;
+        this.eventOrchestrator = eventOrchestrator;
     }
+
 
     @Scheduled(fixedDelayString = "${game.session.timer.duration:" + ONE_MINUTE_IN_MILLISECONDS + "}")
     public void run() {
@@ -39,7 +40,7 @@ public class GameSessionTimerAdapter implements GameSessionTimer {
     private void tick(GameSession.Id sessionId, GameSessionTimeUnit timeUnit) {
         final GameEvent.TimeClick event = new GameEvent.TimeClick(timeUnit);
         for (GamePlayer.Id playerId : findActivePlayerIdsBySessionId(sessionId)) {
-            broadCast.fire( new GameSessionContext(sessionId, playerId), event);
+            eventOrchestrator.fire( new GameSessionContext(sessionId, playerId), event);
         }
     }
 

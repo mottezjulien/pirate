@@ -18,9 +18,9 @@ public class GameSessionGetAdapter implements GameSessionGetPort {
     }
 
     @Override
-    public Optional<GameSession.Atom> findById(GameSession.Id sessionId) {
+    public Optional<GameSession.Id> findById(GameSession.Id sessionId) {
         return sessionRepository.findById(sessionId.value())
-                .map(GameSessionEntity::toAtomModel);
+                .map(GameSessionEntity::toModelId);
     }
 
 }

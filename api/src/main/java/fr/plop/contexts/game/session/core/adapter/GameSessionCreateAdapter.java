@@ -12,21 +12,16 @@ import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepEntity;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepRepository;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetEntity;
-import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetRepository;
 import fr.plop.generic.tools.StringTools;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -34,32 +29,35 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
     private final TemplateRepository templateRepository;
     private final GameSessionRepository sessionRepository;
     private final GamePlayerRepository playerRepository;
-    private final ScenarioGoalStepRepository scenarioGoalStepRepository;
-    private final ScenarioGoalTargetRepository scenarioGoalTargetRepository;
 
-    public GameSessionCreateAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository, ScenarioGoalStepRepository scenarioGoalStepRepository, ScenarioGoalTargetRepository scenarioGoalTargetRepository) {
+    public GameSessionCreateAdapter(TemplateRepository templateRepository, GameSessionRepository sessionRepository, GamePlayerRepository playerRepository) {
         this.templateRepository = templateRepository;
         this.sessionRepository = sessionRepository;
         this.playerRepository = playerRepository;
-        this.scenarioGoalStepRepository = scenarioGoalStepRepository;
-        this.scenarioGoalTargetRepository = scenarioGoalTargetRepository;
     }
 
+
     @Override
-    public Optional<GameSession.Atom> findCurrentGameSession(ConnectUser.Id userId) {
-        return sessionRepository.findByUserId(userId.value()).stream()
+    public Optional<GameSessionContext> findCurrentGameSession(ConnectUser.Id userId) {
+        return sessionRepository.findByIdFetchPlayerAndUser(userId.value()).stream()
                 .filter(session -> session.getState() != GameSession.State.OVER)
-                .map(entity -> new GameSession.Atom(new GameSession.Id(entity.getId()), entity.getLabel()))
+                .map(entity -> {
+                    GamePlayer.Id playerId = entity.getPlayers().stream()
+                            .filter(player -> player.getUser().getId().equals(userId.value()))
+                            .findFirst()
+                            .map(player -> new GamePlayer.Id(player.getId()))
+                            .orElseThrow();
+                    return new GameSessionContext(new GameSession.Id(entity.getId()),playerId);
+                })
                 .findFirst();
     }
 
     @Override
     public Optional<Template> findTemplateByCode(Template.Code code) {
-        List<TemplateEntity> templates = templateRepository.findByCodeFetchAll(code.value());
-        if (templates.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(templates.getFirst().toModel());
+        return templateRepository
+                .findByCodeFetchAll(code.value())
+                .stream().findFirst()
+                .map(TemplateEntity::toModel);
     }
 
     @Override
@@ -97,13 +95,13 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
 
         entity = sessionRepository.save(entity);
 
-        GameSession.Atom atom = new GameSession.Atom(new GameSession.Id(entity.getId()), template.label());
-        return GameSession.buildWithoutPlayer(atom, state, template.scenario(), template.board(), template.map(),
+        return GameSession.buildWithoutPlayer(new GameSession.Id(entity.getId()),
+                template.label(), state, template.scenario(), template.board(), template.map(),
                 template.talk(), template.image());
     }
 
     @Override
-    public GamePlayer.Id insert(GameSession.Id sessionId, ConnectUser.Id userId) {
+    public GamePlayer.Id insertUserId(GameSession.Id sessionId, ConnectUser.Id userId) {
         GamePlayerEntity playerEntity = new GamePlayerEntity();
         playerEntity.setId(StringTools.generate());
 
@@ -122,12 +120,5 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
         return new GamePlayer.Id(playerEntity.getId());
     }
 
-    @Override
-    public void insertScenarioSessionPlayer(GamePlayer.Id playerId, ScenarioSessionPlayer sessionPlayer) {
-        sessionPlayer.bySteps().forEach((stepId, state) ->
-                scenarioGoalStepRepository.save(ScenarioGoalStepEntity.build(playerId, stepId, state)));
-        sessionPlayer.byTargets().forEach((targetId, state) ->
-                scenarioGoalTargetRepository.save(ScenarioGoalTargetEntity.build(playerId, targetId, state)));
-    }
 
 }

@@ -15,6 +15,11 @@ public record BoardSpace(Id id, String label, Priority priority, List<Rect> rect
         }
     }
 
+
+    public BoardSpace(Id id, List<Rect> rects) {
+        this(id, "", Priority.byDefault(), rects);
+    }
+
     public BoardSpace(String label, Priority priority, List<Rect> rects) {
         this(new Id(), label, priority, rects);
     }

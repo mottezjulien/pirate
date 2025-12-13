@@ -27,7 +27,7 @@ public class GameSessionEntity {
     private String label;
 
     @OneToMany(mappedBy = "session")
-    private Set<GamePlayerEntity> players = new HashSet<>();
+    private final Set<GamePlayerEntity> players = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "scenario_config_id")
@@ -150,7 +150,7 @@ public class GameSessionEntity {
         this.overAt = overAt;
     }
 
-    public GameSession.Atom toAtomModel() {
-        return new GameSession.Atom(new GameSession.Id(id), label);
+    public GameSession.Id toModelId() {
+        return new GameSession.Id(id);
     }
 }

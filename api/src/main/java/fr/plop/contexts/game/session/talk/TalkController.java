@@ -12,7 +12,7 @@ import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.i18n.domain.Language;
@@ -33,14 +33,15 @@ public class TalkController {
     private final ConnectUseCase connectUseCase;
     private final GameConfigCache cache;
     private final GameSessionSituationGetPort situationGetPort;
-    private final GameEventBroadCast broadCast;
+    private final GameEventOrchestrator eventOrchestrator;
 
-    public TalkController(ConnectUseCase connectUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventBroadCast broadCast) {
+    public TalkController(ConnectUseCase connectUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventOrchestrator eventOrchestrator) {
         this.connectUseCase = connectUseCase;
         this.cache = cache;
         this.situationGetPort = situationGetPort;
-        this.broadCast = broadCast;
+        this.eventOrchestrator = eventOrchestrator;
     }
+
     @GetMapping({"/{talkId}", "/{talkId}/"})
     public ResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
                               @RequestHeader("Language") String languageStr,
@@ -82,7 +83,7 @@ public class TalkController {
             if(item instanceof TalkItem.Options multipleOptions) {
                 Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);
                 if(optOption.isPresent()) {
-                    broadCast.fire(context, new GameEvent.Talk(item.id(), Optional.of(optionId)));
+                    eventOrchestrator.fire(context, new GameEvent.Talk(item.id(), Optional.of(optionId)));
                     TalkItem.Options.Option option = optOption.get();
                     if(option.hasNext()) {
                         return getOne(rawToken, languageStr, sessionIdStr, option.nextId().value());

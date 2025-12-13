@@ -29,8 +29,7 @@ public sealed interface Consequence permits
         }
     }
 
-    record ScenarioTarget(Id id, ScenarioConfig.Step.Id stepId, ScenarioConfig.Target.Id targetId,
-                          ScenarioSessionState state) implements Consequence {
+    record ScenarioTarget(Id id, ScenarioConfig.Target.Id targetId, ScenarioSessionState state) implements Consequence {
 
     }
 

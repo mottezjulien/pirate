@@ -2,12 +2,13 @@ package fr.plop.contexts.game.session.core.domain.usecase;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.push.PushEvent;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.generic.position.Point;
@@ -25,22 +26,22 @@ public class GameMoveUseCase {
     }
 
     private final OutPort outPort;
-
     private final GamePlayerGetPort gamePlayerGetPort;
-
-    private final GameEventBroadCast broadCast;
-
+    private final GameEventOrchestrator eventOrchestrator;
     private final PushPort pushPort;
+    private final GameConfigCache cache;
 
-    public GameMoveUseCase(OutPort outPort, GamePlayerGetPort gamePlayerGetPort, GameEventBroadCast broadCast, PushPort pushPort) {
+    public GameMoveUseCase(OutPort outPort, GamePlayerGetPort gamePlayerGetPort, GameEventOrchestrator eventOrchestrator, PushPort pushPort, GameConfigCache cache) {
         this.outPort = outPort;
         this.gamePlayerGetPort = gamePlayerGetPort;
-        this.broadCast = broadCast;
+        this.eventOrchestrator = eventOrchestrator;
         this.pushPort = pushPort;
+        this.cache = cache;
     }
 
-    public void apply(GameSessionContext context, BoardConfig board, Point position) throws GameException {
 
+    public void apply(GameSessionContext context, Point position) throws GameException {
+        BoardConfig board = cache.board(context.sessionId());
         List<BoardSpace.Id> spaceInIds = gamePlayerGetPort.findSpaceIdsByPlayerId(context.playerId());
         List<BoardSpace> next = board.spacesByPoint(position).toList();
         System.out.println("MOVE: BoardSpace next: " + next.stream().map(boardSpace -> boardSpace.id().value()).collect(Collectors.joining()));
@@ -49,10 +50,10 @@ public class GameMoveUseCase {
             outPort.savePosition(context.playerId(), nextIds);
 
             List<BoardSpace.Id> removed = ListTools.removed(spaceInIds, nextIds);
-            removed.forEach(space -> broadCast.fire(context, new GameEvent.GoOut(space)));
+            removed.forEach(space -> eventOrchestrator.fire(context, new GameEvent.GoOut(space)));
 
             List<BoardSpace.Id> added = ListTools.added(spaceInIds, nextIds);
-            added.forEach(space -> broadCast.fire(context, new GameEvent.GoIn(space)));
+            added.forEach(space -> eventOrchestrator.fire(context, new GameEvent.GoIn(space)));
             pushPort.push(new PushEvent.GameMove(context));
         }
 

@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface GameSessionGetPort {
 
-    Optional<GameSession.Atom> findById(GameSession.Id sessionId);
+    Optional<GameSession.Id> findById(GameSession.Id sessionId);
 
 }

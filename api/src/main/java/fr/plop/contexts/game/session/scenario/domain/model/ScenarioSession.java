@@ -12,18 +12,8 @@ public record ScenarioSession(ScenarioConfig config, Map<GamePlayer.Id, Scenario
         return new ScenarioSession(config, new HashMap<>());
     }
 
-    public ScenarioSessionPlayer player(GamePlayer.Id playerId) {
-        if(!byPlayers.containsKey(playerId)) {
-            init(playerId);
-        }
-        return byPlayers.get(playerId);
-    }
 
-    private void init(GamePlayer.Id playerId) {
-        ScenarioConfig.Step step = config.firstStep();
-        ScenarioSessionPlayer sessionPlayer = ScenarioSessionPlayer.build();
-        sessionPlayer.initStep(step);
-        byPlayers.put(playerId, sessionPlayer);
-    }
+
+
 
 }

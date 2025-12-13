@@ -18,4 +18,8 @@ public record GamePlayer(Id id, List<ScenarioConfig.Step.Id> activeStepIds, List
         INIT, ACTIVE, WIN, LOSE
     }
 
+    public GamePlayer(Id id) {
+        this(id, List.of(), List.of());
+    }
+
 }

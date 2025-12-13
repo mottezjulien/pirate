@@ -260,7 +260,6 @@ public class TemplateGeneratorUseCaseTest {
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
-                                            assertThat(goalTarget.stepId()).isEqualTo(template.scenario().steps().get(1).id());
                                             assertThat(goalTarget.targetId()).isEqualTo(template.scenario().steps().get(1).targets().getFirst().id());
                                             assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.FAILURE);
                                         });
@@ -298,7 +297,6 @@ public class TemplateGeneratorUseCaseTest {
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
-                                            assertThat(goalTarget.stepId()).isEqualTo(template.scenario().steps().get(1).id());
                                             assertThat(goalTarget.targetId()).isEqualTo(template.scenario().steps().get(1).targets().getFirst().id());
                                             assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
                                         });
@@ -690,7 +688,6 @@ public class TemplateGeneratorUseCaseTest {
         assertThat(possibility.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
         Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibility.consequences().getFirst();
         assertThat(scenarioTarget.id()).isNotNull();
-        assertThat(scenarioTarget.stepId()).isEqualTo(stepSecond.id());
         assertThat(scenarioTarget.targetId()).isEqualTo(stepSecond.targets().getFirst().id());
         assertThat(scenarioTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
     }

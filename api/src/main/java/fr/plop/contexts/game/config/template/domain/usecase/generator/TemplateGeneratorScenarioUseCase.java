@@ -141,7 +141,7 @@ public class TemplateGeneratorScenarioUseCase {
                     conditions.add(conditionGenerator.apply(child));
                     break;
                 case POSSIBILITY_CONSEQUENCE_KEY:
-                    consequences.add(parseConsequence(child, currentStepId));
+                    consequences.add(parseConsequence(child));
                     break;
                 case POSSIBILITY_RECURRENCE_KEY:
                     recurrence.set(parseRecurrence(child));
@@ -187,7 +187,7 @@ public class TemplateGeneratorScenarioUseCase {
         throw new TemplateException("Invalid recurrence format: " + String.join(SEPARATOR, tree.params()));
     }
 
-    private Consequence parseConsequence(Tree tree, ScenarioConfig.Step.Id currentStepId) {
+    private Consequence parseConsequence(Tree tree) {
         Tree sub = tree.sub();
         switch (sub.header()) {
             case "ALERT" -> {
@@ -197,7 +197,7 @@ public class TemplateGeneratorScenarioUseCase {
                 return new Consequence.DisplayMessage(new Consequence.Id(), message);
             }
             case "GOALTARGET" -> {
-                return parseGoalTargetConsequence(sub, currentStepId);
+                return parseGoalTargetConsequence(sub);
             }
             case "GOAL" -> {
                 // Format: "Goal:state:SUCCESS:stepId:KLM" ou autre ordre
@@ -283,18 +283,11 @@ public class TemplateGeneratorScenarioUseCase {
         };
     }
 
-    private Consequence parseGoalTargetConsequence(Tree sub, ScenarioConfig.Step.Id currentStepId) {
-        Optional<String> optStepIdParam = sub.findByKey("stepid");
+    private Consequence parseGoalTargetConsequence(Tree sub) {
         String targetIdParam = sub.findByKeyOrThrow("targetid");
         String stateParam = sub.findByKeyOrThrow("state");
-        ScenarioConfig.Step.Id stepId;
-        if (optStepIdParam.isEmpty() || optStepIdParam.get().equals("CURRENT_STEP")) {
-            stepId = currentStepId;
-        } else {
-            stepId = globalCache.reference(optStepIdParam.get(), ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id());
-        }
         ScenarioConfig.Target.Id targetId = globalCache.reference(targetIdParam, ScenarioConfig.Target.Id.class, new ScenarioConfig.Target.Id());
-        return new Consequence.ScenarioTarget(new Consequence.Id(), stepId, targetId, parseState(stateParam));
+        return new Consequence.ScenarioTarget(new Consequence.Id(), targetId, parseState(stateParam));
     }
 
 

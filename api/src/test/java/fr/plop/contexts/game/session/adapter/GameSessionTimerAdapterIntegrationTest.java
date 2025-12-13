@@ -1,6 +1,9 @@
 package fr.plop.contexts.game.session.adapter;
 
-import fr.plop.contexts.connect.domain.*;
+import fr.plop.contexts.connect.domain.ConnectAuth;
+import fr.plop.contexts.connect.domain.ConnectException;
+import fr.plop.contexts.connect.domain.ConnectUseCase;
+import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -8,24 +11,23 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.session.core.domain.GameException;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
-import fr.plop.contexts.game.session.event.adapter.action.GameEventActionScenarioAdapter;
+import fr.plop.contexts.game.session.scenario.adapter.GameSessionScenarioGoalAdapter;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @SpringBootTest(properties = {"game.session.timer.duration=1000"})
 public class GameSessionTimerAdapterIntegrationTest {
@@ -45,8 +47,8 @@ public class GameSessionTimerAdapterIntegrationTest {
     @Autowired
     private ConnectionCreateAuthUseCase createAuthUseCase;
 
-    @MockitoBean
-    private GameEventActionScenarioAdapter scenarioAdapter;
+    @Autowired
+    private GameSessionScenarioGoalAdapter scenarioAdapter;
 
     @Test
     public void fireTimeClickEvent() throws GameException, ConnectException {
@@ -58,29 +60,28 @@ public class GameSessionTimerAdapterIntegrationTest {
         templateInitUseCase.create(template);
 
         ConnectAuth auth = createAuthUseCase.byDeviceId("anyDeviceId");
-        GameSession.Atom session = createGameUseCase.apply(code, auth.connect().user().id());
+        GameSessionContext context = createGameUseCase.apply(code, auth.connect().user().id());
 
-        ConnectUser connectUser = connectUseCase.findUserIdBySessionIdAndRawToken(session.id(), auth.token());
-        GamePlayer.Id playerId = connectUser.playerId().orElseThrow();
+        ScenarioConfig.Step.Id step0 = template.scenario().steps().getFirst().id();
+        ScenarioConfig.Step.Id step1 = template.scenario().steps().get(1).id();
 
-        session = startUseCase.apply(session.id(), playerId);
+        startUseCase.apply(context);
 
-        List<Possibility> possibilities = template.scenario().steps().getFirst().possibilities();
-        Consequence.ScenarioStep consequence1 = (Consequence.ScenarioStep) possibilities.getFirst().consequences().getFirst();
-        Consequence.ScenarioStep consequence2 = (Consequence.ScenarioStep) possibilities.get(1).consequences().getFirst();
-
-        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence1);
-        verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence2);
+        assertThat(scenarioAdapter.findSteps(context.playerId()))
+                .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.ACTIVE)); //DEFAULT
 
         await().pollDelay(Duration.ofSeconds(2)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence1);
-            verify(scenarioAdapter, never()).updateStateOrCreateGoalStep(playerId, consequence2);
+            Map<ScenarioConfig.Step.Id, ScenarioSessionState> steps = scenarioAdapter.findSteps(context.playerId());
+            assertThat(steps)
+                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.ACTIVE),
+                            new AbstractMap.SimpleEntry<>(step1, ScenarioSessionState.ACTIVE));
             return true;
         });
 
         await().pollDelay(Duration.ofSeconds(4)).until(() -> {
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence1);
-            verify(scenarioAdapter).updateStateOrCreateGoalStep(playerId, consequence2);
+            Map<ScenarioConfig.Step.Id, ScenarioSessionState> steps = scenarioAdapter.findSteps(context.playerId());
+            assertThat(steps)
+                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.FAILURE), new AbstractMap.SimpleEntry<>(step1, ScenarioSessionState.ACTIVE));
             return true;
         });
 
@@ -88,15 +89,22 @@ public class GameSessionTimerAdapterIntegrationTest {
 
 
     private Template template(Template.Code code) {
-        ScenarioConfig.Step step = new ScenarioConfig.Step(List.of(), List.of(possibility(new GameSessionTimeUnit(1)), possibility(new GameSessionTimeUnit(3))));
-        ScenarioConfig scenario = new ScenarioConfig(List.of(step));
+        ScenarioConfig.Step.Id stepId0 = new ScenarioConfig.Step.Id();
+        ScenarioConfig.Step.Id stepId1 = new ScenarioConfig.Step.Id();
+
+        PossibilityTrigger.AbsoluteTime trigger0 = new PossibilityTrigger.AbsoluteTime(new GameSessionTimeUnit(1));
+        Consequence.ScenarioStep consequence0 = new Consequence.ScenarioStep(stepId1, ScenarioSessionState.ACTIVE);
+        Possibility possibility0 = new Possibility(trigger0, List.of(consequence0));
+
+        PossibilityTrigger.AbsoluteTime trigger1 = new PossibilityTrigger.AbsoluteTime(new GameSessionTimeUnit(3));
+        Consequence.ScenarioStep consequence1 = new Consequence.ScenarioStep(stepId0, ScenarioSessionState.FAILURE);
+        Possibility possibility1 = new Possibility(trigger1, List.of(consequence1));
+
+        ScenarioConfig.Step step0 = new ScenarioConfig.Step(stepId0, List.of(possibility0, possibility1));
+        ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId1, List.of());
+        ScenarioConfig scenario = new ScenarioConfig(List.of(step0, step1));
         return new Template(code, scenario);
     }
 
-    private static Possibility possibility(GameSessionTimeUnit value) {
-        PossibilityTrigger.AbsoluteTime trigger = new PossibilityTrigger.AbsoluteTime(value);
-        Consequence.ScenarioStep consequence = new Consequence.ScenarioStep(new ScenarioConfig.Step.Id(), ScenarioSessionState.ACTIVE);
-        return new Possibility(trigger, List.of(consequence));
-    }
 
 }

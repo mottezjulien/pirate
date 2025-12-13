@@ -13,7 +13,7 @@ import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.event.domain.GameEventBroadCast;
+import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.subs.image.ImageDetailsResponseDTO;
@@ -27,15 +27,16 @@ public class ImageController {
 
     private final ConnectUseCase connectUseCase;
     private final GameConfigCache cache;
-    private final GameEventBroadCast broadCast;
+    private final GameEventOrchestrator eventOrchestrator;
     private final GameSessionSituationGetPort situationGetPort;
 
-    public ImageController(ConnectUseCase connectUseCase, GameConfigCache cache, GameEventBroadCast broadCast, GameSessionSituationGetPort situationGetPort) {
+    public ImageController(ConnectUseCase connectUseCase, GameConfigCache cache, GameEventOrchestrator eventOrchestrator, GameSessionSituationGetPort situationGetPort) {
         this.connectUseCase = connectUseCase;
         this.cache = cache;
-        this.broadCast = broadCast;
+        this.eventOrchestrator = eventOrchestrator;
         this.situationGetPort = situationGetPort;
     }
+
 
     @GetMapping({"/{imageId}", "/{imageId}/"})
     public ResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
@@ -77,7 +78,7 @@ public class ImageController {
         try {
             final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
             final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
-            broadCast.fire(new GameSessionContext(sessionId, playerId), new GameEvent.ImageObjectClick(objectId));
+            eventOrchestrator.fire(new GameSessionContext(sessionId, playerId), new GameEvent.ImageObjectClick(objectId));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
