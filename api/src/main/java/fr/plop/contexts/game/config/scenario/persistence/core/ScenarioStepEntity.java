@@ -6,6 +6,7 @@ import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Entity
@@ -19,6 +20,10 @@ public class ScenarioStepEntity {
     @JoinColumn(name = "label_i18n_id")
     private I18nEntity label;
 
+    @ManyToOne
+    @JoinColumn(name = "description_i18n_id")
+    private I18nEntity optDescription;
+
     @Column(name = "step_order")
     private int order;
 
@@ -31,7 +36,6 @@ public class ScenarioStepEntity {
 
     @OneToMany(mappedBy = "step")
     private Set<ScenarioPossibilityEntity> possibilities = new HashSet<>();
-
 
     public String getId() {
         return id;
@@ -78,10 +82,11 @@ public class ScenarioStepEntity {
     }
 
     public ScenarioConfig.Step toModel() {
-        return new ScenarioConfig.Step(new ScenarioConfig.Step.Id(id),
-                label.toModel(), order, targets.stream().map(ScenarioTargetEntity::toModel).toList(),
-                possibilities.stream().map(ScenarioPossibilityEntity::toModel).toList()
-        );
+        return new ScenarioConfig.Step(new ScenarioConfig.Step.Id(id), label.toModel(),
+                Optional.ofNullable(optDescription).map(I18nEntity::toModel),
+                order, targets.stream().map(ScenarioTargetEntity::toModel).toList(),
+                possibilities.stream().map(ScenarioPossibilityEntity::toModel).toList());
+
 
     }
 

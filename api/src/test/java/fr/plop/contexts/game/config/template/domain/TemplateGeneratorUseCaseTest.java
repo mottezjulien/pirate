@@ -107,17 +107,19 @@ public class TemplateGeneratorUseCaseTest {
                 ------ Target:EN:Office:FR:Bureau:OPTIONAL:TRUE
                 ------ Target:FR:Chambre:EN:Room
                 --------- OPTIONAL:TRUE
-                --------- FR:Ceci est ma chambre.
-                --------- C'est une belle chambre.
-                --------- EN:This is my room.
-                --------- It's a beautiful room.
+                --------- DESCRIPTION
+                ------------ FR:Ceci est ma chambre.
+                ------------ C'est une belle chambre.
+                ------------ EN:This is my room.
+                ------------ It's a beautiful room.
                 ------ Target:FR:Autre:EN:Other
-                --------- EN:This is another space.
-                --------- It's an other space.
-                --------- It's an other space.
-                --------- FR: Ceci est mon bureau.
-                --------- Ceci est ma chambre.
-                --------- Ceci est mon bureau.
+                --------- DESCRIPTION
+                ------------ EN:This is another space.
+                ------------ It's an other space.
+                ------------ It's an other space.
+                ------------ FR: Ceci est mon bureau.
+                ------------ Ceci est ma chambre.
+                ------------ Ceci est mon bureau.
                 """);
         Template template = generator.apply(script);
         assertThat(template).isNotNull();
@@ -138,19 +140,19 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Cuisine", "Kitchen")));
-                                assertThat(target.desc()).isEmpty();
+                                assertThat(target.optDescription()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Bureau", "Office")));
-                                assertThat(target.desc()).isEmpty();
+                                assertThat(target.optDescription()).isEmpty();
                                 assertThat(target.optional()).isTrue();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Chambre", "Room")));
-                                assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
+                                assertThat(target.optDescription()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est ma chambre.
                                         C'est une belle chambre.""", """
                                         This is my room.
@@ -160,7 +162,7 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Autre", "Other")));
-                                assertThat(target.desc()).isPresent().hasValueSatisfying(withoutId(i18n("""
+                                assertThat(target.optDescription()).isPresent().hasValueSatisfying(withoutId(i18n("""
                                         Ceci est mon bureau.
                                         Ceci est ma chambre.
                                         Ceci est mon bureau.""", """
@@ -218,13 +220,13 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Cuisine", "Kitchen")));
-                                assertThat(target.desc()).isEmpty();
+                                assertThat(target.optDescription()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             })
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Bureau", "Office")));
-                                assertThat(target.desc()).isEmpty();
+                                assertThat(target.optDescription()).isEmpty();
                                 assertThat(target.optional()).isTrue();
                             });
                     assertThat(step.possibilities())
@@ -355,7 +357,7 @@ public class TemplateGeneratorUseCaseTest {
                             .anySatisfy(target -> {
                                 assertThat(target.id()).isNotNull();
                                 assertThat(target.label()).satisfies(withoutId(i18n("Mon objectif", "My target")));
-                                assertThat(target.desc()).isEmpty();
+                                assertThat(target.optDescription()).isEmpty();
                                 assertThat(target.optional()).isFalse();
                             });
                     assertThat(step.possibilities())

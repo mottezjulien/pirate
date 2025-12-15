@@ -4,7 +4,9 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_TARGET")
@@ -26,6 +28,19 @@ public class ScenarioTargetEntity {
     private I18nEntity description;
 
     private boolean optional;
+
+    @OneToMany
+    @JoinTable(
+            name = "TEST2_SCENARIO_TARGET_HINT",
+            joinColumns = @JoinColumn(name = "target_id"),
+            inverseJoinColumns = @JoinColumn(name = "i18n_id")
+    )
+    private final Set<I18nEntity> hints = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "answer_i18n_id")
+    private I18nEntity answer;
+
 
     public String getId() {
         return id;
@@ -68,7 +83,7 @@ public class ScenarioTargetEntity {
                 new ScenarioConfig.Target.Id(id),
                 label.toModel(),
                 Optional.ofNullable(description).map(I18nEntity::toModel),
-                optional
-        );
+                optional, hints.stream().map(I18nEntity::toModel).toList(),
+                Optional.ofNullable(answer).map(I18nEntity::toModel));
     }
 }

@@ -56,12 +56,13 @@ public class GameSessionScenarioController {
         }
     }
 
+
     public record GameGoalResponseDTO(String id, String label, String state, List<GameTargetSimpleResponseDTO> targets) {
         public static GameGoalResponseDTO fromModel(ScenarioConfig.Step step, ScenarioSessionPlayer scenarioSessionPlayer, Language language) {
             List<GameTargetSimpleResponseDTO> targets = step.targets().stream()
                     .map(target -> GameTargetSimpleResponseDTO.fromModel(target, scenarioSessionPlayer, language)).toList();
-             return new GameGoalResponseDTO(step.id().value(), step.label().value(language),
-                     scenarioSessionPlayer.optStepState(step.id()).orElseThrow().name(), targets);
+            return new GameGoalResponseDTO(step.id().value(), step.label().value(language),
+                    scenarioSessionPlayer.optStepState(step.id()).orElseThrow().name(), targets);
         }
     }
 
@@ -74,5 +75,41 @@ public class GameSessionScenarioController {
                     target.optional());
         }
     }
+
+    @GetMapping({"/targets/{targetId}", "/targets/{targetId}/"})
+    public GameTargetDetailsResponseDTO targetDetails(@RequestHeader("Authorization") String rawToken,
+                                             @RequestHeader("Language") String languageStr,
+                                             @PathVariable("sessionId") String sessionIdStr,
+                                                     @PathVariable("targetId") String targetIdStr) {
+
+        final Language language = Language.valueOf(languageStr.toUpperCase());
+        final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
+        final ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetIdStr);
+        try {
+            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
+            user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            final ScenarioConfig scenario = cache.scenario(sessionId);
+            ScenarioConfig.Target target = scenario.targetById(targetId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target not found", null));
+            return GameTargetDetailsResponseDTO.toModel(target, language);
+        } catch (ConnectException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+        }
+    }
+
+    public record GameTargetDetailsResponseDTO(String id, String label, String description, boolean done, boolean optional, List<String> hints, String answer) {
+
+        public static GameTargetDetailsResponseDTO toModel(ScenarioConfig.Target target, Language language) {
+
+            return new GameTargetDetailsResponseDTO(
+                    target.id().value(),
+                    target.label().value(language),
+                    target.optDescription().map(desc -> desc.value(language)).orElse(""),
+                    false,
+                    target.optional(),
+                    target.hints().stream().map(hint -> hint.value(language)).toList(),
+                    target.optAnswer().map(ans -> ans.value(language)).orElse(""));
+        }
+    }
+
 
 }

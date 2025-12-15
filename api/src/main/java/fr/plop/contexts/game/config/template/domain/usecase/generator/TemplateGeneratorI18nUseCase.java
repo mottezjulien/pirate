@@ -17,15 +17,17 @@ public class TemplateGeneratorI18nUseCase {
         final Map<Language, String> values = new HashMap<>();
         currentLang = Language.byDefault();
         for (Tree child : children) {
-            if(child.params().size() == 1) {
-                Language.safeValueOf(child.header())
-                        .ifPresent(language -> {
-                            currentLang = language;
-                            insertValue(values, child.params().getFirst());
-                        });
-            } else {
-                insertValue(values, child.headerKeepCase());
-            }
+            Optional<Language> optlg = Language.safeValueOf(child.header());
+            optlg.ifPresentOrElse(lg -> {
+                currentLang = lg;
+                insertValue(values, child.params().getFirst());
+            },() -> {
+                if(child.params().isEmpty()){
+                    insertValue(values, child.headerKeepCase());
+                }
+            });
+
+
         }
         if(values.isEmpty())
             return Optional.empty();

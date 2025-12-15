@@ -76,7 +76,7 @@ public class TemplateGeneratorScenarioUseCase {
                 .map(child -> parsePossibility(child, stepId, talkConfig))
                 .toList();
 
-        return new ScenarioConfig.Step(stepId, stepLabel,0, targets, possibilities); //TODO order
+        return new ScenarioConfig.Step(stepId, stepLabel, Optional.empty(), 0, targets, possibilities);
     }
 
     private ScenarioConfig.Step.Id initStepId(Tree root) {
@@ -92,13 +92,22 @@ public class TemplateGeneratorScenarioUseCase {
         if (tree.reference() != null) {
             targetId = globalCache.reference(tree.reference(), ScenarioConfig.Target.Id.class, targetId);
         }
-        I18n label = parseI18nFromLine(tree).orElseThrow();
         boolean optional = tree.findByKey("OPTIONAL").map(Boolean::parseBoolean).orElse(false);
-        return new ScenarioConfig.Target(targetId, label, i18nGenerator.apply(tree.children()), optional);
+
+        I18n label = tree.findChildKey("LABEL")
+                .map(childLabel -> i18nGenerator.apply(childLabel.children()).orElseThrow())
+                .orElseGet(() -> parseI18nFromLine(tree).orElseThrow());
+        Optional<I18n> optDescription = tree.findChildKey("DESCRIPTION")
+                .map(childLabel -> i18nGenerator.apply(childLabel.children()).orElseThrow());
+        List<I18n> hints = tree.childrenByKey("HINT")
+                .map(childLabel -> i18nGenerator.apply(childLabel.children()).orElseThrow())
+                .toList();
+        Optional<I18n> optAnswer = tree.findChildKey("ANSWER")
+                .map(childLabel -> i18nGenerator.apply(childLabel.children()).orElseThrow());
+        return new ScenarioConfig.Target(targetId, label, optDescription, optional, hints, optAnswer);
     }
 
     private Optional<I18n> parseI18nFromLine(Tree tree) {
-        // Format: "FR:Chez Moi:EN:At Home" ou "EN:Office:FR:Bureau"
         Map<Language, String> i18nMap = new HashMap<>();
         tree.keys().forEach(key -> Language.safeValueOf(key.trim())
                 .ifPresent(language -> i18nMap.put(language, tree.findByKeyOrThrow(key).trim())));

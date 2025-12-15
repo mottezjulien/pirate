@@ -138,8 +138,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         ScenarioTargetEntity targetEntity = new ScenarioTargetEntity();
         targetEntity.setId(target.id().value());
         targetEntity.setLabel(createI18n(target.label()));
-        target.desc().ifPresent(desc ->
-                targetEntity.setDescription(createI18n(desc)));
+        target.optDescription().ifPresent(desc -> targetEntity.setDescription(createI18n(desc)));
         targetEntity.setStep(stepEntity);
         targetEntity.setOptional(target.optional());
         scenarioTargetRepository.save(targetEntity);

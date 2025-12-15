@@ -10,13 +10,14 @@ import java.util.stream.Stream;
 
 public record ScenarioConfig(Id id, String label, List<Step> steps) {
 
+
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());
         }
     }
 
-    public record Step(Id id, I18n label, Integer order, List<Target> targets, List<Possibility> possibilities) {
+    public record Step(Id id, I18n label, Optional<I18n> optDescription, Integer order, List<Target> targets, List<Possibility> possibilities) {
 
 
         public record Id(String value) {
@@ -29,21 +30,25 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
             this(List.of());
         }
 
+        public Step(Id id, List<Possibility> possibilities) {
+            this(id, new I18n(),  Optional.empty(), 0, List.of(), possibilities);
+        }
+
         public Step(List<Possibility> possibilities) {
             this(List.of(), possibilities);
         }
 
         public Step(List<Target> targets, List<Possibility> possibilities) {
-            this(new Id(), new I18n(), 0, targets, possibilities);
+            this(new Id(), new I18n(), Optional.empty(),  0, targets, possibilities);
         }
 
-        public Step(Id id, List<Possibility> possibilities) {
-            this(id, new I18n(), 0, List.of(), possibilities);
+        public Optional<Target> targetById(Target.Id targetId) {
+            return targets.stream().filter(target -> target.id().equals(targetId)).findFirst();
         }
 
     }
 
-    public record Target(Id id, I18n label, Optional<I18n> desc, boolean optional) {
+    public record Target(Id id, I18n label, Optional<I18n> optDescription, boolean optional, List<I18n> hints, Optional<I18n> optAnswer) {
         public record Id(String value) {
             public Id() {
                 this(StringTools.generate());
@@ -65,6 +70,11 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
 
     public Stream<Step> orderedSteps() {
         return steps.stream().sorted(Comparator.comparing(o -> o.order));
+    }
+
+    public Optional<Target> targetById(Target.Id targetId) {
+        return steps.stream().flatMap(step -> step.targetById(targetId).stream())
+                .findFirst();
     }
 
 }
