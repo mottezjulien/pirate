@@ -126,13 +126,13 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
+        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
 
-        assertThat(getMaps(connection.token(), session.id())).hasSize(0);
+        assertThat(getMaps(connectionSession.gameToken(), connectionSession.id())).hasSize(0);
 
-        move(connection.token(), session.id());
+        move(connectionSession.gameToken(), connectionSession.id());
 
-        assertThat(getMaps(connection.token(), session.id())).hasSize(1)
+        assertThat(getMaps(connectionSession.gameToken(), connectionSession.id())).hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(mapItem.id().value()));
     }
 
@@ -154,11 +154,11 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
+        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
 
-        move(connection.token(), session.id());
+        move(connectionSession.gameToken(), connectionSession.id());
 
-        assertThat(getMaps(connection.token(), session.id()))
+        assertThat(getMaps(connectionSession.gameToken(), connectionSession.id()))
                 .hasSize(1)
                 .anySatisfy(map -> {
                     assertThat(map.id()).isEqualTo(mapItem.id().value());
@@ -198,11 +198,11 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
+        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
 
-        move(connection.token(), session.id());
+        move(connectionSession.gameToken(), connectionSession.id());
 
-        assertThat(getMaps(connection.token(), session.id()))
+        assertThat(getMaps(connectionSession.gameToken(), connectionSession.id()))
                 .hasSize(1)
                 .anySatisfy(map -> {
                     assertThat(map.id()).isEqualTo(mapItem.id().value());
@@ -223,7 +223,7 @@ public class GameSessionMapControllerIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionResponseDTO createGameSession(String token) throws URISyntaxException {
+    private GameSessionController.GameSessionCreateResponseDTO createGameSession(String token) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
 
         GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(TEMPLATE_CODE);
@@ -231,7 +231,7 @@ public class GameSessionMapControllerIntegrationTest {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionResponseDTO> result = restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionResponseDTO.class);
+        ResponseEntity<GameSessionController.GameSessionCreateResponseDTO> result = restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionCreateResponseDTO.class);
         return result.getBody();
     }
 
@@ -253,9 +253,9 @@ public class GameSessionMapControllerIntegrationTest {
 
     private List<GameSessionMapController.ResponseDTO> startSessionAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
-        startGameSession(connection.token(), session.id());
-        return getMaps(connection.token(), session.id());
+        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
+        startGameSession(connectionSession.gameToken(), connectionSession.id());
+        return getMaps(connectionSession.gameToken(), connectionSession.id());
     }
 
     private List<GameSessionMapController.ResponseDTO> getMaps(String token, String sessionId) throws URISyntaxException {

@@ -1,9 +1,10 @@
 package fr.plop.contexts.game.session.adapter;
 
-import fr.plop.contexts.connect.domain.ConnectAuth;
+import fr.plop.contexts.connect.domain.ConnectAuthGameSession;
+import fr.plop.contexts.connect.domain.ConnectAuthUser;
 import fr.plop.contexts.connect.domain.ConnectException;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
+import fr.plop.contexts.connect.usecase.ConnectAuthUserCreateUseCase;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -33,9 +34,6 @@ import static org.awaitility.Awaitility.await;
 public class GameSessionTimerAdapterIntegrationTest {
 
     @Autowired
-    private ConnectUseCase connectUseCase;
-
-    @Autowired
     private GameSessionCreateUseCase createGameUseCase;
 
     @Autowired
@@ -45,7 +43,10 @@ public class GameSessionTimerAdapterIntegrationTest {
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
     @Autowired
-    private ConnectionCreateAuthUseCase createAuthUseCase;
+    private ConnectAuthUserCreateUseCase createAuthUseCase;
+
+    @Autowired
+    private ConnectAuthGameSessionUseCase authGameSessionUseCase;
 
     @Autowired
     private GameSessionScenarioGoalAdapter scenarioAdapter;
@@ -59,13 +60,14 @@ public class GameSessionTimerAdapterIntegrationTest {
 
         templateInitUseCase.create(template);
 
-        ConnectAuth auth = createAuthUseCase.byDeviceId("anyDeviceId");
-        GameSessionContext context = createGameUseCase.apply(code, auth.connect().user().id());
+        ConnectAuthUser authUser = createAuthUseCase.byDeviceId("anyDeviceId");
+        GameSessionContext context = createGameUseCase.apply(code, authUser.userId());
+        ConnectAuthGameSession authSession = authGameSessionUseCase.create(authUser, context);
 
         ScenarioConfig.Step.Id step0 = template.scenario().steps().getFirst().id();
         ScenarioConfig.Step.Id step1 = template.scenario().steps().get(1).id();
 
-        startUseCase.apply(context);
+        startUseCase.apply(authSession);
 
         assertThat(scenarioAdapter.findSteps(context.playerId()))
                 .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.ACTIVE)); //DEFAULT

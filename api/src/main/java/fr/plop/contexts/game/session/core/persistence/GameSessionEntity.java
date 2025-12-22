@@ -58,6 +58,7 @@ public class GameSessionEntity {
     @Column(name = "over_at")
     private Instant overAt;
 
+
     public String getId() {
         return id;
     }
@@ -150,7 +151,17 @@ public class GameSessionEntity {
         this.overAt = overAt;
     }
 
+
+    public static GameSessionEntity fromModelId(GameSession.Id modelId) {
+        GameSessionEntity entity = new GameSessionEntity();
+        entity.setId(modelId.value());
+        return entity;
+    }
+
     public GameSession.Id toModelId() {
         return new GameSession.Id(id);
     }
+
+
+
 }

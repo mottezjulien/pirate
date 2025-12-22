@@ -1,35 +1,29 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'generic/config/router.dart' as router;
+import 'generic/style/style.dart';
 
 class App extends StatelessWidget {
 
-  const App({super.key});
+  final GoRouter router;
+
+  const App({super.key, required this.router});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'The Plop 2 App',
+      title: 'Locked Out',
 
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
 
-      /*themeMode: ThemeMode.dark,
-      theme: _themeData(Brightness.light),
-      darkTheme: _themeData(Brightness.dark),*/
+      themeMode: Style.themes.default_.mode,
+      theme: Style.themes.default_.value(Brightness.light),
+      darkTheme: Style.themes.default_.value(Brightness.dark),
 
-      routerConfig: router.AppRouter.create()
-    );
-  }
-
-  ThemeData _themeData(Brightness brightness) {
-    return ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange, brightness: brightness),
-        useMaterial3: true,
-        brightness: brightness
-    );
+      routerConfig: router);
   }
 
 }

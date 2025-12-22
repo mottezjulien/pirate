@@ -3,18 +3,19 @@ package fr.plop.contexts.game.session.map.presenter;
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
-import fr.plop.subs.image.*;
+import fr.plop.subs.image.Image;
+import fr.plop.subs.image.ImageDetailsResponseDTO;
+import fr.plop.subs.image.ImagePositionDTO;
+import fr.plop.subs.image.ImageResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,25 +26,27 @@ import java.util.List;
 @RequestMapping("/sessions/{sessionId}/maps")
 public class GameSessionMapController {
 
-    private final ConnectUseCase connectUseCase;
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
     private final GameConfigCache cache;
     private final GameSessionSituationGetPort situationGetPort;
 
-    public GameSessionMapController(ConnectUseCase connectUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort) {
-        this.connectUseCase = connectUseCase;
+    public GameSessionMapController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort) {
+        this.authGameSessionUseCase = authGameSessionUseCase;
         this.cache = cache;
         this.situationGetPort = situationGetPort;
     }
 
+
     @GetMapping({"", "/"})
-    public List<ResponseDTO> maps(@RequestHeader("Authorization") String rawToken,
-                                              @PathVariable("sessionId") String sessionIdStr) {
+    public List<ResponseDTO> maps(@RequestHeader("Authorization") String rawSessionToken,
+                                  @PathVariable("sessionId") String sessionIdStr) {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            GameSessionSituation situation = situationGetPort.get(new GameSessionContext(sessionId, playerId));
-            MapConfig map = cache.map(sessionId);
+            final GameSessionContext context = authGameSessionUseCase
+                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+
+            final GameSessionSituation situation = situationGetPort.get(context);
+            final MapConfig map = cache.map(sessionId);
             return map.select(situation)
                     .map(mapItem -> ResponseDTO.fromModel(mapItem, situation.board().spaceIds()))
                     .toList();
@@ -58,6 +61,7 @@ public class GameSessionMapController {
                 return new Pointer(ImageResponseDTO.fromModel(pointer), new ImagePositionDTO(position.top(), position.left()));
             }
         }
+
         public static ResponseDTO fromModel(MapItem mapItem, List<BoardSpace.Id> spaceIds) {
             Pointer pointerDTO = mapItem.optPointer()
                     .flatMap(pointer -> mapItem.selectPosition(spaceIds)

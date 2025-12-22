@@ -1,3 +1,53 @@
 {
-
+  "default": {
+    "close": "Close"
+  },
+  "config": {
+    "preparing": {
+      "label": "Session de jeux en cours de preparation"
+    }
+  },
+  "scenario": {
+    "goal": {
+      "title": "Objectives",
+      "finished": "Finished"
+    }
+  },
+  "talk": {
+    "next": "Next"
+  },
+  "help": {
+    "label": "Help"
+  },
+  "onboarding": {
+    "language": {
+      "select": "Select your language"
+    },
+    "welcome": {
+      "title": "Welcome to Pirate",
+      "description": "Discover an exciting adventure filled with challenges and mysteries. Get ready to explore and solve enigmas!"
+    },
+    "development": {
+      "title": "Work in Progress",
+      "description": "This application is currently in development. We're constantly adding new features and improvements. Thank you for your patience!"
+    },
+    "help": {
+      "title": "Need Help?",
+      "description": "Don't hesitate to contact us if you have any questions, suggestions, or encounter any issues. Your feedback is valuable to us!"
+    },
+    "nickname": {
+      "title": "Choose your nickname",
+      "description": "What would you like to be called?",
+      "hint": "Enter your nickname"
+    },
+    "email": {
+      "title": "Enter your email",
+      "description": "We'll use this to send you updates and news (optional).",
+      "hint": "Enter your email address"
+    },
+    "skip": "Skip",
+    "confirm": "Confirm",
+    "next": "Next",
+    "finish": "Start"
+  }
 }

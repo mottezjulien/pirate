@@ -1,5 +1,9 @@
 package fr.plop.contexts.connect.domain;
 
-public record ConnectToken(String value) {
+import fr.plop.generic.tools.StringTools;
 
+public record ConnectToken(String value) {
+    public ConnectToken() {
+        this(StringTools.generate());
+    }
 }

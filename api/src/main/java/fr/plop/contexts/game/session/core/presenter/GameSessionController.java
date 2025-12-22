@@ -1,19 +1,20 @@
 package fr.plop.contexts.game.session.core.presenter;
 
 
+import fr.plop.contexts.connect.domain.ConnectAuthGameSession;
+import fr.plop.contexts.connect.domain.ConnectAuthUser;
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
+import fr.plop.contexts.connect.usecase.ConnectAuthUserGetUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.core.domain.GameException;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
-import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,14 +26,17 @@ import java.util.Objects;
 @RequestMapping("/sessions")
 public class GameSessionController {
 
-    private final ConnectUseCase connectUseCase;
+    private final ConnectAuthUserGetUseCase authUserGetUseCase;
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
+
     private final GameSessionCreateUseCase createUseCase;
     private final GameSessionStartUseCase startUseCase;
     private final GameOverUseCase gameOverUseCase;
     private final GameSessionGetPort getPort;
 
-    public GameSessionController(ConnectUseCase connectUseCase, GameSessionCreateUseCase createUseCase, GameSessionStartUseCase startUseCase, GameOverUseCase gameOverUseCase, GameSessionGetPort getPort) {
-        this.connectUseCase = connectUseCase;
+    public GameSessionController(ConnectAuthUserGetUseCase authUserGetUseCase, ConnectAuthGameSessionUseCase authGameSessionUseCase, GameSessionCreateUseCase createUseCase, GameSessionStartUseCase startUseCase, GameOverUseCase gameOverUseCase, GameSessionGetPort getPort) {
+        this.authUserGetUseCase = authUserGetUseCase;
+        this.authGameSessionUseCase = authGameSessionUseCase;
         this.createUseCase = createUseCase;
         this.startUseCase = startUseCase;
         this.gameOverUseCase = gameOverUseCase;
@@ -41,15 +45,19 @@ public class GameSessionController {
 
 
     @PostMapping({"", "/"})
-    public GameSessionResponseDTO create(
-            @RequestHeader("Authorization") String rawToken,
+    public GameSessionCreateResponseDTO create(
+            @RequestHeader("Authorization") String rawUserToken,
             @RequestBody GameSessionCreateRequest request
     ) {
         try {
-            ConnectUser user = connectUseCase.findUserIdByRawToken(new ConnectToken(rawToken));
-            Template.Code templateCode = new Template.Code(request.templateCode());
-            GameSessionContext context = createUseCase.apply(templateCode, user.id());
-            return GameSessionResponseDTO.fromModel(context.sessionId());
+            final ConnectAuthUser connectAuthUser = authUserGetUseCase.findByConnectToken(new ConnectToken(rawUserToken));
+
+            final Template.Code templateCode = new Template.Code(request.templateCode());
+            final GameSessionContext context = createUseCase.apply(templateCode, connectAuthUser.userId());
+
+            final ConnectAuthGameSession authGameSession = authGameSessionUseCase.create(connectAuthUser, context);
+
+            return GameSessionCreateResponseDTO.fromAuthGameSession(authGameSession);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
@@ -60,46 +68,56 @@ public class GameSessionController {
         }
     }
 
+    public record GameSessionCreateRequest(String templateCode) {
+
+    }
+
+    public record GameSessionCreateResponseDTO(String id, String gameToken) {
+        public static GameSessionCreateResponseDTO fromAuthGameSession(ConnectAuthGameSession authGameSession) {
+            return new GameSessionCreateResponseDTO(authGameSession.context().sessionId().value(),
+                    authGameSession.token().value());
+        }
+    }
+
+
     @PostMapping({"/{sessionId}/start", "/{sessionId}/start/"})
     public GameSessionResponseDTO start(
-            @RequestHeader("Authorization") String rawToken,
+            @RequestHeader("Authorization") String rawSessionToken,
             @PathVariable("sessionId") String sessionIdStr) {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            startUseCase.apply(new GameSessionContext(sessionId, playerId));
+            ConnectAuthGameSession authGameSession = authGameSessionUseCase
+                    .findSessionAuth(sessionId, new ConnectToken(rawSessionToken));
+            startUseCase.apply(authGameSession);
             return GameSessionResponseDTO.fromModel(sessionId);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {
-            switch (e.type()){
-                case SESSION_NOT_FOUND, PLAYER_NOT_FOUND, TEMPLATE_NOT_FOUND -> throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            switch (e.type()) {
+                case SESSION_NOT_FOUND, PLAYER_NOT_FOUND, TEMPLATE_NOT_FOUND ->
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
                 default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
         }
     }
 
     @PostMapping({"/{sessionId}/stop", "/{sessionId}/stop/"})
-    public GameSessionResponseDTO stop(@RequestHeader("Authorization") String rawToken,
-                                         @PathVariable("sessionId") String sessionIdStr) {
+    public GameSessionResponseDTO stop(@RequestHeader("Authorization") String rawSessionToken,
+                                       @PathVariable("sessionId") String sessionIdStr) {
 
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-
+            ConnectAuthGameSession authGameSession = authGameSessionUseCase
+                    .findSessionAuth(sessionId, new ConnectToken(rawSessionToken));
             SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.FAILURE_ONE_CONTINUE);
-            gameOverUseCase.apply(new GameSessionContext(sessionId, playerId), gameOver);
+            gameOverUseCase.apply(authGameSession.context(), gameOver);
+            //TODO Remove game session. In UseCase ??? Je pense que non, faire un scheduler ??? Think ... (après, c'est pour le multi donc fuck)
+            authGameSessionUseCase.close(authGameSession.id());
             return GameSessionResponseDTO.fromModel(getPort.findById(sessionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
-    }
-
-    public record GameSessionCreateRequest(String templateCode) {
-
     }
 
     public record GameSessionResponseDTO(String id) {

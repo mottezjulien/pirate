@@ -1,11 +1,11 @@
 package fr.plop.contexts.game.session.core.persistence;
 
-import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepEntity;
+import fr.plop.contexts.user.persistence.UserEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
@@ -26,7 +26,7 @@ public class GamePlayerEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private ConnectionUserEntity user;
+    private UserEntity user;
 
     @Enumerated
     private GamePlayer.State state;
@@ -62,11 +62,11 @@ public class GamePlayerEntity {
         this.session = session;
     }
 
-    public ConnectionUserEntity getUser() {
+    public UserEntity getUser() {
         return user;
     }
 
-    public void setUser(ConnectionUserEntity user) {
+    public void setUser(UserEntity user) {
         this.user = user;
     }
 
@@ -110,6 +110,12 @@ public class GamePlayerEntity {
         this.endGameReason = endGameReason;
     }
 
+    public static GamePlayerEntity fromModelId(GamePlayer.Id modelId) {
+        GamePlayerEntity entity = new GamePlayerEntity();
+        entity.setId(modelId.value());
+        return entity;
+    }
+
     public GamePlayer toModel() {
         List<BoardSpace.Id> spacesInIds = List.of();
         if (lastPosition != null) {
@@ -126,4 +132,6 @@ public class GamePlayerEntity {
     public GamePlayer.Id toModelId() {
         return new GamePlayer.Id(id);
     }
+
+
 }

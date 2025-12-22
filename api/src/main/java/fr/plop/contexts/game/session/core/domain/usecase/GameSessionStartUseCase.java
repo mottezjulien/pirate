@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.session.core.domain.usecase;
 
+import fr.plop.contexts.connect.domain.ConnectAuthGameSession;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.GameException;
@@ -14,6 +15,7 @@ public class GameSessionStartUseCase {
 
     public interface Port {
         void active(GameSession.Id sessionId);
+        void active(ConnectAuthGameSession.Id id);
     }
 
     private final Port port;
@@ -33,8 +35,9 @@ public class GameSessionStartUseCase {
         this.scenarioGoalPort = scenarioGoalPort;
     }
 
-    public GameSession.Id apply(GameSessionContext context) throws GameException {
+    public GameSession.Id apply(ConnectAuthGameSession authGameSession) throws GameException {
 
+        final GameSessionContext context = authGameSession.context();
         final GameSession.Id session = get.findById(context.sessionId())
                 .orElseThrow(() -> new GameException(GameException.Type.SESSION_NOT_FOUND));
 
@@ -43,6 +46,9 @@ public class GameSessionStartUseCase {
         timer.start(context.sessionId());
         //TODO notify other players that the game has started
         port.active(context.sessionId());
+
+        port.active(authGameSession.id());
+
         ScenarioConfig.Step step = cache.scenario(context.sessionId()).firstStep();
         scenarioGoalPort.saveStep(context, step.id(), ScenarioSessionState.ACTIVE);
 

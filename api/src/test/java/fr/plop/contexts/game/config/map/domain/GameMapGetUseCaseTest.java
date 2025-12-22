@@ -6,13 +6,13 @@ public class GameMapGetUseCaseTest {
     private final InMemory inMemory = new InMemory();
     private final GameMapGetUseCase useCase = new GameMapGetUseCase(inMemory);
     private final GamePlayer player = mock(GamePlayer.class);
-    private final GamePlayer.Id playerId = new GamePlayer.Id("myPlayerId");
+    private final GamePlayer.Id currentPlayerId = new GamePlayer.Id("myPlayerId");
 
     @BeforeEach
     void setUp() {
         inMemory.clear();
         reset(player);
-        when(player.id()).thenReturn(playerId);
+        when(player.id()).thenReturn(currentPlayerId);
     }
 
     @Test

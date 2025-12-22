@@ -4,4 +4,8 @@ public record GameSessionContext(GameSession.Id sessionId, GamePlayer.Id playerI
     public GameSessionContext() {
         this(new GameSession.Id(), new GamePlayer.Id());
     }
+
+    public boolean isSessionId(GameSession.Id sessionId) {
+        return this.sessionId.equals(sessionId);
+    }
 }

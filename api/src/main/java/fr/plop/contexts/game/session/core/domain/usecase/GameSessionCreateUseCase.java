@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.session.core.domain.usecase;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.user.User;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.session.core.domain.GameException;
@@ -12,16 +12,14 @@ import java.util.Optional;
 
 public class GameSessionCreateUseCase {
 
-
-
     public interface Port {
-        Optional<GameSessionContext> findCurrentGameSession(ConnectUser.Id userId);
+        Optional<GameSessionContext> findCurrentGameSession(User.Id userId);
 
         Optional<Template> findTemplateByCode(Template.Code code);
 
         GameSession create(Template template);
 
-        GamePlayer.Id insertUserId(GameSession.Id gameId, ConnectUser.Id userId);
+        GamePlayer.Id insertUserId(GameSession.Id gameId, User.Id userId);
 
     }
 
@@ -33,7 +31,7 @@ public class GameSessionCreateUseCase {
         this.cache = cache;
     }
 
-    public GameSessionContext apply(Template.Code code, ConnectUser.Id userId) throws GameException {
+    public GameSessionContext apply(Template.Code code, User.Id userId) throws GameException {
         Optional<GameSessionContext> findInGame = port.findCurrentGameSession(userId);
         if (findInGame.isPresent()) {
             return findInGame.get();
@@ -42,7 +40,7 @@ public class GameSessionCreateUseCase {
     }
 
 
-    private GameSessionContext createNewGame(Template.Code code, ConnectUser.Id userId) throws GameException {
+    private GameSessionContext createNewGame(Template.Code code, User.Id userId) throws GameException {
         Template template = port.findTemplateByCode(code)
                 .orElseThrow(() -> new GameException(GameException.Type.TEMPLATE_NOT_FOUND));
 

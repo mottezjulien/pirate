@@ -1,5 +1,53 @@
 {
   "default": {
     "close": "Fermer"
+  },
+  "config": {
+    "preparing": {
+      "label": "Session de jeux en cours de preparation"
+    }
+  },
+  "scenario": {
+    "goal": {
+      "title": "Objectifs",
+      "finished": "Terminé"
+    }
+  },
+  "talk": {
+    "next": "Continue"
+  },
+  "help": {
+    "label": "Aide"
+  },
+  "onboarding": {
+    "language": {
+      "select": "Sélectionnez votre langue"
+    },
+    "welcome": {
+      "title": "Bienvenue sur Locked Out - La plateforme d'escape game urbain",
+      "description": "Découvrez des aventures captivantes remplies de défis et de mystères. Préparez-vous à explorer et à résoudre des énigmes tout en visitant des lieux merveilleux !"
+    },
+    "development": {
+      "title": "En cours de développement",
+      "description": "Cette application est actuellement en développement. Nous ajoutons constamment de nouvelles fonctionnalités et améliorations. Merci de votre patience !"
+    },
+    "help": {
+      "title": "Besoin d'aide ?",
+      "description": "Si c'est votre première partie, n'hésitez pas à suivre le tutorial pendant le jeu. Vous pouvez à tout moment cliquer sur la bouée de sauvetage (en haut à droite de chaque écran) afin d'avoir d'avoir plus d'aide et de vous débloquer si besoin."
+    },
+    "nickname": {
+      "title": "Choisissez votre pseudo",
+      "description": "Comment souhaitez-vous être appelé ?",
+      "hint": "Entrez votre pseudo"
+    },
+    "email": {
+      "title": "Entrez votre email",
+      "description": "Nous l'utiliserons pour vous envoyer des mises à jour et des actualités (optionnel).",
+      "hint": "Entrez votre adresse email"
+    },
+    "skip": "Passer",
+    "confirm": "Confirmer",
+    "next": "Suivant",
+    "finish": "Commencer"
   }
 }

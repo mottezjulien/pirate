@@ -1,8 +1,11 @@
 package fr.plop.contexts.game.session.event.domain;
 
 
-import fr.plop.contexts.connect.domain.ConnectAuth;
-import fr.plop.contexts.connect.domain.ConnectionCreateAuthUseCase;
+import fr.plop.contexts.connect.domain.ConnectAuthGameSession;
+import fr.plop.contexts.connect.domain.ConnectAuthUser;
+import fr.plop.contexts.connect.domain.ConnectException;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
+import fr.plop.contexts.connect.usecase.ConnectAuthUserCreateUseCase;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.consequence.Consequence;
@@ -48,10 +51,13 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     private TemplateInitUseCase.OutPort templatePort;
 
     @Autowired
-    private ConnectionCreateAuthUseCase createAuthUseCase;
+    private ConnectAuthUserCreateUseCase createAuthUseCase;
 
     @Autowired
     private GameSessionCreateUseCase createUseCase;
+
+    @Autowired
+    private ConnectAuthGameSessionUseCase authGameSessionUseCase;
 
     @Autowired
     private GameSessionStartUseCase startUseCase;
@@ -92,12 +98,12 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
 
     @Test
-    public void _default() throws GameException {
+    public void _default() throws GameException, ConnectException {
         GameSessionContext context = start();
         assertThat(situationPort.get(context).scenario().stepIds()).containsOnly(stepId); //Default
     }
     @Test
-    public void moveInTrap() throws GameException, InterruptedException {
+    public void moveInTrap() throws GameException, InterruptedException, ConnectException {
         GameSessionContext context = start();
         Point position = new Point(5, 5);
         moveUseCase.apply(context, position);
@@ -107,7 +113,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     }
 
     @Test
-    public void moveOtherSpace_doNothing() throws GameException, InterruptedException {
+    public void moveOtherSpace_doNothing() throws GameException, InterruptedException, ConnectException {
         GameSessionContext context = start();
         Point position = new Point(15, 25);
         moveUseCase.apply(context, position);
@@ -116,10 +122,11 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
         assertThat(situationPort.get(context).scenario().stepIds()).containsOnly(stepId);
     }
 
-    private GameSessionContext start() throws GameException {
-        ConnectAuth auth = createAuthUseCase.byDeviceId("anyDeviceId");
-        GameSessionContext context = createUseCase.apply(new Template.Code(CODE), auth.userId());
-        startUseCase.apply(context);
+    private GameSessionContext start() throws GameException, ConnectException {
+        final ConnectAuthUser auth = createAuthUseCase.byDeviceId("anyDeviceId");
+        final GameSessionContext context = createUseCase.apply(new Template.Code(CODE), auth.userId());
+        final ConnectAuthGameSession authGameSession = authGameSessionUseCase.create(auth, context);
+        startUseCase.apply(authGameSession);
         return context;
     }
 

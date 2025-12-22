@@ -78,13 +78,13 @@ public class GameAdminSessionController {
     }
 
     /*
-    @PostMapping({"/{sessionId}/players/{playerId}/message"})
+    @PostMapping({"/{sessionId}/players/{currentPlayerId}/message"})
     public void sendMessage(@PathVariable("sessionId") String sessionIdStr,
-                            @PathVariable("playerId") String playerIdStr,
+                            @PathVariable("currentPlayerId") String playerIdStr,
                             @RequestBody SendMessageRequest request) {
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        GamePlayer.Id playerId = new GamePlayer.Id(playerIdStr);
-        pushPort.push(new PushEvent.Message(sessionId, playerId, request.value()));
+        GamePlayer.Id currentPlayerId = new GamePlayer.Id(playerIdStr);
+        pushPort.push(new PushEvent.Message(sessionId, currentPlayerId, request.value()));
     }
 
     public record SendMessageRequest(String value) {

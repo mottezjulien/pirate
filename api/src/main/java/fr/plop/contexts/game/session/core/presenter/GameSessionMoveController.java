@@ -3,10 +3,8 @@ package fr.plop.contexts.game.session.core.presenter;
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.GameException;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
@@ -19,25 +17,26 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/sessions/{sessionId}/move")
 public class GameSessionMoveController {
 
-    private final ConnectUseCase connectUseCase;
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
     private final GameMoveUseCase moveUseCase;
 
-    public GameSessionMoveController(ConnectUseCase connectUseCase, GameMoveUseCase moveUseCase) {
-        this.connectUseCase = connectUseCase;
+    public GameSessionMoveController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameMoveUseCase moveUseCase) {
+        this.authGameSessionUseCase = authGameSessionUseCase;
         this.moveUseCase = moveUseCase;
     }
 
+
     @PostMapping({"", "/"})
-    public void move(
-            @RequestHeader("Authorization") String rawToken,
-            @PathVariable("sessionId") String sessionIdStr,
-            @RequestBody GameMoveRequestDTO request) {
+    public void move(@RequestHeader("Authorization") String rawSessionToken,
+                     @PathVariable("sessionId") String sessionIdStr,
+                     @RequestBody GameMoveRequestDTO request) {
         System.out.println("MOVE: " + request.lat() + " " + request.lng());
         GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            moveUseCase.apply(new GameSessionContext(sessionId, playerId), request.toModel());
+            final GameSessionContext context = authGameSessionUseCase
+                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+
+            moveUseCase.apply(context, request.toModel());
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameException e) {

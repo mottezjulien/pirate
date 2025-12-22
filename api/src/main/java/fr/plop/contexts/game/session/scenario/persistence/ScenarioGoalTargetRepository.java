@@ -10,13 +10,13 @@ import java.util.Optional;
 public interface ScenarioGoalTargetRepository extends JpaRepository<ScenarioGoalTargetEntity, String> {
 
     @Query("FROM ScenarioGoalTargetEntity goalTarget" +
-            " WHERE goalTarget.player.id = :playerId" +
+            " WHERE goalTarget.player.id = :currentPlayerId" +
             " AND goalTarget.target.id = :targetId")
-    Optional<ScenarioGoalTargetEntity> byPlayerIdAndTargetId(@Param("playerId") String playerId, @Param("targetId") String targetId);
+    Optional<ScenarioGoalTargetEntity> byPlayerIdAndTargetId(@Param("currentPlayerId") String playerId, @Param("targetId") String targetId);
 
 
     @Query("FROM ScenarioGoalTargetEntity goal" +
             " LEFT JOIN FETCH goal.target target" +
-            " WHERE goal.player.id = :playerId")
-    List<ScenarioGoalTargetEntity> byPlayerIdFetchTarget(@Param("playerId") String playerId);
+            " WHERE goal.player.id = :currentPlayerId")
+    List<ScenarioGoalTargetEntity> byPlayerIdFetchTarget(@Param("currentPlayerId") String playerId);
 }

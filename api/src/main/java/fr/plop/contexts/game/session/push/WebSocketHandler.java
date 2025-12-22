@@ -2,8 +2,7 @@ package fr.plop.contexts.game.session.push;
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import org.slf4j.Logger;
@@ -26,11 +25,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private final Map<GameSessionContext, WebSocketSession> playerIdsWithSession = new HashMap<>();
 
-    private final ConnectUseCase connectUseCase;
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
 
-    public WebSocketHandler(ConnectUseCase connectUseCase) {
-        this.connectUseCase = connectUseCase;
+    public WebSocketHandler(ConnectAuthGameSessionUseCase authGameSessionUseCase) {
+        this.authGameSessionUseCase = authGameSessionUseCase;
     }
+
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
@@ -69,10 +69,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         if (optSessionId.isPresent() && tokenStr != null) {
             GameSession.Id sessionId = optSessionId.get();
             try {
-                ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(tokenStr));
-                if (user.playerId().isPresent()) {
-                    return Optional.of(new GameSessionContext(sessionId, user.playerId().get()));
-                }
+                GameSessionContext context = authGameSessionUseCase.findContext(sessionId, new ConnectToken(tokenStr));
+                return Optional.of(context);
             } catch (ConnectException e) {
                 logger.error("Erreur lors de la récupération du joueur {}", session.getId(), e);
             }

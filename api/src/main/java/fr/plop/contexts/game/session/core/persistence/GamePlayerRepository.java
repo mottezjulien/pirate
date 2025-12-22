@@ -12,31 +12,13 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
     String FROM = "FROM GamePlayerEntity player";
 
     //fetch space && goal bugs -> separate queries
-    String FETCH_GOALS = " LEFT JOIN FETCH player.goals goal LEFT JOIN FETCH goal.step step";
     String FETCH_LAST_POSITION = "LEFT JOIN FETCH player.lastPosition position LEFT JOIN FETCH position.spaces spaces";
-    String W_PLAYER_ID_EQUALS = "player.id = :playerId";
+    String W_PLAYER_ID_EQUALS = "player.id = :currentPlayerId";
     String W_SESSION_ID_EQUALS = "player.session.id = :sessionId";
     String W_PLAYER_IS_ACTIVE = "player.state = fr.plop.contexts.game.session.core.domain.model.GamePlayer.State.ACTIVE";
 
-    @Query(FROM + " " + FETCH_GOALS + " WHERE " + W_PLAYER_ID_EQUALS)
-    Optional<GamePlayerEntity> findByIdFetchGoals(@Param("playerId") String playerId);
-
     @Query(FROM + " " + FETCH_LAST_POSITION + " WHERE " + W_PLAYER_ID_EQUALS)
-    Optional<GamePlayerEntity> findByIdFetchLastPosition(@Param("playerId") String playerId);
-
-
-    @Query(FROM +
-            " WHERE player.user.id = :userId" +
-            " AND " + W_SESSION_ID_EQUALS +
-            " AND " + W_PLAYER_IS_ACTIVE)
-    Optional<GamePlayerEntity> findBySessionIdAndUserId(@Param("sessionId") String sessionId, @Param("userId") String userId);
-
-    @Query(FROM + " " + FETCH_LAST_POSITION +
-            " WHERE player.user.id = :userId" +
-            " AND " + W_SESSION_ID_EQUALS +
-            " AND " + W_PLAYER_IS_ACTIVE)
-    Optional<GamePlayerEntity> findBySessionIdAndUserIdFetchLastPosition(@Param("sessionId") String sessionId, @Param("userId") String userId);
-
+    Optional<GamePlayerEntity> findByIdFetchLastPosition(@Param("currentPlayerId") String playerId);
 
     @Query("SELECT player.id " + FROM +
             " WHERE " + W_SESSION_ID_EQUALS +
@@ -45,7 +27,6 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
 
     @Query(FROM + " LEFT JOIN FETCH player.user user" +
             " WHERE " + W_PLAYER_ID_EQUALS)
-    Optional<GamePlayerEntity> findByIdFetchUser(@Param("playerId") String playerId);
-
+    Optional<GamePlayerEntity> findByIdFetchUser(@Param("currentPlayerId") String playerId);
 
 }

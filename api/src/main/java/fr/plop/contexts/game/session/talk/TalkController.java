@@ -3,14 +3,12 @@ package fr.plop.contexts.game.session.talk;
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
@@ -29,21 +27,21 @@ import java.util.Optional;
 @RequestMapping("/sessions/{sessionId}/talks")
 public class TalkController {
 
-
-    private final ConnectUseCase connectUseCase;
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
     private final GameConfigCache cache;
     private final GameSessionSituationGetPort situationGetPort;
     private final GameEventOrchestrator eventOrchestrator;
 
-    public TalkController(ConnectUseCase connectUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventOrchestrator eventOrchestrator) {
-        this.connectUseCase = connectUseCase;
+    public TalkController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventOrchestrator eventOrchestrator) {
+        this.authGameSessionUseCase = authGameSessionUseCase;
         this.cache = cache;
         this.situationGetPort = situationGetPort;
         this.eventOrchestrator = eventOrchestrator;
     }
 
+
     @GetMapping({"/{talkId}", "/{talkId}/"})
-    public ResponseDTO getOne(@RequestHeader("Authorization") String rawToken,
+    public ResponseDTO getOne(@RequestHeader("Authorization") String rawSessionToken,
                               @RequestHeader("Language") String languageStr,
                               @PathVariable("sessionId") String sessionIdStr,
                               @PathVariable("talkId") String talkIdStr) {
@@ -51,12 +49,12 @@ public class TalkController {
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
-            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found"));
+            final GameSessionContext context = authGameSessionUseCase
+                    .findContext(sessionId, new ConnectToken(rawSessionToken));
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-            final GameSessionSituation situation = situationGetPort.get(new GameSessionContext(sessionId, playerId));
+            final GameSessionSituation situation = situationGetPort.get(context);
             return ResponseDTO.fromModel(item.select(situation), language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
@@ -65,28 +63,27 @@ public class TalkController {
 
 
     @PostMapping({"/{talkId}/options/{optionId}", "/{talkId}/options/{optionId}/"})
-    public ResponseDTO selectOption(@RequestHeader("Authorization") String rawToken,
+    public ResponseDTO selectOption(@RequestHeader("Authorization") String rawSessionToken,
                                     @RequestHeader("Language") String languageStr,
-                             @PathVariable("sessionId") String sessionIdStr,
-                             @PathVariable("talkId") String talkIdStr,
-                             @PathVariable("optionId") String optionIdStr) {
+                                    @PathVariable("sessionId") String sessionIdStr,
+                                    @PathVariable("talkId") String talkIdStr,
+                                    @PathVariable("optionId") String optionIdStr) {
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         final TalkItem.Id taklId = new TalkItem.Id(talkIdStr);
         final TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(optionIdStr);
         try {
-            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            final GameSessionContext context = authGameSessionUseCase
+                    .findContext(sessionId, new ConnectToken(rawSessionToken));
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(taklId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
-            final GameSessionContext context = new GameSessionContext(sessionId, playerId);
 
-            if(item instanceof TalkItem.Options multipleOptions) {
+            if (item instanceof TalkItem.Options multipleOptions) {
                 Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);
-                if(optOption.isPresent()) {
+                if (optOption.isPresent()) {
                     eventOrchestrator.fire(context, new GameEvent.Talk(item.id(), Optional.of(optionId)));
                     TalkItem.Options.Option option = optOption.get();
-                    if(option.hasNext()) {
-                        return getOne(rawToken, languageStr, sessionIdStr, option.nextId().value());
+                    if (option.hasNext()) {
+                        return getOne(rawSessionToken, languageStr, sessionIdStr, option.nextId().value());
                     }
                     throw new ResponseStatusException(HttpStatus.NO_CONTENT);
                 }
@@ -101,7 +98,8 @@ public class TalkController {
 
     public record ResponseDTO(String id, String value, Character character, Result result) {
 
-        public record Character(String name, ImageResponseDTO image) { }
+        public record Character(String name, ImageResponseDTO image) {
+        }
 
         public record Result(String type, List<Option> options, String nextId) {
             public record Option(String id, String value) {
@@ -111,6 +109,7 @@ public class TalkController {
 
             }
         }
+
         public static ResponseDTO fromModel(TalkItem item, Language language) {
             final Image imageCharacter = item.characterReference().image();
             final ImageResponseDTO image = ImageResponseDTO.fromModel(imageCharacter);
@@ -134,8 +133,6 @@ public class TalkController {
             return new ResponseDTO(item.id().value(), item.value(language), character, result);
         }
     }
-
-
 
 
 }

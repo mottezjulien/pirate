@@ -52,15 +52,9 @@ public class GameFirstStartIntegrationTest {
 
     @Test
     public void createSession() throws URISyntaxException {
-
         ConnectionController.ResponseDTO connection = createAuth();
-
         GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
-
         assertThat(session.id()).isNotNull();
-
-        //TODO -> Get Session ? Get User one ??
-
     }
 
     private ConnectionController.ResponseDTO createAuth() throws URISyntaxException {

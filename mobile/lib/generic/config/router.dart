@@ -2,10 +2,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../contexts/game/views/goal/game_goal_view.dart';
-import '../../contexts/game/views/home/game_home_view.dart';
-import '../../contexts/game/views/map/game_map_view.dart';
-import '../../contexts/game/views/menu/game_menu_view.dart';
+import '../../contexts/session/views/home/game_home_view.dart';
+import '../../contexts/session/views/menu/game_menu_view.dart';
+import '../../contexts/config/onboarding/views/onboarding_screen.dart';
+import '../app_current.dart';
 
 class AppRouter {
 
@@ -14,53 +14,58 @@ class AppRouter {
   static const homeName = "home";
   static const homePath = "/";
 
-  static const gameMenuName = "game-menu";
-  static const gameMenuPath = "/game/menu";
+  static const onboardingName = "onboarding";
+  static const onboardingPath = "/onboarding";
 
-  static const gameHomeName = "game-home";
-  static const gameHomePath = "/game/home";
+  static const gameMenuName = "session-menu";
+  static const gameMenuPath = "/session/menu";
 
-  static const gameGoalName = "game-goal";
-  static const gameGoalPath = "/game/goal";
+  static const gameHomeName = "session-home";
+  static const gameHomePath = "/session/home";
 
-  static const gameMapName = "game-map";
-  static const gameMapPath = "/game/map";
 
   static GoRouter create() {
+    String initialLocation = homePath;
+    if(!AppCurrent.hasUser) {
+      initialLocation = onboardingPath;
+    }
     return GoRouter(
       navigatorKey: navigatorKey,
+      initialLocation: initialLocation,
       redirect: (context, state) {
         return null;
       },
       routes: [
-        GoRoute(
-          name: homeName,
-          path: homePath,
-          builder: (context, state) => GameMenuView(),
-        ),
-        GoRoute(
-          name: gameMenuName,
-          path: gameMenuPath,
-          builder: (context, state) => GameMenuView(),
-        ),
-        GoRoute(
-          name: gameHomeName,
-          path: gameHomePath,
-          builder: (context, state) => GameHomeView(),
-        ),
-        GoRoute(
-          name: gameGoalName,
-          path: gameGoalPath,
-          builder: (context, state) => GameGoalView(),
-        ),
-        GoRoute(
-          name: gameMapName,
-          path: gameMapPath,
-          builder: (context, state) => GameMapView(),
-        ),
-
-
-      ],
+        ShellRoute(
+            builder: (BuildContext context, GoRouterState state, Widget child) {
+              return SafeArea(
+                child: child,
+              );
+            },
+            routes: [
+              GoRoute(
+                name: onboardingName,
+                path: onboardingPath,
+                builder: (context, state) => OnboardingScreen(),
+              ),
+              GoRoute(
+                name: homeName,
+                path: homePath,
+                builder: (context, state) => GameMenuView(),
+              ),
+              GoRoute(
+                name: gameMenuName,
+                path: gameMenuPath,
+                builder: (context, state) => GameMenuView(),
+              ),
+              GoRoute(
+                name: gameHomeName,
+                path: gameHomePath,
+                builder: (context, state) => GameHomeView(),
+              )
+          ]
+        )
+      ]
     );
   }
 

@@ -6,7 +6,7 @@ public interface BoardPositionRepository extends JpaRepository<BoardPositionEnti
 
     /*@Query("FROM BoardPositionEntity position" +
             " LEFT JOIN FETCH position.spaces spaces" +
-            " WHERE position.player.id = :playerId")
-    Optional<BoardPositionEntity> findByPlayerIdFetchSpaces(@Param("playerId") String playerId);*/
+            " WHERE position.player.id = :currentPlayerId")
+    Optional<BoardPositionEntity> findByPlayerIdFetchSpaces(@Param("currentPlayerId") String currentPlayerId);*/
 
 }

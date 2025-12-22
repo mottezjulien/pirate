@@ -11,7 +11,7 @@ public interface GamePlayerActionRepository extends JpaRepository<GamePlayerActi
     @Query("FROM GamePlayerActionEntity action " +
             "LEFT JOIN FETCH action.player player " +
             "LEFT JOIN FETCH action.possibility possibility " +
-            "WHERE player.id = :playerId")
-    List<GamePlayerActionEntity> fullByPlayerId(@Param("playerId") String playerId);
+            "WHERE player.id = :currentPlayerId")
+    List<GamePlayerActionEntity> fullByPlayerId(@Param("currentPlayerId") String playerId);
 
 }

@@ -35,4 +35,16 @@ enum Language {
     }
   }
 
+  String get icon => switch(this) {
+    Language.en => '🇬🇧',
+    Language.fr => '🇫🇷',
+  };
+
+  String get label => switch(this) {
+    Language.en => 'English',
+    Language.fr => 'Français',
+  };
+
+
+
 }

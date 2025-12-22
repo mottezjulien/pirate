@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.session.core.adapter;
 
-import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.connect.persistence.entity.ConnectionUserEntity;
+import fr.plop.contexts.user.User;
+import fr.plop.contexts.user.persistence.UserEntity;
 import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
@@ -38,12 +38,12 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
 
 
     @Override
-    public Optional<GameSessionContext> findCurrentGameSession(ConnectUser.Id userId) {
+    public Optional<GameSessionContext> findCurrentGameSession(User.Id userId) {
         return sessionRepository.findByIdFetchPlayerAndUser(userId.value()).stream()
                 .filter(session -> session.getState() != GameSession.State.OVER)
                 .map(entity -> {
                     GamePlayer.Id playerId = entity.getPlayers().stream()
-                            .filter(player -> player.getUser().getId().equals(userId.value()))
+                            .filter(player -> player.getUser().is(userId.value()))  //.getId().equals(userId.value()))
                             .findFirst()
                             .map(player -> new GamePlayer.Id(player.getId()))
                             .orElseThrow();
@@ -101,7 +101,7 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
     }
 
     @Override
-    public GamePlayer.Id insertUserId(GameSession.Id sessionId, ConnectUser.Id userId) {
+    public GamePlayer.Id insertUserId(GameSession.Id sessionId, User.Id userId) {
         GamePlayerEntity playerEntity = new GamePlayerEntity();
         playerEntity.setId(StringTools.generate());
 
@@ -109,9 +109,8 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
         session.setId(sessionId.value());
         playerEntity.setSession(session);
 
-        ConnectionUserEntity user = new ConnectionUserEntity();
-        user.setId(userId.value());
-        playerEntity.setUser(user);
+
+        playerEntity.setUser(UserEntity.buildWithModelId(userId));
 
         playerEntity.setState(GamePlayer.State.ACTIVE);
 

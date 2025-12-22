@@ -2,12 +2,11 @@ package fr.plop.contexts.game.session.scenario.presenter;
 
 import fr.plop.contexts.connect.domain.ConnectException;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.ConnectUseCase;
-import fr.plop.contexts.connect.domain.ConnectUser;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
-import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
+import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.scenario.domain.GameSessionScenarioGoalPort;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionPlayer;
 import fr.plop.subs.i18n.domain.Language;
@@ -22,30 +21,30 @@ import java.util.stream.Stream;
 @RequestMapping("/sessions/{sessionId}")
 public class GameSessionScenarioController {
 
-    private final ConnectUseCase connectUseCase;
-
+    private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
     private final GameSessionScenarioGoalPort scenarioGoalPort;
-
     private final GameConfigCache cache;
 
-    public GameSessionScenarioController(ConnectUseCase connectUseCase, GameSessionScenarioGoalPort scenarioGoalPort, GameConfigCache cache) {
-        this.connectUseCase = connectUseCase;
+    public GameSessionScenarioController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameSessionScenarioGoalPort scenarioGoalPort, GameConfigCache cache) {
+        this.authGameSessionUseCase = authGameSessionUseCase;
         this.scenarioGoalPort = scenarioGoalPort;
         this.cache = cache;
     }
 
 
     @GetMapping({"/goals", "/goals/"})
-    public Stream<GameGoalResponseDTO> goals(@RequestHeader("Authorization") String rawToken,
+    public Stream<GameGoalResponseDTO> goals(@RequestHeader("Authorization") String rawSessionToken,
                                              @RequestHeader("Language") String languageStr,
                                              @PathVariable("sessionId") String sessionIdStr) {
 
         final Language language = Language.valueOf(languageStr.toUpperCase());
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         try {
-            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            final GamePlayer.Id playerId = user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
-            final ScenarioSessionPlayer scenarioSessionPlayer = scenarioGoalPort.findByPlayerId(playerId);
+
+            final GameSessionContext context = authGameSessionUseCase
+                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+
+            final ScenarioSessionPlayer scenarioSessionPlayer = scenarioGoalPort.findByPlayerId(context.playerId());
             final ScenarioConfig scenario = cache.scenario(sessionId);
 
             return scenario.orderedSteps()
@@ -57,7 +56,8 @@ public class GameSessionScenarioController {
     }
 
 
-    public record GameGoalResponseDTO(String id, String label, String state, List<GameTargetSimpleResponseDTO> targets) {
+    public record GameGoalResponseDTO(String id, String label, String state,
+                                      List<GameTargetSimpleResponseDTO> targets) {
         public static GameGoalResponseDTO fromModel(ScenarioConfig.Step step, ScenarioSessionPlayer scenarioSessionPlayer, Language language) {
             List<GameTargetSimpleResponseDTO> targets = step.targets().stream()
                     .map(target -> GameTargetSimpleResponseDTO.fromModel(target, scenarioSessionPlayer, language)).toList();
@@ -77,17 +77,17 @@ public class GameSessionScenarioController {
     }
 
     @GetMapping({"/targets/{targetId}", "/targets/{targetId}/"})
-    public GameTargetDetailsResponseDTO targetDetails(@RequestHeader("Authorization") String rawToken,
-                                             @RequestHeader("Language") String languageStr,
-                                             @PathVariable("sessionId") String sessionIdStr,
-                                                     @PathVariable("targetId") String targetIdStr) {
+    public GameTargetDetailsResponseDTO targetDetails(@RequestHeader("Authorization") String rawSessionToken,
+                                                      @RequestHeader("Language") String languageStr,
+                                                      @PathVariable("sessionId") String sessionIdStr,
+                                                      @PathVariable("targetId") String targetIdStr) {
 
         final Language language = Language.valueOf(languageStr.toUpperCase());
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         final ScenarioConfig.Target.Id targetId = new ScenarioConfig.Target.Id(targetIdStr);
         try {
-            final ConnectUser user = connectUseCase.findUserIdBySessionIdAndRawToken(sessionId, new ConnectToken(rawToken));
-            user.playerId().orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No player found", null));
+            authGameSessionUseCase.findContext(sessionId, new ConnectToken(rawSessionToken));
+
             final ScenarioConfig scenario = cache.scenario(sessionId);
             ScenarioConfig.Target target = scenario.targetById(targetId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target not found", null));
             return GameTargetDetailsResponseDTO.toModel(target, language);
@@ -96,7 +96,8 @@ public class GameSessionScenarioController {
         }
     }
 
-    public record GameTargetDetailsResponseDTO(String id, String label, String description, boolean done, boolean optional, List<String> hints, String answer) {
+    public record GameTargetDetailsResponseDTO(String id, String label, String description, boolean done,
+                                               boolean optional, List<String> hints, String answer) {
 
         public static GameTargetDetailsResponseDTO toModel(ScenarioConfig.Target target, Language language) {
 

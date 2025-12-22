@@ -34,6 +34,9 @@ LYON_9:1.0::10
 ------ Character
 --------- Roboto
 ------------ default:ASSET:/game/lyon9/roboto_default.png
+------------ happy1:ASSET:/game/lyon9/roboto_happy1.png
+------------ happy2:ASSET:/game/lyon9/roboto_happy2.png
+------------ happy3:ASSET:/game/lyon9/roboto_happy3.png
 --------- Coco
 ------------ happy1:ASSET:/game/lyon9/perroquet_happy1.png
 ------------ happy2:ASSET:/game/lyon9/perroquet_happy2.png
@@ -62,13 +65,13 @@ LYON_9:1.0::10
 
 --- Talk
 ------ Continue (ref TALK_LETS_GO1):TALK_LETS_GO2
---------- Character:Roboto:default
+--------- Character:Roboto:happy1
 --------- FR:Et c'est parti, bienvenu dans la partie d'exemple !
 ------ Continue (ref TALK_LETS_GO2):TALK_LETS_GO3
---------- Character:Roboto:default
+--------- Character:Roboto:happy2
 --------- FR:Nous allons faire une petite aventure afin de que tu puisses voir les différentes possibilités des l'applications.
 ------ Options (ref TALK_LETS_GO3)
---------- Character:Roboto:default
+--------- Character:Roboto:happy3
 --------- FR:Pour commencer, est ce que tu veux que je te présente l'application, les différentes actions possible (conseiller pour la première partie) ou bien veux tu rentrer directement de l'action ?
 --------- Option (ref TALK_LETS_GO3_OPTION_INTRO)
 ------------ FR:Je veux bien un peu d'explication de l'application
