@@ -1,52 +1,31 @@
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../../generic/repository/generic_repository.dart';
 import '../game_current.dart';
 
-class GameMapRepository {
+class GameImageRepository {
 
   static const resourcePath = '/sessions';
 
-  Future<List<GameMap>> get() async {
-    GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
-    final response = await genericRepository.get(path: "$resourcePath/${GameCurrent.sessionId}/maps/");
-    final List<GameMap> maps = [];
-    response.forEach((jsonMap) {
-      maps.add(GameMap.fromJson(jsonMap));
-    });
-    return maps;
+  Future<ImageDetails> findById(String imageId) async {
+    final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
+    final responseBody = await genericRepository.get(path: "/sessions/${GameCurrent.sessionId}/images/$imageId");
+    return ImageDetails.fromJson(responseBody);
   }
-}
 
-class GameMap {
-
-  final String id;
-  final ImageDetails image;
-  final Pointer? pointer;
-
-  GameMap({
-    required this.id,
-    required this.image,
-    this.pointer
-  });
-
-  String get imageValue => image.value;
-
-  List<ImageObject> get imageObjects => image.objects;
-
-  factory GameMap.fromJson(Map<String, dynamic> json) {
-    Pointer? pointer;
-    if(json['pointer'] != null) {
-     pointer = Pointer.fromJson(json['pointer']);
-    }
-    return GameMap(
-      id: json['id'] as String,
-      image: ImageDetails.fromJson(json['image'] as Map<String, dynamic>),
-      pointer: pointer,
+  Future<void> clickObject(String imageId, String objectId) async {
+    GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
+    await genericRepository.post(
+        path: "$resourcePath/${GameCurrent.sessionId}/images/$imageId/objects/$objectId",
+        decode: false
     );
   }
+
 }
+
 
 class ImageDetails {
   final String id;
@@ -68,34 +47,6 @@ class ImageDetails {
 }
 
 
-class Pointer {
-
-  final ImagePosition position;
-  final ImageData image;
-
-  Pointer({required this.position, required this.image});
-
-  factory Pointer.fromJson(Map<String, dynamic> json) {
-    return Pointer(
-        position: ImagePosition.fromJson(json['position'] as Map<String,dynamic>),
-        image: ImageData.fromJson(json['image'] as Map<String,dynamic>));
-  }
-
-  ImageObject toImageObject() {
-    return ImageObject(id: "", label:"", type: "IMAGE", position: position, image: image);
-  }
-
-}
-
-class ImageData {
-  final String type;
-  final String value;
-  ImageData({required this.type, required this.value});
-
-  factory ImageData.fromJson(Map<String, dynamic> json) {
-    return ImageData(type: json['type'] as String, value: json['value'] as String);
-  }
-}
 
 class ImageObject {
   final String id;
@@ -138,6 +89,17 @@ class ImageObject {
 
 }
 
+class ImageData {
+  final String type;
+  final String value;
+  ImageData({required this.type, required this.value});
+
+  factory ImageData.fromJson(Map<String, dynamic> json) {
+    return ImageData(type: json['type'] as String, value: json['value'] as String);
+  }
+}
+
+
 class ImagePosition {
   final double top, left;
   ImagePosition({required this.top, required this.left});
@@ -150,4 +112,3 @@ class ImagePoint {
   final Color color;
   ImagePoint({required this.color});
 }
-

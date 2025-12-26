@@ -9,6 +9,7 @@ import '../../../../generic/components/dialog.dart';
 import '../../../../generic/app_current.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
+import '../../image/game_image_dialog.dart';
 import '../../talk/views/game_session_talk_dialog.dart';
 
 class GameSession {
@@ -152,6 +153,11 @@ class GameEventListener {
       String talkId = message.toString().substring('SYSTEM:TALK:'.length);
       GameSessionTalkDialog talkDialog = GameSessionTalkDialog();
       talkDialog.start(talkId: talkId);
+    }
+    if(upperCase.contains('SYSTEM:IMAGE')) {
+      String imageId = message.toString().substring('SYSTEM:IMAGE:'.length);
+      GameSessionImageDialog imageDialog = GameSessionImageDialog();
+      imageDialog.start(imageId: imageId);
     }
   }
 

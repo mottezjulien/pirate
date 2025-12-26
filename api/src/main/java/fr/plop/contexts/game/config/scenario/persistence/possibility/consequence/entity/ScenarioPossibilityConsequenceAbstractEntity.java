@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity;
 
+import fr.plop.contexts.game.config.Image.persistence.ImageItemEntity;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.talk.persistence.TalkItemEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
@@ -94,6 +95,14 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 TalkItemEntity talkItemEntity = new TalkItemEntity();
                 talkItemEntity.setId(displayTalk.talkId().value());
                 entity.setTalk(talkItemEntity);
+                yield entity;
+            }
+            case Consequence.DisplayImage  displayImage -> {
+                ScenarioPossibilityConsequenceImageEntity entity = new ScenarioPossibilityConsequenceImageEntity();
+                entity.setId(displayImage.id().value());
+                ImageItemEntity itemEntity = new ImageItemEntity();
+                itemEntity.setId(displayImage.imageId().value());
+                entity.setImage(itemEntity);
                 yield entity;
             }
         };

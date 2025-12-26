@@ -10,6 +10,7 @@ public class WebSocketPushAdapter implements PushPort {
     private static final String MESSAGE_STATUS = "SYSTEM:STATUS";
     private static final String MESSAGE_MESSAGE = "SYSTEM:MESSAGE";
     private static final String MESSAGE_TALK = "SYSTEM:TALK";
+    private static final String IMAGE_TALK = "SYSTEM:IMAGE";
     private final WebSocketHandler webSocketHandler;
 
     public WebSocketPushAdapter(WebSocketHandler webSocketHandler) {
@@ -27,6 +28,7 @@ public class WebSocketPushAdapter implements PushPort {
             case PushEvent.GameStatus ignored -> MESSAGE_STATUS;
             case PushEvent.Message message -> MESSAGE_MESSAGE + ":" + message.message();
             case PushEvent.Talk talk -> MESSAGE_TALK + ":" + talk.talkId().value();
+            case PushEvent.Image image -> IMAGE_TALK + ":" + image.imageId().value();
         };
     }
 }

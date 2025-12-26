@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GameConfigSpringConfig {
 
-
     @Bean
     public PossibilityGetUseCase possibilityGetUseCase(GameSessionSituationGetPort situationGet, GamePlayerActionPort action, GameConfigCache cache, GameSessionScenarioGoalPort scenarioGoalPort) {
         return new PossibilityGetUseCase(situationGet, action, cache, scenarioGoalPort);
@@ -24,12 +23,14 @@ public class GameConfigSpringConfig {
                                                  ConsequenceTalkHandler talkHandler,
                                                  ConsequenceOverHandler gameOverHandler,
                                                  ConsequenceObjectHandler objectHandler,
+                                                 ConsequenceImageHandler imageHandler,
                                                  ConsequenceMetadataHandler metadataHandler) {
         ConsequenceUseCase consequenceUseCase = new ConsequenceUseCase();
         consequenceUseCase.registerHandler(scenarioGoalHandler);
         consequenceUseCase.registerHandler(talkHandler);
         consequenceUseCase.registerHandler(gameOverHandler);
         consequenceUseCase.registerHandler(objectHandler);
+        consequenceUseCase.registerHandler(imageHandler);
         consequenceUseCase.registerHandler(metadataHandler);
         return consequenceUseCase;
     }

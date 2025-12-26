@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../generic/components/organisms/game_app_bar.dart';
+import '../../map/game_map_view.dart';
 import '../goal/game_goal_view.dart';
-import '../map/game_map_view.dart';
 
 class GameHomeView extends StatelessWidget {
 

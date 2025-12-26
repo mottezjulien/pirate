@@ -1,5 +1,6 @@
 package fr.plop.contexts.game.config.consequence;
 
+import fr.plop.contexts.game.config.Image.domain.ImageItem;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
@@ -13,6 +14,7 @@ public sealed interface Consequence permits
         Consequence.SessionEnd,
         Consequence.DisplayMessage,
         Consequence.DisplayTalk,
+        Consequence.DisplayImage,
         Consequence.UpdatedMetadata,
         Consequence.ObjetAdd,
         Consequence.ObjetRemove {
@@ -42,6 +44,10 @@ public sealed interface Consequence permits
     }
 
     record DisplayTalk(Id id, TalkItem.Id talkId) implements Consequence {
+
+    }
+
+    record DisplayImage(Id id, ImageItem.Id imageId) implements Consequence {
 
     }
 
