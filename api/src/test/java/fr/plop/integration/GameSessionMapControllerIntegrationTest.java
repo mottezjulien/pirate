@@ -12,14 +12,13 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
-import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.presenter.GameSessionController;
 import fr.plop.contexts.game.session.core.presenter.GameSessionMoveController;
 import fr.plop.contexts.game.session.map.presenter.GameSessionMapController;
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
+import fr.plop.generic.position.Rectangle;
 import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,12 +53,11 @@ public class GameSessionMapControllerIntegrationTest {
     private GameSessionClearPort sessionClear;
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
-    @Autowired
-    private GameMoveUseCase gameMoveUseCase;
+
 
     private final ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step(), new ScenarioConfig.Step()));
-    private final Rect rect = new Rect(new Point(0.0, 0.0), new Point(20.0, 20.0));
-    private final BoardConfig board = new BoardConfig(List.of(new BoardSpace("space", Priority.LOW, List.of(rect))));
+    private final Rectangle rectangle = new Rectangle(Point.from(0.0, 0.0), Point.from(20.0, 20.0));
+    private final BoardConfig board = new BoardConfig(List.of(new BoardSpace("space", Priority.LOW, List.of(rectangle))));
 
 
     @BeforeEach
@@ -247,7 +245,13 @@ public class GameSessionMapControllerIntegrationTest {
     }
 
     private void createTemplateWithMaps(MapConfig map) {
-        Template template = new Template(new Template.Code(TEMPLATE_CODE), "Test Maps Game", scenario, board, map);
+        Template template = Template.builder()
+                .code(new Template.Code(TEMPLATE_CODE))
+                .label("Test Maps Game")
+                .scenario(scenario)
+                .board(board)
+                .map(map)
+                .build();
         templateInitUseCase.create(template);
     }
 

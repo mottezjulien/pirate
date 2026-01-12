@@ -23,7 +23,7 @@ import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
+import fr.plop.generic.position.Rectangle;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,7 +79,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
     private void createTemplate() {
         BoardSpace.Id spaceId = new BoardSpace.Id();
-        BoardSpace space = new BoardSpace(spaceId, List.of(new Rect(new Point(0, 0), new Point(10, 10))));
+        BoardSpace space = new BoardSpace(spaceId, List.of(new Rectangle(Point.from(0, 0), Point.from(10, 10))));
 
         I18n i18nMessage = new I18n(Map.of(Language.FR, "Vous êtes piégé"));
         Consequence.DisplayMessage message = new Consequence.DisplayMessage(new Consequence.Id(), i18nMessage);
@@ -91,8 +91,11 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
         ScenarioConfig.Step step = new ScenarioConfig.Step(stepId, List.of(possibility));
         List<ScenarioConfig.Step> steps = List.of(step);
 
-
-        Template template = new Template(new Template.Code(CODE), new ScenarioConfig(steps), new BoardConfig(List.of(space)));
+        Template template = Template.builder()
+                .code(new Template.Code(CODE))
+                .scenario(new ScenarioConfig(steps))
+                .board(new BoardConfig(List.of(space)))
+                .build();
         templatePort.create(template);
     }
 
@@ -105,7 +108,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     @Test
     public void moveInTrap() throws GameException, InterruptedException, ConnectException {
         GameSessionContext context = start();
-        Point position = new Point(5, 5);
+        Point position = Point.from(5, 5);
         moveUseCase.apply(context, position);
         Thread.sleep(100);
 
@@ -115,7 +118,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     @Test
     public void moveOtherSpace_doNothing() throws GameException, InterruptedException, ConnectException {
         GameSessionContext context = start();
-        Point position = new Point(15, 25);
+        Point position = Point.from(15, 25);
         moveUseCase.apply(context, position);
         Thread.sleep(100);
 

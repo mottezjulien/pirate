@@ -2,12 +2,12 @@ package fr.plop.contexts.game.config.board.domain.model;
 
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
+import fr.plop.generic.position.Rectangle;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
 
-public record BoardSpace(Id id, String label, Priority priority, List<Rect> rects) {
+public record BoardSpace(Id id, String label, Priority priority, List<Rectangle> rectangles) {
 
     public record Id(String value) {
         public Id() {
@@ -16,20 +16,20 @@ public record BoardSpace(Id id, String label, Priority priority, List<Rect> rect
     }
 
 
-    public BoardSpace(Id id, List<Rect> rects) {
-        this(id, "", Priority.byDefault(), rects);
+    public BoardSpace(Id id, List<Rectangle> rectangles) {
+        this(id, "", Priority.byDefault(), rectangles);
     }
 
-    public BoardSpace(String label, Priority priority, List<Rect> rects) {
-        this(new Id(), label, priority, rects);
+    public BoardSpace(String label, Priority priority, List<Rectangle> rectangles) {
+        this(new Id(), label, priority, rectangles);
     }
 
-    public BoardSpace(List<Rect> rects) {
-        this(new Id(), "", Priority.HIGHEST, rects);
+    public BoardSpace(List<Rectangle> rectangles) {
+        this(new Id(), "", Priority.HIGHEST, rectangles);
     }
 
     public boolean in(Point point) {
-        return rects.stream().anyMatch(rect -> rect.in(point));
+        return rectangles.stream().anyMatch(rectangle -> rectangle.in(point));
     }
 
     public boolean hasLabel(String label) {

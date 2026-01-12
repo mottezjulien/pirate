@@ -2,6 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../contexts/config/select/game_config_select_view.dart';
 import '../../contexts/session/views/home/game_home_view.dart';
 import '../../contexts/session/views/menu/game_menu_view.dart';
 import '../../contexts/config/onboarding/views/onboarding_screen.dart';
@@ -17,6 +18,9 @@ class AppRouter {
   static const onboardingName = "onboarding";
   static const onboardingPath = "/onboarding";
 
+  static const selectGameName = "selectGame";
+  static const selectGamePath = "/selectGame";
+
   static const gameMenuName = "session-menu";
   static const gameMenuPath = "/session/menu";
 
@@ -25,7 +29,7 @@ class AppRouter {
 
 
   static GoRouter create() {
-    String initialLocation = homePath;
+    String initialLocation = selectGamePath;//homePath;
     if(!AppCurrent.hasUser) {
       initialLocation = onboardingPath;
     }
@@ -47,6 +51,11 @@ class AppRouter {
                 name: onboardingName,
                 path: onboardingPath,
                 builder: (context, state) => OnboardingScreen(),
+              ),
+              GoRoute(
+                name: selectGameName,
+                path: selectGamePath,
+                builder: (context, state) => GameConfigSelectView(),
               ),
               GoRoute(
                 name: homeName,

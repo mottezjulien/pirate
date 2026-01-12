@@ -7,29 +7,25 @@ import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigRepo
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface TemplateRepository extends JpaRepository<TemplateEntity, String> {
 
-    @Query("FROM TemplateEntity template" +
+    String FROM = "FROM TemplateEntity template";
 
-            " LEFT JOIN FETCH template.scenario scenario" +
-            ScenarioConfigRepository.FETCH_ALL +
+    String FETCH_FULL = " LEFT JOIN FETCH template.scenario scenario" + ScenarioConfigRepository.FETCH_ALL +
+            " LEFT JOIN FETCH template.board board" + BoardConfigRepository.FETCH_ALL +
+            " LEFT JOIN FETCH template.map map" + MapConfigRepository.FETCH_ALL +
+            " LEFT JOIN FETCH template.talk talk" + TalkConfigRepository.FETCH_ALL +
+            " LEFT JOIN FETCH template.image image" + ImageConfigRepository.FETCH_ALL;
 
-            " LEFT JOIN FETCH template.board board" +
-            BoardConfigRepository.FETCH_ALL +
+    String WHERE_TEMPLATE_CODE = " WHERE template.code = :code";
 
-            " LEFT JOIN FETCH template.map map" +
-            MapConfigRepository.FETCH_ALL +
-
-            " LEFT JOIN FETCH template.talk talk" +
-            TalkConfigRepository.FETCH_ALL +
-
-            " LEFT JOIN FETCH template.image image" +
-            ImageConfigRepository.FETCH_ALL +
-
-            " WHERE template.code = :code")
-    List<TemplateEntity> findByCodeFetchAll(String code);
+    @Query(FROM + FETCH_FULL + WHERE_TEMPLATE_CODE)
+    List<TemplateEntity> fullByCode(@Param("code") String code);
+    @Query(FROM + " WHERE LOWER(REPLACE(template.code, ' ', '')) LIKE LOWER(CONCAT(:pattern, '%'))")
+    List<TemplateEntity> findLikeLowerCode(@Param("pattern") String pattern);
 
 }

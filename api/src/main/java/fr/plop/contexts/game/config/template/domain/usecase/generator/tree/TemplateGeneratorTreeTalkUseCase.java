@@ -1,0 +1,218 @@
+package fr.plop.contexts.game.config.template.domain.usecase.generator.tree;
+
+import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
+import fr.plop.contexts.game.config.talk.domain.TalkConfig;
+import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkValue;
+import fr.plop.contexts.game.config.template.domain.model.Tree;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.GlobalCache;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.image.Image;
+
+import java.util.*;
+
+public class TemplateGeneratorTreeTalkUseCase {
+
+    private static final String PARAM_KEY_TALK_OPTION = "OPTION";
+    private static final String KEY_TALK_CHARACTER = "CHARACTER";
+
+    private final GlobalCache globalCache;
+
+    private final Map<String, TalkItem.Id> localCacheRefToId = new HashMap<>();
+    private final Map<String, String> localCacheGenIdToRefNext = new HashMap<>();
+
+    private final List<TalkCharacter.Reference> characterReferences = new ArrayList<>();
+
+    private final TemplateGeneratorTreeI18nUseCase i18nGenerator = new TemplateGeneratorTreeI18nUseCase();
+
+    public TemplateGeneratorTreeTalkUseCase(GlobalCache globalCache) {
+        this.globalCache = globalCache;
+    }
+
+
+    public TalkConfig apply(Tree root) {
+        List<TalkItem> items = new ArrayList<>();
+        for (Tree child : root.children()) {
+            if ("TALK".equalsIgnoreCase(child.header())) {
+                items.addAll(generateItems(child));
+            }
+        }
+        return new TalkConfig(items);
+    }
+
+    private List<TalkItem> generateItems(Tree tree) {
+        generateCharacterReferences(tree);
+        List<TalkItem> items = generateItemsWithoutOtherItemReference(tree);
+        return items.stream().map(item -> {
+            if (item instanceof TalkItem.Continue _continue) {
+                String referenceNextId = localCacheGenIdToRefNext.get(item.id().value());
+                return _continue.withNextId(localCacheRefToId.get(referenceNextId));
+            }
+            if (item instanceof TalkItem.Options itamsOptions) {
+                List<TalkItem.Options.Option> options = itamsOptions.options().map(opt -> {
+                    if (localCacheGenIdToRefNext.containsKey(opt.id().value())) {
+                        return opt.withNextId(localCacheRefToId.get(localCacheGenIdToRefNext.get(opt.id().value())));
+                    }
+                    return opt;
+                }).toList();
+                return itamsOptions.withOptions(options);
+            }
+            return item;
+        }).toList();
+    }
+
+    private void generateCharacterReferences(Tree tree) {
+        tree.children().forEach(child -> {
+            if (child.header().contains(KEY_TALK_CHARACTER)) {
+                characterReferences.addAll(parseCharacterReferences(child));
+            }
+        });
+    }
+
+    private List<TalkCharacter.Reference> parseCharacterReferences(Tree characterTree) {
+        List<TalkCharacter.Reference> result = new ArrayList<>();
+        for (Tree characterChild : characterTree.children()) {
+            TalkCharacter character = new TalkCharacter(characterChild.headerKeepCase());
+            for (Tree avatarTree : characterChild.children()) {
+                List<String> params = avatarTree.params();
+                if (avatarTree.params().size() == 1) {
+                    result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage("ASSET", params.getFirst())));
+                } else if (params.size() >= 2) {
+                    result.add(new TalkCharacter.Reference(character, avatarTree.header(), buildImage(params.getFirst(), params.get(1))));
+                }
+            }
+        }
+        return result;
+    }
+
+    private List<TalkItem> generateItemsWithoutOtherItemReference(Tree tree) {
+        return tree.children().stream()
+                .flatMap(child -> {
+                    Optional<TalkItem> optItem = parseItem(child);
+                    if (child.reference() != null) {
+                        optItem.ifPresent(talkItem -> {
+                            globalCache.reference(child.reference(), TalkItem.Id.class, talkItem.id());
+                            localCacheRefToId.put(child.reference(), talkItem.id());
+                        });
+                    }
+                    return optItem.stream();
+                }).toList();
+    }
+
+
+    private Optional<TalkItem> parseItem(Tree child) {
+        return switch (child.header()) {
+            case "SIMPLE" -> Optional.of(parseSimpleFromTree(child, parseCharacterReference(child)));
+            case "CONTINUE" -> Optional.of(parseContinueFromTree(child, parseCharacterReference(child)));
+            case "OPTIONS" -> Optional.of(parseMultipleOptionsFromTree(child, parseCharacterReference(child)));
+            default -> Optional.empty();
+        };
+    }
+
+    private TalkItem.Simple parseSimpleFromTree(Tree simpleTree, TalkCharacter.Reference talkCharacterReference) {
+        return new TalkItem.Simple(new TalkItem.Id(), TalkValue.fixed(parseValue(simpleTree)), talkCharacterReference);
+    }
+
+
+    private TalkItem.Continue parseContinueFromTree(Tree continueTree, TalkCharacter.Reference talkCharacterReference) {
+        TalkItem.Id id = new TalkItem.Id();
+        localCacheGenIdToRefNext.put(id.value(), continueTree.params().getFirst());
+        return new TalkItem.Continue(id, TalkValue.fixed(parseValue(continueTree)), talkCharacterReference, null);
+    }
+
+    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
+
+        TalkItem.Id id = new TalkItem.Id();
+
+        List<TalkItem.Options.Option> options = new ArrayList<>();
+
+        for (Tree child : optionsTree.children()) {
+            String header = child.header();
+            if (header.equals(PARAM_KEY_TALK_OPTION)) {
+
+                List<Tree> childrenToParseI18n = child.children();
+                Optional<Tree> valueTree = child.children().stream()
+                        .filter(t -> t.header().equals("VALUE"))
+                        .findFirst();
+
+                if (valueTree.isPresent()) {
+                    childrenToParseI18n = valueTree.get().children();
+                }
+
+                Optional<I18n> optionOpt = i18nGenerator.apply(childrenToParseI18n);
+                I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
+
+                TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id();
+                if (child.reference() != null) {
+                    optionId = globalCache.reference(child.reference(), TalkItem.Options.Option.Id.class, optionId);
+                }
+
+                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, options.size(), optionMessage);
+
+                // Chercher la référence nextId via "next:TALK002"
+                Optional<String> nextIdRef = child.children().stream()
+                        .filter(t -> t.header().equals("NEXT"))
+                        .flatMap(t -> t.params().stream())
+                        .findFirst();
+
+                nextIdRef.ifPresent(nextId -> localCacheGenIdToRefNext.put(option.id().value(), nextId));
+
+                options.add(option);
+            }
+        }
+        return new TalkItem.Options(id, TalkValue.fixed(parseValue(optionsTree)), talkCharacterReference, options);
+    }
+
+    private I18n parseValue(Tree item) {
+        return item.findChildKey("LABEL")
+                .map(this::parseValue)
+                .orElseGet(() -> i18nGenerator.apply(item.children()).orElse(new I18n(Map.of())));
+    }
+
+
+
+    private TalkCharacter.Reference parseCharacterReference(Tree tree) {
+        Optional<TalkCharacter.Reference> characterReference = tree.children().stream().filter(child -> child.header()
+                        .equals(KEY_TALK_CHARACTER))
+                .findFirst()
+                .map(child -> {
+                    List<String> parts = child.params();
+                    if (parts.size() >= 2) {
+                        return parseCharacterReferenceFromParams(parts.get(0), parts.get(1));
+                    }
+                    if (!child.children().isEmpty() && !child.children().getFirst().children().isEmpty()) {
+                        String characterName = child.children().getFirst().headerKeepCase();
+                        String reference = child.children().getFirst().children().getFirst().headerKeepCase();
+                        return parseCharacterReferenceFromParams(characterName, reference);
+                    }
+                    throw new RuntimeException("Character not found");
+                });
+        return characterReference.orElseGet(() -> {
+            if (tree.params().size() == 2) {
+                return parseCharacterReferenceFromParams(tree.params().get(0), tree.params().get(1));
+            }
+            throw new RuntimeException("Character not found");
+        });
+    }
+
+    private TalkCharacter.Reference parseCharacterReferenceFromParams(String characterName, String reference) {
+        if (!characterName.isEmpty()) {
+            return characterReferences.stream()
+                    .filter(r -> r.character().name().equalsIgnoreCase(characterName))
+                    .filter(r -> r.value().equalsIgnoreCase(reference))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Character not found: " + characterName + ", " + reference));
+        }
+        throw new RuntimeException("Character not found: " + characterName + ", " + reference);
+    }
+
+    private static Image buildImage(String typeStr, String imagePath) {
+        Image.Type imageType = "WEB".equalsIgnoreCase(typeStr) ? Image.Type.WEB : Image.Type.ASSET;
+        return new Image(imageType, imagePath);
+    }
+
+
+
+
+
+}

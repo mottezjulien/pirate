@@ -12,7 +12,7 @@ import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.push.PushPort;
 import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
+import fr.plop.generic.position.Rectangle;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -98,44 +98,44 @@ public class GameMoveUseCaseTest {
     }
 
     private static BoardSpace spaceA() {
-        Rect rect = new Rect(new Point(1, 1), new Point(10, 10));
-        return new BoardSpace(List.of(rect));
+        Rectangle rectangle = new Rectangle(Point.from(1, 1), Point.from(10, 10));
+        return new BoardSpace(List.of(rectangle));
     }
 
     private static Point inSpaceAPosition() {
-        return new Point(5, 4.6f);
+        return Point.from(5, 4.6f);
     }
 
     private static Point inSpaceABPosition() {
-        return new Point(9, 1.7f);
+        return Point.from(9, 1.7f);
     }
 
     private static BoardSpace spaceB() {
-        Rect rect = new Rect(new Point(8, 1), new Point(12, 2));
-        return new BoardSpace(List.of(rect));
+        Rectangle rectangle = new Rectangle(Point.from(8, 1), Point.from(12, 2));
+        return new BoardSpace(List.of(rectangle));
     }
 
     private static BoardSpace spaceC() {
-        Rect rect = new Rect(new Point(8, 5), new Point(14, 20));
-        return new BoardSpace(List.of(rect));
+        Rectangle rectangle = new Rectangle(Point.from(8, 5), Point.from(14, 20));
+        return new BoardSpace(List.of(rectangle));
     }
 
     private static BoardSpace spaceD() {
-        Rect rect = new Rect(new Point(10, 0), new Point(14, 8));
-        return new BoardSpace(List.of(rect));
+        Rectangle rectangle = new Rectangle(Point.from(10, 0), Point.from(14, 8));
+        return new BoardSpace(List.of(rectangle));
     }
 
     private static BoardSpace spaceE() {
-        Rect rect = new Rect(new Point(9, 4), new Point(16, 8));
-        return new BoardSpace(List.of(rect));
+        Rectangle rectangle = new Rectangle(Point.from(9, 4), Point.from(16, 8));
+        return new BoardSpace(List.of(rectangle));
     }
 
     private static Point inCDEPosition() {
-        return new Point(12, 6f);
+        return Point.from(12, 6f);
     }
 
     private static Point outPosition() {
-        return new Point(99, 6.6f);
+        return Point.from(99, 6.6f);
     }
 
 }

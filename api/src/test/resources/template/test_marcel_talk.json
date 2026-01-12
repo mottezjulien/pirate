@@ -1,0 +1,210 @@
+{
+  "code": "TEST_MARCEL",
+  "version": "1.0",
+  "label": "Test de la discussion de Marcel avec humeurs",
+  "duration": 30,
+  "talk": {
+    "characters": [
+      {
+        "ref": "MARCEL",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor/marcel_default.png"
+            }
+          },
+          {
+            "ref": "happy",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor/marcel_happy.png"
+            }
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_MARCEL_HOME_WITHOUT_CARD",
+        "value": {
+          "FR": "Bonjour l'ami. Alors, c'est aujourd'hui le grand jour, cette fois, tu trouveras le trésor, tu réussiras là où j'ai échoué."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "happy"
+        },
+        "next": "TALK_MARCEL_HOME_WITHOUT_CARD_2"
+      },
+      {
+        "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_2",
+        "value": {
+          "FR": "Comme prévu, voici ma partie de la carte du trésor."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "happy"
+        },
+        "next": "TALK_MARCEL_HOME_WITHOUT_CARD_3"
+      },
+      {
+        "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_3",
+        "value": {
+          "FR": "Sophie et Émilie possèdent les autres parties de la carte. Tu devrais leur parler afin de compléter la carte."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITHOUT_CARD_4"
+      },
+      {
+        "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_4",
+        "value": {
+          "FR": "Sophie est une artiste, tu la trouveras en train de flâner au café des arts."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITHOUT_CARD_5"
+      },
+      {
+        "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_5",
+        "value": {
+          "FR": "Émilie se trouve dans sa librairie."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_OPTION_QUESTION",
+            "value": {
+              "FR": "Merci Marcel. J'aurai des questions à te poser."
+            },
+            "next": "TALK_MARCEL_HOME_WITH_CARD"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITHOUT_CARD_OPTION_GO",
+            "value": {
+              "FR": "Merci Marcel. C'est parti pour l'aventure."
+            },
+            "next": null
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_HOME_WITH_CARD",
+        "value": {
+          "FR": "Oui l'ami, que puis-je faire pour toi ?"
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "happy"
+        },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_WHAT_TODO",
+            "value": {
+              "FR": "Rappelle-moi ce que je dois faire pour avoir la carte complète ?"
+            },
+            "next": "TALK_MARCEL_1"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_COMPLETE_CARD",
+            "value": {
+              "FR": "J'ai la carte complète, que dois-je faire maintenant ?"
+            },
+            "next": "TALK_MARCEL_1_BIS"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_WHERE_SOPHIE",
+            "value": {
+              "FR": "Où puis-je trouver Sophie ?"
+            },
+            "next": "TALK_MARCEL_2"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_WHERE_EMILIE",
+            "value": {
+              "FR": "Où puis-je trouver Émilie ?"
+            },
+            "next": "TALK_MARCEL_3"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_TRUST_VICTOR",
+            "value": {
+              "FR": "Est-ce que tu fais confiance à Victor ?"
+            },
+            "next": "TALK_MARCEL_4"
+          },
+          {
+            "ref": "TALK_MARCEL_HOME_WITH_CARD_OPTION_NO_QUESTION",
+            "value": {
+              "FR": "Je n'ai plus de question."
+            },
+            "next": null
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_1",
+        "value": {
+          "FR": "Tu dois parler avec Sophie et Émilie, afin de leur demander leur partie de la carte au trésor. Dès que tu l'auras récupérée, tu pourras fusionner les cartes, afin de trouver l'emplacement du trésor."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITH_CARD"
+      },
+      {
+        "ref": "TALK_MARCEL_1_BIS",
+        "value": {
+          "FR": "Bien joué, tu y es presque. Regarde la carte, elle doit t'indiquer où se trouve le trésor. Il suffira d'utiliser ta pelle à l'endroit indiqué afin de creuser pour trouver le trésor."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITH_CARD"
+      },
+      {
+        "ref": "TALK_MARCEL_2",
+        "value": {
+          "FR": "Sophie est toujours au café des arts. Cela se trouve à côté, au sud-est de ma position."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITH_CARD"
+      },
+      {
+        "ref": "TALK_MARCEL_3",
+        "value": {
+          "FR": "La librairie d'Émilie est juste au sud-ouest de ma position, c'est à côté."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITH_CARD"
+      },
+      {
+        "ref": "TALK_MARCEL_4",
+        "value": {
+          "FR": "Victor ? Non, je ne lui fais pas confiance. Il essaiera de récupérer le trésor par tous les moyens, méfie-toi de lui."
+        },
+        "character": {
+          "character": "MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_HOME_WITH_CARD"
+      }
+    ]
+  }
+}

@@ -55,7 +55,7 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
     @Override
     public Optional<Template> findTemplateByCode(Template.Code code) {
         return templateRepository
-                .findByCodeFetchAll(code.value())
+                .fullByCode(code.value())
                 .stream().findFirst()
                 .map(TemplateEntity::toModel);
     }

@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.talk.persistence;
 
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkValue;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
@@ -49,7 +50,7 @@ public class TalkItemEntity {
     }
 
     public TalkItem toModel() {
-        return new TalkItem.Simple(new TalkItem.Id(id), value.toModel(), characterReference.toModel());
+        return new TalkItem.Simple(new TalkItem.Id(id), TalkValue.fixed(value.toModel()), characterReference.toModel());
     }
 
 }

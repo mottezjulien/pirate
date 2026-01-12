@@ -3,6 +3,7 @@ package fr.plop.contexts.game.config.template.adapter;
 import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkValue;
 import fr.plop.contexts.game.config.talk.persistence.*;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
@@ -25,7 +26,9 @@ public class TemplateInitDataTalkAdapter {
     private final TalkCharacterRepository talkCharacterRepository;
     private final TalkCharacterReferenceRepository talkCharacterReferenceRepository;
 
-    public TemplateInitDataTalkAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository) {
+    private final TemplateInitDataConditionAdapter conditionAdapter;
+
+    public TemplateInitDataTalkAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository, TemplateInitDataConditionAdapter conditionAdapter) {
         this.i18nRepository = i18nRepository;
         this.talkConfigRepository = talkConfigRepository;
         this.talkItemRepository = talkItemRepository;
@@ -33,6 +36,7 @@ public class TemplateInitDataTalkAdapter {
         this.talkOptionItemRepository = talkOptionItemRepository;
         this.talkCharacterRepository = talkCharacterRepository;
         this.talkCharacterReferenceRepository = talkCharacterReferenceRepository;
+        this.conditionAdapter = conditionAdapter;
     }
 
     public void deleteAll() {
@@ -79,7 +83,7 @@ public class TemplateInitDataTalkAdapter {
     }
 
     private void createTalkItem(TalkItem item, TalkConfigEntity config, List<TalkCharacter.Reference> savedCharacterReferences) {
-        I18nEntity value = createI18n(item.value());
+        I18nEntity value = createI18nFromTalkValue(item.value());
         TalkItemEntity entity = switch (item) {
             case TalkItem.Simple ignored -> new TalkItemEntity();
             case TalkItem.Continue _continue -> {
@@ -117,11 +121,26 @@ public class TemplateInitDataTalkAdapter {
         entity.setValue(createI18n(talkOption.value()));
         entity.setOrder(index);
         talkOption.optNextId().ifPresent(nextId -> entity.setNullableNextId(nextId.value()));
+        talkOption.optCondition()
+                .ifPresent(condition -> entity.setNullableCondition(conditionAdapter.create(condition)));
         return talkOptionItemRepository.save(entity);
     }
 
     private I18nEntity createI18n(I18n model) {
         return i18nRepository.save(I18nEntity.fromModel(model));
+    }
+
+    /**
+     * Extracts the I18n from a TalkValue for persistence.
+     * For Fixed values, returns the text directly.
+     * For Conditional values, returns the default text (conditions are not persisted yet).
+     */
+    private I18nEntity createI18nFromTalkValue(TalkValue talkValue) {
+        I18n i18n = switch (talkValue) {
+            case TalkValue.Fixed fixed -> fixed.text();
+            case TalkValue.Conditional conditional -> conditional.defaultText();
+        };
+        return createI18n(i18n);
     }
 
 }

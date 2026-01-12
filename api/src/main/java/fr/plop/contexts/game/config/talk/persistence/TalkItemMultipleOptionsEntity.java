@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkValue;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -29,7 +30,7 @@ public class TalkItemMultipleOptionsEntity extends TalkItemEntity {
 
     @Override
     public TalkItem toModel() {
-        return new TalkItem.Options(new TalkItem.Id(id), value.toModel(), characterReference.toModel(),
+        return new TalkItem.Options(new TalkItem.Id(id), TalkValue.fixed(value.toModel()), characterReference.toModel(),
                 options.stream().map(TalkOptionEntity::toModel).toList());
     }
 }

@@ -105,7 +105,8 @@ public class GameSessionTimerAdapterIntegrationTest {
         ScenarioConfig.Step step0 = new ScenarioConfig.Step(stepId0, List.of(possibility0, possibility1));
         ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId1, List.of());
         ScenarioConfig scenario = new ScenarioConfig(List.of(step0, step1));
-        return new Template(code, scenario);
+
+        return Template.builder().code(code).scenario(scenario).build();
     }
 
 

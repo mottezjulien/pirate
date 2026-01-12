@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.config.template.domain.usecase.generator.TemplateGeneratorUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.tree.TemplateGeneratorTreeUseCase;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,9 +51,9 @@ public class TemplateInitUseCase {
     private Template chezWamTemplate() {
         try {
             //String scriptContent = loadScriptFromResources("template/chez_wam.txt");
-            String scriptContent = loadScriptFromResources("template/chez_wam_easy.txt");
-            TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
-            TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+            String scriptContent = loadScriptFromResources("template/archives/chez_wam_easy.txt");
+            TemplateGeneratorTreeUseCase generator = new TemplateGeneratorTreeUseCase();
+            TemplateGeneratorTreeUseCase.Script script = new TemplateGeneratorTreeUseCase.Script(scriptContent);
             return generator.apply(script);
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
@@ -63,8 +63,8 @@ public class TemplateInitUseCase {
     private Template lyon9Template() {
         try {
             String scriptContent = loadScriptFromResources("template/lyon9.txt");
-            TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
-            TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+            TemplateGeneratorTreeUseCase generator = new TemplateGeneratorTreeUseCase();
+            TemplateGeneratorTreeUseCase.Script script = new TemplateGeneratorTreeUseCase.Script(scriptContent);
             return generator.apply(script);
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
@@ -74,8 +74,8 @@ public class TemplateInitUseCase {
     private Template testDiscussionTemplate() {
         try {
             String scriptContent = loadScriptFromResources("template/test_discution.txt");
-            TemplateGeneratorUseCase generator = new TemplateGeneratorUseCase();
-            TemplateGeneratorUseCase.Script script = new TemplateGeneratorUseCase.Script(scriptContent);
+            TemplateGeneratorTreeUseCase generator = new TemplateGeneratorTreeUseCase();
+            TemplateGeneratorTreeUseCase.Script script = new TemplateGeneratorTreeUseCase.Script(scriptContent);
             return generator.apply(script);
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors du chargement du script test_discution.txt", e);

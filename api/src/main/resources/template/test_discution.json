@@ -1,0 +1,178 @@
+{
+  "code": "TEST_DISCUSSION",
+  "version": "1.0",
+  "label": "Test de discussion",
+  "duration": 10,
+  "board": null,
+  "maps": null,
+  "talk": {
+    "characters": [
+      {
+        "ref": "BOB",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "/pouet/bobdefault.jpg"
+            }
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_LETS_GO",
+        "value": {
+          "FR": "Tu veux jouer ?",
+          "EN": "Do you want to play?"
+        },
+        "options": [
+          {
+            "ref": "TALK_LETS_GO_CHOIX_OUI",
+            "value": {
+              "FR": "Oui",
+              "EN": "Yes"
+            },
+            "next": "TALK002"
+          },
+          {
+            "ref": "TALK_LETS_GO_CHOIX_NON",
+            "value": {
+              "FR": "Non",
+              "EN": "No"
+            },
+            "next": "TALK003"
+          },
+          {
+            "ref": "TALK_LETS_GO_CHOIX_MAYBE",
+            "value": {
+              "FR": "Peut être",
+              "EN": "May be"
+            },
+            "next": "TALK004"
+          }
+        ],
+        "next": null,
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK002",
+        "value": {
+          "FR": "Excellent, continuons !",
+          "EN": "Great, let's continue!"
+        },
+        "options": null,
+        "next": null,
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK003",
+        "value": {
+          "FR": "Dommage, fin de test.",
+          "EN": "Too bad, end of test."
+        },
+        "options": null,
+        "next": null,
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK004",
+        "value": {
+          "FR": "Alors, on hésite ?",
+          "EN": "Alors, on hésite ? EN"
+        },
+        "options": null,
+        "next": "TALK005",
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK005",
+        "value": {
+          "FR": "fin de la discution.",
+          "EN": "fin de la discution. EN"
+        },
+        "options": null,
+        "next": null,
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      }
+    ]
+  },
+  "scenario": {
+    "steps": [
+      {
+        "ref": "ETAPE_DEBUT",
+        "label": {
+          "FR": "Démarrage",
+          "EN": "Start"
+        },
+        "targets": null,
+        "possibilities": [
+          {
+            "trigger": {
+              "type": "ABSOLUTETIME",
+              "value": "0"
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_LETS_GO"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TalkEnd",
+              "value": "TALK002"
+            },
+            "consequences": [
+              {
+                "type": "GameOver",
+                "metadata": {
+                  "result": "SUCCESS_ONE_CONTINUE"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TalkOptionSelect",
+              "value": "TALK_LETS_GO_CHOIX_NON"
+            },
+            "consequences": [
+              {
+                "type": "GameOver",
+                "metadata": {
+                  "result": "FAILURE_ONE_CONTINUE"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          }
+        ]
+      }
+    ]
+  }
+}

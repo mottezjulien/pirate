@@ -41,7 +41,7 @@ public class TemplateInitDataBoardAdapter {
             spaceEntity.setLabel(space.label());
             spaceEntity.setPriority(space.priority());
             boardSpaceRepository.save(spaceEntity);
-            space.rects().forEach(rect -> boardRectRepository.save(BoardRectEntity.fromModel(space.id(), rect)));
+            space.rectangles().forEach(rect -> boardRectRepository.save(BoardRectEntity.fromModel(space.id(), rect)));
         });
         return boardEntity;
     }

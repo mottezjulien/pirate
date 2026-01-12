@@ -18,7 +18,7 @@ class ImageObjectWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     void onAction() {
       if(imageId != null) {
-        final GameImageRepository imageRepository = new GameImageRepository();
+        final GameImageRepository imageRepository = GameImageRepository();
         imageRepository.clickObject(object.id, object.id);
       }
     }

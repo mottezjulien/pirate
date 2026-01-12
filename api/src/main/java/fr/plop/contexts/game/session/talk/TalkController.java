@@ -7,6 +7,7 @@ import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemResolved;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
@@ -55,7 +56,7 @@ public class TalkController {
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
             final GameSessionSituation situation = situationGetPort.get(context);
-            return ResponseDTO.fromModel(item.select(situation), language);
+            return ResponseDTO.fromModel(item.resolve(situation), language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         }
@@ -69,19 +70,21 @@ public class TalkController {
                                     @PathVariable("talkId") String talkIdStr,
                                     @PathVariable("optionId") String optionIdStr) {
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
-        final TalkItem.Id taklId = new TalkItem.Id(talkIdStr);
-        final TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id(optionIdStr);
+        final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
+        final TalkItemResolved.Options.Option.Id optionId = new TalkItemResolved.Options.Option.Id(optionIdStr);
         try {
             final GameSessionContext context = authGameSessionUseCase
                     .findContext(sessionId, new ConnectToken(rawSessionToken));
             final TalkConfig talkConfig = cache.talk(sessionId);
-            final TalkItem item = talkConfig.byId(taklId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
+            final TalkItem item = talkConfig.byId(talkId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
+            final GameSessionSituation situation = situationGetPort.get(context);
+            final TalkItemResolved resolved = item.resolve(situation);
 
-            if (item instanceof TalkItem.Options multipleOptions) {
-                Optional<TalkItem.Options.Option> optOption = multipleOptions.option(optionId);
+            if (resolved instanceof TalkItemResolved.Options multipleOptions) {
+                Optional<TalkItemResolved.Options.Option> optOption = multipleOptions.option(optionId);
                 if (optOption.isPresent()) {
-                    eventOrchestrator.fire(context, new GameEvent.Talk(item.id(), Optional.of(optionId)));
-                    TalkItem.Options.Option option = optOption.get();
+                    eventOrchestrator.fire(context, new GameEvent.Talk(item.id(), Optional.of(new TalkItem.Options.Option.Id(optionIdStr))));
+                    TalkItemResolved.Options.Option option = optOption.get();
                     if (option.hasNext()) {
                         return getOne(rawSessionToken, languageStr, sessionIdStr, option.nextId().value());
                     }
@@ -103,31 +106,31 @@ public class TalkController {
 
         public record Result(String type, List<Option> options, String nextId) {
             public record Option(String id, String value) {
-                public static Result.Option fromModel(TalkItem.Options.Option model, Language language) {
+                public static Result.Option fromModel(TalkItemResolved.Options.Option model, Language language) {
                     return new Result.Option(model.id().value(), model.value().value(language));
                 }
 
             }
         }
 
-        public static ResponseDTO fromModel(TalkItem item, Language language) {
+        public static ResponseDTO fromModel(TalkItemResolved item, Language language) {
             final Image imageCharacter = item.characterReference().image();
             final ImageResponseDTO image = ImageResponseDTO.fromModel(imageCharacter);
             final ResponseDTO.Character character = new Character(item.character().name(), image);
             List<Result.Option> options = List.of();
             String nextId = null;
             final String resultType = switch (item) {
-                case TalkItem.Options multipleOptions -> {
+                case TalkItemResolved.Options multipleOptions -> {
                     options = multipleOptions.options()
                             .map(option -> Result.Option.fromModel(option, language))
                             .toList();
                     yield "MULTIPLE";
                 }
-                case TalkItem.Continue _continue -> {
+                case TalkItemResolved.Continue _continue -> {
                     nextId = _continue.nextId().value();
                     yield "CONTINUE";
                 }
-                case TalkItem.Simple ignored -> "SIMPLE";
+                case TalkItemResolved.Simple ignored -> "SIMPLE";
             };
             Result result = new Result(resultType, options, nextId);
             return new ResponseDTO(item.id().value(), item.value(language), character, result);

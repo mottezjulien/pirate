@@ -1,0 +1,420 @@
+{
+  "code": "LYON_9",
+  "version": "1.0",
+  "label": "",
+  "duration": 10,
+  "board": {
+    "spaces": [
+      {
+        "ref": "SPACE_PLACE_PARIS",
+        "label": "Place de Paris",
+        "priority": "HIGH",
+        "rects": [
+          {
+            "bottomLeft": {
+              "lat": 45.778678,
+              "lng": 4.804497
+            },
+            "topRight": {
+              "lat": 45.779231,
+              "lng": 4.805454
+            }
+          }
+        ]
+      },
+      {
+        "ref": "SPACE_CHEZ_WAM",
+        "label": "Chez Moi",
+        "priority": "HIGH",
+        "rects": [
+          {
+            "bottomLeft": {
+              "lat": 45.778075,
+              "lng": 4.803506
+            },
+            "topRight": {
+              "lat": 45.778353,
+              "lng": 4.803923
+            }
+          }
+        ]
+      },
+      {
+        "ref": "SPACE_TNG",
+        "label": "TNG",
+        "priority": "HIGH",
+        "rects": [
+          {
+            "bottomLeft": {
+              "lat": 45.777163,
+              "lng": 4.803153
+            },
+            "topRight": {
+              "lat": 45.777446,
+              "lng": 4.803636
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "maps": [
+    {
+      "label": "Lyon 9",
+      "priority": "HIGH",
+      "image": {
+        "type": "ASSET",
+        "value": "assets/game/lyon9/map_lyon9_0.png"
+      },
+      "pointer": {
+        "type": "ASSET",
+        "value": "assets/game/tres/pointer.png"
+      },
+      "spaces": [
+        {
+          "position": {
+            "top": 0.2,
+            "left": 0.8
+          },
+          "ref": "SPACE_PLACE_PARIS"
+        },
+        {
+          "position": {
+            "top": 0.5,
+            "left": 0.5
+          },
+          "ref": "SPACE_CHEZ_WAM"
+        },
+        {
+          "position": {
+            "top": 0.7,
+            "left": 0.3
+          },
+          "ref": "SPACE_TNG"
+        }
+      ],
+      "objects": null
+    },
+    {
+      "label": "TNG",
+      "priority": "HIGH",
+      "image": {
+        "type": "ASSET",
+        "value": "assets/game/lyon9/map_lyon9_1.png"
+      },
+      "pointer": null,
+      "spaces": null,
+      "objects": [
+        {
+          "position": {
+            "top": 0.6,
+            "left": 0.2
+          },
+          "priority": "MEDIUM",
+          "image": {
+            "type": "ASSET",
+            "value": "assets/game/lyon9/coco.png"
+          },
+          "point": null,
+          "condition": {
+            "type": "AND",
+            "metadata": {},
+            "children": [
+              {
+                "type": "instep",
+                "metadata": {
+                  "stepId": "STEP_TNG"
+                },
+                "children": null
+              },
+              {
+                "type": "insidespace",
+                "metadata": {
+                  "spaceId": "SPACE_TNG"
+                },
+                "children": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "talk": {
+    "characters": [
+      {
+        "ref": "ROBOTO",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/roboto_default.png"
+            }
+          },
+          {
+            "ref": "happy1",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/roboto_happy1.png"
+            }
+          },
+          {
+            "ref": "happy2",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/roboto_happy2.png"
+            }
+          },
+          {
+            "ref": "happy3",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/roboto_happy3.png"
+            }
+          }
+        ]
+      },
+      {
+        "ref": "COCO",
+        "images": [
+          {
+            "ref": "happy1",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/perroquet_happy1.png"
+            }
+          },
+          {
+            "ref": "happy2",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/perroquet_happy2.png"
+            }
+          },
+          {
+            "ref": "mad1",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/perroquet_mad1.png"
+            }
+          },
+          {
+            "ref": "mad2",
+            "value": {
+              "type": "ASSET",
+              "value": "/game/lyon9/perroquet_mad2.png"
+            }
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_LETS_GO1",
+        "value": {
+          "FR": "Et c'est parti, bienvenue dans la partie d'exemple !"
+        },
+        "options": null,
+        "next": "TALK_LETS_GO2",
+        "character": {
+          "character": "ROBOTO",
+          "image": "happy1"
+        }
+      },
+      {
+        "ref": "TALK_LETS_GO2",
+        "value": {
+          "FR": "Nous allons faire une petite aventure afin de que tu puisses voir les différentes possibilités des l'applications."
+        },
+        "options": null,
+        "next": "TALK_LETS_GO3",
+        "character": {
+          "character": "ROBOTO",
+          "image": "happy2"
+        }
+      },
+      {
+        "ref": "TALK_LETS_GO3",
+        "value": {
+          "FR": "Pour commencer, est ce que tu veux que je te présente l'application, les différentes actions possible (conseiller pour la première partie) ou bien veux tu rentrer directement de l'action ?"
+        },
+        "options": [
+          {
+            "ref": "TALK_LETS_GO3_OPTION_INTRO",
+            "value": {
+              "FR": "Je veux bien un peu d'explication de l'application"
+            },
+            "next": null
+          },
+          {
+            "ref": "TALK_LETS_GO3_OPTION_ACTION",
+            "value": {
+              "FR": "Je veux rentrer directement dans l'action"
+            },
+            "next": null
+          }
+        ],
+        "next": null,
+        "character": {
+          "character": "ROBOTO",
+          "image": "happy3"
+        }
+      }
+    ]
+  },
+  "scenario": {
+    "steps": [
+      {
+        "ref": "STEP_INTRO",
+        "label": {
+          "FR": "Introduction"
+        },
+        "targets": [
+          {
+            "ref": "TARGET_INTRO_1",
+            "label": {
+              "FR": "Lancer l'application"
+            },
+            "description": null,
+            "optional": false
+          },
+          {
+            "ref": "TARGET_INTRO_2",
+            "label": {
+              "FR": "Faire une démo de l'application"
+            },
+            "description": null,
+            "optional": false
+          }
+        ],
+        "possibilities": [
+          {
+            "trigger": {
+              "type": "STEPACTIVE",
+              "value": null
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_LETS_GO1"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TalkOptionSelect",
+              "value": "TALK_LETS_GO3_OPTION_INTRO"
+            },
+            "consequences": [
+              {
+                "type": "Alert",
+                "metadata": {
+                  "FR": "Petit tour à construire ..."
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TalkOptionSelect",
+              "value": "TALK_LETS_GO3_OPTION_ACTION"
+            },
+            "consequences": [
+              {
+                "type": "Goal",
+                "metadata": {
+                  "stepId": "STEP_INTRO",
+                  "state": "SUCCESS"
+                }
+              },
+              {
+                "type": "Goal",
+                "metadata": {
+                  "stepId": "STEP_TNG",
+                  "state": "ACTIVE"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          }
+        ]
+      },
+      {
+        "ref": "STEP_TNG",
+        "label": {
+          "FR": "Retrouver la loupe mystère"
+        },
+        "targets": [
+          {
+            "ref": "TARGET_TNG_A",
+            "label": {
+              "FR": "Aller devant le TNG"
+            },
+            "description": null,
+            "optional": false
+          },
+          {
+            "ref": "TARGET_TNG_B",
+            "label": {
+              "FR": "Cliquer sur l'image"
+            },
+            "description": null,
+            "optional": false
+          }
+        ],
+        "possibilities": [
+          {
+            "trigger": {
+              "type": "STEPACTIVE",
+              "value": null
+            },
+            "consequences": [
+              {
+                "type": "Alert",
+                "metadata": {
+                  "FR": "C'est parti pour l'aventure !!!"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "GOINSPACE",
+              "value": "SPACE_TNG"
+            },
+            "consequences": [
+              {
+                "type": "Goal",
+                "metadata": {
+                  "stepId": "TARGET_TNG_A",
+                  "state": "success"
+                }
+              },
+              {
+                "type": "Alert",
+                "metadata": {
+                  "FR": "Bravo, vous avez trouver le TNG. Maintenant, il reste plus qu'à trouver la loupe mystère."
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": {
+              "type": "times",
+              "value": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

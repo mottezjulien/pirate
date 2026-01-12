@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/generic/app_current.dart';
 
 import 'app.dart';
-import 'contexts/config/user/data/user_repository.dart';
+import 'contexts/config/user/user_repository.dart';
 import 'contexts/config/user/user.dart';
 import 'contexts/connect/connection_repository.dart';
 import 'generic/config/language.dart';

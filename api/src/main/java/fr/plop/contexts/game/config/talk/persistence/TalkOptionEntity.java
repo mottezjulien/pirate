@@ -1,6 +1,8 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
 
+import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
@@ -28,6 +30,10 @@ public class TalkOptionEntity {
     @Column(name = "_order")
     private int order;
 
+    @ManyToOne
+    @JoinColumn(name = "condition_id")
+    private ConditionEntity nullableCondition;
+
     public void setId(String id) {
         this.id = id;
     }
@@ -44,13 +50,15 @@ public class TalkOptionEntity {
         this.order = order;
     }
 
+    public void setNullableCondition(ConditionEntity nullableCondition) {
+        this.nullableCondition = nullableCondition;
+    }
+
     public TalkItem.Options.Option toModel() {
-        //TODO condition
         TalkItem.Options.Option.Id optionalId = new TalkItem.Options.Option.Id(id);
         I18n i18n = value.toModel();
-        if(nullableNextId != null) {
-            return new TalkItem.Options.Option(optionalId, order, i18n, Optional.of(new TalkItem.Id(nullableNextId)), Optional.empty());
-        }
-        return new TalkItem.Options.Option(optionalId, order, i18n, Optional.empty(), Optional.empty());
+        Optional<TalkItem.Id> optNextId = Optional.ofNullable(nullableNextId).map(TalkItem.Id::new);
+        Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
+        return new TalkItem.Options.Option(optionalId, order, i18n, optNextId, optCondition);
     }
 }

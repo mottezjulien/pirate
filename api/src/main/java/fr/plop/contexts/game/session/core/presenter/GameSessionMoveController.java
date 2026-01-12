@@ -44,9 +44,9 @@ public class GameSessionMoveController {
         }
     }
 
-    public record GameMoveRequestDTO(float lat, float lng) {
+    public record GameMoveRequestDTO(double lat, double lng) {
         public Point toModel() {
-            return new Point(lat, lng);
+            return Point.from(lat, lng);
         }
     }
 

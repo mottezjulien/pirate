@@ -2,12 +2,14 @@ package fr.plop.contexts.game.config.board.persistence.entity;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.generic.position.Point;
-import fr.plop.generic.position.Rect;
+import fr.plop.generic.position.Rectangle;
 import fr.plop.generic.tools.StringTools;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
-@Table(name = "TEST2_BOARD_RECT")
+@Table(name = "TEST2_BOARD_RECTANGLE")
 public class BoardRectEntity {
 
     @Id
@@ -18,16 +20,16 @@ public class BoardRectEntity {
     private BoardSpaceEntity space;
 
     @Column(name = "top_right_latitude")
-    private double topRightLatitude;
+    private BigDecimal topRightLatitude;
 
     @Column(name = "top_right_longitude")
-    private double topRightLongitude;
+    private BigDecimal topRightLongitude;
 
     @Column(name = "bottom_left_latitude")
-    private double bottomLeftLatitude;
+    private BigDecimal bottomLeftLatitude;
 
     @Column(name = "bottom_left_longitude")
-    private double bottomLeftLongitude;
+    private BigDecimal bottomLeftLongitude;
 
     public String getId() {
         return id;
@@ -45,27 +47,27 @@ public class BoardRectEntity {
         this.space = space;
     }
 
-    public void setTopRightLatitude(double topRightLatitude) {
+    public void setTopRightLatitude(BigDecimal topRightLatitude) {
         this.topRightLatitude = topRightLatitude;
     }
 
-    public void setTopRightLongitude(double topRightLongitude) {
+    public void setTopRightLongitude(BigDecimal topRightLongitude) {
         this.topRightLongitude = topRightLongitude;
     }
 
-    public void setBottomLeftLatitude(double bottomLeftLatitude) {
+    public void setBottomLeftLatitude(BigDecimal bottomLeftLatitude) {
         this.bottomLeftLatitude = bottomLeftLatitude;
     }
 
-    public void setBottomLeftLongitude(double bottomLeftLongitude) {
+    public void setBottomLeftLongitude(BigDecimal bottomLeftLongitude) {
         this.bottomLeftLongitude = bottomLeftLongitude;
     }
 
-    public Rect toModel() {
-        return new Rect(new Point(bottomLeftLatitude, bottomLeftLongitude), new Point(topRightLatitude, topRightLongitude));
+    public Rectangle toModel() {
+        return new Rectangle(new Point(bottomLeftLatitude, bottomLeftLongitude), new Point(topRightLatitude, topRightLongitude));
     }
 
-    public static BoardRectEntity fromModel(BoardSpace.Id spaceId, Rect model) {
+    public static BoardRectEntity fromModel(BoardSpace.Id spaceId, Rectangle model) {
         BoardRectEntity entity = new BoardRectEntity();
         entity.setId(StringTools.generate());
         BoardSpaceEntity spaceEntity = new BoardSpaceEntity();

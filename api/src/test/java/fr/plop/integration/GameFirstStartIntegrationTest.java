@@ -46,7 +46,7 @@ public class GameFirstStartIntegrationTest {
         templateInitUseCase.deleteAll();
         Template.Code code = new Template.Code("TEST_FIRST");
         ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));
-        Template template = new Template(code, "Mon premier jeu", scenario);
+        Template template = Template.builder().code(code).label("Mon premier jeu").scenario(scenario).build();
         templateInitUseCase.create(template);
     }
 

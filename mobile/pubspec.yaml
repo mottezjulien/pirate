@@ -28,6 +28,13 @@ dependencies:
   #Local Storage
   shared_preferences: ^2.5.4
 
+  #Map
+  flutter_map: ^8.0.0
+  latlong2: ^0.9.1
+
+  #Shimmer Loading
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -18,6 +18,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
 import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
+import fr.plop.generic.position.Location;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import fr.plop.subs.i18n.persistence.I18nRepository;
@@ -105,6 +106,17 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         templateEntity.setCode(template.code().value());
         templateEntity.setLabel(template.label());
         templateEntity.setVersion(template.version());
+
+        templateEntity.setLevel(template.level().value());
+        templateEntity.setDescription(template.description());
+
+        Location departure = template.descriptor().departure();
+        templateEntity.setDepartureAddress(departure.address().toString());
+        templateEntity.setDepartureBottomLeftLat(departure.rect().bottomLeft().lat());
+        templateEntity.setDepartureBottomLeftLng(departure.rect().bottomLeft().lng());
+        templateEntity.setDepartureTopRightLat(departure.rect().topRight().lat());
+        templateEntity.setDepartureTopRightLng(departure.rect().topRight().lng());
+
         templateEntity.setDurationInMinute(template.maxDuration().toMinutes());
         templateEntity.setTalk(talkAdapter.createTalk(template.talk()));
         templateEntity.setBoard(boardAdapter.createBoard(template.board()));

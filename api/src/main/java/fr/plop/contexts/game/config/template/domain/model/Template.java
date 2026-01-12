@@ -5,43 +5,15 @@ import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
+import fr.plop.generic.position.Location;
 import fr.plop.generic.tools.StringTools;
 
 import java.time.Duration;
 
-public record Template(Atom atom, String label, String version, Duration maxDuration, ScenarioConfig scenario,
+public record Template(Atom atom, String label, String version, Descriptor descriptor, Duration maxDuration, ScenarioConfig scenario,
                        BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
 
     private static final Duration DEFAULT_DURATION = Duration.ofMinutes(30);
-
-    public Template(Code code) {
-        this(code, new ScenarioConfig());
-    }
-
-    public Template(Code code, ScenarioConfig scenario) {
-        this(code, "", scenario);
-    }
-
-    public Template(Code code, ScenarioConfig scenario, BoardConfig board) {
-        this(code, "", scenario, board, new MapConfig());
-    }
-
-    public Template(Code code, String label, ScenarioConfig scenario) {
-        this(code, label, scenario, new BoardConfig(), new MapConfig());
-    }
-
-    public Template(Code code, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
-        this(code, "", scenario, board, map, new TalkConfig());
-    }
-
-    public Template(Code code, String label, ScenarioConfig scenario, BoardConfig board, MapConfig map) {
-        this(code, label, scenario, board, map, new TalkConfig());
-    }
-
-    public Template(Code code, String label, ScenarioConfig scenario, BoardConfig board, MapConfig map, TalkConfig talk) {
-        this(new Atom(new Id(), code), label, "", DEFAULT_DURATION, scenario, board, map, talk, new ImageConfig());
-    }
-
 
     /**
      * Valide que tous les TalkItem référencés par les possibilités (conséquences DisplayTalk et triggers TalkNext)
@@ -68,6 +40,14 @@ public record Template(Atom atom, String label, String version, Duration maxDura
         return true;
     }
 
+    public Descriptor.Level level() {
+        return descriptor.level();
+    }
+
+    public String description() {
+        return descriptor.desc();
+    }
+
     public record Id(String value) {
         public Id() {
             this(StringTools.generate());
@@ -79,8 +59,32 @@ public record Template(Atom atom, String label, String version, Duration maxDura
     }
 
     public record Atom(Id id, Code code) {
+        public Atom() {
+            this(new Id(), new Code(""));
+        }
+        public Atom withCode(Code code) {
+            return new Atom(id, code);
+        }
+    }
+
+    public record Descriptor(Level level, String desc, Location departure) {
+
+        public static Descriptor empty() {
+            return new Descriptor(Level._default(), "", Location.lyonBellecour());
+        }
+
+        public record Level(int value) { // 1-5
+            public static Level from(int value) {
+                return new Level(value);
+            }
+
+            public static Level _default() {
+                return Level.from(3);
+            }
+        }
 
     }
+
 
     public Id id() {
         return atom.id();
@@ -88,6 +92,77 @@ public record Template(Atom atom, String label, String version, Duration maxDura
 
     public Code code() {
         return atom.code();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Atom atom = new Atom();
+        private String label = "";
+        private String version = "0.0.0";
+        private Descriptor descriptor = Descriptor.empty();
+        private Duration maxDuration = DEFAULT_DURATION;
+        private ScenarioConfig scenario = new ScenarioConfig();
+        private BoardConfig board = new BoardConfig();
+        private MapConfig map = new MapConfig();
+        private TalkConfig talk = new TalkConfig();
+        private ImageConfig image = new ImageConfig();
+
+        public Builder code(Code code) {
+            this.atom = atom.withCode(code);
+            return this;
+        }
+
+        public Builder label(String label) {
+            this.label = label;
+            return this;
+        }
+
+        public Builder version(String version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder descriptor(Descriptor descriptor) {
+            this.descriptor = descriptor;
+            return this;
+        }
+
+        public Builder maxDuration(Duration maxDuration) {
+            this.maxDuration = maxDuration;
+            return this;
+        }
+
+        public Builder scenario(ScenarioConfig scenario) {
+            this.scenario = scenario;
+            return this;
+        }
+
+        public Builder board(BoardConfig board) {
+            this.board = board;
+            return this;
+        }
+
+        public Builder map(MapConfig map) {
+            this.map = map;
+            return this;
+        }
+
+        public Builder talk(TalkConfig talk) {
+            this.talk = talk;
+            return this;
+        }
+
+        public Builder image(ImageConfig image) {
+            this.image = image;
+            return this;
+        }
+
+        public Template build() {
+            return new Template(atom, label, version, descriptor, maxDuration, scenario, board, map, talk, image);
+        }
     }
 
 }

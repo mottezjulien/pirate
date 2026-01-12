@@ -7,7 +7,7 @@ import 'package:mobile/generic/app_current.dart';
 import 'package:mobile/generic/config/language.dart';
 
 import '../../../generic/config/router.dart';
-import '../user/data/user_repository.dart';
+import '../user/user_repository.dart';
 
 class OnboardingViewModel {
 
@@ -57,7 +57,8 @@ class OnboardingViewModel {
 
   void _completeOnboarding() {
     BuildContext? context = AppRouter.navigatorKey.currentContext;
-    context!.goNamed(AppRouter.homeName);
+    //context!.goNamed(AppRouter.homeName);
+    context!.goNamed(AppRouter.selectGameName);
   }
 
 
