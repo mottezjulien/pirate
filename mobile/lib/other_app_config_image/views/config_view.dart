@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../models/config_models.dart';
 
@@ -30,7 +31,7 @@ class _ConfigViewState extends State<ConfigView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Config Editor'),
+        title: Text('config_editor.title'.tr()),
         centerTitle: true,
       ),
       body: Center(
@@ -80,7 +81,7 @@ class _CoordinatesDialog extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Coordonnées',
+                  'config_editor.coordinates'.tr(),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 20),
@@ -95,7 +96,7 @@ class _CoordinatesDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Cliquez n\'importe où pour fermer',
+                  'config_editor.close_hint'.tr(),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey,
                       ),

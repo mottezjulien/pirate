@@ -3,8 +3,6 @@
   "version": "1.0",
   "label": "Test de discussion",
   "duration": 10,
-  "board": null,
-  "maps": null,
   "talk": {
     "characters": [
       {
@@ -53,7 +51,6 @@
             "next": "TALK004"
           }
         ],
-        "next": null,
         "character": {
           "character": "BOB",
           "image": "default"
@@ -65,8 +62,6 @@
           "FR": "Excellent, continuons !",
           "EN": "Great, let's continue!"
         },
-        "options": null,
-        "next": null,
         "character": {
           "character": "BOB",
           "image": "default"
@@ -78,8 +73,6 @@
           "FR": "Dommage, fin de test.",
           "EN": "Too bad, end of test."
         },
-        "options": null,
-        "next": null,
         "character": {
           "character": "BOB",
           "image": "default"
@@ -91,7 +84,6 @@
           "FR": "Alors, on hésite ?",
           "EN": "Alors, on hésite ? EN"
         },
-        "options": null,
         "next": "TALK005",
         "character": {
           "character": "BOB",
@@ -104,8 +96,104 @@
           "FR": "fin de la discution.",
           "EN": "fin de la discution. EN"
         },
-        "options": null,
-        "next": null,
+        "next": "TALK_INPUT_ALPHA",
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK_INPUT_ALPHA",
+        "value": {
+          "FR": "Quel est le mot de passe secret ?",
+          "EN": "What is the secret password?"
+        },
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        },
+        "inputText": {
+          "type": "ALPHANUMERIC"
+        }
+      },
+      {
+        "ref": "TALK_INPUT_ALPHA_SUCCESS",
+        "value": {
+          "FR": "Bravo ! Le mot de passe est correct.",
+          "EN": "Well done! The password is correct."
+        },
+        "next": "TALK_INPUT_NUMERIC",
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK_INPUT_ALPHA_FAIL",
+        "value": {
+          "FR": "Non, ce n'est pas le bon mot de passe.",
+          "EN": "No, that's not the right password."
+        },
+        "options": [
+          {
+            "ref": "TALK_INPUT_ALPHA_RETRY",
+            "value": { "FR": "Réessayer", "EN": "Try again" },
+            "next": "TALK_INPUT_ALPHA"
+          },
+          {
+            "ref": "TALK_INPUT_ALPHA_SKIP",
+            "value": { "FR": "Passer", "EN": "Skip" },
+            "next": "TALK_INPUT_NUMERIC"
+          }
+        ],
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK_INPUT_NUMERIC",
+        "value": {
+          "FR": "Entrez le code à 4 chiffres :",
+          "EN": "Enter the 4-digit code:"
+        },
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        },
+        "inputText": {
+          "type": "NUMERIC",
+          "size": 4
+        }
+      },
+      {
+        "ref": "TALK_INPUT_NUMERIC_SUCCESS",
+        "value": {
+          "FR": "Code correct ! Fin du test.",
+          "EN": "Correct code! End of test."
+        },
+        "character": {
+          "character": "BOB",
+          "image": "default"
+        }
+      },
+      {
+        "ref": "TALK_INPUT_NUMERIC_FAIL",
+        "value": {
+          "FR": "Code incorrect.",
+          "EN": "Wrong code."
+        },
+        "options": [
+          {
+            "ref": "TALK_INPUT_NUMERIC_RETRY",
+            "value": { "FR": "Réessayer", "EN": "Try again" },
+            "next": "TALK_INPUT_NUMERIC"
+          },
+          {
+            "ref": "TALK_INPUT_NUMERIC_ABANDON",
+            "value": { "FR": "Abandonner", "EN": "Give up" }
+          }
+        ],
         "character": {
           "character": "BOB",
           "image": "default"
@@ -125,14 +213,13 @@
         "possibilities": [
           {
             "trigger": {
-              "type": "ABSOLUTETIME",
-              "value": "0"
+              "type": "STEPACTIVE"
             },
             "consequences": [
               {
                 "type": "Talk",
                 "metadata": {
-                  "talkRef": "TALK_LETS_GO"
+                  "talkRef": "TALK_INPUT_ALPHA"
                 }
               }
             ],
@@ -165,6 +252,78 @@
                 "type": "GameOver",
                 "metadata": {
                   "result": "FAILURE_ONE_CONTINUE"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TALKINPUTTEXT",
+              "talkId": "TALK_INPUT_ALPHA",
+              "value": "secret",
+              "matchType": "EQUALS"
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_INPUT_ALPHA_SUCCESS"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TALKINPUTTEXT",
+              "talkId": "TALK_INPUT_ALPHA",
+              "value": "secret",
+              "matchType": "DIFFERENT"
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_INPUT_ALPHA_FAIL"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TALKINPUTTEXT",
+              "talkId": "TALK_INPUT_NUMERIC",
+              "value": "1234",
+              "matchType": "EQUALS"
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_INPUT_NUMERIC_SUCCESS"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": null
+          },
+          {
+            "trigger": {
+              "type": "TALKINPUTTEXT",
+              "talkId": "TALK_INPUT_NUMERIC",
+              "value": "1234",
+              "matchType": "DIFFERENT"
+            },
+            "consequences": [
+              {
+                "type": "Talk",
+                "metadata": {
+                  "talkRef": "TALK_INPUT_NUMERIC_FAIL"
                 }
               }
             ],

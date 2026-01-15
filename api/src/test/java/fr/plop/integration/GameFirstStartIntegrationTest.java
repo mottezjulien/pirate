@@ -40,20 +40,22 @@ public class GameFirstStartIntegrationTest {
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
+    private final Template.Id templateId = new Template.Id();
+
     @BeforeEach
     void setUp() {
         sessionClear.clearAll();
         templateInitUseCase.deleteAll();
-        Template.Code code = new Template.Code("TEST_FIRST");
+
         ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));
-        Template template = Template.builder().code(code).label("Mon premier jeu").scenario(scenario).build();
+        Template template = Template.builder().id(templateId).label("Mon premier jeu").scenario(scenario).build();
         templateInitUseCase.create(template);
     }
 
     @Test
     public void createSession() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = createAuth();
-        GameSessionController.GameSessionResponseDTO session = createGameSession(connection.token());
+        GameSessionController.GameSessionActivedResponseDTO session = createGameSession(connection.token());
         assertThat(session.id()).isNotNull();
     }
 
@@ -67,17 +69,17 @@ public class GameFirstStartIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionResponseDTO createGameSession(String token) throws URISyntaxException {
+    private GameSessionController.GameSessionActivedResponseDTO createGameSession(String token) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
         URI uri = new URI(baseUrl);
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest("TEST_FIRST");
+        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(templateId.value());
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionResponseDTO> result = this.restTemplate
-                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionResponseDTO.class);
+        ResponseEntity<GameSessionController.GameSessionActivedResponseDTO> result = this.restTemplate
+                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionActivedResponseDTO.class);
         return result.getBody();
     }
 

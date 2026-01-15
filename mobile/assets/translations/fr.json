@@ -1,23 +1,63 @@
 {
+  "app": {
+    "title": "Locked Out"
+  },
   "default": {
-    "close": "Fermer"
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non"
   },
   "config": {
     "preparing": {
       "label": "Session de jeux en cours de preparation"
+    },
+    "select": {
+      "title": "Sélectionnez votre jeu",
+      "code_tab": "Code",
+      "map_tab": "Carte",
+      "code_label": "Code",
+      "code_hint": "Entrez le code du jeu",
+      "validate": "Valider",
+      "error": "Erreur",
+      "error_empty_code": "Veuillez entrer un code",
+      "template_details": {
+        "description": "Description",
+        "departure": "Lieu de départ",
+        "level": "Niveau",
+        "cancel": "Annuler",
+        "select": "Valider"
+      }
     }
   },
   "scenario": {
     "goal": {
       "title": "Objectifs",
-      "finished": "Terminé"
+      "finished": "Terminé",
+      "optional": "Optionnel"
     }
   },
   "talk": {
-    "next": "Continue"
+    "next": "Continuer",
+    "submit": "Valider"
   },
   "help": {
     "label": "Aide"
+  },
+  "menu": {
+    "title": "Menu du jeu",
+    "start": "Démarrer",
+    "continue": "Continuer",
+    "configuration": "Configuration",
+    "exit": "Sortir"
+  },
+  "navigation": {
+    "objectives": "Objectifs",
+    "maps": "Cartes"
+  },
+  "config_editor": {
+    "title": "Éditeur de config",
+    "coordinates": "Coordonnées",
+    "close_hint": "Cliquez n'importe où pour fermer"
   },
   "onboarding": {
     "language": {

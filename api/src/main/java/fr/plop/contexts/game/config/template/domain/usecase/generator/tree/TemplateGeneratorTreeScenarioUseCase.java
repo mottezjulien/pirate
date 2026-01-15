@@ -10,6 +10,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.TemplateException;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.GlobalCache;
@@ -204,7 +205,7 @@ public class TemplateGeneratorTreeScenarioUseCase {
                 // Parse le value I18n qui suit depuis les enfants (sans \n final pour les Alert)
                 Optional<I18n> messageOpt = i18nGenerator.apply(tree.children());
                 I18n message = messageOpt.orElse(new I18n(Map.of())); // I18n vide si pas de value
-                return new Consequence.DisplayMessage(new Consequence.Id(), message);
+                return new Consequence.DisplayAlert(new Consequence.Id(), message);
             }
             case "GOALTARGET" -> {
                 return parseGoalTargetConsequence(sub);
@@ -267,7 +268,7 @@ public class TemplateGeneratorTreeScenarioUseCase {
             }
             case "TALKOPTIONSELECT" -> {
                 String optionReference = subTree.findByKeyWithUnique(PARAM_KEY_TALK_OPTION);
-                TalkItem.Options.Option.Id optId = globalCache.reference(optionReference, TalkItem.Options.Option.Id.class, new TalkItem.Options.Option.Id());
+                TalkItemNext.Options.Option.Id optId = globalCache.reference(optionReference, TalkItemNext.Options.Option.Id.class, new TalkItemNext.Options.Option.Id());
                 TalkItem.Id talkId = talkConfig.findByIdByOptionId(optId).orElseThrow(); //TODO
                 return new PossibilityTrigger.TalkOptionSelect(new PossibilityTrigger.Id(), talkId, optId);
             }

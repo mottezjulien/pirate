@@ -11,9 +11,9 @@ public record TalkConfig(Id id, List<TalkItem> items) {
         return items.stream().filter(item -> item.is(talkId)).findFirst();
     }
 
-    public Optional<TalkItem.Id> findByIdByOptionId(TalkItem.Options.Option.Id optId) {
+    public Optional<TalkItem.Id> findByIdByOptionId(TalkItemNext.Options.Option.Id optId) {
         return items.stream()
-                .filter(item -> item instanceof TalkItem.Options opt && opt.contains(optId))
+                .filter(item -> item.isOptions() && item.options().contains(optId))
                 .findFirst().map(TalkItem::id);
     }
 

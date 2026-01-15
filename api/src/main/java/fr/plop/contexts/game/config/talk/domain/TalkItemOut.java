@@ -8,10 +8,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Represents the text value of a TalkItem.
+ * Represents the text output of a TalkItem.
  * Can be either fixed (always the same) or conditional (depends on game situation).
  */
-public sealed interface TalkValue permits TalkValue.Conditional, TalkValue.Fixed {
+public sealed interface TalkItemOut permits TalkItemOut.Conditional, TalkItemOut.Fixed {
 
     /**
      * Resolves the value based on the current game situation.
@@ -24,7 +24,7 @@ public sealed interface TalkValue permits TalkValue.Conditional, TalkValue.Fixed
     /**
      * Fixed value - always returns the same text.
      */
-    record Fixed(I18n text) implements TalkValue {
+    record Fixed(I18n text) implements TalkItemOut {
         @Override
         public I18n resolve(GameSessionSituation situation) {
             return text;
@@ -35,10 +35,7 @@ public sealed interface TalkValue permits TalkValue.Conditional, TalkValue.Fixed
      * Conditional value - evaluates branches in order and returns the first matching one.
      * Falls back to defaultText if no branch matches.
      */
-    record Conditional(
-            I18n defaultText,
-            List<Branch> branches
-    ) implements TalkValue {
+    record Conditional(I18n defaultText, List<Branch> branches) implements TalkItemOut {
 
         /**
          * A branch with a condition and associated text.
@@ -58,16 +55,16 @@ public sealed interface TalkValue permits TalkValue.Conditional, TalkValue.Fixed
     }
 
     /**
-     * Factory method to create a Fixed TalkValue from an I18n.
+     * Factory method to create a Fixed TalkOut from an I18n.
      */
-    static TalkValue fixed(I18n text) {
+    static TalkItemOut fixed(I18n text) {
         return new Fixed(text);
     }
 
     /**
-     * Factory method to create a Conditional TalkValue.
+     * Factory method to create a Conditional TalkOut.
      */
-    static TalkValue conditional(I18n defaultText, List<Conditional.Branch> branches) {
+    static TalkItemOut conditional(I18n defaultText, List<Conditional.Branch> branches) {
         return new Conditional(defaultText, branches);
     }
 }

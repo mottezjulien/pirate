@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/contexts/connect/auth.dart';
 import 'package:mobile/contexts/geo/domain/model/coordinate.dart';
 
+import '../../../generic/app_current.dart';
 import '../../../generic/config/server.dart';
 import '../../../generic/repository/generic_repository.dart';
 import '../../../generic/repository/http_headers.dart';
@@ -16,14 +17,21 @@ class GameSessionRepository {
 
   static const resourcePath = '/sessions';
 
-  Future<GameSessionCreate> create() async {
+  Future<GameSessionResponseDTO?> find() async {
+    var uri = Server.session(resourcePath);
+    final http.Response response = await http.get(uri, headers: Headers.userAuth());
+    if(response.statusCode == 404) {
+      return null;
+    }
+    return sessionCreateToModel(jsonDecode(response.body));
+  }
+
+  Future<GameSessionResponseDTO> create() async {
     var uri = Server.session(resourcePath);
     final http.Response response = await http.post(uri,
         headers: Headers.userAuth(),
         body: jsonEncode({
-          //'templateCode': 'TEST_DISCUSSION'
-          //'templateCode': 'ChezWamEasy' //TODO 'templateCode': 'pirate_lyon'
-          'templateCode': 'LYON_9'
+          'templateId': AppCurrent.templateId
         })
     );
     return sessionCreateToModel(jsonDecode(response.body));
@@ -47,10 +55,10 @@ class GameSessionRepository {
     return GameSession(id: json['id']);
   }
 
-  GameSessionCreate sessionCreateToModel(Map<String, dynamic> json) {
+  GameSessionResponseDTO sessionCreateToModel(Map<String, dynamic> json) {
     GameSession session = sessionToModel(json);
     Auth auth = Auth(token: json['gameToken']);
-    return GameSessionCreate(session: session, auth: auth);
+    return GameSessionResponseDTO(session: session, auth: auth);
   }
 
   Future<void> move(Coordinate coordinate) async {
@@ -92,13 +100,16 @@ class GameSessionRepository {
     );
   }
 
+  Future<void> confirmAnswer({required String confirmId, required bool answer}) async {
+    GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
+    var path = "$resourcePath/${GameCurrent.sessionId}/confirms/$confirmId/answer/";
+    await genericRepository.post(path: path, body: {'answer': answer}, decode: false);
+  }
+
 }
 
-class GameSessionCreate {
-
+class GameSessionResponseDTO {
   final GameSession session;
   final Auth auth;
-
-  GameSessionCreate({required this.session, required this.auth});
-
+  GameSessionResponseDTO({required this.session, required this.auth});
 }

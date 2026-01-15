@@ -30,9 +30,9 @@ class GameSessionUseCase {
   Future<void> startSession() async {
 
     final Dialog dialog = Dialog();
-    final BuildContext? dialogContext = dialog.showMessage(message: "other_app_config_image.preparing.label".tr(),  isClosable: false);
+    final BuildContext? dialogContext = dialog.showMessage(message: "config.preparing.label".tr(),  isClosable: false);
     final GameSessionRepository repository = GameSessionRepository();
-    final GameSessionCreate sessionCreate = await repository.create();
+    final GameSessionResponseDTO sessionCreate = await repository.create();
     GameCurrent.session = sessionCreate.session;
     AppCurrent.gameSessionAuth = sessionCreate.auth;
     await sessionCreate.session.init();

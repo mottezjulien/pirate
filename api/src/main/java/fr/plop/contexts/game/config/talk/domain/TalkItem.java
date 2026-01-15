@@ -1,34 +1,28 @@
 package fr.plop.contexts.game.config.talk.domain;
 
-import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
-public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, TalkItem.Options {
+/**
+ * Represents a single item in a dialog/conversation.
+ * Contains the text to display, the character speaking, and what happens next.
+ */
+public record TalkItem(Id id, TalkItemOut out, TalkCharacter.Reference characterReference, TalkItemNext next) {
 
-    record Id(String value) {
+    public record Id(String value) {
         public Id() {
             this(StringTools.generate());
         }
     }
 
-    Id id();
-
-    default boolean is(Id otherId) {
+    public boolean is(Id otherId) {
         return id().equals(otherId);
     }
 
-    TalkValue value();
-
-    TalkCharacter.Reference characterReference();
-
-    default TalkCharacter character() {
+    public TalkCharacter character() {
         return characterReference().character();
     }
 
@@ -39,140 +33,90 @@ public sealed interface TalkItem permits TalkItem.Simple, TalkItem.Continue, Tal
      * @param situation the current game session situation
      * @return a resolved TalkItem ready for display
      */
-    TalkItemResolved resolve(GameSessionSituation situation);
+    public I18n resolve(GameSessionSituation situation) {
+        return out.resolve(situation);
+    }
+
+    // ========== Convenience methods for working with TalkItemNext types ==========
 
     /**
-     * Simple TalkItem - the conversation ends here.
+     * Returns true if this item ends the conversation (Empty next).
      */
-    record Simple(
-            Id id,
-            TalkValue value,
-            TalkCharacter.Reference characterReference
-    ) implements TalkItem {
-
-        @Override
-        public TalkItemResolved resolve(GameSessionSituation situation) {
-            I18n resolvedValue = value.resolve(situation);
-            return new TalkItemResolved.Simple(id, resolvedValue, characterReference);
-        }
+    public boolean isSimple() {
+        return next instanceof TalkItemNext.Empty;
     }
 
     /**
-     * Continue TalkItem - automatically leads to the next item.
+     * Returns true if this item automatically continues to another item.
      */
-    record Continue(
-            Id id,
-            TalkValue value,
-            TalkCharacter.Reference characterReference,
-            Id nextId
-    ) implements TalkItem {
-
-        @Override
-        public TalkItemResolved resolve(GameSessionSituation situation) {
-            I18n resolvedValue = value.resolve(situation);
-            return new TalkItemResolved.Continue(id, resolvedValue, characterReference, nextId);
-        }
-
-        public TalkItem withNextId(Id newNextId) {
-            return new Continue(id, value, characterReference, newNextId);
-        }
+    public boolean isContinue() {
+        return next instanceof TalkItemNext.Continue;
     }
 
     /**
-     * Options TalkItem - user must select from available options.
-     * Options can have conditions that determine their visibility.
+     * Returns true if this item presents options to the user.
      */
-    record Options(
-            Id id,
-            TalkValue value,
-            TalkCharacter.Reference characterReference,
-            List<Option> _options
-    ) implements TalkItem {
-
-        public Optional<Option> option(Option.Id optionId) {
-            return options().filter(option -> option.is(optionId)).findFirst();
-        }
-
-        public Stream<Option> options() {
-            return _options.stream().sorted(Comparator.comparing(Option::order));
-        }
-
-        public TalkItem withOptions(List<Option> newOptions) {
-            return new Options(id, value, characterReference, newOptions);
-        }
-
-        @Override
-        public TalkItemResolved resolve(GameSessionSituation situation) {
-            I18n resolvedValue = value.resolve(situation);
-
-            // Filter options based on their conditions
-            List<TalkItemResolved.Options.Option> resolvedOptions = options()
-                    .filter(option -> option.accept(situation))
-                    .map(Option::toResolved)
-                    .toList();
-
-            return new TalkItemResolved.Options(id, resolvedValue, characterReference, resolvedOptions);
-        }
-
-        public boolean contains(Option.Id optId) {
-            return _options.stream().anyMatch(_opt -> _opt.is(optId));
-        }
-
-        /**
-         * Option with optional condition for visibility.
-         */
-        public record Option(
-                Option.Id id,
-                Integer order,
-                I18n value,
-                Optional<TalkItem.Id> optNextId,
-                Optional<Condition> optCondition
-        ) {
-            public Option(Id id, int order, I18n value) {
-                this(id, order, value, Optional.empty(), Optional.empty());
-            }
-
-            public boolean is(Id otherId) {
-                return id.equals(otherId);
-            }
-
-            public boolean hasNext() {
-                return optNextId.isPresent();
-            }
-
-            public TalkItem.Id nextId() {
-                return optNextId.orElseThrow();
-            }
-
-            public Option withNextId(TalkItem.Id nextId) {
-                return new Option(id, order, value, Optional.of(nextId), optCondition);
-            }
-
-            /**
-             * Checks if this option should be displayed based on its condition and the current situation.
-             */
-            public boolean accept(GameSessionSituation situation) {
-                return optCondition.map(condition -> condition.accept(situation).toBoolean())
-                        .orElse(true);
-            }
-
-            /**
-             * Converts this Option to a resolved Option (without the condition).
-             */
-            public TalkItemResolved.Options.Option toResolved() {
-                return new TalkItemResolved.Options.Option(
-                        new TalkItemResolved.Options.Option.Id(id.value()),
-                        order,
-                        value,
-                        optNextId
-                );
-            }
-
-            public record Id(String value) {
-                public Id() {
-                    this(StringTools.generate());
-                }
-            }
-        }
+    public boolean isOptions() {
+        return next instanceof TalkItemNext.Options;
     }
+
+    /**
+     * Gets the next item ID if this is a Continue type.
+     * @throws IllegalStateException if not a Continue type
+     */
+    public Id nextId() {
+        if (next instanceof TalkItemNext.Continue(Id nextId)) {
+            return nextId;
+        }
+        throw new IllegalStateException("TalkItem is not a Continue type");
+    }
+
+    /**
+     * Gets the options if this is an Options type.
+     * @throws IllegalStateException if not an Options type
+     */
+    public TalkItemNext.Options options() {
+        if (next instanceof TalkItemNext.Options opts) {
+            return opts;
+        }
+        throw new IllegalStateException("TalkItem is not an Options type");
+    }
+
+    /**
+     * Creates a new TalkItem with an updated nextId (for Continue type).
+     */
+    public TalkItem withNextId(Id newNextId) {
+        return new TalkItem(id, out, characterReference, new TalkItemNext.Continue(newNextId));
+    }
+
+    /**
+     * Creates a new TalkItem with updated options (for Options type).
+     */
+    public TalkItem withOptions(List<TalkItemNext.Options.Option> newOptions) {
+        return new TalkItem(id, out, characterReference, new TalkItemNext.Options(newOptions));
+    }
+
+    // ========== Static factory methods for easier construction ==========
+
+    /**
+     * Creates a Simple TalkItem (conversation ends here).
+     */
+    public static TalkItem simple(Id id, TalkItemOut out, TalkCharacter.Reference characterReference) {
+        return new TalkItem(id, out, characterReference, new TalkItemNext.Empty());
+    }
+
+    /**
+     * Creates a Continue TalkItem (automatically leads to next item).
+     */
+    public static TalkItem continueItem(Id id, TalkItemOut out, TalkCharacter.Reference characterReference, Id nextId) {
+        return new TalkItem(id, out, characterReference, new TalkItemNext.Continue(nextId));
+    }
+
+    /**
+     * Creates an Options TalkItem (user must select from options).
+     */
+    public static TalkItem options(Id id, TalkItemOut out, TalkCharacter.Reference characterReference, List<TalkItemNext.Options.Option> options) {
+        return new TalkItem(id, out, characterReference, new TalkItemNext.Options(options));
+    }
+
 }

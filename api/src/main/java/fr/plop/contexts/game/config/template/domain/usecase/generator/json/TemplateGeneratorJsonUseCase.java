@@ -19,12 +19,15 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.domain.TalkValue;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
+import fr.plop.contexts.game.config.talk.domain.TalkItemOut;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.GlobalCache;
+import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.enumerate.BeforeOrAfter;
+import fr.plop.generic.enumerate.EqualsOrDifferent;
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Address;
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 public class TemplateGeneratorJsonUseCase {
 
     private final GlobalCache globalCache = new GlobalCache();
+    private TalkConfig talkConfig;
 
     public Template apply(String json) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
@@ -54,9 +58,10 @@ public class TemplateGeneratorJsonUseCase {
         Template.Descriptor descriptor = descriptor(root);
 
         BoardConfig board = mapBoard(root.board());
+        TalkConfig talk = mapTalk(root.talk());
+        this.talkConfig = talk;
         ScenarioConfig scenario = mapScenario(root.scenario());
         MapConfig map = mapMaps(root.maps());
-        TalkConfig talk = mapTalk(root.talk());
         ImageConfig imageConfig = mapImage(root.image());
 
 
@@ -174,6 +179,31 @@ public class TemplateGeneratorJsonUseCase {
             case "ABSOLUTETIME" ->
                     new PossibilityTrigger.AbsoluteTime(new PossibilityTrigger.Id(), GameSessionTimeUnit.ofMinutes(Integer.parseInt(triggerRoot.value())));
             case "STEPACTIVE" -> new PossibilityTrigger.StepActive(new PossibilityTrigger.Id(), currentStepId);
+            case "TALKINPUTTEXT" -> {
+                TalkItem.Id talkId = globalCache.reference(triggerRoot.talkId(), TalkItem.Id.class, new TalkItem.Id());
+                String matchTypeStr = triggerRoot.matchType() != null ? triggerRoot.matchType().toUpperCase() : "EQUALS";
+                EqualsOrDifferent matchType = EqualsOrDifferent.valueOf(matchTypeStr);
+                yield new PossibilityTrigger.TalkInputText(new PossibilityTrigger.Id(), talkId, triggerRoot.value(), matchType);
+            }
+            case "TALKOPTIONSELECT" -> {
+                String optionRef = triggerRoot.value();
+                TalkItemNext.Options.Option.Id optionId = globalCache.reference(optionRef, TalkItemNext.Options.Option.Id.class, new TalkItemNext.Options.Option.Id());
+                TalkItem.Id talkId = talkConfig.findByIdByOptionId(optionId).orElseThrow(() ->
+                        new IllegalArgumentException("Option not found in any TalkItem: " + optionRef));
+                yield new PossibilityTrigger.TalkOptionSelect(new PossibilityTrigger.Id(), talkId, optionId);
+            }
+            case "TALKEND" -> {
+                String talkRef = triggerRoot.value();
+                TalkItem.Id talkId = globalCache.reference(talkRef, TalkItem.Id.class, new TalkItem.Id());
+                yield new PossibilityTrigger.TalkEnd(new PossibilityTrigger.Id(), talkId);
+            }
+            case "CONFIRMANSWER" -> {
+                String confirmRef = (String) triggerRoot.metadata().get("confirmRef");
+                String answerStr = (String) triggerRoot.metadata().get("answer");
+                boolean expectedAnswer = "YES".equalsIgnoreCase(answerStr) || "TRUE".equalsIgnoreCase(answerStr);
+                Consequence.Id confirmId = globalCache.reference(confirmRef, Consequence.Id.class, new Consequence.Id());
+                yield new PossibilityTrigger.ConfirmAnswer(new PossibilityTrigger.Id(), confirmId, expectedAnswer);
+            }
             default -> null;
         };
     }
@@ -222,7 +252,7 @@ public class TemplateGeneratorJsonUseCase {
         return switch (consequenceRoot.type().toUpperCase()) {
             case "ALERT" -> {
                 I18n message = toI18n((Map<String, String>) consequenceRoot.metadata().get("value"));
-                yield new Consequence.DisplayMessage(new Consequence.Id(), message);
+                yield new Consequence.DisplayAlert(new Consequence.Id(), message);
             }
             case "GOALTARGET" -> {
                 String targetRef = (String) consequenceRoot.metadata().get("targetId");
@@ -237,9 +267,20 @@ public class TemplateGeneratorJsonUseCase {
                 yield new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
             case "TALK" -> {
-                String talkRef = (String) consequenceRoot.metadata().get("talkId");
+                String talkRef = (String) consequenceRoot.metadata().get("talkRef");
                 TalkItem.Id talkId = globalCache.reference(talkRef, TalkItem.Id.class, new TalkItem.Id());
                 yield new Consequence.DisplayTalk(new Consequence.Id(), talkId);
+            }
+            case "GAMEOVER" -> {
+                String result = (String) consequenceRoot.metadata().get("result");
+                SessionGameOver.Type type = SessionGameOver.Type.valueOf(result);
+                yield new Consequence.SessionEnd(new Consequence.Id(), new SessionGameOver(type));
+            }
+            case "CONFIRM" -> {
+                String confirmRef = (String) consequenceRoot.metadata().get("ref");
+                I18n message = toI18n((Map<String, String>) consequenceRoot.metadata().get("message"));
+                Consequence.Id confirmId = globalCache.reference(confirmRef, Consequence.Id.class, new Consequence.Id());
+                yield new Consequence.DisplayConfirm(confirmId, message);
             }
             default -> null;
         };
@@ -359,8 +400,8 @@ public class TemplateGeneratorJsonUseCase {
         TalkItem.Id id = itemRoot.ref() != null
                 ? globalCache.reference(itemRoot.ref(), TalkItem.Id.class, new TalkItem.Id())
                 : new TalkItem.Id();
-        
-        I18n value = toI18n(itemRoot.value());
+
+        TalkItemOut talkItemOut = mapTalkOut(itemRoot.value());
         
         String characterName = itemRoot.character().character();
         String imageRef = itemRoot.character().image();
@@ -379,38 +420,91 @@ public class TemplateGeneratorJsonUseCase {
         Image image = new Image(Image.Type.valueOf(imageType.toUpperCase()), imagePath);
         TalkCharacter.Reference characterRef = new TalkCharacter.Reference(character, imageRef, image);
         
-        if (itemRoot.options() != null && !itemRoot.options().isEmpty()) {
-            List<TalkItem.Options.Option> options = new ArrayList<>();
+        // Priority: inputText > options > next > simple
+        if (itemRoot.inputText() != null) {
+            TalkItemNext.InputText.Type type = TalkItemNext.InputText.Type.valueOf(itemRoot.inputText().type().toUpperCase());
+            Optional<Integer> optSize = Optional.ofNullable(itemRoot.inputText().size());
+            TalkItemNext.InputText inputText = new TalkItemNext.InputText(type, optSize);
+            return new TalkItem(id, talkItemOut, characterRef, inputText);
+        } else if (itemRoot.options() != null && !itemRoot.options().isEmpty()) {
+            List<TalkItemNext.Options.Option> options = new ArrayList<>();
             for (int i = 0; i < itemRoot.options().size(); i++) {
                 TemplateGeneratorRoot.Talk.Item.Option optionRoot = itemRoot.options().get(i);
-                TalkItem.Options.Option.Id optionId = optionRoot.ref() != null
-                        ? globalCache.reference(optionRoot.ref(), TalkItem.Options.Option.Id.class, new TalkItem.Options.Option.Id())
-                        : new TalkItem.Options.Option.Id();
-                
+                TalkItemNext.Options.Option.Id optionId = optionRoot.ref() != null
+                        ? globalCache.reference(optionRoot.ref(), TalkItemNext.Options.Option.Id.class, new TalkItemNext.Options.Option.Id())
+                        : new TalkItemNext.Options.Option.Id();
+
                 I18n optionValue = toI18n(optionRoot.value());
                 Optional<TalkItem.Id> optNextId = Optional.empty();
                 if (optionRoot.next() != null) {
                     optNextId = Optional.of(globalCache.reference(optionRoot.next(), TalkItem.Id.class, new TalkItem.Id()));
                 }
-                
+
                 Condition condition = mapCondition(optionRoot.condition());
                 Optional<Condition> optCondition = Optional.ofNullable(condition);
-                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, i, optionValue, optNextId, optCondition);
+                TalkItemNext.Options.Option option = new TalkItemNext.Options.Option(optionId, i, optionValue, optNextId, optCondition);
                 options.add(option);
             }
-            return new TalkItem.Options(id, TalkValue.fixed(value), characterRef, options);
+            return TalkItem.options(id, talkItemOut, characterRef, options);
         } else {
             Optional<TalkItem.Id> optNextId = Optional.empty();
             if (itemRoot.next() != null) {
                 optNextId = Optional.of(globalCache.reference(itemRoot.next(), TalkItem.Id.class, new TalkItem.Id()));
             }
+            return optNextId.map(value -> TalkItem.continueItem(id, talkItemOut, characterRef, value))
+                    .orElseGet(() -> TalkItem.simple(id, talkItemOut, characterRef));
+        }
+    }
 
-            if (optNextId.isPresent()) {
-                return new TalkItem.Continue(id, TalkValue.fixed(value), characterRef, optNextId.get());
+    @SuppressWarnings("unchecked")
+    private TalkItemOut mapTalkOut(Object valueRoot) {
+        if (valueRoot instanceof Map<?, ?> map) {
+            // Check if it's a conditional value (has "default" key)
+            if (map.containsKey("default")) {
+                Map<String, String> defaultMap = (Map<String, String>) map.get("default");
+                I18n defaultText = toI18n(defaultMap);
+
+                List<TalkItemOut.Conditional.Branch> branches = new ArrayList<>();
+                if (map.containsKey("branches")) {
+                    List<Map<String, Object>> branchList = (List<Map<String, Object>>) map.get("branches");
+                    for (Map<String, Object> branchMap : branchList) {
+                        int order = branchMap.containsKey("order") ? ((Number) branchMap.get("order")).intValue() : 0;
+                        Map<String, Object> conditionMap = (Map<String, Object>) branchMap.get("condition");
+                        Condition condition = mapConditionFromMap(conditionMap);
+                        Map<String, String> branchValueMap = (Map<String, String>) branchMap.get("value");
+                        I18n branchText = toI18n(branchValueMap);
+                        branches.add(new TalkItemOut.Conditional.Branch(order, condition, branchText));
+                    }
+                }
+
+                return TalkItemOut.conditional(defaultText, branches);
             } else {
-                return new TalkItem.Simple(id, TalkValue.fixed(value), characterRef);
+                // Simple fixed value: { "FR": "...", "EN": "..." }
+                Map<String, String> simpleMap = (Map<String, String>) map;
+                return TalkItemOut.fixed(toI18n(simpleMap));
             }
         }
+        return TalkItemOut.fixed(new I18n());
+    }
+
+    private Condition mapConditionFromMap(Map<String, Object> conditionMap) {
+        if (conditionMap == null) return null;
+        String type = (String) conditionMap.get("type");
+        Map<String, Object> metadata = (Map<String, Object>) conditionMap.get("metadata");
+        List<Map<String, Object>> children = (List<Map<String, Object>>) conditionMap.get("children");
+
+        TemplateGeneratorRoot.Condition conditionRoot = new TemplateGeneratorRoot.Condition(
+                type,
+                metadata,
+                children != null ? children.stream()
+                        .map(c -> new TemplateGeneratorRoot.Condition(
+                                (String) c.get("type"),
+                                (Map<String, Object>) c.get("metadata"),
+                                null
+                        ))
+                        .toList() : null
+        );
+        return mapCondition(conditionRoot);
     }
 
     private ImageConfig mapImage(TemplateGeneratorRoot.TemplateGeneratorImage imageRoot) {

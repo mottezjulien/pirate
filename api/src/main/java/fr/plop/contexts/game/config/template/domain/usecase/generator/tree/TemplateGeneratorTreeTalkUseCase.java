@@ -3,7 +3,8 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator.tree;
 import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.domain.TalkValue;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
+import fr.plop.contexts.game.config.talk.domain.TalkItemOut;
 import fr.plop.contexts.game.config.template.domain.model.Tree;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.GlobalCache;
 import fr.plop.subs.i18n.domain.I18n;
@@ -44,18 +45,18 @@ public class TemplateGeneratorTreeTalkUseCase {
         generateCharacterReferences(tree);
         List<TalkItem> items = generateItemsWithoutOtherItemReference(tree);
         return items.stream().map(item -> {
-            if (item instanceof TalkItem.Continue _continue) {
+            if (item.isContinue()) {
                 String referenceNextId = localCacheGenIdToRefNext.get(item.id().value());
-                return _continue.withNextId(localCacheRefToId.get(referenceNextId));
+                return item.withNextId(localCacheRefToId.get(referenceNextId));
             }
-            if (item instanceof TalkItem.Options itamsOptions) {
-                List<TalkItem.Options.Option> options = itamsOptions.options().map(opt -> {
+            if (item.isOptions()) {
+                List<TalkItemNext.Options.Option> options = item.options().options().map(opt -> {
                     if (localCacheGenIdToRefNext.containsKey(opt.id().value())) {
                         return opt.withNextId(localCacheRefToId.get(localCacheGenIdToRefNext.get(opt.id().value())));
                     }
                     return opt;
                 }).toList();
-                return itamsOptions.withOptions(options);
+                return item.withOptions(options);
             }
             return item;
         }).toList();
@@ -109,22 +110,23 @@ public class TemplateGeneratorTreeTalkUseCase {
         };
     }
 
-    private TalkItem.Simple parseSimpleFromTree(Tree simpleTree, TalkCharacter.Reference talkCharacterReference) {
-        return new TalkItem.Simple(new TalkItem.Id(), TalkValue.fixed(parseValue(simpleTree)), talkCharacterReference);
+    private TalkItem parseSimpleFromTree(Tree simpleTree, TalkCharacter.Reference talkCharacterReference) {
+        return TalkItem.simple(new TalkItem.Id(), TalkItemOut.fixed(parseValue(simpleTree)), talkCharacterReference);
     }
 
 
-    private TalkItem.Continue parseContinueFromTree(Tree continueTree, TalkCharacter.Reference talkCharacterReference) {
+    private TalkItem parseContinueFromTree(Tree continueTree, TalkCharacter.Reference talkCharacterReference) {
         TalkItem.Id id = new TalkItem.Id();
         localCacheGenIdToRefNext.put(id.value(), continueTree.params().getFirst());
-        return new TalkItem.Continue(id, TalkValue.fixed(parseValue(continueTree)), talkCharacterReference, null);
+        // Create with a placeholder nextId (null), will be resolved later in generateItems
+        return TalkItem.continueItem(id, TalkItemOut.fixed(parseValue(continueTree)), talkCharacterReference, null);
     }
 
-    private TalkItem.Options parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
+    private TalkItem parseMultipleOptionsFromTree(Tree optionsTree, TalkCharacter.Reference talkCharacterReference) {
 
         TalkItem.Id id = new TalkItem.Id();
 
-        List<TalkItem.Options.Option> options = new ArrayList<>();
+        List<TalkItemNext.Options.Option> options = new ArrayList<>();
 
         for (Tree child : optionsTree.children()) {
             String header = child.header();
@@ -142,12 +144,12 @@ public class TemplateGeneratorTreeTalkUseCase {
                 Optional<I18n> optionOpt = i18nGenerator.apply(childrenToParseI18n);
                 I18n optionMessage = optionOpt.orElse(new I18n(Map.of()));
 
-                TalkItem.Options.Option.Id optionId = new TalkItem.Options.Option.Id();
+                TalkItemNext.Options.Option.Id optionId = new TalkItemNext.Options.Option.Id();
                 if (child.reference() != null) {
-                    optionId = globalCache.reference(child.reference(), TalkItem.Options.Option.Id.class, optionId);
+                    optionId = globalCache.reference(child.reference(), TalkItemNext.Options.Option.Id.class, optionId);
                 }
 
-                TalkItem.Options.Option option = new TalkItem.Options.Option(optionId, options.size(), optionMessage);
+                TalkItemNext.Options.Option option = new TalkItemNext.Options.Option(optionId, options.size(), optionMessage);
 
                 // Chercher la référence nextId via "next:TALK002"
                 Optional<String> nextIdRef = child.children().stream()
@@ -160,7 +162,7 @@ public class TemplateGeneratorTreeTalkUseCase {
                 options.add(option);
             }
         }
-        return new TalkItem.Options(id, TalkValue.fixed(parseValue(optionsTree)), talkCharacterReference, options);
+        return TalkItem.options(id, TalkItemOut.fixed(parseValue(optionsTree)), talkCharacterReference, options);
     }
 
     private I18n parseValue(Tree item) {

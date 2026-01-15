@@ -5,7 +5,7 @@ import fr.plop.contexts.game.session.core.domain.port.GamePlayerGetPort;
 import fr.plop.contexts.game.session.core.domain.port.GameSessionGetPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Configuration;
 public class GameSessionSpringConfig {
 
     @Bean
-    public GameSessionCreateUseCase gameCreateUseCase(GameSessionCreateUseCase.Port port, GameConfigCache cache) {
-        return new GameSessionCreateUseCase(port, cache);
+    public GameSessionUseCase gameCreateUseCase(GameSessionUseCase.Port port, GameConfigCache cache) {
+        return new GameSessionUseCase(port, cache);
     }
 
     @Bean

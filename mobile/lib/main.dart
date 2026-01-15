@@ -7,6 +7,8 @@ import 'app.dart';
 import 'contexts/config/user/user_repository.dart';
 import 'contexts/config/user/user.dart';
 import 'contexts/connect/connection_repository.dart';
+import 'contexts/session/data/game_repository.dart';
+import 'contexts/session/game_current.dart';
 import 'generic/config/language.dart';
 
 import 'generic/config/router.dart' as router;
@@ -26,6 +28,13 @@ Future<void> main() async {
     final User? nullableUser = await userRepository.find();
     if(nullableUser != null) {
       AppCurrent.user = nullableUser;
+      final GameSessionRepository repository = GameSessionRepository();
+      final GameSessionResponseDTO? nullableSession = await repository.find();
+      if(nullableSession != null) {
+        GameCurrent.session = nullableSession.session;
+        AppCurrent.gameSessionAuth = nullableSession.auth;
+      }
+
     }
 
     final GoRouter _router = router.AppRouter.create();

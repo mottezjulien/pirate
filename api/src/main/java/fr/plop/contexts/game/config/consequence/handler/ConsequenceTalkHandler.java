@@ -25,15 +25,17 @@ public class ConsequenceTalkHandler implements ConsequenceHandler {
 
     @Override
     public boolean supports(Consequence consequence) {
-        return consequence instanceof Consequence.DisplayMessage
-                || consequence instanceof Consequence.DisplayTalk;
+        return consequence instanceof Consequence.DisplayAlert
+                || consequence instanceof Consequence.DisplayTalk
+                || consequence instanceof Consequence.DisplayConfirm;
     }
 
     @Override
     public void handle(GameSessionContext context, Consequence consequence) {
         switch (consequence) {
-            case Consequence.DisplayMessage message -> message(context, message.value());
+            case Consequence.DisplayAlert message -> message(context, message.value());
             case Consequence.DisplayTalk talk -> talk(context, talk.talkId());
+            case Consequence.DisplayConfirm confirm -> confirm(context, confirm);
             default -> throw new IllegalStateException("Unexpected value: " + consequence);
         }
     }
@@ -46,6 +48,13 @@ public class ConsequenceTalkHandler implements ConsequenceHandler {
 
     public void talk(GameSessionContext context, TalkItem.Id talkId) {
         PushEvent event = new PushEvent.Talk(context, talkId);
+        pushPort.push(event);
+    }
+
+    public void confirm(GameSessionContext context, Consequence.DisplayConfirm confirm) {
+        GamePlayerEntity player = playerRepository.findByIdFetchUser(context.playerId().value()).orElseThrow();
+        String message = confirm.message().value(player.getUser().getLanguage());
+        PushEvent event = new PushEvent.Confirm(context, confirm.id(), message);
         pushPort.push(event);
     }
 

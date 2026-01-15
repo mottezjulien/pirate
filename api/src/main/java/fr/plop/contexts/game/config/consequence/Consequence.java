@@ -12,7 +12,8 @@ public sealed interface Consequence permits
         Consequence.ScenarioStep,
         Consequence.ScenarioTarget,
         Consequence.SessionEnd,
-        Consequence.DisplayMessage,
+        Consequence.DisplayAlert,
+        Consequence.DisplayConfirm,
         Consequence.DisplayTalk,
         Consequence.DisplayImage,
         Consequence.UpdatedMetadata,
@@ -39,7 +40,11 @@ public sealed interface Consequence permits
 
     }
 
-    record DisplayMessage(Id id, I18n value) implements Consequence {
+    record DisplayAlert(Id id, I18n value) implements Consequence {
+
+    }
+
+    record DisplayConfirm(Id id, I18n message) implements Consequence {
 
     }
 

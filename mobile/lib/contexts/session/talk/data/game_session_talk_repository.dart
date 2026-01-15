@@ -19,6 +19,14 @@ class GameSessionTalkRepository {
     return toModel(responseBody);
   }
 
+  Future<void> submitInputText({required String talkId, required String value}) async {
+    final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
+    await genericRepository.post(
+      path: "/sessions/${GameCurrent.sessionId}/talks/$talkId/inputtext/",
+      body: {"value": value},
+    );
+  }
+
 
   GameTalk toModel(Map<String, dynamic> json) {
     final GameImage image = GameImage(
@@ -28,42 +36,43 @@ class GameSessionTalkRepository {
         name: json['character']['name'],
         image: image
     );
-
-
-    GameTalkResult result = GameTalkResultSimple();
-    switch(GameTalkResultType.fromString(json['result']['type'])) {
-      case GameTalkResultType.SIMPLE:
-        result = GameTalkResultSimple();
-        break;
-      case GameTalkResultType.CONTINUE:
-        result = GameTalkResultContinue(nextId: json['result']['nextId']);
-        break;
-      case GameTalkResultType.MULTIPLE:
-        List<GameTalkResultOption> options = [];
-        if(json['result']['options'] != null) {
-          options = json['result']['options']
-              .map((each) => talkOptionToModel(each)).toList().cast<GameTalkResultOption>();
-        }
-        result = GameTalkResultMultiple(options: options);
-        break;
-    }
-
     return GameTalk(
         id: json['id'],
-        value: json['value'],
+        text: json['text'],
         character: character,
-        result: result);
+        next: toModelNext(json['next']));
   }
 
   GameTalkResultOption talkOptionToModel(Map<String, dynamic> json) {
     return GameTalkResultOption(id: json['id'], value: json['value']);
   }
 
-}
-
-enum GameTalkResultType {
-  SIMPLE, CONTINUE, MULTIPLE;
-  static GameTalkResultType fromString(String str) {
-    return GameTalkResultType.values.singleWhere((each) => each.name == str);
+  GameTalkNext toModelNext(Map<String, dynamic> jsonNext) {
+    switch(jsonNext['type']) {
+      case "CONTINUE":
+        return GameTalkResultContinue(nextId: jsonNext['nextId']);
+      case "MULTIPLE":
+        List<GameTalkResultOption> options = [];
+        if(jsonNext['options'] != null) {
+          options = jsonNext['options']
+              .map((each) => talkOptionToModel(each)).toList().cast<GameTalkResultOption>();
+        }
+        return GameTalkResultMultiple(options: options);
+      case "INPUTTEXT":
+      case "INPUT_TEXT":
+        final parameters = jsonNext['parameters'] as Map<String, dynamic>?;
+        final typeStr = parameters?['type'] as String? ?? 'ALPHANUMERIC';
+        final sizeStr = parameters?['size'] as String?;
+        final hint = parameters?['hint'] as String?;
+        return GameTalkResultInputText(
+          type: GameTalkInputTextType.fromString(typeStr),
+          size: sizeStr != null ? int.tryParse(sizeStr) : null,
+          hint: hint,
+        );
+        default:
+          return GameTalkResultEmpty();
+    }
   }
+
+
 }

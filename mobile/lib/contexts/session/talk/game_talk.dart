@@ -3,12 +3,14 @@
 import 'package:flutter/material.dart';
 
 class GameTalk {
+
+
   final String id;
-  final String value;
+  final String text;
   final GameTalkCharacter character;
-  final GameTalkResult result;
-  GameTalk({required this.id, required this.value,
-    required this.character, required this.result});
+  final GameTalkNext next;
+  GameTalk({required this.id, required this.text,
+    required this.character, required this.next});
 }
 
 class GameTalkCharacter {
@@ -18,20 +20,34 @@ class GameTalkCharacter {
 }
 
 
-sealed class GameTalkResult {}
+sealed class GameTalkNext {}
 
-class GameTalkResultSimple extends GameTalkResult {
+class GameTalkResultEmpty extends GameTalkNext {
 
 }
 
-class GameTalkResultContinue extends GameTalkResult {
+class GameTalkResultContinue extends GameTalkNext {
   final String nextId;
   GameTalkResultContinue({required this.nextId});
 }
 
-class GameTalkResultMultiple extends GameTalkResult {
+class GameTalkResultMultiple extends GameTalkNext {
   final List<GameTalkResultOption> options;
   GameTalkResultMultiple({required this.options});
+}
+
+class GameTalkResultInputText extends GameTalkNext {
+  final GameTalkInputTextType type;
+  final int? size;
+  final String? hint;
+  GameTalkResultInputText({required this.type, this.size, this.hint});
+}
+
+enum GameTalkInputTextType {
+  NUMERIC, ALPHANUMERIC;
+  static GameTalkInputTextType fromString(String str) {
+    return GameTalkInputTextType.values.singleWhere((each) => each.name == str);
+  }
 }
 
 class GameTalkResultOption {

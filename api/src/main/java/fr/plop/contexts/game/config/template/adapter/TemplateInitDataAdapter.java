@@ -82,7 +82,6 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         consequenceRepository.deleteAll();
         triggerRepository.deleteAll();
         recurrenceRepository.deleteAll();
-        conditionAdapter.deleteAll();
 
         talkAdapter.deleteAll();
 
@@ -96,6 +95,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         imageObjectRepository.deleteAll();
         imageGenericRepository.deleteAll();
+
+        conditionAdapter.deleteAll();
 
         i18nRepository.deleteAll();
     }
@@ -174,8 +175,11 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
         possibility.consequences().forEach(consequence -> {
             ScenarioPossibilityConsequenceAbstractEntity consequenceEntity = ScenarioPossibilityConsequenceAbstractEntity.fromModel(consequence);
-            if (consequence instanceof Consequence.DisplayMessage message) {
+            if (consequence instanceof Consequence.DisplayAlert message) {
                 createI18n(message.value());
+            }
+            if (consequence instanceof Consequence.DisplayConfirm confirm) {
+                createI18n(confirm.message());
             }
             possibilityEntity.getConsequences().add(consequenceRepository.save(consequenceEntity));
         });

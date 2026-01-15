@@ -42,7 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("GameSessionMapController Integration Tests")
 public class GameSessionMapControllerIntegrationTest {
 
-    public static final String TEMPLATE_CODE = "TEST_MAPS";
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -55,6 +54,8 @@ public class GameSessionMapControllerIntegrationTest {
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
 
+
+    private final Template.Id templateId = new Template.Id();
     private final ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step(), new ScenarioConfig.Step()));
     private final Rectangle rectangle = new Rectangle(Point.from(0.0, 0.0), Point.from(20.0, 20.0));
     private final BoardConfig board = new BoardConfig(List.of(new BoardSpace("space", Priority.LOW, List.of(rectangle))));
@@ -124,7 +125,7 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
+        GameSessionController.GameSessionActivedResponseDTO connectionSession = createGameSession(connection.token());
 
         assertThat(getMaps(connectionSession.gameToken(), connectionSession.id())).hasSize(0);
 
@@ -152,7 +153,7 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
+        GameSessionController.GameSessionActivedResponseDTO connectionSession = createGameSession(connection.token());
 
         move(connectionSession.gameToken(), connectionSession.id());
 
@@ -196,7 +197,7 @@ public class GameSessionMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
+        GameSessionController.GameSessionActivedResponseDTO connectionSession = createGameSession(connection.token());
 
         move(connectionSession.gameToken(), connectionSession.id());
 
@@ -221,32 +222,32 @@ public class GameSessionMapControllerIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionCreateResponseDTO createGameSession(String token) throws URISyntaxException {
+    private GameSessionController.GameSessionActivedResponseDTO createGameSession(String token) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(TEMPLATE_CODE);
+        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(templateId.value());
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionCreateResponseDTO> result = restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionCreateResponseDTO.class);
+        ResponseEntity<GameSessionController.GameSessionActivedResponseDTO> result = restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionActivedResponseDTO.class);
         return result.getBody();
     }
 
     private void startGameSession(String token, String sessionId) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort +  "/sessions/" + sessionId + "/start";
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(TEMPLATE_CODE);
+        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(templateId.value());
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionResponseDTO.class);
+        restTemplate.exchange(new URI(baseUrl), HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionStoppedResponseDTO.class);
     }
 
     private void createTemplateWithMaps(MapConfig map) {
         Template template = Template.builder()
-                .code(new Template.Code(TEMPLATE_CODE))
+                .id(templateId)
                 .label("Test Maps Game")
                 .scenario(scenario)
                 .board(board)
@@ -257,7 +258,7 @@ public class GameSessionMapControllerIntegrationTest {
 
     private List<GameSessionMapController.ResponseDTO> startSessionAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
-        GameSessionController.GameSessionCreateResponseDTO connectionSession = createGameSession(connection.token());
+        GameSessionController.GameSessionActivedResponseDTO connectionSession = createGameSession(connection.token());
         startGameSession(connectionSession.gameToken(), connectionSession.id());
         return getMaps(connectionSession.gameToken(), connectionSession.id());
     }

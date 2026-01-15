@@ -115,7 +115,7 @@ class _GameGoalTabViewState extends State<GameGoalTabView> implements OnGoalList
             color: target.done ? Colors.green : Colors.grey,
           ),
           title: Text(
-            target.label + (target.optional ? ' (Optionnel)' : ''),
+            target.label + (target.optional ? ' (${'scenario.goal.optional'.tr()})' : ''),
             style: TextStyle(
               decoration: target.done ? TextDecoration.lineThrough : TextDecoration.none,
             ),

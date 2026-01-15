@@ -2,10 +2,13 @@ package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.generic.enumerate.EqualsOrDifferent;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.Comparator;
@@ -20,7 +23,9 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
         PossibilityTrigger.TalkOptionSelect,
         PossibilityTrigger.TalkEnd,
-        PossibilityTrigger.ImageObjectClick {
+        PossibilityTrigger.TalkInputText,
+        PossibilityTrigger.ImageObjectClick,
+        PossibilityTrigger.ConfirmAnswer {
 
 
     record Id(String value) {
@@ -99,11 +104,27 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record TalkOptionSelect(Id id, TalkItem.Id talkId, TalkItem.Options.Option.Id optionId) implements PossibilityTrigger {
+    record TalkOptionSelect(Id id, TalkItem.Id talkId, TalkItemNext.Options.Option.Id optionId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
-            if (event instanceof GameEvent.Talk(TalkItem.Id eventTalkId, Optional<TalkItem.Options.Option.Id> eventOptOptionId)) {
+            if (event instanceof GameEvent.Talk(TalkItem.Id eventTalkId, Optional<TalkItemNext.Options.Option.Id> eventOptOptionId)) {
                 return eventTalkId.equals(talkId) && eventOptOptionId.map(optionIdEvent -> optionIdEvent.equals(optionId)).orElse(false);
+            }
+            return false;
+        }
+    }
+
+    record TalkInputText(Id id, TalkItem.Id talkId, String value, EqualsOrDifferent matchType) implements PossibilityTrigger {
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            if (event instanceof GameEvent.TalkInputText(TalkItem.Id eventTalkId, String eventValue)) {
+                if (!eventTalkId.equals(talkId)) {
+                    return false;
+                }
+                return switch (matchType) {
+                    case EQUALS -> eventValue.equals(value);
+                    case DIFFERENT -> !eventValue.equals(value);
+                };
             }
             return false;
         }
@@ -113,6 +134,16 @@ public sealed interface PossibilityTrigger permits
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
             return event instanceof GameEvent.ImageObjectClick(ImageObject.Id objectIdEvent) && objectId.equals(objectIdEvent);
+        }
+    }
+
+    record ConfirmAnswer(Id id, Consequence.Id confirmId, boolean expectedAnswer) implements PossibilityTrigger {
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> actions) {
+            if (event instanceof GameEvent.ConfirmAnswer(Consequence.Id eventConfirmId, boolean eventAnswer)) {
+                return confirmId.equals(eventConfirmId) && expectedAnswer == eventAnswer;
+            }
+            return false;
         }
     }
 

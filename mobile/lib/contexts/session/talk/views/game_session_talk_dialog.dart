@@ -14,6 +14,7 @@ class GameSessionTalkDialog {
   final GameSessionTalkRepository repository = GameSessionTalkRepository();
   final Dialog dialog = Dialog();
   final ValueNotifier<GameTalk?> notifier = ValueNotifier(null);
+  final TextEditingController inputTextController = TextEditingController();
 
   void start({required String talkId}) {
     final BuildContext? context = AppRouter.navigatorKey.currentContext;
@@ -62,7 +63,7 @@ class GameSessionTalkDialog {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    talk.value,
+                    talk.text,
                     style: TextStyle(fontSize: 16, height: 1.5),
                   ),
                 ),
@@ -70,7 +71,7 @@ class GameSessionTalkDialog {
             ],
           ),
           SizedBox(height: 24),
-          ...buttons(talk, context),
+          ...nexWidgets(talkId: talk.id, next: talk.next, context: context),
         ],
       ),
     );
@@ -82,15 +83,19 @@ class GameSessionTalkDialog {
         child: image.toWidget(fit: BoxFit.cover));
   }
 
-  List<Widget> buttons(GameTalk talk, BuildContext context) {
-    List<Widget> buttonChildren = [];
-    switch(talk.result) {
-      case GameTalkResultSimple():
-        buttonChildren.add(TextButton(child: Text('default.close'.tr()),
+  List<Widget> nexWidgets({
+    required String talkId,
+    required GameTalkNext next,
+    required BuildContext context
+  }) {
+    List<Widget> widgets = [];
+    switch(next) {
+      case GameTalkResultEmpty():
+        widgets.add(TextButton(child: Text('default.close'.tr()),
           onPressed: () => Navigator.of(context).pop()));
         break;
       case GameTalkResultContinue(:final nextId):
-        buttonChildren.add(TextButton(child: Text('talk.next'.tr()),
+        widgets.add(TextButton(child: Text('talk.next'.tr()),
             onPressed: () {
               notifier.value = null;
               repository.findById(nextId).then((talk) => notifier.value = talk);
@@ -99,7 +104,7 @@ class GameSessionTalkDialog {
         break;
       case GameTalkResultMultiple(:final options):
         for (var option in options) {
-          buttonChildren.add(
+          widgets.add(
             TextButton(style: TextButton.styleFrom(
               foregroundColor: GameCurrent.style.color.primary,
               padding: EdgeInsets.symmetric(vertical: 12),
@@ -110,7 +115,7 @@ class GameSessionTalkDialog {
               ),
               onPressed: () {
                 notifier.value = null;
-                repository.selectOption(talkId: talk.id, optionId: option.id)
+                repository.selectOption(talkId: talkId, optionId: option.id)
                     .then((nextTalk) {
                   if(nextTalk != null) {
                     notifier.value = nextTalk;
@@ -121,11 +126,48 @@ class GameSessionTalkDialog {
               }
             )
           );
-          buttonChildren.add(SizedBox(height: 8));
+          widgets.add(SizedBox(height: 8));
         }
         break;
+      case GameTalkResultInputText(:final type, :final size, :final hint):
+        inputTextController.clear();
+        widgets.add(
+          TextField(
+            controller: inputTextController,
+            keyboardType: type == GameTalkInputTextType.NUMERIC
+                ? TextInputType.number
+                : TextInputType.text,
+            maxLength: size,
+            decoration: InputDecoration(
+              hintText: hint,
+              border: OutlineInputBorder(),
+              counterText: size != null ? '' : null,
+            ),
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, letterSpacing: 4),
+          ),
+        );
+        widgets.add(SizedBox(height: 16));
+        widgets.add(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: GameCurrent.style.color.primary,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            onPressed: () {
+              final value = inputTextController.text;
+              if (value.isNotEmpty) {
+                repository.submitInputText(talkId: talkId, value: value);
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('talk.submit'.tr(), style: TextStyle(fontSize: 16)),
+          ),
+        );
+        break;
     }
-    return buttonChildren;
+    return widgets;
   }
 
 

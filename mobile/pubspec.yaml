@@ -55,6 +55,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/default/
     - assets/translations/
     - assets/game/
     - assets/game/lyon9/

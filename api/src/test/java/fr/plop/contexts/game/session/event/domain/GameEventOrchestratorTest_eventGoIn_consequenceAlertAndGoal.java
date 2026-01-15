@@ -18,7 +18,7 @@ import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
 import fr.plop.contexts.game.session.core.domain.usecase.GameMoveUseCase;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
@@ -39,7 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
-    private static final String CODE = "eventGoIn_consequenceAlertAndGoal";
 
     @Autowired
     private GameEventOrchestrator eventOrchestrator;
@@ -54,7 +53,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     private ConnectAuthUserCreateUseCase createAuthUseCase;
 
     @Autowired
-    private GameSessionCreateUseCase createUseCase;
+    private GameSessionUseCase createUseCase;
 
     @Autowired
     private ConnectAuthGameSessionUseCase authGameSessionUseCase;
@@ -68,7 +67,10 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     @Autowired
     private GameSessionSituationGetPort situationPort;
 
+    private final Template.Id templateId = new Template.Id();
+
     private final ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
+
 
     @BeforeEach
     void setUp() {
@@ -82,7 +84,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
         BoardSpace space = new BoardSpace(spaceId, List.of(new Rectangle(Point.from(0, 0), Point.from(10, 10))));
 
         I18n i18nMessage = new I18n(Map.of(Language.FR, "Vous êtes piégé"));
-        Consequence.DisplayMessage message = new Consequence.DisplayMessage(new Consequence.Id(), i18nMessage);
+        Consequence.DisplayAlert message = new Consequence.DisplayAlert(new Consequence.Id(), i18nMessage);
         Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), stepId, ScenarioSessionState.FAILURE);
         List<Consequence> consequences = List.of(message, goal);
 
@@ -92,7 +94,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
         List<ScenarioConfig.Step> steps = List.of(step);
 
         Template template = Template.builder()
-                .code(new Template.Code(CODE))
+                .id(templateId)
                 .scenario(new ScenarioConfig(steps))
                 .board(new BoardConfig(List.of(space)))
                 .build();
@@ -127,7 +129,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
     private GameSessionContext start() throws GameException, ConnectException {
         final ConnectAuthUser auth = createAuthUseCase.byDeviceId("anyDeviceId");
-        final GameSessionContext context = createUseCase.apply(new Template.Code(CODE), auth.userId());
+        final GameSessionContext context = createUseCase.create(templateId, auth.userId());
         final ConnectAuthGameSession authGameSession = authGameSessionUseCase.create(auth, context);
         startUseCase.apply(authGameSession);
         return context;

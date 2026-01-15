@@ -13,7 +13,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.session.core.domain.GameException;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionUseCase;
 import fr.plop.contexts.game.session.core.domain.usecase.GameSessionStartUseCase;
 import fr.plop.contexts.game.session.scenario.adapter.GameSessionScenarioGoalAdapter;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
@@ -34,7 +34,7 @@ import static org.awaitility.Awaitility.await;
 public class GameSessionTimerAdapterIntegrationTest {
 
     @Autowired
-    private GameSessionCreateUseCase createGameUseCase;
+    private GameSessionUseCase createGameUseCase;
 
     @Autowired
     private GameSessionStartUseCase startUseCase;
@@ -54,14 +54,11 @@ public class GameSessionTimerAdapterIntegrationTest {
     @Test
     public void fireTimeClickEvent() throws GameException, ConnectException {
 
-        Template.Code code = new Template.Code("absolute-time");
-
-        Template template = template(code);
-
+        Template template = template();
         templateInitUseCase.create(template);
 
         ConnectAuthUser authUser = createAuthUseCase.byDeviceId("anyDeviceId");
-        GameSessionContext context = createGameUseCase.apply(code, authUser.userId());
+        GameSessionContext context = createGameUseCase.create(template.id(), authUser.userId());
         ConnectAuthGameSession authSession = authGameSessionUseCase.create(authUser, context);
 
         ScenarioConfig.Step.Id step0 = template.scenario().steps().getFirst().id();
@@ -90,7 +87,7 @@ public class GameSessionTimerAdapterIntegrationTest {
     }
 
 
-    private Template template(Template.Code code) {
+    private Template template() {
         ScenarioConfig.Step.Id stepId0 = new ScenarioConfig.Step.Id();
         ScenarioConfig.Step.Id stepId1 = new ScenarioConfig.Step.Id();
 
@@ -106,7 +103,7 @@ public class GameSessionTimerAdapterIntegrationTest {
         ScenarioConfig.Step step1 = new ScenarioConfig.Step(stepId1, List.of());
         ScenarioConfig scenario = new ScenarioConfig(List.of(step0, step1));
 
-        return Template.builder().code(code).scenario(scenario).build();
+        return Template.builder().code(new Template.Code("absolute-time")).scenario(scenario).build();
     }
 
 

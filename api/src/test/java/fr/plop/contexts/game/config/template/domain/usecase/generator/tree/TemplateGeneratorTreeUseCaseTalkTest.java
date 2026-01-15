@@ -3,10 +3,11 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator.tree;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.domain.TalkItemResolved;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ public class TemplateGeneratorTreeUseCaseTalkTest {
     private final TemplateGeneratorTreeUseCase generator = new TemplateGeneratorTreeUseCase();
 
     private static void text(TalkItem talkItem, Map<Language, String> expected) {
-        TalkItemResolved resolve = talkItem.resolve(new GameSessionSituation());
+        I18n resolve = talkItem.resolve(new GameSessionSituation());
         for(Language lg : expected.keySet()) {
             assertThat(resolve.value(lg)).isEqualTo(expected.get(lg));
         }
@@ -58,7 +59,7 @@ TEST_DISCUSSION1
                 .hasSize(1)
                         .anySatisfy(talkItem -> {
                             assertThat(talkItem.id()).isNotNull();
-                            assertThat(talkItem).isInstanceOf(TalkItem.Simple.class);
+                            assertThat(talkItem.isSimple()).isTrue();
                             text(talkItem, Map.of(Language.FR, "Bonjour", Language.EN, "Hello"));
                             assertThat(talkItem.character().name()).isEqualTo("Bob");
                             assertThat(talkItem.characterReference().image().value()).isEqualTo("bob-happy.jpg");
@@ -123,17 +124,16 @@ TEST_DISCUSSION2
 
         TalkItem talkItem = template.talk().items().getFirst();
         assertThat(talkItem.id()).isNotNull();
-        assertThat(talkItem).isInstanceOf(TalkItem.Continue.class);
+        assertThat(talkItem.isContinue()).isTrue();
         text(talkItem, Map.of(Language.FR, "Pouet", Language.EN, "Pouet en anglais"));
         assertThat(talkItem.character().name()).isEqualTo("Alice");
         assertThat(talkItem.characterReference().image().value()).isEqualTo("www.toto.yo/alicesad.png");
         assertThat(talkItem.characterReference().image().type()).isEqualTo(Image.Type.WEB);
-        TalkItem.Continue continueItem = (TalkItem.Continue) talkItem;
-        assertThat(continueItem.nextId()).isEqualTo(template.talk().items().getLast().id());
+        assertThat(talkItem.nextId()).isEqualTo(template.talk().items().getLast().id());
 
         talkItem = template.talk().items().getLast();
         assertThat(talkItem.id()).isNotNull();
-        assertThat(talkItem).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem.isSimple()).isTrue();
         text(talkItem, Map.of(Language.FR, "La suite", Language.EN, "The next"));
         assertThat(talkItem.character().name()).isEqualTo("Alice");
         assertThat(talkItem.characterReference().image().value()).isEqualTo("alicehappy.jpg");
@@ -216,19 +216,18 @@ TEST_DISCUSSION3
 
         // First item: Options
         assertThat(firstTalkItem.id()).isNotNull();
-        assertThat(firstTalkItem).isInstanceOf(TalkItem.Options.class);
+        assertThat(firstTalkItem.isOptions()).isTrue();
         text(firstTalkItem, Map.of(Language.FR, "Ca va ?", Language.EN, "Wahup ?"));
         assertThat(firstTalkItem.character().name()).isEqualTo("Alice");
         assertThat(firstTalkItem.characterReference().image().value()).isEqualTo("www.toto.yo/alicesad.png");
         assertThat(firstTalkItem.characterReference().image().type()).isEqualTo(Image.Type.WEB);
-        TalkItem.Options optionsItem = (TalkItem.Options) firstTalkItem;
 
-        List<TalkItem.Options.Option> options = optionsItem.options().toList();
+        List<TalkItemNext.Options.Option> options = firstTalkItem.options().options().toList();
         assertThat(options).hasSize(3);
 
-        TalkItem.Options.Option optionYes = options.getFirst();
-        TalkItem.Options.Option optionNo = options.get(1);
-        TalkItem.Options.Option optionMayBe = options.get(2);
+        TalkItemNext.Options.Option optionYes = options.getFirst();
+        TalkItemNext.Options.Option optionNo = options.get(1);
+        TalkItemNext.Options.Option optionMayBe = options.get(2);
 
         assertThat(optionYes.id()).isNotNull();
         assertThat(optionYes.value().value(Language.FR)).isEqualTo("Oui");
@@ -248,7 +247,7 @@ TEST_DISCUSSION3
 
         // Last item: Simple
         assertThat(lastTalkItem.id()).isNotNull();
-        assertThat(lastTalkItem).isInstanceOf(TalkItem.Simple.class);
+        assertThat(lastTalkItem.isSimple()).isTrue();
         text(lastTalkItem, Map.of(Language.FR, "Content de le savoir", Language.EN, "Happy to know"));
         assertThat(lastTalkItem.character().name()).isEqualTo("Alice");
         assertThat(lastTalkItem.characterReference().image().value()).isEqualTo("alicehappy.jpg");
@@ -280,8 +279,8 @@ TEST_DISCUSSION3
                     assertThat(possibility.consequences())
                             .hasSize(1)
                             .anySatisfy(consequence -> {
-                                assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                Consequence.DisplayMessage displayTalk = (Consequence.DisplayMessage) consequence;
+                                assertThat(consequence).isInstanceOf(Consequence.DisplayAlert.class);
+                                Consequence.DisplayAlert displayTalk = (Consequence.DisplayAlert) consequence;
                                 assertThat(displayTalk.value().value(Language.FR)).isEqualTo("Tu vas bien !!");
                                 assertThat(displayTalk.value().value(Language.EN)).isEqualTo("You're fine !!");
                             });
@@ -360,19 +359,18 @@ TEST_DISCUSSION3
 
         // First item: Options
         assertThat(talkItem0.id()).isNotNull();
-        assertThat(talkItem0).isInstanceOf(TalkItem.Options.class);
+        assertThat(talkItem0.isOptions()).isTrue();
         text(talkItem0, Map.of(Language.FR, "Tu veux jouer ?", Language.EN, "Do you want to play?"));
         assertThat(talkItem0.character().name()).isEqualTo("Bob");
         assertThat(talkItem0.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
         assertThat(talkItem0.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
-        TalkItem.Options optionsItem = (TalkItem.Options) talkItem0;
 
-        List<TalkItem.Options.Option> options = optionsItem.options().toList();
+        List<TalkItemNext.Options.Option> options = talkItem0.options().options().toList();
         assertThat(options).hasSize(3);
 
-        TalkItem.Options.Option optionYes = options.getFirst();
-        TalkItem.Options.Option optionNo = options.get(1);
-        TalkItem.Options.Option optionMayBe = options.get(2);
+        TalkItemNext.Options.Option optionYes = options.getFirst();
+        TalkItemNext.Options.Option optionNo = options.get(1);
+        TalkItemNext.Options.Option optionMayBe = options.get(2);
 
         assertThat(optionYes.id()).isNotNull();
         assertThat(optionYes.value().value(Language.FR)).isEqualTo("Oui");
@@ -393,30 +391,29 @@ TEST_DISCUSSION3
         assertThat(optionMayBe.nextId()).isEqualTo(talkItem3.id());
 
         assertThat(talkItem1.id()).isNotNull();
-        assertThat(talkItem1).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem1.isSimple()).isTrue();
         text(talkItem1, Map.of(Language.FR, "Excellent, continuons !", Language.EN, "Great, let's continue!"));
         assertThat(talkItem1.character().name()).isEqualTo("Bob");
         assertThat(talkItem1.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
         assertThat(talkItem1.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         assertThat(talkItem2.id()).isNotNull();
-        assertThat(talkItem2).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem2.isSimple()).isTrue();
         text(talkItem2, Map.of(Language.FR, "Dommage, fin de test.", Language.EN, "Too bad, end of test."));
         assertThat(talkItem2.character().name()).isEqualTo("Bob");
         assertThat(talkItem2.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
         assertThat(talkItem2.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
 
         assertThat(talkItem3.id()).isNotNull();
-        assertThat(talkItem3).isInstanceOf(TalkItem.Continue.class);
+        assertThat(talkItem3.isContinue()).isTrue();
         text(talkItem3, Map.of(Language.FR, "Alors, on hésite ?", Language.EN, "Alors, on hésite ? EN"));
         assertThat(talkItem3.character().name()).isEqualTo("Bob");
         assertThat(talkItem3.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");
         assertThat(talkItem3.characterReference().image().type()).isEqualTo(Image.Type.ASSET);
-        TalkItem.Continue continueItem = (TalkItem.Continue) talkItem3;
-        assertThat(continueItem.nextId()).isEqualTo(talkItem4.id());
+        assertThat(talkItem3.nextId()).isEqualTo(talkItem4.id());
 
         assertThat(talkItem4.id()).isNotNull();
-        assertThat(talkItem4).isInstanceOf(TalkItem.Simple.class);
+        assertThat(talkItem4.isSimple()).isTrue();
         text(talkItem4, Map.of(Language.FR, "fin de la discution.", Language.EN, "fin de la discution. EN"));
         assertThat(talkItem4.character().name()).isEqualTo("Bob");
         assertThat(talkItem4.characterReference().image().value()).isEqualTo("/pouet/bobdefault.jpg");

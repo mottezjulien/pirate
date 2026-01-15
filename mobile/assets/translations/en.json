@@ -1,23 +1,63 @@
 {
+  "app": {
+    "title": "Locked Out"
+  },
   "default": {
-    "close": "Close"
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
   },
   "config": {
     "preparing": {
-      "label": "Session de jeux en cours de preparation"
+      "label": "Game session being prepared"
+    },
+    "select": {
+      "title": "Select your game",
+      "code_tab": "Code",
+      "map_tab": "Map",
+      "code_label": "Code",
+      "code_hint": "Enter the game code",
+      "validate": "Validate",
+      "error": "Error",
+      "error_empty_code": "Please enter a code",
+      "template_details": {
+        "description": "Description",
+        "departure": "Starting location",
+        "level": "Level",
+        "cancel": "Cancel",
+        "select": "Select"
+      }
     }
   },
   "scenario": {
     "goal": {
       "title": "Objectives",
-      "finished": "Finished"
+      "finished": "Finished",
+      "optional": "Optional"
     }
   },
   "talk": {
-    "next": "Next"
+    "next": "Next",
+    "submit": "Submit"
   },
   "help": {
     "label": "Help"
+  },
+  "menu": {
+    "title": "Game Menu",
+    "start": "Start",
+    "continue": "Continue",
+    "configuration": "Configuration",
+    "exit": "Exit"
+  },
+  "navigation": {
+    "objectives": "Objectives",
+    "maps": "Maps"
+  },
+  "config_editor": {
+    "title": "Config Editor",
+    "coordinates": "Coordinates",
+    "close_hint": "Click anywhere to close"
   },
   "onboarding": {
     "language": {

@@ -21,10 +21,11 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
             " LEFT JOIN FETCH template.talk talk" + TalkConfigRepository.FETCH_ALL +
             " LEFT JOIN FETCH template.image image" + ImageConfigRepository.FETCH_ALL;
 
-    String WHERE_TEMPLATE_CODE = " WHERE template.code = :code";
+    String WHERE_TEMPLATE_ID = " WHERE template.id = :id";
 
-    @Query(FROM + FETCH_FULL + WHERE_TEMPLATE_CODE)
-    List<TemplateEntity> fullByCode(@Param("code") String code);
+    @Query(FROM + FETCH_FULL + WHERE_TEMPLATE_ID)
+    List<TemplateEntity> fullById(@Param("id") String id);
+
     @Query(FROM + " WHERE LOWER(REPLACE(template.code, ' ', '')) LIKE LOWER(CONCAT(:pattern, '%'))")
     List<TemplateEntity> findLikeLowerCode(@Param("pattern") String pattern);
 

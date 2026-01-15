@@ -3,7 +3,8 @@ package fr.plop.contexts.game.config.template.adapter;
 import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.domain.TalkValue;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
+import fr.plop.contexts.game.config.talk.domain.TalkItemOut;
 import fr.plop.contexts.game.config.talk.persistence.*;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
@@ -83,21 +84,27 @@ public class TemplateInitDataTalkAdapter {
     }
 
     private void createTalkItem(TalkItem item, TalkConfigEntity config, List<TalkCharacter.Reference> savedCharacterReferences) {
-        I18nEntity value = createI18nFromTalkValue(item.value());
-        TalkItemEntity entity = switch (item) {
-            case TalkItem.Simple ignored -> new TalkItemEntity();
-            case TalkItem.Continue _continue -> {
+        I18nEntity value = createI18nFromTalkOut(item.out());
+        TalkItemEntity entity = switch (item.next()) {
+            case TalkItemNext.Empty ignored -> new TalkItemEntity();
+            case TalkItemNext.Continue cont -> {
                 TalkItemContinueEntity continueEntity = new TalkItemContinueEntity();
-                continueEntity.setNextId(_continue.nextId().value());
+                continueEntity.setNextId(cont.nextId().value());
                 yield continueEntity;
             }
-            case TalkItem.Options model -> {
+            case TalkItemNext.Options opts -> {
                 TalkItemMultipleOptionsEntity optionsEntity = new TalkItemMultipleOptionsEntity();
-                List<TalkItem.Options.Option> options = model.options().toList();
+                List<TalkItemNext.Options.Option> options = opts.options().toList();
                 for (int i = 0; i < options.size(); i++) {
                     optionsEntity.getOptions().add(createTalkOption(options.get(i), i));
                 }
                 yield optionsEntity;
+            }
+            case TalkItemNext.InputText inputText -> {
+                TalkItemInputTextEntity inputTextEntity = new TalkItemInputTextEntity();
+                inputTextEntity.setInputTextType(inputText.type().name());
+                inputText.optSize().ifPresent(inputTextEntity::setInputTextSize);
+                yield inputTextEntity;
             }
         };
         entity.setId(item.id().value());
@@ -115,7 +122,7 @@ public class TemplateInitDataTalkAdapter {
         return entity;
     }
 
-    private TalkOptionEntity createTalkOption(TalkItem.Options.Option talkOption, int index) {
+    private TalkOptionEntity createTalkOption(TalkItemNext.Options.Option talkOption, int index) {
         TalkOptionEntity entity = new TalkOptionEntity();
         entity.setId(talkOption.id().value());
         entity.setValue(createI18n(talkOption.value()));
@@ -131,14 +138,14 @@ public class TemplateInitDataTalkAdapter {
     }
 
     /**
-     * Extracts the I18n from a TalkValue for persistence.
+     * Extracts the I18n from a TalkOut for persistence.
      * For Fixed values, returns the text directly.
      * For Conditional values, returns the default text (conditions are not persisted yet).
      */
-    private I18nEntity createI18nFromTalkValue(TalkValue talkValue) {
-        I18n i18n = switch (talkValue) {
-            case TalkValue.Fixed fixed -> fixed.text();
-            case TalkValue.Conditional conditional -> conditional.defaultText();
+    private I18nEntity createI18nFromTalkOut(TalkItemOut talkItemOut) {
+        I18n i18n = switch (talkItemOut) {
+            case TalkItemOut.Fixed fixed -> fixed.text();
+            case TalkItemOut.Conditional conditional -> conditional.defaultText();
         };
         return createI18n(i18n);
     }

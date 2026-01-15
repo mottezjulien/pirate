@@ -9,6 +9,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
@@ -254,8 +255,8 @@ public class TemplateGeneratorTreeUseCaseTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                            assertThat(((Consequence.DisplayMessage) consequence).value()).satisfies(withoutId(i18n("""
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayAlert.class);
+                                            assertThat(((Consequence.DisplayAlert) consequence).value()).satisfies(withoutId(i18n("""
                                                     C'est la vie
                                                     Cuicui""", "Alarm !!!")));
                                         })
@@ -631,11 +632,14 @@ public class TemplateGeneratorTreeUseCaseTest {
         assertThat(template.talk().items())
                 .hasSize(1)
                 .anySatisfy(talk -> {
-                    assertThat(talk).isInstanceOf(TalkItem.Options.class);
-                    TalkItem.Options talkOptions = (TalkItem.Options) talk;
-                    assertThat(talkOptions.id()).isEqualTo(talkId);
-                    assertThat(talkOptions.value().resolve(new GameSessionSituation()).value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
-                    assertThat(talkOptions.value().resolve(new GameSessionSituation()).value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+                    assertThat(talk.id()).isEqualTo(talkId);
+
+                    I18n resolve = talk.out().resolve(new GameSessionSituation());
+                    assertThat(resolve.value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+                    assertThat(resolve.value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+
+                    TalkItemNext.Options talkOptions = ((TalkItemNext.Options) talk.next());
+
                     assertThat(talkOptions.options()).hasSize(2)
                             .anySatisfy(option -> {
                                 assertThat(option.id()).isNotNull();

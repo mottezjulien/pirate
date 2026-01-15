@@ -31,4 +31,7 @@ public record GameSessionSituation(Board board, Scenario scenario, Time time) {
         }
     }
 
+
+
+
 }

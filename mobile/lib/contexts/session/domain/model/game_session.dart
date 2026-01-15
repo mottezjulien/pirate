@@ -159,6 +159,25 @@ class GameEventListener {
       GameSessionImageDialog imageDialog = GameSessionImageDialog();
       imageDialog.start(imageId: imageId);
     }
+    if(upperCase.contains('SYSTEM:CONFIRM')) {
+      // Format: SYSTEM:CONFIRM:<confirmId>:<message>
+      String payload = message.toString().substring('SYSTEM:CONFIRM:'.length);
+      int separatorIndex = payload.indexOf(':');
+      if (separatorIndex > 0) {
+        String confirmId = payload.substring(0, separatorIndex);
+        String confirmMessage = payload.substring(separatorIndex + 1);
+        _handleConfirm(confirmId, confirmMessage);
+      }
+    }
+  }
+
+  Future<void> _handleConfirm(String confirmId, String message) async {
+    Dialog dialog = Dialog();
+    bool? answer = await dialog.showConfirm(message: message);
+    if (answer != null) {
+      GameSessionRepository repository = GameSessionRepository();
+      await repository.confirmAnswer(confirmId: confirmId, answer: answer);
+    }
   }
 
   void stop() {

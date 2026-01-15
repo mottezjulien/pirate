@@ -10,6 +10,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
@@ -288,8 +289,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(2)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                            assertThat(((Consequence.DisplayMessage) consequence).value()).satisfies(withoutId(i18n("C'est la vie\nCuicui", "Alarm !!!")));
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayAlert.class);
+                                            assertThat(((Consequence.DisplayAlert) consequence).value()).satisfies(withoutId(i18n("C'est la vie\nCuicui", "Alarm !!!")));
                                         })
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
@@ -681,7 +682,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                           {
                             "trigger": { "type": "GoInSpace", "value": "La lune" },
                             "consequences": [
-                              { "type": "Talk", "metadata": { "talkId": "OPTIONS_ABCD" } }
+                              { "type": "Talk", "metadata": { "talkRef": "OPTIONS_ABCD" } }
                             ]
                           }
                         ]
@@ -734,11 +735,13 @@ public class TemplateGeneratorJsonUseCaseTest {
         assertThat(template.talk().items())
                 .hasSize(1)
                 .anySatisfy(talk -> {
-                    assertThat(talk).isInstanceOf(TalkItem.Options.class);
-                    TalkItem.Options talkOptions = (TalkItem.Options) talk;
-                    assertThat(talkOptions.id()).isEqualTo(talkId);
-                    assertThat(talkOptions.value().resolve(new GameSessionSituation()).value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
-                    assertThat(talkOptions.value().resolve(new GameSessionSituation()).value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+                    assertThat(talk.id()).isEqualTo(talkId);
+                    I18n resolve = talk.out().resolve(new GameSessionSituation());
+                    assertThat(resolve.value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
+                    assertThat(resolve.value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
+
+                    TalkItemNext.Options talkOptions = ((TalkItemNext.Options) talk.next());
+
                     assertThat(talkOptions.options()).hasSize(2)
                             .anySatisfy(option -> {
                                 assertThat(option.id()).isNotNull();
@@ -824,6 +827,95 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     private static I18n i18n(String fr, String en) {
         return new I18n(Map.of(Language.FR, fr, Language.EN, en));
+    }
+
+    @Test
+    public void confirmConsequenceAndTrigger() throws JsonProcessingException {
+        Template template = generator.apply("""
+                {
+                  "code": "confirmTest",
+                  "version": "1.0.0",
+                  "label": "Test Confirm",
+                  "scenario": {
+                    "steps": [
+                      {
+                        "ref": "STEP_1",
+                        "label": { "FR": "Etape 1", "EN": "Step 1" },
+                        "targets": [
+                          { "ref": "TARGET_CHEST", "label": { "FR": "Ouvrir le coffre", "EN": "Open the chest" } }
+                        ],
+                        "possibilities": [
+                          {
+                            "trigger": { "type": "StepActive" },
+                            "consequences": [
+                              {
+                                "type": "CONFIRM",
+                                "metadata": {
+                                  "ref": "CONFIRM_CHEST",
+                                  "message": { "FR": "Voulez-vous ouvrir le coffre ?", "EN": "Do you want to open the chest?" }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "trigger": {
+                              "type": "ConfirmAnswer",
+                              "metadata": { "confirmRef": "CONFIRM_CHEST", "answer": "YES" }
+                            },
+                            "consequences": [
+                              { "type": "GoalTarget", "metadata": { "targetId": "TARGET_CHEST", "state": "SUCCESS" } },
+                              { "type": "Alert", "metadata": { "value": { "FR": "Le coffre s'ouvre !", "EN": "The chest opens!" } } }
+                            ]
+                          },
+                          {
+                            "trigger": {
+                              "type": "ConfirmAnswer",
+                              "metadata": { "confirmRef": "CONFIRM_CHEST", "answer": "NO" }
+                            },
+                            "consequences": [
+                              { "type": "Alert", "metadata": { "value": { "FR": "Vous laissez le coffre ferme.", "EN": "You leave the chest closed." } } }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+                """);
+
+        assertThat(template).isNotNull();
+        assertThat(template.code()).isEqualTo(new Template.Code("CONFIRMTEST"));
+
+        List<ScenarioConfig.Step> steps = template.scenario().steps();
+        assertThat(steps).hasSize(1);
+
+        ScenarioConfig.Step step = steps.getFirst();
+        assertThat(step.possibilities()).hasSize(3);
+
+        // First possibility: DisplayConfirm consequence
+        Possibility displayConfirmPossibility = step.possibilities().get(0);
+        assertThat(displayConfirmPossibility.consequences()).hasSize(1);
+        assertThat(displayConfirmPossibility.consequences().getFirst()).isInstanceOf(Consequence.DisplayConfirm.class);
+        Consequence.DisplayConfirm displayConfirm = (Consequence.DisplayConfirm) displayConfirmPossibility.consequences().getFirst();
+        assertThat(displayConfirm.id()).isNotNull();
+        assertThat(displayConfirm.message().value(Language.FR)).isEqualTo("Voulez-vous ouvrir le coffre ?");
+        assertThat(displayConfirm.message().value(Language.EN)).isEqualTo("Do you want to open the chest?");
+
+        // Second possibility: ConfirmAnswer YES trigger
+        Possibility confirmYesPossibility = step.possibilities().get(1);
+        assertThat(confirmYesPossibility.trigger()).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
+        PossibilityTrigger.ConfirmAnswer confirmYesTrigger = (PossibilityTrigger.ConfirmAnswer) confirmYesPossibility.trigger();
+        assertThat(confirmYesTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(confirmYesTrigger.expectedAnswer()).isTrue();
+        assertThat(confirmYesPossibility.consequences()).hasSize(2);
+
+        // Third possibility: ConfirmAnswer NO trigger
+        Possibility confirmNoPossibility = step.possibilities().get(2);
+        assertThat(confirmNoPossibility.trigger()).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
+        PossibilityTrigger.ConfirmAnswer confirmNoTrigger = (PossibilityTrigger.ConfirmAnswer) confirmNoPossibility.trigger();
+        assertThat(confirmNoTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(confirmNoTrigger.expectedAnswer()).isFalse();
+        assertThat(confirmNoPossibility.consequences()).hasSize(1);
     }
 
 }

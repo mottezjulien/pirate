@@ -62,6 +62,10 @@ public record Template(Atom atom, String label, String version, Descriptor descr
         public Atom() {
             this(new Id(), new Code(""));
         }
+
+        public Atom withId(Id id) {
+            return new Atom(id, code);
+        }
         public Atom withCode(Code code) {
             return new Atom(id, code);
         }
@@ -110,6 +114,11 @@ public record Template(Atom atom, String label, String version, Descriptor descr
         private TalkConfig talk = new TalkConfig();
         private ImageConfig image = new ImageConfig();
 
+        public Builder id(Id id) {
+            this.atom = atom.withId(id);
+            return this;
+        }
+
         public Builder code(Code code) {
             this.atom = atom.withCode(code);
             return this;
@@ -122,16 +131,6 @@ public record Template(Atom atom, String label, String version, Descriptor descr
 
         public Builder version(String version) {
             this.version = version;
-            return this;
-        }
-
-        public Builder descriptor(Descriptor descriptor) {
-            this.descriptor = descriptor;
-            return this;
-        }
-
-        public Builder maxDuration(Duration maxDuration) {
-            this.maxDuration = maxDuration;
             return this;
         }
 

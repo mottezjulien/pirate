@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'widgets/game_config_select_map_tab_widget.dart';
 import 'widgets/game_config_select_text_input_code_tab_widget.dart';
 
@@ -11,14 +12,14 @@ class GameConfigSelectView extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('sélectionner votre jeux'),
+          title: Text('config.select.title'.tr()),
         ),
-        body: const Column(
+        body: Column(
           children: [
             TabBar(
               tabs: [
-                Tab(text: 'Code'),
-                Tab(text: 'Carte'),
+                Tab(child: Text('config.select.code_tab'.tr())),
+                Tab(child: Text('config.select.map_tab'.tr())),
               ],
             ),
             Expanded(

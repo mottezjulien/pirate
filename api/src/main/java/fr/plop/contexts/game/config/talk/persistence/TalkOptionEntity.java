@@ -4,6 +4,7 @@ package fr.plop.contexts.game.config.talk.persistence;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
@@ -54,11 +55,11 @@ public class TalkOptionEntity {
         this.nullableCondition = nullableCondition;
     }
 
-    public TalkItem.Options.Option toModel() {
-        TalkItem.Options.Option.Id optionalId = new TalkItem.Options.Option.Id(id);
+    public TalkItemNext.Options.Option toModel() {
+        TalkItemNext.Options.Option.Id optionalId = new TalkItemNext.Options.Option.Id(id);
         I18n i18n = value.toModel();
         Optional<TalkItem.Id> optNextId = Optional.ofNullable(nullableNextId).map(TalkItem.Id::new);
         Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
-        return new TalkItem.Options.Option(optionalId, order, i18n, optNextId, optCondition);
+        return new TalkItemNext.Options.Option(optionalId, order, i18n, optNextId, optCondition);
     }
 }

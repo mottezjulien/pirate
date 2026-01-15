@@ -32,6 +32,7 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
             case ScenarioPossibilityConsequenceGoalEntity goal -> goal.toModel();
             case ScenarioPossibilityConsequenceGoalTargetEntity goalTarget -> goalTarget.toModel();
             case ScenarioPossibilityConsequenceMessageEntity alert -> alert.toModel();
+            case ScenarioPossibilityConsequenceConfirmEntity confirm -> confirm.toModel();
             case ScenarioPossibilityConsequenceTalkEntity options -> options.toModel();
             default -> throw new IllegalStateException("Unexpected value: " + this);
         };
@@ -81,12 +82,20 @@ public abstract class ScenarioPossibilityConsequenceAbstractEntity {
                 entity.setValue(updatedMetadata.value());
                 yield entity;
             }
-            case Consequence.DisplayMessage displayMessage -> {
+            case Consequence.DisplayAlert displayAlert -> {
                 ScenarioPossibilityConsequenceMessageEntity entity = new ScenarioPossibilityConsequenceMessageEntity();
-                entity.setId(displayMessage.id().value());
+                entity.setId(displayAlert.id().value());
                 I18nEntity value = new I18nEntity();
-                value.setId(displayMessage.value().id().value());
+                value.setId(displayAlert.value().id().value());
                 entity.setValue(value);
+                yield entity;
+            }
+            case Consequence.DisplayConfirm displayConfirm -> {
+                ScenarioPossibilityConsequenceConfirmEntity entity = new ScenarioPossibilityConsequenceConfirmEntity();
+                entity.setId(displayConfirm.id().value());
+                I18nEntity message = new I18nEntity();
+                message.setId(displayConfirm.message().id().value());
+                entity.setMessage(message);
                 yield entity;
             }
             case Consequence.DisplayTalk displayTalk -> {

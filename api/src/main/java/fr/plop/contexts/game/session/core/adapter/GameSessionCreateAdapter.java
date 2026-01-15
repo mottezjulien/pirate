@@ -13,7 +13,7 @@ import fr.plop.contexts.game.config.template.persistence.TemplateRepository;
 import fr.plop.contexts.game.session.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.core.domain.usecase.GameSessionCreateUseCase;
+import fr.plop.contexts.game.session.core.domain.usecase.GameSessionUseCase;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionEntity;
@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Component
-public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
+public class GameSessionCreateAdapter implements GameSessionUseCase.Port {
     private final TemplateRepository templateRepository;
     private final GameSessionRepository sessionRepository;
     private final GamePlayerRepository playerRepository;
@@ -53,9 +53,9 @@ public class GameSessionCreateAdapter implements GameSessionCreateUseCase.Port {
     }
 
     @Override
-    public Optional<Template> findTemplateByCode(Template.Code code) {
+    public Optional<Template> findTemplateById(Template.Id templateId) {
         return templateRepository
-                .fullByCode(code.value())
+                .fullById(templateId.value())
                 .stream().findFirst()
                 .map(TemplateEntity::toModel);
     }

@@ -122,7 +122,7 @@ class GameEventOrchestratorInternalTest {
         orchestrator.fire(context, new TestGameEventListeners.TestEventA());
         orchestrator.fire(context, new TestGameEventListeners.TestEventB());
 
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         assertEquals(2, recorder.getRecordedEvents().size());
         assertInstanceOf(TestGameEventListeners.TestEventA.class, recorder.getRecordedEvents().get(0).event());

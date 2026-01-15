@@ -25,6 +25,10 @@ class AppCurrent {
 
   static get gameSessionToken => _instance._gameSessionAuth!.token;
 
+  static String get templateId =>  _instance._templateId!;
+
+  static set templateId(String templateId) => _instance._templateId = templateId;
+
 }
 
 class _Instance {
@@ -34,5 +38,7 @@ class _Instance {
   Auth? _gameSessionAuth;
 
   User? _user;
+
+  String? _templateId;
 
 }

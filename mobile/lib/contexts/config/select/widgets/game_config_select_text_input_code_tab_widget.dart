@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../template/game_config_template.dart';
 import '../../template/template_repository.dart';
+import 'package:mobile/generic/app_current.dart';
+import 'package:mobile/generic/config/router.dart';
 
 class GameConfigSelectTextInputCodeTabWidget extends StatefulWidget {
   const GameConfigSelectTextInputCodeTabWidget({super.key});
@@ -37,15 +41,80 @@ class _GameConfigSelectTextInputCodeTabWidgetState
         _isLoadingNotifier.value = false;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $error')),
+            SnackBar(content: Text('${'config.select.error'.tr()}: $error')),
           );
         }
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez entrer un code')),
+        SnackBar(content: Text('config.select.error_empty_code'.tr())),
       );
     }
+  }
+
+  void _showTemplateDetailsDialog(GameConfigTemplateSimple template) async {
+    final details = await _repository.findById(template.id);
+    if (!mounted) return;
+    
+    final parentContext = context;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(details.label),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'config.select.template_details.description'.tr(),
+                style: Theme.of(dialogContext).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(details.description),
+              const SizedBox(height: 16),
+              Text(
+                'config.select.template_details.departure'.tr(),
+                style: Theme.of(dialogContext).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(details.departure.address),
+              const SizedBox(height: 16),
+              Text(
+                'config.select.template_details.level'.tr(),
+                style: Theme.of(dialogContext).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: List.generate(
+                  5,
+                  (starIndex) => Icon(
+                    starIndex < details.level ? Icons.star : Icons.star_outline,
+                    size: 20,
+                    color: Colors.amber,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('${'config.select.template_details.cancel'.tr()}'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              AppCurrent.templateId = details.id;
+              Navigator.of(dialogContext).pop();
+              parentContext.goNamed(AppRouter.homeName);
+            },
+            child: Text('${'config.select.template_details.select'.tr()}'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -59,17 +128,17 @@ class _GameConfigSelectTextInputCodeTabWidgetState
           TextField(
             controller: _codeController,
             decoration: InputDecoration(
-              labelText: 'Code',
+              labelText: 'config.select.code_label'.tr(),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              hintText: 'Entrez le code du jeu',
+              hintText: 'config.select.code_hint'.tr(),
             ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _onValidate,
-            child: const Text('Valider'),
+            child: Text('config.select.validate'.tr()),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -129,10 +198,7 @@ class _GameConfigSelectTextInputCodeTabWidgetState
           borderRadius: BorderRadius.circular(8),
         ),
         child: GestureDetector(
-          onTap: () async {
-            _isLoadingNotifier.value = false;
-            GameConfigTemplateDetails details = await _repository.findById(template.id);
-          },
+          onTap: () async => _showTemplateDetailsDialog(template),
           child: ListTile(
             title: Text(template.label),
             subtitle: Column(

@@ -62,7 +62,7 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
             }
         }
 
-        public record Item(String ref,  Map<String, String> value, List<Option> options, String next, ItemCharacter character) {
+        public record Item(String ref, Object value, List<Option> options, String next, ItemCharacter character, InputText inputText) {
             public record ItemCharacter(String character, String image) {
 
             }
@@ -70,6 +70,11 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
             public record Option(String ref, Map<String, String> value, String next, Condition condition) {
 
             }
+
+            public record InputText(String type, Integer size) {
+
+            }
+
         }
     }
 
@@ -82,7 +87,7 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
             public record Possibility(Trigger trigger, List<Consequence> consequences, Condition condition, Recurrence recurrence) {
 
-                public record Trigger(String type, String value) {
+                public record Trigger(String type, String value, String talkId, String matchType, Map<String, Object> metadata) {
 
                 }
 

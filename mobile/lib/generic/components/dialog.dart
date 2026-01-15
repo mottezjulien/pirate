@@ -39,4 +39,32 @@ class Dialog {
     return Future.value();
   }
 
+  Future<bool?> showConfirm({required String message}) async {
+    BuildContext? context = AppRouter.navigatorKey.currentContext;
+    if (context == null) {
+      return null;
+    }
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SingleChildScrollView(child: ListBody(children: [Text(message)])),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: GameCurrent.style.color.primary),
+              child: Text('default.no'.tr()),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: GameCurrent.style.color.primary),
+              child: Text('default.yes'.tr()),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }

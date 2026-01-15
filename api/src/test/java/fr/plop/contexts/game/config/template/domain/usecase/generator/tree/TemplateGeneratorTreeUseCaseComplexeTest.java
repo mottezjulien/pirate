@@ -64,10 +64,10 @@ public class TemplateGeneratorTreeUseCaseComplexeTest {
                    assertThat(possibility.consequences())
                        .hasSize(1)
                        .anySatisfy(consequence -> {
-                           assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                           Consequence.DisplayMessage displayMessage = (Consequence.DisplayMessage) consequence;
-                           assertThat(displayMessage.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
-                           assertThat(displayMessage.value().value(Language.EN)).isEqualTo("Welcome to the game !");
+                           assertThat(consequence).isInstanceOf(Consequence.DisplayAlert.class);
+                           Consequence.DisplayAlert displayAlert = (Consequence.DisplayAlert) consequence;
+                           assertThat(displayAlert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
+                           assertThat(displayAlert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
                        });
                });
 
@@ -116,8 +116,8 @@ public class TemplateGeneratorTreeUseCaseComplexeTest {
                                 assertThat(possibility.consequences())
                                         .hasSize(1)
                                         .anySatisfy(consequence -> {
-                                            assertThat(consequence).isInstanceOf(Consequence.DisplayMessage.class);
-                                            Consequence.DisplayMessage alert = (Consequence.DisplayMessage) consequence;
+                                            assertThat(consequence).isInstanceOf(Consequence.DisplayAlert.class);
+                                            Consequence.DisplayAlert alert = (Consequence.DisplayAlert) consequence;
                                             assertThat(alert.value().value(Language.FR)).isEqualTo("Bienvenue dans le jeu !");
                                             assertThat(alert.value().value(Language.EN)).isEqualTo("Welcome to the game !");
                                         });
