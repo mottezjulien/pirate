@@ -12,7 +12,7 @@ import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.generic.enumerate.EqualsOrDifferent;
+
 import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.Test;
 
@@ -466,7 +466,7 @@ public class TemplateGeneratorJsonUseCaseTalkTest {
         PossibilityTrigger.TalkInputText triggerEquals = (PossibilityTrigger.TalkInputText) possibilityEquals.trigger();
         assertThat(triggerEquals.talkId()).isEqualTo(inputTextItem.id());
         assertThat(triggerEquals.value()).isEqualTo("862");
-        assertThat(triggerEquals.matchType()).isEqualTo(EqualsOrDifferent.EQUALS);
+        assertThat(triggerEquals.matchType()).isEqualTo(PossibilityTrigger.TalkInputText.MatchType.EQUALS);
 
         // Second possibility: DIFFERENT trigger
         var possibilityDifferent = possibilities.get(1);
@@ -474,7 +474,7 @@ public class TemplateGeneratorJsonUseCaseTalkTest {
         PossibilityTrigger.TalkInputText triggerDifferent = (PossibilityTrigger.TalkInputText) possibilityDifferent.trigger();
         assertThat(triggerDifferent.talkId()).isEqualTo(inputTextItem.id());
         assertThat(triggerDifferent.value()).isEqualTo("862");
-        assertThat(triggerDifferent.matchType()).isEqualTo(EqualsOrDifferent.DIFFERENT);
+        assertThat(triggerDifferent.matchType()).isEqualTo(PossibilityTrigger.TalkInputText.MatchType.DIFFERENT);
 
         // Test trigger matching
         GameEvent.TalkInputText eventCorrect = new GameEvent.TalkInputText(inputTextItem.id(), "862");
@@ -487,5 +487,136 @@ public class TemplateGeneratorJsonUseCaseTalkTest {
         // DIFFERENT trigger should match wrong value
         assertThat(triggerDifferent.accept(eventCorrect, List.of())).isFalse();
         assertThat(triggerDifferent.accept(eventWrong, List.of())).isTrue();
+    }
+
+    @Test
+    public void inputTextWithOrTrigger() throws JsonProcessingException {
+        Template template = generator.apply("""
+                {
+                  "code": "TEST_OR_TRIGGER",
+                  "scenario": {
+                    "steps": [
+                      {
+                        "ref": "STEP_1",
+                        "label": { "FR": "Mission Sophie", "EN": "Sophie Mission" },
+                        "targets": [
+                          { "ref": "TARGET_ARTIST", "label": { "FR": "Trouver l'artiste", "EN": "Find the artist" } }
+                        ],
+                        "possibilities": [
+                          {
+                            "trigger": { "type": "TALKINPUTTEXT", "talkId": "TALK_SOPHIE_SAISIE", "value": "Golu", "matchType": "ALMOST_EQUALS" },
+                            "consequences": [
+                              { "type": "GoalTarget", "metadata": { "targetId": "TARGET_ARTIST", "state": "success" } }
+                            ]
+                          },
+                          {
+                            "trigger": {
+                              "type": "OR",
+                              "children": [
+                                { "type": "TALKINPUTTEXT", "talkId": "TALK_SOPHIE_SAISIE", "value": "Losof", "matchType": "ALMOST_EQUALS" },
+                                { "type": "TALKINPUTTEXT", "talkId": "TALK_SOPHIE_SAISIE", "value": "Celle", "matchType": "ALMOST_EQUALS" }
+                              ]
+                            },
+                            "consequences": [
+                              { "type": "Talk", "metadata": { "talkRef": "TALK_WRONG_ARTIST" } }
+                            ]
+                          },
+                          {
+                            "trigger": { "type": "TALKINPUTTEXT", "talkId": "TALK_SOPHIE_SAISIE", "value": "Golu", "matchType": "COMPLETELY_DIFFERENT" },
+                            "consequences": [
+                              { "type": "Talk", "metadata": { "talkRef": "TALK_UNKNOWN" } }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "talk": {
+                    "characters": [
+                      {
+                        "ref": "Sophie",
+                        "images": [
+                          { "ref": "default", "value": { "type": "Asset", "value": "sophie.png" } }
+                        ]
+                      }
+                    ],
+                    "items": [
+                      {
+                        "ref": "TALK_SOPHIE_SAISIE",
+                        "value": { "FR": "Quel est le nom du peintre ?", "EN": "What is the painter's name?" },
+                        "character": { "character": "Sophie", "image": "default" },
+                        "inputText": { "type": "ALPHANUMERIC", "size": 20 }
+                      },
+                      {
+                        "ref": "TALK_WRONG_ARTIST",
+                        "value": { "FR": "Oui je connais cet artiste, mais ce n'est pas lui.", "EN": "Yes I know this artist, but it's not him." },
+                        "character": { "character": "Sophie", "image": "default" }
+                      },
+                      {
+                        "ref": "TALK_UNKNOWN",
+                        "value": { "FR": "Je ne connais pas ce nom.", "EN": "I don't know this name." },
+                        "character": { "character": "Sophie", "image": "default" }
+                      }
+                    ]
+                  }
+                }
+                """);
+
+        assertThat(template).isNotNull();
+        assertThat(template.code().value()).isEqualTo("TEST_OR_TRIGGER");
+
+        // Get the input text talk item
+        TalkItem inputTextItem = template.talk().items().stream()
+                .filter(item -> item.next() instanceof TalkItemNext.InputText)
+                .findFirst()
+                .orElseThrow();
+
+        // Verify possibilities
+        var possibilities = template.scenario().steps().getFirst().possibilities();
+        assertThat(possibilities).hasSize(3);
+
+        // First possibility: ALMOST_EQUALS for "Golu" (success)
+        var possibilitySuccess = possibilities.get(0);
+        assertThat(possibilitySuccess.trigger()).isInstanceOf(PossibilityTrigger.TalkInputText.class);
+        PossibilityTrigger.TalkInputText triggerSuccess = (PossibilityTrigger.TalkInputText) possibilitySuccess.trigger();
+        assertThat(triggerSuccess.value()).isEqualTo("Golu");
+        assertThat(triggerSuccess.matchType()).isEqualTo(PossibilityTrigger.TalkInputText.MatchType.ALMOST_EQUALS);
+
+        // Second possibility: OR trigger with two TalkInputText children
+        var possibilityOr = possibilities.get(1);
+        assertThat(possibilityOr.trigger()).isInstanceOf(PossibilityTrigger.Or.class);
+        PossibilityTrigger.Or triggerOr = (PossibilityTrigger.Or) possibilityOr.trigger();
+        assertThat(triggerOr.triggers()).hasSize(2);
+        assertThat(triggerOr.triggers().get(0)).isInstanceOf(PossibilityTrigger.TalkInputText.class);
+        assertThat(triggerOr.triggers().get(1)).isInstanceOf(PossibilityTrigger.TalkInputText.class);
+
+        // Third possibility: COMPLETELY_DIFFERENT
+        var possibilityUnknown = possibilities.get(2);
+        assertThat(possibilityUnknown.trigger()).isInstanceOf(PossibilityTrigger.TalkInputText.class);
+        PossibilityTrigger.TalkInputText triggerUnknown = (PossibilityTrigger.TalkInputText) possibilityUnknown.trigger();
+        assertThat(triggerUnknown.matchType()).isEqualTo(PossibilityTrigger.TalkInputText.MatchType.COMPLETELY_DIFFERENT);
+
+        // Test trigger matching
+        GameEvent.TalkInputText eventGolu = new GameEvent.TalkInputText(inputTextItem.id(), "Golu");
+        GameEvent.TalkInputText eventGolu2 = new GameEvent.TalkInputText(inputTextItem.id(), "golu"); // lowercase
+        GameEvent.TalkInputText eventLosof = new GameEvent.TalkInputText(inputTextItem.id(), "Losof");
+        GameEvent.TalkInputText eventCelle = new GameEvent.TalkInputText(inputTextItem.id(), "Celle");
+        GameEvent.TalkInputText eventUnknown = new GameEvent.TalkInputText(inputTextItem.id(), "ABCD");
+
+        // Success trigger should match "Golu" and "golu" (almost equals)
+        assertThat(triggerSuccess.accept(eventGolu, List.of())).isTrue();
+        assertThat(triggerSuccess.accept(eventGolu2, List.of())).isTrue();
+        assertThat(triggerSuccess.accept(eventLosof, List.of())).isFalse();
+
+        // OR trigger should match "Losof" OR "Celle"
+        assertThat(triggerOr.accept(eventLosof, List.of())).isTrue();
+        assertThat(triggerOr.accept(eventCelle, List.of())).isTrue();
+        assertThat(triggerOr.accept(eventGolu, List.of())).isFalse();
+        assertThat(triggerOr.accept(eventUnknown, List.of())).isFalse();
+
+        // COMPLETELY_DIFFERENT trigger should match "ABCD" but not "Golu" or similar
+        assertThat(triggerUnknown.accept(eventUnknown, List.of())).isTrue();
+        assertThat(triggerUnknown.accept(eventGolu, List.of())).isFalse();
+        assertThat(triggerUnknown.accept(eventGolu2, List.of())).isFalse();
     }
 }

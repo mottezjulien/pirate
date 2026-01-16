@@ -87,7 +87,7 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
             public record Possibility(Trigger trigger, List<Consequence> consequences, Condition condition, Recurrence recurrence) {
 
-                public record Trigger(String type, String value, String talkId, String matchType, Map<String, Object> metadata) {
+                public record Trigger(String type, String value, String talkId, String matchType, Map<String, Object> metadata, List<Trigger> children) {
 
                 }
 

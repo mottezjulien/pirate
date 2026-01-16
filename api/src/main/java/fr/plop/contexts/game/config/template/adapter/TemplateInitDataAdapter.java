@@ -4,6 +4,7 @@ import fr.plop.contexts.game.config.Image.persistence.ImageGenericRepository;
 import fr.plop.contexts.game.config.Image.persistence.ImageObjectRepository;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.scenario.persistence.core.*;
 import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
@@ -167,8 +168,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         ScenarioPossibilityRecurrenceAbstractEntity recurrenceEntity = ScenarioPossibilityRecurrenceAbstractEntity.fromModel(possibility.recurrence());
         possibilityEntity.setRecurrence(recurrenceRepository.save(recurrenceEntity));
 
-        ScenarioPossibilityTriggerEntity triggerEntity = ScenarioPossibilityTriggerEntity.fromModel(possibility.trigger());
-        possibilityEntity.setTrigger(triggerRepository.save(triggerEntity));
+        ScenarioPossibilityTriggerEntity triggerEntity = persistTriggerRecursive(possibility.trigger());
+        possibilityEntity.setTrigger(triggerEntity);
 
         possibility.optCondition()
                 .ifPresent(condition -> possibilityEntity.setNullableCondition(conditionAdapter.create(condition)));
@@ -185,6 +186,30 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         });
 
         possibilityRepository.save(possibilityEntity);
+    }
+
+    private ScenarioPossibilityTriggerEntity persistTriggerRecursive(PossibilityTrigger trigger) {
+        ScenarioPossibilityTriggerEntity triggerEntity = ScenarioPossibilityTriggerEntity.fromModel(trigger);
+        
+        if (trigger instanceof PossibilityTrigger.And and) {
+            triggerEntity.getSubs().clear();
+            and.triggers().forEach(child -> {
+                ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
+                triggerEntity.getSubs().add(childEntity);
+            });
+        } else if (trigger instanceof PossibilityTrigger.Or or) {
+            triggerEntity.getSubs().clear();
+            or.triggers().forEach(child -> {
+                ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
+                triggerEntity.getSubs().add(childEntity);
+            });
+        } else if (trigger instanceof PossibilityTrigger.Not not) {
+            triggerEntity.getSubs().clear();
+            ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(not.trigger());
+            triggerEntity.getSubs().add(childEntity);
+        }
+        
+        return triggerRepository.save(triggerEntity);
     }
 
     private I18nEntity createI18n(I18n i18n) {

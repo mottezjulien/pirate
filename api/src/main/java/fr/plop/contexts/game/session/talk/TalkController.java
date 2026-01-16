@@ -107,15 +107,14 @@ public class TalkController {
         final GameSession.Id sessionId = new GameSession.Id(sessionIdStr);
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
-            final GameSessionContext context = authGameSessionUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+            final GameSessionContext context = authGameSessionUseCase.findContext(sessionId, new ConnectToken(rawSessionToken));
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
 
             if (item.next() instanceof TalkItemNext.InputText) {
                 eventOrchestrator.fire(context, new GameEvent.TalkInputText(item.id(), request.value()));
-                return;
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT);
             }
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Talk item is not an InputText type");
 

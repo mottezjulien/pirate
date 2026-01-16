@@ -6,6 +6,8 @@ public interface ScenarioPossibilityRepository extends JpaRepository<ScenarioPos
     String FETCH_ALL = " LEFT JOIN FETCH possibility.recurrence possibility_recurrence" +
             " LEFT JOIN FETCH possibility.trigger possibility_trigger" +
             " LEFT JOIN FETCH possibility_trigger.keyValues possibility_trigger_values" +
+            " LEFT JOIN FETCH possibility_trigger.subs possibility_trigger_subs" +
+            " LEFT JOIN FETCH possibility_trigger_subs.keyValues possibility_trigger_subs_values" +
             " LEFT JOIN FETCH possibility.nullableCondition possibility_condition" +
             " LEFT JOIN FETCH possibility_condition.keyValues possibility_condition_values" +
             " LEFT JOIN FETCH possibility.consequences possibility_consequence";

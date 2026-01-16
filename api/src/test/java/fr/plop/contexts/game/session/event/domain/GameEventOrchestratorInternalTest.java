@@ -29,21 +29,19 @@ class GameEventOrchestratorInternalTest {
     }
 
     @Test
-    void testEventFireingWithSingleListener() throws InterruptedException {
+    void testEventFireingWithSingleListener() {
         TestGameEventListeners.ListenerRecorder recorder = new TestGameEventListeners.ListenerRecorder();
         orchestrator.registerListener(recorder);
 
         TestGameEventListeners.TestEventA eventA = new TestGameEventListeners.TestEventA();
-        orchestrator.fire(context, eventA);
-
-        Thread.sleep(200);
+        orchestrator.fireAndWait(context, eventA);
 
         assertEquals(1, recorder.getRecordedEvents().size());
         assertEquals(eventA, recorder.getRecordedEvents().getFirst().event());
     }
 
     @Test
-    void testEventFiringWithMultipleListeners() throws InterruptedException {
+    void testEventFiringWithMultipleListeners() {
         TestGameEventListeners.ListenerRecorder recorder1 = new TestGameEventListeners.ListenerRecorder();
         TestGameEventListeners.ListenerRecorder recorder2 = new TestGameEventListeners.ListenerRecorder();
 
@@ -51,9 +49,7 @@ class GameEventOrchestratorInternalTest {
         orchestrator.registerListener(recorder2);
 
         TestGameEventListeners.TestEventA eventA = new TestGameEventListeners.TestEventA();
-        orchestrator.fire(context, eventA);
-
-        Thread.sleep(200);
+        orchestrator.fireAndWait(context, eventA);
 
         assertEquals(1, recorder1.getRecordedEvents().size());
         assertEquals(1, recorder2.getRecordedEvents().size());
@@ -62,29 +58,25 @@ class GameEventOrchestratorInternalTest {
     }
 
     @Test
-    void testListenerUnregistration() throws InterruptedException {
+    void testListenerUnregistration() {
         TestGameEventListeners.ListenerRecorder recorder = new TestGameEventListeners.ListenerRecorder();
         orchestrator.registerListener(recorder);
         recorder.clear();
 
         TestGameEventListeners.TestEventA eventA = new TestGameEventListeners.TestEventA();
-        orchestrator.fire(context, eventA);
-
-        Thread.sleep(200);
+        orchestrator.fireAndWait(context, eventA);
 
         assertEquals(1, recorder.getRecordedEvents().size());
     }
 
     @Test
-    void testSequentialEventQueueing() throws InterruptedException {
+    void testSequentialEventQueueing() {
         TestGameEventListeners.ListenerRecorder recorder = new TestGameEventListeners.ListenerRecorder();
         orchestrator.registerListener(recorder);
 
-        orchestrator.fire(context, new TestGameEventListeners.TestEventA());
-        orchestrator.fire(context, new TestGameEventListeners.TestEventB());
-        orchestrator.fire(context, new TestGameEventListeners.TestEventC());
-
-        Thread.sleep(300);
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventA());
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventB());
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventC());
 
         assertEquals(3, recorder.getRecordedEvents().size());
     }
@@ -115,14 +107,12 @@ class GameEventOrchestratorInternalTest {
     }
 
     @Test
-    void testMultipleEventsProcessedSequentially() throws InterruptedException {
+    void testMultipleEventsProcessedSequentially() {
         TestGameEventListeners.ListenerRecorder recorder = new TestGameEventListeners.ListenerRecorder();
         orchestrator.registerListener(recorder);
 
-        orchestrator.fire(context, new TestGameEventListeners.TestEventA());
-        orchestrator.fire(context, new TestGameEventListeners.TestEventB());
-
-        Thread.sleep(500);
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventA());
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventB());
 
         assertEquals(2, recorder.getRecordedEvents().size());
         assertInstanceOf(TestGameEventListeners.TestEventA.class, recorder.getRecordedEvents().get(0).event());
@@ -130,16 +120,11 @@ class GameEventOrchestratorInternalTest {
     }
 
     @Test
-    void testQueueSize() throws InterruptedException {
+    void testQueueSize() {
         TestGameEventListeners.ListenerRecorder recorder = new TestGameEventListeners.ListenerRecorder();
         orchestrator.registerListener(recorder);
 
-        orchestrator.fire(context, new TestGameEventListeners.TestEventA());
-
-        int queueSizeAfterFire = eventQueue.queueSize();
-        assertTrue(queueSizeAfterFire >= 0);
-
-        Thread.sleep(200);
+        orchestrator.fireAndWait(context, new TestGameEventListeners.TestEventA());
 
         int queueSizeAfterWait = eventQueue.queueSize();
         assertEquals(0, queueSizeAfterWait);

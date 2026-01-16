@@ -27,7 +27,7 @@ import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
 import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
 import fr.plop.generic.enumerate.BeforeOrAfter;
-import fr.plop.generic.enumerate.EqualsOrDifferent;
+
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Address;
@@ -182,7 +182,7 @@ public class TemplateGeneratorJsonUseCase {
             case "TALKINPUTTEXT" -> {
                 TalkItem.Id talkId = globalCache.reference(triggerRoot.talkId(), TalkItem.Id.class, new TalkItem.Id());
                 String matchTypeStr = triggerRoot.matchType() != null ? triggerRoot.matchType().toUpperCase() : "EQUALS";
-                EqualsOrDifferent matchType = EqualsOrDifferent.valueOf(matchTypeStr);
+                PossibilityTrigger.TalkInputText.MatchType matchType = PossibilityTrigger.TalkInputText.MatchType.valueOf(matchTypeStr);
                 yield new PossibilityTrigger.TalkInputText(new PossibilityTrigger.Id(), talkId, triggerRoot.value(), matchType);
             }
             case "TALKOPTIONSELECT" -> {
@@ -203,6 +203,22 @@ public class TemplateGeneratorJsonUseCase {
                 boolean expectedAnswer = "YES".equalsIgnoreCase(answerStr) || "TRUE".equalsIgnoreCase(answerStr);
                 Consequence.Id confirmId = globalCache.reference(confirmRef, Consequence.Id.class, new Consequence.Id());
                 yield new PossibilityTrigger.ConfirmAnswer(new PossibilityTrigger.Id(), confirmId, expectedAnswer);
+            }
+            case "AND" -> {
+                List<PossibilityTrigger> childTriggers = triggerRoot.children().stream()
+                        .map(child -> mapTrigger(child, currentStepId))
+                        .toList();
+                yield new PossibilityTrigger.And(new PossibilityTrigger.Id(), childTriggers);
+            }
+            case "OR" -> {
+                List<PossibilityTrigger> childTriggers = triggerRoot.children().stream()
+                        .map(child -> mapTrigger(child, currentStepId))
+                        .toList();
+                yield new PossibilityTrigger.Or(new PossibilityTrigger.Id(), childTriggers);
+            }
+            case "NOT" -> {
+                PossibilityTrigger childTrigger = mapTrigger(triggerRoot.children().getFirst(), currentStepId);
+                yield new PossibilityTrigger.Not(new PossibilityTrigger.Id(), childTrigger);
             }
             default -> null;
         };

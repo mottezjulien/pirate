@@ -6,4 +6,10 @@ public interface GameEventOrchestrator {
 
     void fire(GameSessionContext context, GameEvent event);
 
+    /**
+     * Fire an event and wait for all listeners to complete processing.
+     * Useful for tests to avoid race conditions.
+     */
+    void fireAndWait(GameSessionContext context, GameEvent event);
+
 }

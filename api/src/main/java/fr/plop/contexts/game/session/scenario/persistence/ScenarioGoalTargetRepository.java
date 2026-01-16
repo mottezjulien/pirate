@@ -19,4 +19,10 @@ public interface ScenarioGoalTargetRepository extends JpaRepository<ScenarioGoal
             " LEFT JOIN FETCH goal.target target" +
             " WHERE goal.player.id = :currentPlayerId")
     List<ScenarioGoalTargetEntity> byPlayerIdFetchTarget(@Param("currentPlayerId") String playerId);
+
+    @Query("FROM ScenarioGoalTargetEntity goal" +
+            " LEFT JOIN FETCH goal.target target" +
+            " WHERE goal.player.id = :playerId" +
+            " AND target.step.id = :stepId")
+    List<ScenarioGoalTargetEntity> byPlayerIdAndStepIdFetchTarget(@Param("playerId") String playerId, @Param("stepId") String stepId);
 }

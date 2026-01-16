@@ -8,7 +8,7 @@ import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.session.core.domain.model.GameAction;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.generic.enumerate.EqualsOrDifferent;
+
 import fr.plop.generic.tools.StringTools;
 
 import java.util.Comparator;
@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Optional;
 
 public sealed interface PossibilityTrigger permits
+        PossibilityTrigger.And,
+        PossibilityTrigger.Or,
+        PossibilityTrigger.Not,
         PossibilityTrigger.SpaceGoIn,
         PossibilityTrigger.SpaceGoOut,
         PossibilityTrigger.StepActive,
@@ -38,6 +41,41 @@ public sealed interface PossibilityTrigger permits
 
     default boolean accept(GameEvent event, List<GameAction> previousUserActions) {
         return false;
+    }
+
+    record And(Id id, List<PossibilityTrigger> triggers) implements PossibilityTrigger {
+        public And(List<PossibilityTrigger> triggers) {
+            this(new Id(), triggers);
+        }
+
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            return triggers.stream()
+                    .allMatch(t -> t.accept(event, previousUserActions));
+        }
+    }
+
+    record Or(Id id, List<PossibilityTrigger> triggers) implements PossibilityTrigger {
+        public Or(List<PossibilityTrigger> triggers) {
+            this(new Id(), triggers);
+        }
+
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            return triggers.stream()
+                    .anyMatch(t -> t.accept(event, previousUserActions));
+        }
+    }
+
+    record Not(Id id, PossibilityTrigger trigger) implements PossibilityTrigger {
+        public Not(PossibilityTrigger trigger) {
+            this(new Id(), trigger);
+        }
+
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
+            return !trigger.accept(event, previousUserActions);
+        }
     }
 
     record SpaceGoIn(Id id, BoardSpace.Id spaceId) implements PossibilityTrigger {
@@ -114,7 +152,12 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record TalkInputText(Id id, TalkItem.Id talkId, String value, EqualsOrDifferent matchType) implements PossibilityTrigger {
+    record TalkInputText(Id id, TalkItem.Id talkId, String value, MatchType matchType) implements PossibilityTrigger {
+
+        public enum MatchType {
+            EQUALS, DIFFERENT, ALMOST_EQUALS, COMPLETELY_DIFFERENT,
+        }
+        
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
             if (event instanceof GameEvent.TalkInputText(TalkItem.Id eventTalkId, String eventValue)) {
@@ -124,6 +167,8 @@ public sealed interface PossibilityTrigger permits
                 return switch (matchType) {
                     case EQUALS -> eventValue.equals(value);
                     case DIFFERENT -> !eventValue.equals(value);
+                    case ALMOST_EQUALS -> StringTools.almostEquals(eventValue, value);
+                    case COMPLETELY_DIFFERENT -> !StringTools.almostEquals(eventValue, value);
                 };
             }
             return false;

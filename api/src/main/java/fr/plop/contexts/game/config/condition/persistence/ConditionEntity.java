@@ -51,7 +51,7 @@ public class ConditionEntity {
     @JoinTable(name = "TEST2_RELATION_CONDITION_SUB",
             joinColumns = @JoinColumn(name = "condition_id"),
             inverseJoinColumns = @JoinColumn(name = "sub_condition_id"))
-    @Fetch(value = FetchMode.JOIN) //TODO ??
+    //@Fetch(value = FetchMode.JOIN) //TODO ??
     private Set<ConditionEntity> subs = new HashSet<>();
 
     public String getId() { return id; }

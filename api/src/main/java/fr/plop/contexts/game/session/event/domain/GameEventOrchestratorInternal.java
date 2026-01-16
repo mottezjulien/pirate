@@ -28,4 +28,14 @@ public class GameEventOrchestratorInternal implements GameEventOrchestrator {
                 .forEach(listener -> listener.listen(context, event));
         eventQueue.enqueue(() -> CompletableFuture.runAsync(runnable, executorService));
     }
+
+    @Override
+    public void fireAndWait(GameSessionContext context, GameEvent event) {
+        Runnable runnable = () -> listeners
+                .forEach(listener -> listener.listen(context, event));
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        eventQueue.enqueue(() -> CompletableFuture.runAsync(runnable, executorService)
+                .whenComplete((result, ex) -> future.complete(null)));
+        future.join();
+    }
 }

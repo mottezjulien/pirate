@@ -12,6 +12,11 @@ public class GameEventOrchestratorLazy implements GameEventOrchestrator {
         orchestrator.fire(context, event);
     }
 
+    @Override
+    public void fireAndWait(GameSessionContext context, GameEvent event) {
+        orchestrator.fireAndWait(context, event);
+    }
+
     public void set(GameEventOrchestrator orchestrator) {
         this.orchestrator = orchestrator;
     }

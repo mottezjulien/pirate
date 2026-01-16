@@ -3,6 +3,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger;
 
 import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
@@ -10,11 +11,12 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
-import fr.plop.generic.enumerate.EqualsOrDifferent;
-import jakarta.persistence.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
+import java.util.*;
 
 @Entity
 @Table(name = "TEST2_SCENARIO_POSSIBILITY_TRIGGER")
@@ -35,9 +37,13 @@ public class ScenarioPossibilityTriggerEntity {
     private static final String VALUE_TALK_TYPE_INPUT_TEXT = "INPUT_TEXT";
     private static final String KEY_CONFIRM_ID = "CONFIRM_ID";
     private static final String KEY_CONFIRM_EXPECTED_ANSWER = "EXPECTED_ANSWER";
+    private static final String KEY_LOGICAL_TYPE = "LOGICAL_TYPE";
+    private static final String VALUE_LOGICAL_AND = "AND";
+    private static final String VALUE_LOGICAL_OR = "OR";
+    private static final String VALUE_LOGICAL_NOT = "NOT";
 
     public enum Type {
-        TIME, SPACE, STEP, TALK, OBJECT, CONFIRM
+        TIME, SPACE, STEP, TALK, OBJECT, CONFIRM, LOGICAL
     }
 
     @Id
@@ -51,6 +57,19 @@ public class ScenarioPossibilityTriggerEntity {
     @MapKeyColumn(name="map_key")
     @Column(name="map_value")
     private final Map<String, String> keyValues = new HashMap<>();
+
+    /*@ManyToOne
+    @JoinColumn(name = "parent_id")
+    private ScenarioPossibilityTriggerEntity parent;
+
+    @OneToMany(mappedBy = "parent", orphanRemoval = true)
+    private List<ScenarioPossibilityTriggerEntity> children = new ArrayList<>();
+     */
+    @ManyToMany
+    @JoinTable(name = "TEST2_RELATION_SCENARIO_POSSIBILITY_TRIGGER_SUB",
+            joinColumns = @JoinColumn(name = "trigger_id"),
+            inverseJoinColumns = @JoinColumn(name = "sub_trigger_id"))
+    private Set<ScenarioPossibilityTriggerEntity> subs = new HashSet<>();
 
     public String getId() {
         return id;
@@ -70,6 +89,10 @@ public class ScenarioPossibilityTriggerEntity {
 
     public Map<String, String> getKeyValues() {
         return keyValues;
+    }
+
+    public Set<ScenarioPossibilityTriggerEntity> getSubs() {
+        return subs;
     }
 
     public PossibilityTrigger toModel() {
@@ -105,7 +128,7 @@ public class ScenarioPossibilityTriggerEntity {
                     case VALUE_TALK_TYPE_END -> new PossibilityTrigger.TalkEnd(id, talkItemId);
                     case VALUE_TALK_TYPE_INPUT_TEXT -> {
                         String inputValue = keyValues.get(KEY_TALK_INPUT_VALUE);
-                        EqualsOrDifferent matchType = EqualsOrDifferent.valueOf(keyValues.get(KEY_TALK_INPUT_MATCH_TYPE));
+                        PossibilityTrigger.TalkInputText.MatchType matchType = PossibilityTrigger.TalkInputText.MatchType.valueOf(keyValues.get(KEY_TALK_INPUT_MATCH_TYPE));
                         yield new PossibilityTrigger.TalkInputText(id, talkItemId, inputValue, matchType);
                     }
                     default -> throw new IllegalStateException("Unexpected value: " + keyValues.get(KEY_TALK_TYPE));
@@ -119,6 +142,17 @@ public class ScenarioPossibilityTriggerEntity {
                 Consequence.Id confirmId = new Consequence.Id(keyValues.get(KEY_CONFIRM_ID));
                 boolean expectedAnswer = Boolean.parseBoolean(keyValues.get(KEY_CONFIRM_EXPECTED_ANSWER));
                 yield new PossibilityTrigger.ConfirmAnswer(id, confirmId, expectedAnswer);
+            }
+            case LOGICAL -> {
+                List<PossibilityTrigger> childTriggers = subs.stream()
+                        .map(ScenarioPossibilityTriggerEntity::toModel)
+                        .toList();
+                yield switch (keyValues.get(KEY_LOGICAL_TYPE)) {
+                    case VALUE_LOGICAL_AND -> new PossibilityTrigger.And(id, childTriggers);
+                    case VALUE_LOGICAL_OR -> new PossibilityTrigger.Or(id, childTriggers);
+                    case VALUE_LOGICAL_NOT -> new PossibilityTrigger.Not(id, childTriggers.getFirst());
+                    default -> throw new IllegalStateException("Unexpected logical type: " + keyValues.get(KEY_LOGICAL_TYPE));
+                };
             }
         };
     }
@@ -176,6 +210,21 @@ public class ScenarioPossibilityTriggerEntity {
                 entity.setType(Type.CONFIRM);
                 entity.getKeyValues().put(KEY_CONFIRM_ID, confirmAnswer.confirmId().value());
                 entity.getKeyValues().put(KEY_CONFIRM_EXPECTED_ANSWER, Boolean.toString(confirmAnswer.expectedAnswer()));
+            }
+            case PossibilityTrigger.And and -> {
+                entity.setType(Type.LOGICAL);
+                entity.getKeyValues().put(KEY_LOGICAL_TYPE, VALUE_LOGICAL_AND);
+                and.triggers().forEach(child -> entity.subs.add(fromModel(child)));
+            }
+            case PossibilityTrigger.Or or -> {
+                entity.setType(Type.LOGICAL);
+                entity.getKeyValues().put(KEY_LOGICAL_TYPE, VALUE_LOGICAL_OR);
+                or.triggers().forEach(child -> entity.subs.add(fromModel(child)));
+            }
+            case PossibilityTrigger.Not not -> {
+                entity.setType(Type.LOGICAL);
+                entity.getKeyValues().put(KEY_LOGICAL_TYPE, VALUE_LOGICAL_NOT);
+                entity.subs.add(fromModel(not.trigger()));
             }
         }
         return entity;

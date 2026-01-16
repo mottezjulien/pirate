@@ -49,8 +49,13 @@ public class GameSessionStartUseCase {
 
         port.active(authGameSession.id());
 
-        ScenarioConfig.Step step = cache.scenario(context.sessionId()).firstStep();
+        ScenarioConfig scenario = cache.scenario(context.sessionId());
+        ScenarioConfig.Step step = scenario.firstStep();
         scenarioGoalPort.saveStep(context, step.id(), ScenarioSessionState.ACTIVE);
+        
+        step.targets().forEach(target ->
+            scenarioGoalPort.saveTarget(context.playerId(), target.id(), ScenarioSessionState.ACTIVE)
+        );
 
         return session;
     }

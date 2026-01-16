@@ -46,7 +46,7 @@ public class GameSessionScenarioGoalAdapter implements GameSessionScenarioGoalPo
     @Override
     public List<ScenarioConfig.Target.Id> findActiveTargets(GamePlayer.Id playerId) {
         return findTargets(playerId).entrySet().stream()
-                .filter(entry -> entry.getValue() == ScenarioSessionState.ACTIVE)
+                .filter(entry -> entry.getValue() == ScenarioSessionState.ACTIVE || entry.getValue() == ScenarioSessionState.SUCCESS)
                 .map(Map.Entry::getKey).toList();
     }
 
@@ -54,14 +54,16 @@ public class GameSessionScenarioGoalAdapter implements GameSessionScenarioGoalPo
         return goalStepRepository.byPlayerIdFetchStep(playerId.value())
                 .stream().collect(Collectors.toMap(
                         entity -> new ScenarioConfig.Step.Id(entity.getStep().getId()),
-                        ScenarioGoalStepEntity::getState));
+                        ScenarioGoalStepEntity::getState,
+                        (existing, replacement) -> existing));
     }
 
     public Map<ScenarioConfig.Target.Id, ScenarioSessionState> findTargets(GamePlayer.Id playerId) {
         return goalTargetRepository.byPlayerIdFetchTarget(playerId.value())
                 .stream().collect(Collectors.toMap(
                         entity -> new ScenarioConfig.Target.Id(entity.getTarget().getId()),
-                        ScenarioGoalTargetEntity::getState));
+                        ScenarioGoalTargetEntity::getState,
+                        (existing, replacement) -> existing));
     }
 
     public void saveStep(GameSessionContext context, ScenarioConfig.Step.Id stepId, ScenarioSessionState state) {
@@ -80,6 +82,18 @@ public class GameSessionScenarioGoalAdapter implements GameSessionScenarioGoalPo
         optEntity.ifPresentOrElse(entity -> {
             entity.setState(state);
             goalTargetRepository.save(entity);
+            
+            if (state == ScenarioSessionState.SUCCESS) {
+                String stepId = entity.getTarget().getStep().getId();
+                List<ScenarioGoalTargetEntity> otherTargets = goalTargetRepository.byPlayerIdAndStepIdFetchTarget(playerId.value(), stepId);
+                otherTargets.stream()
+                    .filter(t -> !t.getTarget().getId().equals(targetId.value()))
+                    .filter(t -> t.getState() != ScenarioSessionState.SUCCESS)
+                    .forEach(t -> {
+                        t.setState(ScenarioSessionState.FAILURE);
+                        goalTargetRepository.save(t);
+                    });
+            }
         }, () -> goalTargetRepository.save(ScenarioGoalTargetEntity.build(playerId, targetId, state)));
     }
 

@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.cache;
 
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
@@ -57,6 +58,11 @@ public class GameConfigCacheAdapter implements GameConfigCache {
     @Override
     public ImageConfig image(GameSession.Id sessionId) {
         return data(sessionId).image;
+    }
+
+    @Override
+    public InventoryConfig inventory(GameSession.Id id) {
+        return null;
     }
 
     private Data data(GameSession.Id sessionId) {

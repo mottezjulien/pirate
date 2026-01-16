@@ -44,5 +44,14 @@ public class PossibilityGetUseCase {
                 .filter(possibility -> possibility.accept(event, previousActions, situation));
     }
 
+    public Stream<Possibility> findAllBySteps(GameSessionContext context, GameEvent event) {
+        GameSessionSituation situation = situationGet.get(context);
+        List<ScenarioConfig.Step.Id> steps = situation.scenario().stepIds();
+        ScenarioConfig cacheScenario = cache.scenario(context.sessionId());
+        return cacheScenario.steps().stream()
+                .filter(step -> steps.contains(step.id()))
+                .flatMap(step -> step.possibilities().stream());
+    }
+
 
 }
