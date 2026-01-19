@@ -9,6 +9,7 @@ import fr.plop.contexts.game.session.scenario.domain.GameSessionScenarioGoalPort
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class GameConfigSpringConfig {
@@ -22,7 +23,7 @@ public class GameConfigSpringConfig {
     public ConsequenceUseCase ConsequenceUseCase(ConsequenceScenarioGoalHandler scenarioGoalHandler,
                                                  ConsequenceTalkHandler talkHandler,
                                                  ConsequenceOverHandler gameOverHandler,
-                                                 ConsequenceObjectHandler objectHandler,
+                                                 @Lazy ConsequenceObjectHandler objectHandler,
                                                  ConsequenceImageHandler imageHandler,
                                                  ConsequenceMetadataHandler metadataHandler) {
         ConsequenceUseCase consequenceUseCase = new ConsequenceUseCase();

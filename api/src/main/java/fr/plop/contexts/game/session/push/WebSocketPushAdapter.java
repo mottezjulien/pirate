@@ -12,6 +12,7 @@ public class WebSocketPushAdapter implements PushPort {
     private static final String MESSAGE_TALK = "SYSTEM:TALK";
     private static final String MESSAGE_IMAGE = "SYSTEM:IMAGE";
     private static final String MESSAGE_CONFIRM = "SYSTEM:CONFIRM";
+    private static final String MESSAGE_INVENTORY = "SYSTEM:INVENTORY";
     private final WebSocketHandler webSocketHandler;
 
     public WebSocketPushAdapter(WebSocketHandler webSocketHandler) {
@@ -31,6 +32,7 @@ public class WebSocketPushAdapter implements PushPort {
             case PushEvent.Talk talk -> MESSAGE_TALK + ":" + talk.talkId().value();
             case PushEvent.Image image -> MESSAGE_IMAGE + ":" + image.imageId().value();
             case PushEvent.Confirm confirm -> MESSAGE_CONFIRM + ":" + confirm.confirmId().value() + ":" + confirm.message();
+            case PushEvent.Inventory ignored -> MESSAGE_INVENTORY;
         };
     }
 }

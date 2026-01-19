@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.template.domain.model;
 
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
@@ -11,7 +12,7 @@ import fr.plop.generic.tools.StringTools;
 import java.time.Duration;
 
 public record Template(Atom atom, String label, String version, Descriptor descriptor, Duration maxDuration, ScenarioConfig scenario,
-                       BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
+                       BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image, InventoryConfig inventory) {
 
     private static final Duration DEFAULT_DURATION = Duration.ofMinutes(30);
 
@@ -113,6 +114,7 @@ public record Template(Atom atom, String label, String version, Descriptor descr
         private MapConfig map = new MapConfig();
         private TalkConfig talk = new TalkConfig();
         private ImageConfig image = new ImageConfig();
+        private InventoryConfig inventory = new InventoryConfig();
 
         public Builder id(Id id) {
             this.atom = atom.withId(id);
@@ -160,7 +162,7 @@ public record Template(Atom atom, String label, String version, Descriptor descr
         }
 
         public Template build() {
-            return new Template(atom, label, version, descriptor, maxDuration, scenario, board, map, talk, image);
+            return new Template(atom, label, version, descriptor, maxDuration, scenario, board, map, talk, image, inventory);
         }
     }
 

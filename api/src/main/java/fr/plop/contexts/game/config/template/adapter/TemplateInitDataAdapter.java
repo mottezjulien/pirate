@@ -43,12 +43,14 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     private final TemplateInitDataMapAdapter mapAdapter;
     private final TemplateInitDataTalkAdapter talkAdapter;
     private final TemplateInitDataImageAdapter imageAdapter;
+
+    private final TemplateInitDataInventoryAdapter inventoryAdapter;
     private final TemplateInitDataConditionAdapter conditionAdapter;
 
     private final ImageGenericRepository imageGenericRepository;
     private final ImageObjectRepository imageObjectRepository;
 
-    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataMapAdapter mapAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter, TemplateInitDataConditionAdapter conditionAdapter, ImageGenericRepository imageGenericRepository, ImageObjectRepository imageObjectRepository) {
+    public TemplateInitDataAdapter(I18nRepository i18nRepository, TemplateRepository templateRepository, ScenarioConfigRepository scenarioRepository, ScenarioStepRepository scenarioStepRepository, ScenarioTargetRepository scenarioTargetRepository, ScenarioPossibilityRepository possibilityRepository, ScenarioPossibilityRecurrenceRepository recurrenceRepository, ScenarioPossibilityTriggerRepository triggerRepository, ScenarioPossibilityConsequenceRepository consequenceRepository, TemplateInitDataBoardAdapter boardAdapter, TemplateInitDataMapAdapter mapAdapter, TemplateInitDataTalkAdapter talkAdapter, TemplateInitDataImageAdapter imageAdapter, TemplateInitDataInventoryAdapter inventoryAdapter, TemplateInitDataConditionAdapter conditionAdapter, ImageGenericRepository imageGenericRepository, ImageObjectRepository imageObjectRepository) {
         this.i18nRepository = i18nRepository;
         this.templateRepository = templateRepository;
         this.scenarioRepository = scenarioRepository;
@@ -62,6 +64,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         this.mapAdapter = mapAdapter;
         this.talkAdapter = talkAdapter;
         this.imageAdapter = imageAdapter;
+        this.inventoryAdapter = inventoryAdapter;
         this.conditionAdapter = conditionAdapter;
         this.imageGenericRepository = imageGenericRepository;
         this.imageObjectRepository = imageObjectRepository;
@@ -76,6 +79,8 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
     @Override
     public void deleteAll() {
         templateRepository.deleteAll();
+
+        inventoryAdapter.deleteAll();
 
         mapAdapter.deleteAll();
 
@@ -125,6 +130,7 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
         templateEntity.setImage(imageAdapter.createImage(template.image()));
         templateEntity.setScenario(createScenario(template.scenario()));
         templateEntity.setMap(mapAdapter.create(template.map()));
+        templateEntity.setInventory(inventoryAdapter.create(template.inventory()));
         templateRepository.save(templateEntity);
     }
 
@@ -190,23 +196,29 @@ public class TemplateInitDataAdapter implements TemplateInitUseCase.OutPort {
 
     private ScenarioPossibilityTriggerEntity persistTriggerRecursive(PossibilityTrigger trigger) {
         ScenarioPossibilityTriggerEntity triggerEntity = ScenarioPossibilityTriggerEntity.fromModel(trigger);
-        
-        if (trigger instanceof PossibilityTrigger.And and) {
-            triggerEntity.getSubs().clear();
-            and.triggers().forEach(child -> {
-                ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
+
+        switch (trigger) {
+            case PossibilityTrigger.And and -> {
+                triggerEntity.getSubs().clear();
+                and.triggers().forEach(child -> {
+                    ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
+                    triggerEntity.getSubs().add(childEntity);
+                });
+            }
+            case PossibilityTrigger.Or or -> {
+                triggerEntity.getSubs().clear();
+                or.triggers().forEach(child -> {
+                    ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
+                    triggerEntity.getSubs().add(childEntity);
+                });
+            }
+            case PossibilityTrigger.Not not -> {
+                triggerEntity.getSubs().clear();
+                ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(not.trigger());
                 triggerEntity.getSubs().add(childEntity);
-            });
-        } else if (trigger instanceof PossibilityTrigger.Or or) {
-            triggerEntity.getSubs().clear();
-            or.triggers().forEach(child -> {
-                ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(child);
-                triggerEntity.getSubs().add(childEntity);
-            });
-        } else if (trigger instanceof PossibilityTrigger.Not not) {
-            triggerEntity.getSubs().clear();
-            ScenarioPossibilityTriggerEntity childEntity = persistTriggerRecursive(not.trigger());
-            triggerEntity.getSubs().add(childEntity);
+            }
+            default -> {
+            }
         }
         
         return triggerRepository.save(triggerEntity);

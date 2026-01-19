@@ -2,6 +2,7 @@ package fr.plop.contexts.game.session.core.domain.model;
 
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
@@ -13,12 +14,12 @@ import java.util.List;
 
 //TODO USEFULL ?? (Cache && ScenarioSession by player)
 public record GameSession(Id id, String label, State state, List<GamePlayer> players, ScenarioSession scenario,
-                          BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
+                          BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image, InventoryConfig inventory) {
 
     public static GameSession buildWithoutPlayer(Id id, String label, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig,
-                                                 MapConfig mapConfig, TalkConfig talkConfig, ImageConfig imageConfig) {
+                                                 MapConfig mapConfig, TalkConfig talkConfig, ImageConfig imageConfig, InventoryConfig inventory) {
         return new GameSession(id, label, state, List.of(), ScenarioSession.build(scenarioConfig),
-                boardConfig, mapConfig, talkConfig, imageConfig);
+                boardConfig, mapConfig, talkConfig, imageConfig, inventory);
     }
 
     public record Id(String value) {
@@ -36,7 +37,7 @@ public record GameSession(Id id, String label, State state, List<GamePlayer> pla
     }
 
     private GameSession withPlayers(List<GamePlayer> players) {
-        return new GameSession(id, label, state, players, scenario, board, map, talk, image);
+        return new GameSession(id, label, state, players, scenario, board, map, talk, image, inventory);
     }
 
 }

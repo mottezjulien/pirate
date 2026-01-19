@@ -8,12 +8,15 @@ import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
+import fr.plop.contexts.game.config.talk.persistence.TalkItemEntity;
 import fr.plop.contexts.game.session.core.domain.model.GameSession;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
+import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.game.session.event.domain.GameEvent;
 import fr.plop.contexts.game.session.event.domain.GameEventOrchestrator;
 import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
 import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
+import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.Image;
 import fr.plop.subs.image.ImageResponseDTO;
@@ -28,20 +31,24 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/sessions/{sessionId}/talks")
-public class TalkController {
+public class GameSessionTalkController {
 
     private final ConnectAuthGameSessionUseCase authGameSessionUseCase;
     private final GameConfigCache cache;
     private final GameSessionSituationGetPort situationGetPort;
     private final GameEventOrchestrator eventOrchestrator;
 
-    public TalkController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventOrchestrator eventOrchestrator) {
+    private final GameSessionTalkRepository talkRepository;
+    private final GameSessionTalkItemRepository talkItemRepository;
+
+    public GameSessionTalkController(ConnectAuthGameSessionUseCase authGameSessionUseCase, GameConfigCache cache, GameSessionSituationGetPort situationGetPort, GameEventOrchestrator eventOrchestrator, GameSessionTalkRepository talkRepository, GameSessionTalkItemRepository talkItemRepository) {
         this.authGameSessionUseCase = authGameSessionUseCase;
         this.cache = cache;
         this.situationGetPort = situationGetPort;
         this.eventOrchestrator = eventOrchestrator;
+        this.talkRepository = talkRepository;
+        this.talkItemRepository = talkItemRepository;
     }
-
 
     @GetMapping({"/{talkId}", "/{talkId}/"})
     public ResponseDTO getOne(@RequestHeader("Authorization") String rawSessionToken,
@@ -57,10 +64,32 @@ public class TalkController {
             final TalkConfig talkConfig = cache.talk(sessionId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
+
+            saveItem(talkIdStr, context, talkId);
+
             final GameSessionSituation situation = situationGetPort.get(context);
             return ResponseDTO.fromModel(item, situation, language);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+        }
+    }
+
+    private void saveItem(String talkIdStr, GameSessionContext context, TalkItem.Id talkId) {
+        GameSessionTalkEntity entity = talkRepository.fullByPlayerId(context.playerId().value());
+        if(entity == null){
+            entity = new GameSessionTalkEntity();
+            entity.setId(StringTools.generate());
+            entity.setPlayer(GamePlayerEntity.fromModelId(context.playerId()));
+            talkRepository.save(entity);
+        }
+
+        if(entity.getItems().stream()
+                .anyMatch(sessionItem -> sessionItem.getConfig().getId().equals(talkIdStr))) {
+            GameSessionTalkItemEntity sessionTalkItem = new GameSessionTalkItemEntity();
+            sessionTalkItem.setId(StringTools.generate());
+            sessionTalkItem.setTalk(entity);
+            sessionTalkItem.setConfig(TalkItemEntity.fromModelId(talkId));
+            talkItemRepository.save(sessionTalkItem);
         }
     }
 

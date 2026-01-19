@@ -28,6 +28,12 @@ public class TalkItemEntity {
     @JoinColumn(name = "character_reference_id")
     protected TalkCharacterReferenceEntity characterReference;
 
+    public static TalkItemEntity fromModelId(TalkItem.Id talkId) {
+        TalkItemEntity  entity = new TalkItemEntity();
+        entity.id = talkId.toString();
+        return entity;
+    }
+
     public void setId(String id) {
         this.id = id;
     }

@@ -52,7 +52,24 @@
   },
   "navigation": {
     "objectives": "Objectifs",
-    "maps": "Cartes"
+    "maps": "Cartes",
+    "inventory": "Inventaire"
+  },
+  "inventory": {
+    "empty": "Votre inventaire est vide",
+    "quantity": "Quantit\u00e9",
+    "no_actions": "Aucune action disponible",
+    "action_error": "Erreur lors de l'action",
+    "drop_confirm_title": "Jeter l'objet ?",
+    "drop_confirm_message": "\u00cates-vous s\u00fbr de vouloir jeter {} ?",
+    "action": {
+      "use": "Utiliser",
+      "consume": "Consommer",
+      "equip": "\u00c9quiper",
+      "unequip": "D\u00e9s\u00e9quiper",
+      "use_equip": "Activer",
+      "drop": "Jeter"
+    }
   },
   "config_editor": {
     "title": "Éditeur de config",

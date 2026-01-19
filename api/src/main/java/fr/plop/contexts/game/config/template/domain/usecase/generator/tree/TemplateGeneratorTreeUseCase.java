@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator.tree;
 
 import fr.plop.contexts.game.config.Image.domain.ImageConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
@@ -59,6 +60,8 @@ public class TemplateGeneratorTreeUseCase {
 
         MapConfig map = mapGenerator.apply(rootTree);
 
+        InventoryConfig inventory = new InventoryConfig(); //TODO
+
 
         String version = rootTree.findByKeyOrParamIndexOrValue("VERSION", 0, DEFAULT_VERSION);
         String label = rootTree.findByKeyOrParamIndexOrValue("LABEL", 1, "");
@@ -69,7 +72,7 @@ public class TemplateGeneratorTreeUseCase {
 
         Template.Descriptor descriptor = Template.Descriptor.empty();
 
-        return new Template(templateAtom, label, version, descriptor, duration, scenario, board, map, talkConfig, image);
+        return new Template(templateAtom, label, version, descriptor, duration, scenario, board, map, talkConfig, image, inventory);
     }
 
 }

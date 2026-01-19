@@ -43,4 +43,14 @@ class GenericGameSessionRepository {
     return jsonDecode(response.body);
   }
 
+  Future<void> delete({
+    required String path,
+  }) async {
+    final http.Response response = await http.delete(Server.session(path),
+        headers: Headers.gameSessionAuth());
+    if(response.statusCode >= 400) {
+      throw RepositoryException(response.statusCode, response.body);
+    }
+  }
+
 }

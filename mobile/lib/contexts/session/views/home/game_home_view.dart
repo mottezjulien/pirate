@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../generic/components/organisms/game_app_bar.dart';
+import '../../inventory/game_inventory_view.dart';
 import '../../map/game_map_view.dart';
 import '../goal/game_goal_view.dart';
 
@@ -13,7 +14,8 @@ class GameHomeView extends StatelessWidget {
 
   static const List<Widget> _widgetOptions = <Widget>[
     GameGoalTabView(),
-    GameMapTabView()
+    GameMapTabView(),
+    GameInventoryTabView(),
   ];
 
   @override
@@ -32,6 +34,7 @@ class GameHomeView extends StatelessWidget {
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: const Icon(Icons.checklist), label: 'navigation.objectives'.tr()),
             BottomNavigationBarItem(icon: const Icon(Icons.map), label: 'navigation.maps'.tr()),
+            BottomNavigationBarItem(icon: const Icon(Icons.inventory_2), label: 'navigation.inventory'.tr()),
           ],
           currentIndex: currentIndex,
           selectedItemColor: Colors.amber[800],

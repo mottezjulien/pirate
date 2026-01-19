@@ -10,6 +10,10 @@ import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.Image.domain.ImageGeneric;
 import fr.plop.contexts.game.config.Image.domain.ImageItem;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryItemActionRule;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryMergedRule;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
@@ -63,11 +67,9 @@ public class TemplateGeneratorJsonUseCase {
         ScenarioConfig scenario = mapScenario(root.scenario());
         MapConfig map = mapMaps(root.maps());
         ImageConfig imageConfig = mapImage(root.image());
-
-
-
+        InventoryConfig inventoryConfig = mapInventory(root.inventory());
         return new Template(templateAtom, label, version, descriptor, duration, scenario,
-                board, map, talk, imageConfig);
+                board, map, talk, imageConfig, inventoryConfig);
     }
 
     private static Template.Descriptor descriptor(TemplateGeneratorRoot root) {
@@ -297,6 +299,11 @@ public class TemplateGeneratorJsonUseCase {
                 I18n message = toI18n((Map<String, String>) consequenceRoot.metadata().get("message"));
                 Consequence.Id confirmId = globalCache.reference(confirmRef, Consequence.Id.class, new Consequence.Id());
                 yield new Consequence.DisplayConfirm(confirmId, message);
+            }
+            case "INVENTORY_ADD", "INVENTORYADD" -> {
+                String itemRef = (String) consequenceRoot.metadata().get("itemRef");
+                GameConfigInventoryItem.Id itemId = globalCache.reference(itemRef, GameConfigInventoryItem.Id.class, new GameConfigInventoryItem.Id(itemRef));
+                yield new Consequence.ObjetAdd(new Consequence.Id(), itemId.value());
             }
             default -> null;
         };
@@ -550,12 +557,80 @@ public class TemplateGeneratorJsonUseCase {
         if ("point".equalsIgnoreCase(objectRoot.type())) {
             ImagePoint center = new ImagePoint(0, 0);
             ImageObject.Atom atom = new ImageObject.Atom("", center, Optional.empty());
-            String color = objectRoot.metadata() != null && objectRoot.metadata().containsKey("color") 
-                    ? (String) objectRoot.metadata().get("color") 
+            String color = objectRoot.metadata() != null && objectRoot.metadata().containsKey("color")
+                    ? (String) objectRoot.metadata().get("color")
                     : "";
             return new ImageObject.Point(atom, color);
         }
         return null;
+    }
+
+    private InventoryConfig mapInventory(TemplateGeneratorRoot.Inventory inventoryRoot) {
+        if (inventoryRoot == null) {
+            return new InventoryConfig();
+        }
+
+        List<GameConfigInventoryItem> items = inventoryRoot.items() == null ? List.of() : inventoryRoot.items().stream()
+                .map(this::mapInventoryItem)
+                .toList();
+
+        List<InventoryMergedRule> mergeRules = inventoryRoot.mergeRules() == null ? List.of() : inventoryRoot.mergeRules().stream()
+                .map(this::mapMergeRule)
+                .toList();
+
+        return new InventoryConfig(new InventoryConfig.Id(), items, mergeRules);
+    }
+
+    private GameConfigInventoryItem mapInventoryItem(TemplateGeneratorRoot.Inventory.InventoryItem itemRoot) {
+        GameConfigInventoryItem.Id id = itemRoot.ref() != null
+                ? globalCache.reference(itemRoot.ref(), GameConfigInventoryItem.Id.class, new GameConfigInventoryItem.Id(itemRoot.ref()))
+                : new GameConfigInventoryItem.Id(UUID.randomUUID().toString());
+
+        I18n label = toI18n(itemRoot.label());
+        Image image = itemRoot.image() != null
+                ? new Image(Image.Type.valueOf(itemRoot.image().type().toUpperCase()), itemRoot.image().value())
+                : new Image(Image.Type.ASSET, "");
+
+        Optional<I18n> optDescription = Optional.ofNullable(itemRoot.description())
+                .map(this::toI18n)
+                .filter(i18n -> !i18n.values().isEmpty());
+
+        GameConfigInventoryItem.Type type = itemRoot.type() != null
+                ? GameConfigInventoryItem.Type.valueOf(itemRoot.type().toUpperCase())
+                : GameConfigInventoryItem.Type.UNIQUE;
+
+        Optional<ScenarioConfig.Target.Id> optLinkTargetId = Optional.empty();
+        if (itemRoot.linkTargetRef() != null) {
+            optLinkTargetId = Optional.of(globalCache.reference(itemRoot.linkTargetRef(), ScenarioConfig.Target.Id.class, new ScenarioConfig.Target.Id()));
+        }
+
+        List<InventoryItemActionRule> actionRules = itemRoot.actions() == null ? List.of() : itemRoot.actions().stream()
+                .map(this::mapActionRule)
+                .toList();
+
+        return new GameConfigInventoryItem(id, label, image, optDescription, type, optLinkTargetId, actionRules);
+    }
+
+    private InventoryItemActionRule mapActionRule(TemplateGeneratorRoot.Inventory.InventoryItem.ActionRule ruleRoot) {
+        InventoryItemActionRule.Type type = InventoryItemActionRule.Type.valueOf(ruleRoot.type().toUpperCase());
+
+        List<Consequence> consequences = ruleRoot.consequences() == null ? List.of() : ruleRoot.consequences().stream()
+                .map(this::mapConsequence)
+                .filter(Objects::nonNull)
+                .toList();
+
+        InventoryItemActionRule.Consequence consequence = new InventoryItemActionRule.Consequence.Direct(consequences);
+        return new InventoryItemActionRule(type, consequence);
+    }
+
+    private InventoryMergedRule mapMergeRule(TemplateGeneratorRoot.Inventory.MergeRule ruleRoot) {
+        List<GameConfigInventoryItem.Id> acceptIds = ruleRoot.items().stream()
+                .map(ref -> globalCache.reference(ref, GameConfigInventoryItem.Id.class, new GameConfigInventoryItem.Id(ref)))
+                .toList();
+
+        GameConfigInventoryItem.Id resultId = globalCache.reference(ruleRoot.result(), GameConfigInventoryItem.Id.class, new GameConfigInventoryItem.Id(ruleRoot.result()));
+
+        return new InventoryMergedRule(acceptIds, resultId);
     }
 
 }

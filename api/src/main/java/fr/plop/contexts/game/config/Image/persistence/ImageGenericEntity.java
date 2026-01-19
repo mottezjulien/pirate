@@ -48,33 +48,15 @@ public class ImageGenericEntity {
         this.label = label;
     }
 
-
-
     public ImageGeneric toModel() {
         List<ImageObject> objectModels = objects.stream().map(ImageObjectEntity::toModel).toList();
         return new ImageGeneric(new ImageGeneric.Id(id), label, new Image(type, value), objectModels);
     }
-
-
 
     public static ImageGenericEntity fromModelId(ImageGeneric.Id modelId) {
         ImageGenericEntity entity = new ImageGenericEntity();
         entity.id = modelId.value();
         return entity;
     }
-
-     /*
-
-   public static ImageItemGenericEntity fromModel(ImageItem model) {
-        ImageItemGenericEntity entity = new ImageItemGenericEntity();
-        entity.setId(model.id().value());
-        entity.label = model.label();
-        ImageConfigEntity configEntity = new ImageConfigEntity();
-        configEntity.setId(configId.value());
-        entity.setType(model.value().type());
-        entity.setValue(model.value().value());
-        return entity;
-    }*/
-
 
 }

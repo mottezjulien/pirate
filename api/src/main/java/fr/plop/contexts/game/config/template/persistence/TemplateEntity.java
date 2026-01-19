@@ -2,6 +2,7 @@ package fr.plop.contexts.game.config.template.persistence;
 
 import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
 import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
+import fr.plop.contexts.game.config.inventory.persistence.GameConfigInventoryEntity;
 import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
 import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
@@ -59,6 +60,10 @@ public class TemplateEntity {
     @ManyToOne
     @JoinColumn(name = "image_id")
     private ImageConfigEntity image;
+
+    @ManyToOne
+    @JoinColumn(name = "inventory_id")
+    private GameConfigInventoryEntity inventory;
 
     @Column(name = "duration_in_minute")
     private long durationInMinute;
@@ -183,6 +188,14 @@ public class TemplateEntity {
         this.map = map;
     }
 
+    public GameConfigInventoryEntity getInventory() {
+        return inventory;
+    }
+
+    public void setInventory(GameConfigInventoryEntity inventory) {
+        this.inventory = inventory;
+    }
+
     public TalkConfigEntity getTalk() {
         return talk;
     }
@@ -202,7 +215,7 @@ public class TemplateEntity {
 
         Duration duration = Duration.ofMinutes(durationInMinute);
         return new Template(atom, label, version, descriptor, duration, scenario.toModel(),
-                board.toModel(), map.toModel(), talk.toModel(), image.toModel());
+                board.toModel(), map.toModel(), talk.toModel(), image.toModel(), inventory.toModel());
     }
 
     private Template.Descriptor toModelDescriptor() {

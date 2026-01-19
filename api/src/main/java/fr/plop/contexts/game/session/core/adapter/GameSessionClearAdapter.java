@@ -6,6 +6,8 @@ import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerActionRepository;
 import fr.plop.contexts.game.session.core.persistence.GamePlayerRepository;
 import fr.plop.contexts.game.session.core.persistence.GameSessionRepository;
+import fr.plop.contexts.game.session.inventory.persistence.GameSessionInventoryItemRepository;
+import fr.plop.contexts.game.session.inventory.persistence.GameSessionInventoryRepository;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalStepRepository;
 import fr.plop.contexts.game.session.scenario.persistence.ScenarioGoalTargetRepository;
 import org.springframework.stereotype.Component;
@@ -20,8 +22,10 @@ public class GameSessionClearAdapter implements GameSessionClearPort {
     private final ScenarioGoalStepRepository scenarioGoalRepository;
     private final ScenarioGoalTargetRepository scenarioGoalTargetRepository;
     private final GamePlayerActionRepository gamePlayerActionRepository;
+    private final GameSessionInventoryItemRepository inventoryItemRepository;
+    private final GameSessionInventoryRepository inventoryRepository;
 
-    public GameSessionClearAdapter(ConnectionAuthGameSessionRepository authGameSessionRepository, GameSessionRepository gameSessionRepository, GamePlayerRepository gamePlayerRepository, BoardPositionRepository boardPositionRepository, ScenarioGoalStepRepository scenarioGoalRepository, ScenarioGoalTargetRepository scenarioGoalTargetRepository, GamePlayerActionRepository gamePlayerActionRepository) {
+    public GameSessionClearAdapter(ConnectionAuthGameSessionRepository authGameSessionRepository, GameSessionRepository gameSessionRepository, GamePlayerRepository gamePlayerRepository, BoardPositionRepository boardPositionRepository, ScenarioGoalStepRepository scenarioGoalRepository, ScenarioGoalTargetRepository scenarioGoalTargetRepository, GamePlayerActionRepository gamePlayerActionRepository, GameSessionInventoryItemRepository inventoryItemRepository, GameSessionInventoryRepository inventoryRepository) {
         this.authGameSessionRepository = authGameSessionRepository;
         this.gameSessionRepository = gameSessionRepository;
         this.gamePlayerRepository = gamePlayerRepository;
@@ -29,6 +33,8 @@ public class GameSessionClearAdapter implements GameSessionClearPort {
         this.scenarioGoalRepository = scenarioGoalRepository;
         this.scenarioGoalTargetRepository = scenarioGoalTargetRepository;
         this.gamePlayerActionRepository = gamePlayerActionRepository;
+        this.inventoryItemRepository = inventoryItemRepository;
+        this.inventoryRepository = inventoryRepository;
     }
 
     @Override
@@ -44,6 +50,10 @@ public class GameSessionClearAdapter implements GameSessionClearPort {
             gamePlayerRepository.save(entity);
         });
         boardPositionRepository.deleteAll();
+
+        // Supprimer les inventaires avant les players (contrainte FK)
+        inventoryItemRepository.deleteAll();
+        inventoryRepository.deleteAll();
 
         gamePlayerActionRepository.deleteAll();
         gamePlayerRepository.deleteAll();

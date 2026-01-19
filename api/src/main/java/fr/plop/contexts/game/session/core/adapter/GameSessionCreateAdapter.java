@@ -97,7 +97,7 @@ public class GameSessionCreateAdapter implements GameSessionUseCase.Port {
 
         return GameSession.buildWithoutPlayer(new GameSession.Id(entity.getId()),
                 template.label(), state, template.scenario(), template.board(), template.map(),
-                template.talk(), template.image());
+                template.talk(), template.image(), template.inventory());
     }
 
     @Override

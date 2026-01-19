@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public record TemplateGeneratorRoot(String code, String version, String label, int duration, int level, String description, Departure departure,
-                                    Board board, List<TemplateGeneratorMap> maps, Talk talk, Scenario scenario, TemplateGeneratorImage image) {
+                                    Board board, List<TemplateGeneratorMap> maps, Talk talk, Scenario scenario, TemplateGeneratorImage image,
+                                    Inventory inventory) {
 
 
     public record Departure(String address, Rectangle rectangle) {
@@ -114,6 +115,18 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
                 }
             }
+        }
+    }
+
+    public record Inventory(List<InventoryItem> items, List<MergeRule> mergeRules) {
+        public record InventoryItem(String ref, Map<String, String> label, Image image, Map<String, String> description,
+                                    String type, String linkTargetRef, List<ActionRule> actions) {
+            public record ActionRule(String type, List<Consequence> consequences) {
+
+            }
+        }
+        public record MergeRule(List<String> items, String result) {
+
         }
     }
 

@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
 
 public sealed interface PushEvent permits PushEvent.GameStatus, PushEvent.GameMove,
-        PushEvent.Message, PushEvent.Talk, PushEvent.Image, PushEvent.Confirm {
+        PushEvent.Message, PushEvent.Talk, PushEvent.Image, PushEvent.Confirm, PushEvent.Inventory {
 
     GameSessionContext context();
 
@@ -31,6 +31,10 @@ public sealed interface PushEvent permits PushEvent.GameStatus, PushEvent.GameMo
     }
 
     record Confirm(GameSessionContext context, Consequence.Id confirmId, String message) implements PushEvent {
+
+    }
+
+    record Inventory(GameSessionContext context) implements PushEvent {
 
     }
 

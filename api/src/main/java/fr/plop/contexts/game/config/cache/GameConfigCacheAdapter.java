@@ -18,7 +18,7 @@ import java.util.Map;
 public class GameConfigCacheAdapter implements GameConfigCache {
 
     private record Data(List<GamePlayer.Id> playerIds, ScenarioConfig scenario,
-                        BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image) {
+                        BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image, InventoryConfig inventory) {
 
     }
 
@@ -27,7 +27,7 @@ public class GameConfigCacheAdapter implements GameConfigCache {
     @Override
     public void insert(GameSession session) {
         sessions.put(session.id(), new Data(session.players().stream().map(GamePlayer::id).toList(),
-                session.scenario().config(), session.board(), session.map(), session.talk(), session.image()));
+                session.scenario().config(), session.board(), session.map(), session.talk(), session.image(), session.inventory()));
     }
 
     @Override
@@ -61,8 +61,8 @@ public class GameConfigCacheAdapter implements GameConfigCache {
     }
 
     @Override
-    public InventoryConfig inventory(GameSession.Id id) {
-        return null;
+    public InventoryConfig inventory(GameSession.Id sessionId) {
+        return data(sessionId).inventory;
     }
 
     private Data data(GameSession.Id sessionId) {

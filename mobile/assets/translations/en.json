@@ -52,7 +52,24 @@
   },
   "navigation": {
     "objectives": "Objectives",
-    "maps": "Maps"
+    "maps": "Maps",
+    "inventory": "Inventory"
+  },
+  "inventory": {
+    "empty": "Your inventory is empty",
+    "quantity": "Quantity",
+    "no_actions": "No actions available",
+    "action_error": "Action failed",
+    "drop_confirm_title": "Drop item?",
+    "drop_confirm_message": "Are you sure you want to drop {}?",
+    "action": {
+      "use": "Use",
+      "consume": "Consume",
+      "equip": "Equip",
+      "unequip": "Unequip",
+      "use_equip": "Activate",
+      "drop": "Drop"
+    }
   },
   "config_editor": {
     "title": "Config Editor",
