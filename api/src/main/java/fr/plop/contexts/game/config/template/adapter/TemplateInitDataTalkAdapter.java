@@ -20,6 +20,7 @@ public class TemplateInitDataTalkAdapter {
 
     private final TalkConfigRepository talkConfigRepository;
     private final TalkItemRepository talkItemRepository;
+    private final TalkItemBranchRepository talkItemBranchRepository;
 
     private final TalkItemMultipleOptionsRepository talkOptionsRepository;
     private final TalkOptionRepository talkOptionItemRepository;
@@ -29,10 +30,11 @@ public class TemplateInitDataTalkAdapter {
 
     private final TemplateInitDataConditionAdapter conditionAdapter;
 
-    public TemplateInitDataTalkAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository, TemplateInitDataConditionAdapter conditionAdapter) {
+    public TemplateInitDataTalkAdapter(I18nRepository i18nRepository, TalkConfigRepository talkConfigRepository, TalkItemRepository talkItemRepository, TalkItemBranchRepository talkItemBranchRepository, TalkItemMultipleOptionsRepository talkOptionsRepository, TalkOptionRepository talkOptionItemRepository, TalkCharacterRepository talkCharacterRepository, TalkCharacterReferenceRepository talkCharacterReferenceRepository, TemplateInitDataConditionAdapter conditionAdapter) {
         this.i18nRepository = i18nRepository;
         this.talkConfigRepository = talkConfigRepository;
         this.talkItemRepository = talkItemRepository;
+        this.talkItemBranchRepository = talkItemBranchRepository;
         this.talkOptionsRepository = talkOptionsRepository;
         this.talkOptionItemRepository = talkOptionItemRepository;
         this.talkCharacterRepository = talkCharacterRepository;
@@ -41,6 +43,7 @@ public class TemplateInitDataTalkAdapter {
     }
 
     public void deleteAll() {
+        talkItemBranchRepository.deleteAll();
         talkOptionsRepository.deleteAll();
         talkOptionItemRepository.deleteAll();
         talkItemRepository.deleteAll();
@@ -84,7 +87,6 @@ public class TemplateInitDataTalkAdapter {
     }
 
     private void createTalkItem(TalkItem item, TalkConfigEntity config, List<TalkCharacter.Reference> savedCharacterReferences) {
-        I18nEntity value = createI18nFromTalkOut(item.out());
         TalkItemEntity entity = switch (item.next()) {
             case TalkItemNext.Empty ignored -> new TalkItemEntity();
             case TalkItemNext.Continue cont -> {
@@ -109,8 +111,28 @@ public class TemplateInitDataTalkAdapter {
         };
         entity.setId(item.id().value());
         entity.setConfig(config);
-        entity.setValue(value);
         entity.setCharacterReference(findTalkCharacterReference(item.characterReference(), savedCharacterReferences));
+
+        switch (item.out()) {
+            case TalkItemOut.Fixed fixed -> {
+                entity.setOutputType(TalkItemEntity.OutputType.FIXED);
+                entity.setValue(createI18n(fixed.text()));
+            }
+            case TalkItemOut.Conditional conditional -> {
+                entity.setOutputType(TalkItemEntity.OutputType.CONDITIONAL);
+                entity.setValue(createI18n(conditional.defaultText()));
+                for (TalkItemOut.Conditional.Branch branch : conditional.branches()) {
+                    TalkItemBranchEntity branchEntity = new TalkItemBranchEntity();
+                    branchEntity.setId(UUID.randomUUID().toString());
+                    branchEntity.setTalkItem(entity);
+                    branchEntity.setOrder(branch.order());
+                    branchEntity.setValue(createI18n(branch.text()));
+                    branchEntity.setCondition(conditionAdapter.create(branch.condition()));
+                    entity.getBranches().add(branchEntity);
+                }
+            }
+        }
+
         talkItemRepository.save(entity);
     }
 
@@ -135,19 +157,6 @@ public class TemplateInitDataTalkAdapter {
 
     private I18nEntity createI18n(I18n model) {
         return i18nRepository.save(I18nEntity.fromModel(model));
-    }
-
-    /**
-     * Extracts the I18n from a TalkOut for persistence.
-     * For Fixed values, returns the text directly.
-     * For Conditional values, returns the default text (conditions are not persisted yet).
-     */
-    private I18nEntity createI18nFromTalkOut(TalkItemOut talkItemOut) {
-        I18n i18n = switch (talkItemOut) {
-            case TalkItemOut.Fixed fixed -> fixed.text();
-            case TalkItemOut.Conditional conditional -> conditional.defaultText();
-        };
-        return createI18n(i18n);
     }
 
 }

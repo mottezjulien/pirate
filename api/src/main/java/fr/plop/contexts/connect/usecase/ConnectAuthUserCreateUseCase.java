@@ -1,20 +1,20 @@
 package fr.plop.contexts.connect.usecase;
 
 import fr.plop.contexts.connect.domain.ConnectAuthUser;
-import fr.plop.contexts.connect.domain.DeviceUserConnect;
+import fr.plop.contexts.connect.domain.ConnectUserDevice;
 
 import java.util.Optional;
 
 public class ConnectAuthUserCreateUseCase {
 
     public interface Port {
-        Optional<DeviceUserConnect> findByDeviceId(String deviceId);
+        Optional<ConnectUserDevice> findByDeviceId(String deviceId);
 
-        ConnectAuthUser createAuth(DeviceUserConnect connect);
+        ConnectAuthUser createAuth(ConnectUserDevice connect);
 
-        DeviceUserConnect createDeviceConnect(String deviceId);
+        ConnectUserDevice createDeviceConnect(String deviceId);
 
-        Optional<ConnectAuthUser> lastAuth(DeviceUserConnect.Id id);
+        Optional<ConnectAuthUser> lastAuth(ConnectUserDevice.Id id);
     }
 
     private final Port port;
@@ -24,15 +24,15 @@ public class ConnectAuthUserCreateUseCase {
     }
 
     public ConnectAuthUser byDeviceId(String deviceId) {
-        Optional<DeviceUserConnect> optDevice = port.findByDeviceId(deviceId);
+        Optional<ConnectUserDevice> optDevice = port.findByDeviceId(deviceId);
         return optDevice
                 .map(this::byKnownDevice)
                 .orElseGet(() -> byUnknownDevice(deviceId));
     }
-    private ConnectAuthUser byKnownDevice(DeviceUserConnect deviceUserConnect) {
-        return port.lastAuth(deviceUserConnect.id())
+    private ConnectAuthUser byKnownDevice(ConnectUserDevice connectUserDevice) {
+        return port.lastAuth(connectUserDevice.id())
                 .filter(ConnectAuthUser::isValid)
-                .orElseGet(() -> port.createAuth(deviceUserConnect));
+                .orElseGet(() -> port.createAuth(connectUserDevice));
     }
 
     private ConnectAuthUser byUnknownDevice(String deviceId) {

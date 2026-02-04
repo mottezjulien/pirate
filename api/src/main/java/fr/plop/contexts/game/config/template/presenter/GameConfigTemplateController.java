@@ -25,6 +25,7 @@ public class GameConfigTemplateController {
     }
 
 
+    /*
     @GetMapping({"/{templateId}"})
     public GameConfigTemplateDetailsResponseDTO findOne(
             @RequestHeader("Authorization") String rawUserToken,
@@ -35,11 +36,11 @@ public class GameConfigTemplateController {
                     .map(GameConfigTemplateDetailsResponseDTO::fromEntity)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         } catch (ConnectException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.status().name(), e);
         }
-    }
+    }*/
 
-    @GetMapping({"/search"})
+   /*@GetMapping({"/search"})
     public Stream<GameConfigTemplateResponseDTO> search(
             @RequestHeader("Authorization") String rawUserToken,
             @RequestParam ("code") String code
@@ -50,7 +51,7 @@ public class GameConfigTemplateController {
                     .stream()
                     .map(GameConfigTemplateResponseDTO::fromEntity);
         } catch (ConnectException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.status().name(), e);
         }
     }
 
@@ -59,8 +60,8 @@ public class GameConfigTemplateController {
             return new GameConfigTemplateResponseDTO(entity.getId(), entity.getLabel(), entity.getLevel(), entity.getDepartureAddress());
         }
 
-    }
-
+    }*/
+/*
     public record GameConfigTemplateDetailsResponseDTO(String id, String label, int level, String description, Location departure) {
         public record Location(String address, Point bottomLeft, Point topRight) {
             public record Point(double lat, double lng) {
@@ -75,7 +76,7 @@ public class GameConfigTemplateController {
         public static GameConfigTemplateDetailsResponseDTO fromEntity(TemplateEntity entity) {
             return new GameConfigTemplateDetailsResponseDTO(entity.getId(), entity.getLabel(), entity.getLevel(), entity.getDescription(), Location.fromEntity(entity));
         }
-    }
+    }*/
 
 }
 

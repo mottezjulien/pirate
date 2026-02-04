@@ -1,8 +1,6 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
-import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
-import fr.plop.contexts.game.config.talk.domain.TalkItemOut;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -28,11 +26,10 @@ public class TalkItemInputTextEntity extends TalkItemEntity {
     }
 
     @Override
-    public TalkItem toModel() {
+    protected TalkItemNext toModelNext() {
         TalkItemNext.InputText.Type type = TalkItemNext.InputText.Type.valueOf(inputTextType);
         Optional<Integer> optSize = Optional.ofNullable(inputTextSize);
-        TalkItemNext.InputText inputText = new TalkItemNext.InputText(type, optSize);
-        return new TalkItem(new TalkItem.Id(id), TalkItemOut.fixed(value.toModel()), characterReference.toModel(), inputText);
+        return new TalkItemNext.InputText(type, optSize);
     }
 
 }

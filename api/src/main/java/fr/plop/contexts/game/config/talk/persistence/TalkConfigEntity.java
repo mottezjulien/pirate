@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_TALK_CONFIG")
+@Table(name = "LO_TALK_CONFIG")
 public class TalkConfigEntity {
 
     @Id

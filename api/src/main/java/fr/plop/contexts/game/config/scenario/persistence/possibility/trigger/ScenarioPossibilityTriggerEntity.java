@@ -3,23 +3,21 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.trigger;
 
 import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.condition.persistence.ConditionEntity;
-import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import java.util.*;
 
 @Entity
-@Table(name = "TEST2_SCENARIO_POSSIBILITY_TRIGGER")
+@Table(name = "LO_SCENARIO_POSSIBILITY_TRIGGER")
 public class ScenarioPossibilityTriggerEntity {
 
     private static final String KEY_PRIMARY = "PRIMARY";
@@ -33,17 +31,17 @@ public class ScenarioPossibilityTriggerEntity {
     private static final String KEY_TALK_INPUT_VALUE = "TALK_INPUT_VALUE";
     private static final String KEY_TALK_INPUT_MATCH_TYPE = "TALK_INPUT_MATCH_TYPE";
     private static final String VALUE_TALK_TYPE_OPTION_SELECT = "OPTION_SELECT";
-    private static final String VALUE_TALK_TYPE_END = "END";
+    private static final String VALUE_TALK_TYPE_TALK = "TALK";
     private static final String VALUE_TALK_TYPE_INPUT_TEXT = "INPUT_TEXT";
-    private static final String KEY_CONFIRM_ID = "CONFIRM_ID";
-    private static final String KEY_CONFIRM_EXPECTED_ANSWER = "EXPECTED_ANSWER";
+    //private static final String VALUE_TALK_TYPE_CONFIRM  = "CONFIRM ";
+    private static final String KEY_MESSAGE_CONFIRM_EXPECTED_ANSWER = "EXPECTED_ANSWER";
     private static final String KEY_LOGICAL_TYPE = "LOGICAL_TYPE";
     private static final String VALUE_LOGICAL_AND = "AND";
     private static final String VALUE_LOGICAL_OR = "OR";
     private static final String VALUE_LOGICAL_NOT = "NOT";
 
     public enum Type {
-        TIME, SPACE, STEP, TALK, OBJECT, CONFIRM, LOGICAL
+        TIME, SPACE, STEP, TALK, IMAGE, INVENTORY, MESSAGE, LOGICAL
     }
 
     @Id
@@ -53,20 +51,13 @@ public class ScenarioPossibilityTriggerEntity {
     private Type type;
 
     @ElementCollection
-    @CollectionTable(name="TEST2_SCENARIO_POSSIBILITY_TRIGGER_VALUES", joinColumns=@JoinColumn(name="trigger_id"))
+    @CollectionTable(name="LO_SCENARIO_POSSIBILITY_TRIGGER_VALUES", joinColumns=@JoinColumn(name="trigger_id"))
     @MapKeyColumn(name="map_key")
     @Column(name="map_value")
     private final Map<String, String> keyValues = new HashMap<>();
 
-    /*@ManyToOne
-    @JoinColumn(name = "parent_id")
-    private ScenarioPossibilityTriggerEntity parent;
-
-    @OneToMany(mappedBy = "parent", orphanRemoval = true)
-    private List<ScenarioPossibilityTriggerEntity> children = new ArrayList<>();
-     */
     @ManyToMany
-    @JoinTable(name = "TEST2_RELATION_SCENARIO_POSSIBILITY_TRIGGER_SUB",
+    @JoinTable(name = "LO_RELATION_SCENARIO_POSSIBILITY_TRIGGER_SUB",
             joinColumns = @JoinColumn(name = "trigger_id"),
             inverseJoinColumns = @JoinColumn(name = "sub_trigger_id"))
     private Set<ScenarioPossibilityTriggerEntity> subs = new HashSet<>();
@@ -99,7 +90,7 @@ public class ScenarioPossibilityTriggerEntity {
         final PossibilityTrigger.Id id = new PossibilityTrigger.Id(this.id);
         return switch (type) {
             case TIME -> {
-                GameSessionTimeUnit timeUnit = GameSessionTimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_MINUTES)));
+                GameInstanceTimeUnit timeUnit = GameInstanceTimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_MINUTES)));
                 if(keyValues.containsKey(KEY_OTHER_POSSIBILITY)) {
                     yield new PossibilityTrigger.RelativeTimeAfterOtherPossibility(id,
                             new Possibility.Id(keyValues.get(KEY_OTHER_POSSIBILITY)), timeUnit);
@@ -125,7 +116,7 @@ public class ScenarioPossibilityTriggerEntity {
                         TalkItemNext.Options.Option.Id optionId = new TalkItemNext.Options.Option.Id(keyValues.get(KEY_TALK_OPTION));
                         yield new PossibilityTrigger.TalkOptionSelect(id, talkItemId, optionId);
                     }
-                    case VALUE_TALK_TYPE_END -> new PossibilityTrigger.TalkEnd(id, talkItemId);
+                    case VALUE_TALK_TYPE_TALK -> new PossibilityTrigger.Talk(id, talkItemId);
                     case VALUE_TALK_TYPE_INPUT_TEXT -> {
                         String inputValue = keyValues.get(KEY_TALK_INPUT_VALUE);
                         PossibilityTrigger.TalkInputText.MatchType matchType = PossibilityTrigger.TalkInputText.MatchType.valueOf(keyValues.get(KEY_TALK_INPUT_MATCH_TYPE));
@@ -134,16 +125,22 @@ public class ScenarioPossibilityTriggerEntity {
                     default -> throw new IllegalStateException("Unexpected value: " + keyValues.get(KEY_TALK_TYPE));
                 };
             }
-            case OBJECT -> {
+            case IMAGE -> {
                 ImageObject.Id objectId = new ImageObject.Id(keyValues.get(KEY_PRIMARY));
                 yield new PossibilityTrigger.ImageObjectClick(id, objectId);
             }
-            case CONFIRM -> {
-                Consequence.Id confirmId = new Consequence.Id(keyValues.get(KEY_CONFIRM_ID));
-                boolean expectedAnswer = Boolean.parseBoolean(keyValues.get(KEY_CONFIRM_EXPECTED_ANSWER));
-                yield new PossibilityTrigger.ConfirmAnswer(id, confirmId, expectedAnswer);
+            case INVENTORY -> {
+                GameConfigInventoryItem.Id itemId = new GameConfigInventoryItem.Id(keyValues.get(KEY_PRIMARY));
+                yield new PossibilityTrigger.InventoryItemAction(id, itemId);
+            }
+            case MESSAGE -> {
+                MessageToken token = new MessageToken(keyValues.get(KEY_PRIMARY));
+                boolean expectedAnswer = Boolean.parseBoolean(keyValues.get(KEY_MESSAGE_CONFIRM_EXPECTED_ANSWER));
+                yield new PossibilityTrigger.MessageConfirmAnswer(id, token, expectedAnswer);
             }
             case LOGICAL -> {
+                System.out.println("DEBUG LOGICAL trigger " + this.id + " status=" + keyValues.get(KEY_LOGICAL_TYPE) + " subs.size=" + subs.size());
+                subs.forEach(sub -> System.out.println("  DEBUG sub: " + sub.getId() + " status=" + sub.getType() + " keyValues=" + sub.getKeyValues()));
                 List<PossibilityTrigger> childTriggers = subs.stream()
                         .map(ScenarioPossibilityTriggerEntity::toModel)
                         .toList();
@@ -151,7 +148,7 @@ public class ScenarioPossibilityTriggerEntity {
                     case VALUE_LOGICAL_AND -> new PossibilityTrigger.And(id, childTriggers);
                     case VALUE_LOGICAL_OR -> new PossibilityTrigger.Or(id, childTriggers);
                     case VALUE_LOGICAL_NOT -> new PossibilityTrigger.Not(id, childTriggers.getFirst());
-                    default -> throw new IllegalStateException("Unexpected logical type: " + keyValues.get(KEY_LOGICAL_TYPE));
+                    default -> throw new IllegalStateException("Unexpected logical status: " + keyValues.get(KEY_LOGICAL_TYPE));
                 };
             }
         };
@@ -190,10 +187,15 @@ public class ScenarioPossibilityTriggerEntity {
                 entity.getKeyValues().put(KEY_PRIMARY, selectTalkOption.talkId().value());
                 entity.getKeyValues().put(KEY_TALK_OPTION, selectTalkOption.optionId().value());
             }
-            case PossibilityTrigger.TalkEnd talkEnd -> {
+            case PossibilityTrigger.Talk talk -> {
                 entity.setType(Type.TALK);
-                entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_END);
-                entity.getKeyValues().put(KEY_PRIMARY, talkEnd.talkId().value());
+                entity.getKeyValues().put(KEY_PRIMARY, talk.talkId().value());
+                entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_TALK);
+            }
+            case PossibilityTrigger.MessageConfirmAnswer confirm -> {
+                entity.setType(Type.MESSAGE);
+                entity.getKeyValues().put(KEY_PRIMARY, confirm.token().value());
+                entity.getKeyValues().put(KEY_MESSAGE_CONFIRM_EXPECTED_ANSWER, Boolean.toString(confirm.expectedAnswer()));
             }
             case PossibilityTrigger.TalkInputText talkInputText -> {
                 entity.setType(Type.TALK);
@@ -203,13 +205,12 @@ public class ScenarioPossibilityTriggerEntity {
                 entity.getKeyValues().put(KEY_TALK_INPUT_MATCH_TYPE, talkInputText.matchType().name());
             }
             case PossibilityTrigger.ImageObjectClick imageObjectClick -> {
-                entity.setType(Type.OBJECT);
+                entity.setType(Type.IMAGE);
                 entity.getKeyValues().put(KEY_PRIMARY, imageObjectClick.objectId().value());
             }
-            case PossibilityTrigger.ConfirmAnswer confirmAnswer -> {
-                entity.setType(Type.CONFIRM);
-                entity.getKeyValues().put(KEY_CONFIRM_ID, confirmAnswer.confirmId().value());
-                entity.getKeyValues().put(KEY_CONFIRM_EXPECTED_ANSWER, Boolean.toString(confirmAnswer.expectedAnswer()));
+            case PossibilityTrigger.InventoryItemAction inventoryItemAction -> {
+                entity.setType(Type.INVENTORY);
+                entity.getKeyValues().put(KEY_PRIMARY, inventoryItemAction.itemId().value());
             }
             case PossibilityTrigger.And and -> {
                 entity.setType(Type.LOGICAL);

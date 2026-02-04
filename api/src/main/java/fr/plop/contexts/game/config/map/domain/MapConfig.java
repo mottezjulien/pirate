@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.map.domain;
 
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public record MapConfig(Id id, List<MapItem> items) {
         this(new Id(), items);
     }
 
-    public Stream<MapItem> select(GameSessionSituation situation) {
+    public Stream<MapItem> select(GameInstanceSituation situation) {
         return items.stream()
                 .filter(item -> item.optCondition().isEmpty() || item.optCondition().get().accept(situation).toBoolean());
     }

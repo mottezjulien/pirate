@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:upgrader/upgrader.dart';
 
 import 'generic/style/style.dart';
 
@@ -22,7 +23,9 @@ class App extends StatelessWidget {
       themeMode: Style.themes.default_.mode,
       theme: Style.themes.default_.value(Brightness.light),
       darkTheme: Style.themes.default_.value(Brightness.dark),
-
+      builder: (context, child) {
+        return UpgradeAlert(child: child);
+      },
       routerConfig: router);
   }
 

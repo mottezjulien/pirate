@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.talk.domain;
 
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
@@ -22,6 +22,11 @@ public record TalkItem(Id id, TalkItemOut out, TalkCharacter.Reference character
         return id().equals(otherId);
     }
 
+
+    public TalkCharacter.Id characterId() {
+        return character().id();
+    }
+
     public TalkCharacter character() {
         return characterReference().character();
     }
@@ -33,7 +38,7 @@ public record TalkItem(Id id, TalkItemOut out, TalkCharacter.Reference character
      * @param situation the current game session situation
      * @return a resolved TalkItem ready for display
      */
-    public I18n resolve(GameSessionSituation situation) {
+    public I18n resolve(GameInstanceSituation situation) {
         return out.resolve(situation);
     }
 
@@ -61,36 +66,36 @@ public record TalkItem(Id id, TalkItemOut out, TalkCharacter.Reference character
     }
 
     /**
-     * Gets the next item ID if this is a Continue type.
-     * @throws IllegalStateException if not a Continue type
+     * Gets the next item ID if this is a Continue status.
+     * @throws IllegalStateException if not a Continue status
      */
     public Id nextId() {
         if (next instanceof TalkItemNext.Continue(Id nextId)) {
             return nextId;
         }
-        throw new IllegalStateException("TalkItem is not a Continue type");
+        throw new IllegalStateException("TalkItem is not a Continue status");
     }
 
     /**
-     * Gets the options if this is an Options type.
-     * @throws IllegalStateException if not an Options type
+     * Gets the options if this is an Options status.
+     * @throws IllegalStateException if not an Options status
      */
     public TalkItemNext.Options options() {
         if (next instanceof TalkItemNext.Options opts) {
             return opts;
         }
-        throw new IllegalStateException("TalkItem is not an Options type");
+        throw new IllegalStateException("TalkItem is not an Options status");
     }
 
     /**
-     * Creates a new TalkItem with an updated nextId (for Continue type).
+     * Creates a new TalkItem with an updated nextId (for Continue status).
      */
     public TalkItem withNextId(Id newNextId) {
         return new TalkItem(id, out, characterReference, new TalkItemNext.Continue(newNextId));
     }
 
     /**
-     * Creates a new TalkItem with updated options (for Options type).
+     * Creates a new TalkItem with updated options (for Options status).
      */
     public TalkItem withOptions(List<TalkItemNext.Options.Option> newOptions) {
         return new TalkItem(id, out, characterReference, new TalkItemNext.Options(newOptions));

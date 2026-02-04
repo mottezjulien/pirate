@@ -25,8 +25,10 @@ public record InventoryConfig(Id id, List<GameConfigInventoryItem> items, List<I
         return mergedRules.stream().anyMatch(rule -> rule.canMerged(itemId));
     }
 
-    public boolean isMergeable(GameConfigInventoryItem.Id oneId, GameConfigInventoryItem.Id otherId) {
-        return mergedRules.stream().anyMatch(rule -> rule.canMerged(oneId, otherId));
+    public Optional<InventoryMergedRule> mergedRule(GameConfigInventoryItem.Id oneId, GameConfigInventoryItem.Id otherId) {
+        return mergedRules.stream()
+                .filter(rule -> rule.canMerged(oneId, otherId))
+                .findFirst();
     }
 
 }

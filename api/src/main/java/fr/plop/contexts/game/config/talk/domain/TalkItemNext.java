@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.talk.domain;
 
 import fr.plop.contexts.game.config.condition.Condition;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
@@ -72,7 +72,7 @@ public sealed interface TalkItemNext permits TalkItemNext.Empty, TalkItemNext.Co
             /**
              * Checks if this option should be displayed based on its condition and the current situation.
              */
-            public boolean accept(GameSessionSituation situation) {
+            public boolean accept(GameInstanceSituation situation) {
                 return optCondition.map(condition -> condition.accept(situation).toBoolean())
                         .orElse(true);
             }

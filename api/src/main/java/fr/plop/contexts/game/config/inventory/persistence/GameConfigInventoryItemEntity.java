@@ -2,15 +2,15 @@ package fr.plop.contexts.game.config.inventory.persistence;
 
 
 import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @Entity
-@Table(name = "TEST2_CONFIG_INVENTORY_ITEM")
+@Table(name = "LO_CONFIG_INVENTORY_ITEM")
 public class GameConfigInventoryItemEntity {
 
     @Id
@@ -35,9 +35,17 @@ public class GameConfigInventoryItemEntity {
     @JoinColumn(name = "config_id")
     private GameConfigInventoryEntity config;
 
-
     @Enumerated(EnumType.STRING)
     GameConfigInventoryItem.Type type;
+
+    @Column(name = "nullable_scenario_target_id")
+    private String nullableScenarioTargetId;
+
+    @Column(name = "init_value")
+    private int initValue = 0;
+
+    @Enumerated(EnumType.STRING)
+    private GameConfigInventoryItem.ActionType actionType;
 
     public String getId() {
         return id;
@@ -91,13 +99,25 @@ public class GameConfigInventoryItemEntity {
         this.config = config;
     }
 
-    public GameConfigInventoryItem toModel() {
+    public String getNullableScenarioTargetId() {
+        return nullableScenarioTargetId;
+    }
 
+    public void setNullableScenarioTargetId(String nullableScenarioTargetId) {
+        this.nullableScenarioTargetId = nullableScenarioTargetId;
+    }
+
+    public void setActionType(GameConfigInventoryItem.ActionType actionType) {
+        this.actionType = actionType;
+    }
+
+    public GameConfigInventoryItem toModel() {
+        Optional<ScenarioConfig.Target.Id> optTargetId = Optional.ofNullable(nullableScenarioTargetId)
+                .map(ScenarioConfig.Target.Id::new);
         return new GameConfigInventoryItem(new GameConfigInventoryItem.Id(id), label.toModel(),
                 new Image(imageType, imageValue),
-                 Optional.ofNullable(nullableDescription).map(I18nEntity::toModel), type,
-                Optional.empty(), List.of()); //TODO
-
+                Optional.ofNullable(nullableDescription).map(I18nEntity::toModel), type,
+                initValue, optTargetId, actionType);
     }
 
 }

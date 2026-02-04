@@ -1,9 +1,9 @@
 package fr.plop.contexts.game.config.scenario.persistence.possibility.consequence;
 
-import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ScenarioPossibilityConsequenceAbstractEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.consequence.entity.ConsequenceAbstractEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ScenarioPossibilityConsequenceRepository extends JpaRepository<ScenarioPossibilityConsequenceAbstractEntity, String> {
+public interface ScenarioPossibilityConsequenceRepository extends JpaRepository<ConsequenceAbstractEntity, String> {
 
 
 }

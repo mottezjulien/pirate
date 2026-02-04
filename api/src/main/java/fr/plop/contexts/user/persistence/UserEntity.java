@@ -1,6 +1,6 @@
 package fr.plop.contexts.user.persistence;
 
-import fr.plop.contexts.game.session.core.persistence.GamePlayerEntity;
+import fr.plop.contexts.game.instance.core.persistence.GamePlayerEntity;
 import fr.plop.contexts.user.User;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.Language;
@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_USER")
+@Table(name = "LO_USER")
 public class UserEntity {
 
     @Id

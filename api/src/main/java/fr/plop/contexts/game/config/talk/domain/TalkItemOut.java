@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.talk.domain;
 
 import fr.plop.contexts.game.config.condition.Condition;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.subs.i18n.domain.I18n;
 
 import java.util.Comparator;
@@ -19,14 +19,14 @@ public sealed interface TalkItemOut permits TalkItemOut.Conditional, TalkItemOut
      * @param situation the current game session situation
      * @return the resolved I18n text
      */
-    I18n resolve(GameSessionSituation situation);
+    I18n resolve(GameInstanceSituation situation);
 
     /**
      * Fixed value - always returns the same text.
      */
     record Fixed(I18n text) implements TalkItemOut {
         @Override
-        public I18n resolve(GameSessionSituation situation) {
+        public I18n resolve(GameInstanceSituation situation) {
             return text;
         }
     }
@@ -44,7 +44,7 @@ public sealed interface TalkItemOut permits TalkItemOut.Conditional, TalkItemOut
         public record Branch(int order, Condition condition, I18n text) {}
 
         @Override
-        public I18n resolve(GameSessionSituation situation) {
+        public I18n resolve(GameInstanceSituation situation) {
             return branches.stream()
                     .sorted(Comparator.comparingInt(Branch::order))
                     .filter(branch -> branch.condition().accept(situation).toBoolean())

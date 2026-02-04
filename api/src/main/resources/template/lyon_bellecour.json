@@ -1,0 +1,865 @@
+{
+  "code": "LYON_BELLECOUR",
+  "version": "1.0.0",
+  "label": "La Carte aux Tresors Oubliee",
+  "description": "Scenario de demonstration pour presenter les differentes possibilites de l'application Locked Out.",
+  "duration": 30,
+  "level": 1,
+  "board": {
+    "spaces": [
+      {
+        "ref": "BELLECOUR",
+        "label": "Place Bellecour",
+        "priority": "MEDIUM",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.75685821314044, "lng": 4.829412996001784 }, "topRight": { "lat": 45.75834025856722, "lng": 4.83419244823547 } }
+        ]
+      },
+      {
+        "ref": "ANTONIN_PONCET",
+        "label": "Place Antonin Poncet",
+        "priority": "MEDIUM",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.7560946941696, "lng": 4.832909387084399 }, "topRight": { "lat": 45.75671399069831, "lng": 4.834623920742834 } }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_STATUT",
+        "label": "Statue equestre de Louis XIV",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.757585937615076, "lng": 4.831648502957079 }, "topRight": { "lat": 45.757957246092154, "lng": 4.832716370145266 } }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_OFFICE",
+        "label": "Office de Tourisme - Cafe des Arts",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.756738956744925, "lng": 4.832156348590549 }, "topRight": { "lat": 45.75720249228079, "lng": 4.83350248735872 } }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_AIRE_JEUX",
+        "label": "Aire de Jeux - Librairie Ancienne",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.75705883259998, "lng": 4.830043297214081 }, "topRight": { "lat": 45.75740817420495, "lng": 4.831731278534452 } },
+          { "bottomLeft": { "lat": 45.75684710935075, "lng": 4.831109191036608 }, "topRight": { "lat": 45.75724938283746, "lng": 4.832357159248747 } }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_AIRE_JEUX_BIS",
+        "label": "Bureau du Libraire",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.757367017128125, "lng": 4.830385124020432 }, "topRight": { "lat": 45.75743157945151, "lng": 4.830577572505625 } }
+        ]
+      },
+      {
+        "ref": "VICTOR_HUGO_HAUT",
+        "label": "Musee d'art",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.756316052895464, "lng": 4.8309996130073625 }, "topRight": { "lat": 45.75676339755191, "lng": 4.831609751496101 } }
+        ]
+      },
+      {
+        "ref": "ANTONIN_PONCET_TRESOR",
+        "label": "Lieu du tresor",
+        "priority": "HIGH",
+        "rectangles": [
+          { "bottomLeft": { "lat": 45.756310844564865, "lng": 4.833682538368824 }, "topRight": { "lat": 45.75644371438857, "lng": 4.834070117547908 } }
+        ]
+      }
+    ]
+  },
+  "inventory": {
+    "items": [
+      {
+        "ref": "CARTE_1",
+        "label": { "FR": "Carte dechiree" },
+        "description": { "FR": "Premiere partie de la carte." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/carte_dechiree.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_2",
+        "label": { "FR": "Carte semi-complete" },
+        "description": { "FR": "Carte en partie complete menant au tresor." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/carte_semi_complete.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_3",
+        "label": { "FR": "Carte complete" },
+        "description": { "FR": "Carte complete menant au tresor." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/carte_complete.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_SOPHIE",
+        "label": { "FR": "Morceau carte Sophie" },
+        "description": { "FR": "Morceau obtenu aupres de Sophie." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/morceau_carte_sophie.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_EMILIE",
+        "label": { "FR": "Morceau carte Emilie" },
+        "description": { "FR": "Morceau obtenu aupres d'Emilie." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/morceau_carte_emilie.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "NOTE_1",
+        "label": { "FR": "Note du bureau" },
+        "description": { "FR": "Note recuperee dans le bureau de la librairie." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/note_bureau.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "NOTE_2",
+        "label": { "FR": "Note de l'etagere" },
+        "description": { "FR": "Note recuperee dans l'etagere du bureau de la librairie." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/note_etagere.png" },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "PELLE",
+        "label": { "FR": "Pelle" },
+        "description": { "FR": "Pelle utilisee pour creuser le tresor." },
+        "image": { "type": "ASSET", "value": "assets/first_demo/inventory/pelle.png" },
+        "type": "UNIQUE",
+        "actionType": "EQUIPPABLE"
+      }
+    ],
+    "mergeRules": [
+      { "items": ["CARTE_1", "CARTE_SOPHIE"], "result": "CARTE_2" },
+      { "items": ["CARTE_SOPHIE", "CARTE_1"], "result": "CARTE_2" },
+      { "items": ["CARTE_1", "CARTE_EMILIE"], "result": "CARTE_2" },
+      { "items": ["CARTE_EMILIE", "CARTE_1"], "result": "CARTE_2" },
+      { "items": ["CARTE_2", "CARTE_SOPHIE"], "result": "CARTE_3" },
+      { "items": ["CARTE_SOPHIE", "CARTE_2"], "result": "CARTE_3" },
+      { "items": ["CARTE_2", "CARTE_EMILIE"], "result": "CARTE_3" },
+      { "items": ["CARTE_EMILIE", "CARTE_2"], "result": "CARTE_3" }
+    ]
+  },
+  "maps": [
+    {
+      "label": "Place Bellecour sud",
+      "priority": "HIGH",
+      "image": { "type": "ASSET", "value": "assets/first_demo/map/bellecour_principale.png" },
+      "objects": [
+        {
+          "position": { "top": 0.15, "left": 0.5 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_marcel.png" }
+        },
+        {
+          "position": { "top": 0.8, "left": 0.5 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_musee.png" },
+          "condition": { "type": "INSIDESPACE", "metadata": { "spaceId": "VICTOR_HUGO_HAUT" } }
+        }
+      ]
+    },
+    {
+      "label": "Cafe des Arts",
+      "priority": "HIGH",
+      "image": { "type": "ASSET", "value": "assets/first_demo/map/cafe_des_arts.png" },
+      "objects": [
+        {
+          "position": { "top": 0.6, "left": 0.25 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_sophie.png" }
+        },
+        {
+          "position": { "top": 0.6, "left": 0.75 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_victor.png" }
+        }
+      ]
+    },
+    {
+      "label": "Librairie du Vieux Lyon",
+      "priority": "HIGH",
+      "image": { "type": "ASSET", "value": "assets/first_demo/map/librairie.png" },
+      "objects": [
+        {
+          "position": { "top": 0.8, "left": 0.45 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_emilie.png" }
+        },
+        {
+          "position": { "top": 0.35, "left": 0.2 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_bureau.png" },
+          "condition": { "type": "INSIDESPACE", "metadata": { "spaceId": "BELLECOUR_AIRE_JEUX_BIS" } }
+        },
+        {
+          "position": { "top": 0.25, "left": 0.1 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_etagere.png" },
+          "condition": { "type": "INSIDESPACE", "metadata": { "spaceId": "BELLECOUR_AIRE_JEUX_BIS" } }
+        },
+        {
+          "position": { "top": 0.5, "left": 0.1 },
+          "image": { "type": "ASSET", "value": "assets/first_demo/map/obj_coffre.png" },
+          "condition": { "type": "INSIDESPACE", "metadata": { "spaceId": "BELLECOUR_AIRE_JEUX_BIS" } }
+        }
+      ]
+    },
+    {
+      "label": "Eglise Saint-Antoine",
+      "priority": "HIGH",
+      "image": { "type": "ASSET", "value": "assets/first_demo/map/eglise_antonin_poncet.png" },
+      "objects": []
+    }
+  ],
+  "talk": {
+    "characters": [
+      {
+        "ref": "PNJ_MARCEL",
+        "images": [
+          { "ref": "MARCEL_HAPPY", "value": { "type": "ASSET", "value": "assets/first_demo/talk/marcel_happy.png" } },
+          { "ref": "MARCEL_DEFAULT", "value": { "type": "ASSET", "value": "assets/first_demo/talk/marcel_default.png" } }
+        ]
+      },
+      {
+        "ref": "PNJ_SOPHIE",
+        "images": [
+          { "ref": "SOPHIE_DEFAULT", "value": { "type": "ASSET", "value": "assets/first_demo/talk/sophie_default.png" } }
+        ]
+      },
+      {
+        "ref": "PNJ_EMILIE",
+        "images": [
+          { "ref": "EMILIE_DEFAULT", "value": { "type": "ASSET", "value": "assets/first_demo/talk/emilie_default.png" } }
+        ]
+      },
+      {
+        "ref": "PNJ_VICTOR",
+        "images": [
+          { "ref": "VICTOR_DEFAULT", "value": { "type": "ASSET", "value": "assets/first_demo/talk/victor_default.png" } }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_MARCEL_ROOT_1",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_HAPPY" },
+        "value": { "FR": "Bonjour l'ami. Alors, c'est aujourd'hui le grand jour, cette fois, tu trouveras le tresor, tu reussiras la ou j'ai echoue." },
+        "next": "TALK_MARCEL_ROOT_1_2"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_2",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_HAPPY" },
+        "value": { "FR": "Comme prevu, voici ma partie de la carte du tresor." },
+        "next": "TALK_MARCEL_ROOT_1_3"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_3",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Sophie et Emilie possedent les autres parties de la carte. Tu devrais leur parler afin de completer la carte." },
+        "next": "TALK_MARCEL_ROOT_1_4"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_4",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Sophie est une artiste, tu la trouveras en train de flaner au cafe des arts." },
+        "next": "TALK_MARCEL_ROOT_1_5"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_5",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Emilie se trouve dans sa librairie." },
+        "options": [
+          { "ref": "OPT_MARCEL_1_1", "value": { "FR": "Merci Marcel. J'aurai des questions a te poser." }, "next": "TALK_MARCEL_ROOT_2" },
+          { "ref": "OPT_MARCEL_1_2", "value": { "FR": "Merci Marcel. C'est parti pour l'aventure." }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_2",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_HAPPY" },
+        "value": { "FR": "Oui l'ami, que puis-je faire pour toi ?" },
+        "options": [
+          {
+            "ref": "OPT_MARCEL_2_1",
+            "value": { "FR": "Rappelle-moi ce que je dois faire pour avoir la carte complete ?" },
+            "next": "TALK_MARCEL_1",
+            "condition": { "type": "NOT", "children": [{ "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_3" } }] }
+          },
+          {
+            "ref": "OPT_MARCEL_2_2",
+            "value": { "FR": "J'ai la carte complete, que dois-je faire maintenant ?" },
+            "next": "TALK_MARCEL_1_BIS",
+            "condition": { "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_3" } }
+          },
+          { "ref": "OPT_MARCEL_2_3", "value": { "FR": "Ou puis-je trouver Sophie ?" }, "next": "TALK_MARCEL_2" },
+          { "ref": "OPT_MARCEL_2_4", "value": { "FR": "Ou puis-je trouver Emilie ?" }, "next": "TALK_MARCEL_3" },
+          {
+            "ref": "OPT_MARCEL_2_5",
+            "value": { "FR": "Est-ce que tu fais confiance a Victor ?" },
+            "next": "TALK_MARCEL_4",
+            "condition": { "type": "INSTEP", "metadata": { "stepId": "MISSION_4" } }
+          },
+          { "ref": "OPT_MARCEL_2_6", "value": { "FR": "Je n'ai plus de question." }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_1",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Tu dois parler avec Sophie et Emilie, afin de leur demander leur partie de la carte au tresor. Des que tu l'auras recuperee, tu pourras fusionner les cartes, afin de trouver l'emplacement du tresor." },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_1_BIS",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Bien joue, tu y es presque. Regarde la carte, elle doit t'indiquer ou se trouve le tresor. Il suffira d'utiliser ta pelle a l'endroit indique afin de creuser pour trouver le tresor." },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_2",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Sophie est toujours au cafe des arts. Cela se trouve a cote, au sud-est de ma position." },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_3",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "La librairie d'Emilie est juste au sud-ouest de ma position, c'est a cote." },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_4",
+        "character": { "character": "PNJ_MARCEL", "image": "MARCEL_DEFAULT" },
+        "value": { "FR": "Victor ? Non, je ne lui fais pas confiance. Il essaiera de recuperer le tresor par tous les moyens, mefie-toi de lui." },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_SOPHIE_ROOT_1",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Oui ?" },
+        "options": [
+          {
+            "ref": "OPT_SOPHIE_1",
+            "value": { "FR": "Je cherche Sophie, de la part de Marcel, c'est bien vous ?" },
+            "next": "TALK_SOPHIE_UNKNOWN",
+            "condition": { "type": "NOT", "children": [{ "type": "TALKWITH", "metadata": { "characterId": "PNJ_SOPHIE" } }] }
+          },
+          {
+            "ref": "OPT_SOPHIE_2",
+            "value": { "FR": "Vous pouvez me parler un peu de vous ?" },
+            "next": "TALK_SOPHIE_WHO",
+            "condition": { "type": "TALKWITH", "metadata": { "characterId": "PNJ_SOPHIE" } }
+          },
+          {
+            "ref": "OPT_SOPHIE_3",
+            "value": { "FR": "Je recherche l'autre partie de la carte au tresor, Marcel m'a dit que vous en aviez une. Pourriez vous me la donner ?" },
+            "next": "TALK_SOPHIE_CARTE",
+            "condition": {
+              "type": "AND",
+              "children": [
+                { "type": "TALKWITH", "metadata": { "characterId": "PNJ_SOPHIE" } },
+                { "type": "NOT", "children": [{ "type": "INSTEP", "metadata": { "stepId": "MISSION_2" } }] }
+              ]
+            }
+          },
+          {
+            "ref": "OPT_SOPHIE_4",
+            "value": { "FR": "Vous pouvez me redire ce que je dois pour vous aider ?" },
+            "next": "TALK_SOPHIE_WHAT_CARTE",
+            "condition": { "type": "INSTEP", "metadata": { "stepId": "MISSION_2" } }
+          },
+          {
+            "ref": "OPT_SOPHIE_5",
+            "value": { "FR": "J'ai le nom du peintre que vous recherchez" },
+            "next": "TALK_SOPHIE_WHO_CARTE",
+            "condition": { "type": "INSTEP", "metadata": { "stepId": "MISSION_2" } }
+          },
+          { "ref": "OPT_SOPHIE_6", "value": { "FR": "Non rien" }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_SOPHIE_UNKNOWN",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Oui, c'est moi, Sophie, la fameuse peintre du quartier, comment je peux vous aider ?" },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_WHO",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Vous devez connaitre mes peintures, le celebre Canard a tete rouge et a pattes bleues, par exemple. J'adore peindre, mais qu'il est dur de trouver l'inspiration ..." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_CARTE",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Oui, j'ai une partie de la carte, mais je ne vous la donnerai pas comme cela. Pourriez vous faire quelque chose pour moi en echange ?" },
+        "options": [
+          { "ref": "OPT_SOPHIE_CARTE_1", "value": { "FR": "Oui, comment je peux vous aider ?" }, "next": "TALK_SOPHIE_CARTE_2" },
+          { "ref": "OPT_SOPHIE_CARTE_2", "value": { "FR": "Non merci" }, "next": "TALK_SOPHIE_ROOT_1" }
+        ]
+      },
+      {
+        "ref": "TALK_SOPHIE_CARTE_2",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Je cherche le nom d'un peintre, mais je n'arrive pas a trouver le nom. Pourriez vous aller au musee et chercher le nom du peintre du tableau Chat a tete verte et a pattes rouges, svp ? Il se trouve au premier ou au deuxieme etage du musee, je ne sais plus ..." },
+        "options": [
+          { "ref": "OPT_SOPHIE_CARTE_ACCEPT", "value": { "FR": "Oui, je suis pret a faire ca." }, "next": "TALK_SOPHIE_CARTE_ACCEPT" },
+          { "ref": "OPT_SOPHIE_CARTE_REFUSE", "value": { "FR": "Non merci" }, "next": "TALK_SOPHIE_ROOT_1" }
+        ]
+      },
+      {
+        "ref": "TALK_SOPHIE_CARTE_ACCEPT",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Tres bien, je vous laisse aller au musee et revenez me voir quand vous aurez le nom de l'artiste." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_WHAT_CARTE",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Rhaa, je vous ai deja explique ... Je cherche le nom d'un peintre du tableau Chat a tete verte et a pattes rouges au musee. J'adore ce tableau et j'aimerai rencontrer cet artiste afin de m'y inspirer." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_WHO_CARTE",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Tres bien, pouvez vous me dire son nom ?" },
+        "inputText": { "type": "ALPHANUMERIC", "size": 20 }
+      },
+      {
+        "ref": "TALK_SOPHIE_CODE_SUCCESS",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Oui, c'est Golu qui a peint ce chef-oeuvre ! Elle est belle cette oeuvre, hein ? c'est de moi !! Et oui, Sophie Golu. c'est moi ! Allez, merci pour ce bon moment. Comme promis, voici la partie de la carte." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_CODE_ALMOST",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Hmm, je connais cet artiste, tres grande artiste, mais je ne crois pas que cela soit elle qui a peint Chat a tete verte et a pattes rouges." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_SOPHIE_CODE_FAIL",
+        "character": { "character": "PNJ_SOPHIE", "image": "SOPHIE_DEFAULT" },
+        "value": { "FR": "Non, je ne connais pas cet artiste, je ne pense pas que c'est un artiste qui expose au musee." },
+        "next": "TALK_SOPHIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_EMILIE_ROOT_1",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "Oui, que puis je pour vous ?" },
+        "options": [
+          {
+            "ref": "OPT_EMILIE_1",
+            "value": { "FR": "Etes vous Emilie, la libraire ?" },
+            "next": "TALK_EMILIE_UNKNOWN",
+            "condition": { "type": "NOT", "children": [{ "type": "TALKWITH", "metadata": { "characterId": "PNJ_EMILIE" } }] }
+          },
+          {
+            "ref": "OPT_EMILIE_2",
+            "value": { "FR": "Vous pouvez me parler un peu de vous ?" },
+            "next": "TALK_EMILIE_WHO",
+            "condition": { "type": "TALKWITH", "metadata": { "characterId": "PNJ_EMILIE" } }
+          },
+          {
+            "ref": "OPT_EMILIE_3",
+            "value": { "FR": "Marcel m'a prevenu que vous aviez une partie de la carte au tresor. Pourriez vous me la donner, svp ?" },
+            "next": "TALK_EMILIE_CARTE",
+            "condition": {
+              "type": "AND",
+              "children": [
+                { "type": "TALKWITH", "metadata": { "characterId": "PNJ_EMILIE" } },
+                { "type": "NOT", "children": [{ "type": "INSTEP", "metadata": { "stepId": "MISSION_3" } }] }
+              ]
+            }
+          },
+          {
+            "ref": "OPT_EMILIE_4",
+            "value": { "FR": "Comment je peux recuperer la carte deja ?" },
+            "next": "TALK_EMILIE_WHAT_CARTE",
+            "condition": { "type": "INSTEP", "metadata": { "stepId": "MISSION_3" } }
+          },
+          { "ref": "OPT_EMILIE_5", "value": { "FR": "Je n'ai plus de question" }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_EMILIE_UNKNOWN",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "Oui, je suis bien Emilie la libraire, comment je peux vous aider ?" },
+        "next": "TALK_EMILIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_EMILIE_WHO",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "Il n'y a pas grand chose a dire, je suis la libraire du quartier. N'hesitez a me demander un conseil sur un livre." },
+        "next": "TALK_EMILIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_EMILIE_CARTE",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "Je vous le donnerai avec plaisir. Malheureusement, je l'ai mis dans mon coffre dans le bureau et je ne me souviens plus du code. Si vous arrivez a retrouver le code pour moi, je vous laisse sans probleme recuperer la carte dans le coffre. J'ai laisse des notes dans le bureau et dans l'etagere. C'est un code a trois chiffres." },
+        "next": "TALK_EMILIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_EMILIE_WHAT_CARTE",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "Bien sur, il faut aller dans le bureau, recuperer les notes dans l'etagere et le bureau, afin de pouvoir resoudre le code a trois chiffres du coffre." },
+        "next": "TALK_EMILIE_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_ROOT_1",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Excusez moi ? Vous cherchez le tresor ? Nous pouvons surement travailler ensemble." },
+        "options": [
+          {
+            "ref": "OPT_VICTOR_1",
+            "value": { "FR": "Qui etes vous ?" },
+            "next": "TALK_VICTOR_UNKNOWN",
+            "condition": { "type": "NOT", "children": [{ "type": "TALKWITH", "metadata": { "characterId": "PNJ_VICTOR" } }] }
+          },
+          {
+            "ref": "OPT_VICTOR_2",
+            "value": { "FR": "Comment saviez-vous que je cherchais le tresor ?" },
+            "next": "TALK_VICTOR_HOW_TRESOR",
+            "condition": { "type": "TALKWITH", "metadata": { "characterId": "PNJ_VICTOR" } }
+          },
+          {
+            "ref": "OPT_VICTOR_3",
+            "value": { "FR": "Bien sur, toute aide est utile pour trouver le tresor, comment pouvez-vous m'aider ?" },
+            "next": "TALK_VICTOR_HELP",
+            "condition": {
+              "type": "AND",
+              "children": [
+                { "type": "TALKWITH", "metadata": { "characterId": "PNJ_VICTOR" } },
+                { "type": "NOT", "children": [{ "type": "INSTEP", "metadata": { "stepId": "MISSION_4" } }] }
+              ]
+            }
+          },
+          {
+            "ref": "OPT_VICTOR_4",
+            "value": { "FR": "Je veux bien vendre la carte." },
+            "next": "TALK_VICTOR_SELL_KO",
+            "condition": {
+              "type": "AND",
+              "children": [
+                { "type": "INSTEP", "metadata": { "stepId": "MISSION_4" } },
+                { "type": "NOT", "children": [{ "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_3" } }] }
+              ]
+            }
+          },
+          {
+            "ref": "OPT_VICTOR_5",
+            "value": { "FR": "Je veux bien vendre la carte." },
+            "next": "TALK_VICTOR_SELL_OK",
+            "condition": {
+              "type": "AND",
+              "children": [
+                { "type": "INSTEP", "metadata": { "stepId": "MISSION_4" } },
+                { "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_3" } }
+              ]
+            }
+          },
+          {
+            "ref": "OPT_VICTOR_6",
+            "value": { "FR": "Je ne vendrai pas la carte." },
+            "next": "TALK_VICTOR_NOT_SELL",
+            "condition": { "type": "INSTEP", "metadata": { "stepId": "MISSION_4" } }
+          },
+          { "ref": "OPT_VICTOR_7", "value": { "FR": "Je n'ai plus de question" }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_VICTOR_UNKNOWN",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Excusez mes manieres, je m'appelle Victor, je suis un businessman du quartier." },
+        "next": "TALK_VICTOR_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_HOW_TRESOR",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Je suis interesse par le tresor. Je suis pret a acheter votre carte pour 20 Francs. C'est une belle offre, vous devriez y reflechir." },
+        "next": "TALK_VICTOR_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_HELP",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Je suis interesse par le tresor. Je suis pret a acheter votre carte pour 20 Francs. C'est une belle offre, vous devriez y reflechir." },
+        "next": "TALK_VICTOR_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_SELL_KO",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Mais vous n'avez pas la carte complete ! Revenez quand cela sera le cas." },
+        "next": "TALK_VICTOR_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_SELL_OK",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Parfait, vous avez raison, c'est une tres bonne idee. Voici vos 20 francs. Je vous laisse me donner la carte. Acceptez vous l'offre ?" }
+      },
+      {
+        "ref": "TALK_VICTOR_SELL_YES",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Parfait, vous avez fait le bon choix." }
+      },
+      {
+        "ref": "TALK_VICTOR_SELL_NO",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Ok, je vous laisse y reflechir, mais ne tardez pas trop." },
+        "next": "TALK_VICTOR_ROOT_1"
+      },
+      {
+        "ref": "TALK_VICTOR_NOT_SELL",
+        "character": { "character": "PNJ_VICTOR", "image": "VICTOR_DEFAULT" },
+        "value": { "FR": "Vous me repugniez, vous ne savez pas ce que c'est, faire des affaires. Adieu. (Victor s'en va)" }
+      },
+      {
+        "ref": "TALK_COFFRE_ROOT_1",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "(Vous etes devant un coffre avec un cadenas a code, il faut choisir trois chiffres)" },
+        "options": [
+          { "ref": "OPT_COFFRE_1", "value": { "FR": "(Saisir un code)" }, "next": "TALK_COFFRE_SAISIE" },
+          { "ref": "OPT_COFFRE_2", "value": { "FR": "(Abandonner)" }, "next": null }
+        ]
+      },
+      {
+        "ref": "TALK_COFFRE_SAISIE",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "(Saisissez le code a 3 chiffres)" },
+        "inputText": { "type": "NUMERIC", "size": 3 }
+      },
+      {
+        "ref": "TALK_COFFRE_SUCCESS",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "(Le cadenas s'ouvre ! A l'interieur du coffre, vous trouvez la carte d'Emilie.)" }
+      },
+      {
+        "ref": "TALK_COFFRE_FAIL",
+        "character": { "character": "PNJ_EMILIE", "image": "EMILIE_DEFAULT" },
+        "value": { "FR": "(Le cadenas ne s'ouvre pas)" },
+        "options": [
+          { "ref": "OPT_COFFRE_RETRY", "value": { "FR": "(Saisir un nouveau code)" }, "next": "TALK_COFFRE_SAISIE" },
+          { "ref": "OPT_COFFRE_QUIT", "value": { "FR": "(Abandonner)" }, "next": null }
+        ]
+      }
+    ]
+  },
+  "scenario": {
+    "steps": [
+      {
+        "ref": "MISSION_1",
+        "label": { "FR": "Trouver le tresor" },
+        "targets": [
+          { "ref": "OBJECTIF_1A", "label": { "FR": "Afficher la carte" }, "optional": true },
+          { "ref": "OBJECTIF_1B", "label": { "FR": "Parler a Sophie" }, "optional": true },
+          { "ref": "OBJECTIF_1C", "label": { "FR": "Recuperer la carte de Sophie" }, "optional": true },
+          { "ref": "OBJECTIF_1D", "label": { "FR": "Fusionner la carte de Sophie" }, "optional": true },
+          { "ref": "OBJECTIF_1E", "label": { "FR": "Parler a Emilie" }, "optional": true },
+          { "ref": "OBJECTIF_1F", "label": { "FR": "Recuperer la carte d'Emilie" }, "optional": true },
+          { "ref": "OBJECTIF_1G", "label": { "FR": "Fusionner la carte d'Emilie" }, "optional": true },
+          { "ref": "OBJECTIF_1H", "label": { "FR": "Trouver le tresor" }, "optional": false }
+        ],
+        "possibilities": [
+          {
+            "trigger": { "type": "STEPACTIVE", "metadata": { "stepId": "MISSION_1" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_MARCEL_ROOT_1" } },
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "CARTE_1" } },
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "PELLE" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "GOINSPACE", "metadata": { "spaceId": "BELLECOUR_OFFICE" } },
+            "consequences": [
+              { "type": "ALERT", "metadata": { "value": { "FR": "Un homme d'une cinquantaine d'annees, bien habille avec des petites lunettes et un joli costume s'approche de vous" } } },
+              { "type": "Talk", "metadata": { "talkRef": "TALK_VICTOR_ROOT_1" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "InventoryItemAction", "metadata": { "itemId": "PELLE" } },
+            "condition": { "type": "INSIDESPACE", "metadata": { "spaceId": "ANTONIN_PONCET_TRESOR" } },
+            "consequences": [
+              { "type": "ALERT", "metadata": { "value": { "FR": "Felicitations ! Vous avez trouve le tresor !" } } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_1H", "state": "SUCCESS" } },
+              { "type": "GAMEOVER", "metadata": { "result": "SUCCESS_ALL_ENDED" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "InventoryItemAction", "metadata": { "itemId": "PELLE" } },
+            "condition": { "type": "NOT", "children": [{ "type": "INSIDESPACE", "metadata": { "spaceId": "ANTONIN_PONCET_TRESOR" } }] },
+            "consequences": [
+              { "type": "ALERT", "metadata": { "value": { "FR": "Vous ne trouvez rien" } } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_MARCEL_ROOT_1_2" },
+            "consequences": [
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "CARTE_1" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_MARCEL" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_MARCEL_ROOT_2" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_SOPHIE" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_SOPHIE_ROOT_1" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_VICTOR" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_VICTOR_ROOT_1" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_EMILIE" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_EMILIE_ROOT_1" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_BUREAU" } },
+            "consequences": [
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "NOTE_1" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_3B", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_ETAGERE" } },
+            "consequences": [
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "NOTE_2" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_3C", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "ImageObjectClick", "metadata": { "objectId": "OBJ_COFFRE" } },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_COFFRE_ROOT_1" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          }
+        ]
+      },
+      {
+        "ref": "MISSION_2",
+        "label": { "FR": "Aider Sophie" },
+        "targets": [
+          { "ref": "OBJECTIF_2A", "label": { "FR": "Entrer au musee" }, "optional": true },
+          { "ref": "OBJECTIF_2B", "label": { "FR": "Tableaux 1er etage" }, "optional": true },
+          { "ref": "OBJECTIF_2C", "label": { "FR": "Tableaux 2eme etage" }, "optional": true },
+          { "ref": "OBJECTIF_2D", "label": { "FR": "Reponse a Sophie" }, "optional": false }
+        ],
+        "possibilities": [
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_SOPHIE_CARTE_ACCEPT" },
+            "consequences": [
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_1B", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "TalkInputText", "talkId": "TALK_SOPHIE_WHO_CARTE", "matchType": "EQUALS", "value": "Golu" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_SOPHIE_CODE_SUCCESS" } },
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "CARTE_SOPHIE" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_1C", "state": "SUCCESS" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_2D", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "TalkInputText", "talkId": "TALK_SOPHIE_WHO_CARTE", "matchType": "ALMOST_EQUALS", "value": "Golu" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_SOPHIE_CODE_ALMOST" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          },
+          {
+            "trigger": { "type": "TalkInputText", "talkId": "TALK_SOPHIE_WHO_CARTE", "matchType": "COMPLETELY_DIFFERENT", "value": "Golu" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_SOPHIE_CODE_FAIL" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          }
+        ]
+      },
+      {
+        "ref": "MISSION_3",
+        "label": { "FR": "Aider Emilie" },
+        "targets": [
+          { "ref": "OBJECTIF_3A", "label": { "FR": "Entrer dans le bureau" }, "optional": true },
+          { "ref": "OBJECTIF_3B", "label": { "FR": "Notes du bureau" }, "optional": true },
+          { "ref": "OBJECTIF_3C", "label": { "FR": "Notes de l'etagere" }, "optional": true },
+          { "ref": "OBJECTIF_3D", "label": { "FR": "Afficher les notes" }, "optional": true },
+          { "ref": "OBJECTIF_3E", "label": { "FR": "Ouvrir le coffre" }, "optional": false }
+        ],
+        "possibilities": [
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_EMILIE_CARTE" },
+            "consequences": [
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_1E", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "GOINSPACE", "metadata": { "spaceId": "BELLECOUR_AIRE_JEUX_BIS" } },
+            "consequences": [
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_3A", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "TalkInputText", "talkId": "TALK_COFFRE_SAISIE", "matchType": "EQUALS", "value": "862" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_COFFRE_SUCCESS" } },
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "CARTE_EMILIE" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_1F", "state": "SUCCESS" } },
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_3E", "state": "SUCCESS" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "TalkInputText", "talkId": "TALK_COFFRE_SAISIE", "matchType": "DIFFERENT", "value": "862" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_COFFRE_FAIL" } }
+            ],
+            "recurrence": { "type": "ALWAYS" }
+          }
+        ]
+      },
+      {
+        "ref": "MISSION_4",
+        "label": { "FR": "Vendre la carte a Victor" },
+        "targets": [
+          { "ref": "OBJECTIF_4A", "label": { "FR": "Carte complete" }, "optional": true },
+          { "ref": "OBJECTIF_4B", "label": { "FR": "Accepter l'offre de Victor" }, "optional": false }
+        ],
+        "possibilities": [
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_VICTOR_HOW_TRESOR" },
+            "consequences": [],
+            "recurrence": { "type": "ONCE" }
+          },
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_VICTOR_NOT_SELL" },
+            "consequences": [
+              { "type": "GOALTARGET", "metadata": { "targetRef": "OBJECTIF_4B", "state": "FAILURE" } }
+            ],
+            "recurrence": { "type": "ONCE" }
+          }
+        ]
+      }
+    ]
+  }
+}

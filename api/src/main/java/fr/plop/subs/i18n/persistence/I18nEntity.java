@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "TEST2_I18N_SHORT_KEY")
+@Table(name = "LO_I18N_SHORT_KEY")
 public class I18nEntity {
 
     @Id

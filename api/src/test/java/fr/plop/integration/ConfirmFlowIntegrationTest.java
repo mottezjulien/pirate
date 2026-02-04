@@ -1,28 +1,34 @@
 package fr.plop.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.commun.domain.Game;
+import fr.plop.contexts.game.commun.domain.GameProject;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.consequence.handler.ConsequenceTalkHandler;
+import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.json.TemplateGeneratorJsonUseCase;
-import fr.plop.contexts.game.session.confirm.ConfirmController;
-import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
-import fr.plop.contexts.game.session.core.presenter.GameSessionController;
-import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.push.PushEvent;
-import fr.plop.contexts.game.session.push.PushPort;
-import fr.plop.contexts.game.session.push.WebSocketPushAdapter;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.json.TemplateGeneratorRoot;
+import fr.plop.contexts.game.presentation.domain.Presentation;
+import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
+import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
+import fr.plop.contexts.game.instance.event.domain.GameEvent;
+import fr.plop.contexts.game.instance.message.MessageController;
+import fr.plop.contexts.game.instance.push.PushEvent;
+import fr.plop.contexts.game.instance.push.PushPort;
+import fr.plop.contexts.game.instance.push.WebSocketPushAdapter;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
@@ -45,19 +51,19 @@ public class ConfirmFlowIntegrationTest {
     int randomServerPort;
 
     @Autowired
-    private GameSessionClearPort sessionClear;
+    private GameInstanceClearPort sessionClear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
-    @MockBean
+    @MockitoBean
     private PushPort pushPort;
 
     @Autowired
     private ConsequenceTalkHandler consequenceTalkHandler;
 
     private Template template;
-    private Consequence.Id confirmId;
+    private MessageToken token;
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
@@ -66,7 +72,8 @@ public class ConfirmFlowIntegrationTest {
 
         // Create template with Confirm flow
         TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
-        template = generator.apply("""
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = """
                 {
                   "code": "CONFIRM_FLOW_TEST",
                   "version": "1.0.0",
@@ -115,14 +122,21 @@ public class ConfirmFlowIntegrationTest {
                     ]
                   }
                 }
-                """);
+                """;
+        TemplateGeneratorRoot root = objectMapper.readValue(json, TemplateGeneratorRoot.class);
+        GameProject.Code code = generator.code(root);
+        Game.Version version = generator.version(root);
+        template = generator.template(root);
+        Presentation presentation = generator.presentation(root);
 
-        templateInitUseCase.create(template);
+        Game.Id gameId = templateInitUseCase.findOrCreateGame(code, version);
+        templateInitUseCase.createOrUpdate(gameId, template);
+        templateInitUseCase.createOrUpdate(gameId, presentation);
 
         // Extract confirmId from the template
         ScenarioConfig.Step step = template.scenario().steps().getFirst();
         Consequence firstConsequence = step.possibilities().get(0).consequences().getFirst();
-        confirmId = ((Consequence.DisplayConfirm) firstConsequence).id();
+        token = ((Consequence.DisplayConfirm) firstConsequence).token();
     }
 
     @Test
@@ -139,35 +153,36 @@ public class ConfirmFlowIntegrationTest {
 
         // Second possibility has ConfirmAnswer YES trigger
         PossibilityTrigger trigger1 = step.possibilities().get(1).trigger();
-        assertThat(trigger1).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
-        PossibilityTrigger.ConfirmAnswer yesTrigger = (PossibilityTrigger.ConfirmAnswer) trigger1;
-        assertThat(yesTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(trigger1).isInstanceOf(PossibilityTrigger.MessageConfirmAnswer.class);
+        PossibilityTrigger.MessageConfirmAnswer yesTrigger = (PossibilityTrigger.MessageConfirmAnswer) trigger1;
+        assertThat(yesTrigger.token()).isEqualTo(token);
         assertThat(yesTrigger.expectedAnswer()).isTrue();
 
         // Third possibility has ConfirmAnswer NO trigger
         PossibilityTrigger trigger2 = step.possibilities().get(2).trigger();
-        assertThat(trigger2).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
-        PossibilityTrigger.ConfirmAnswer noTrigger = (PossibilityTrigger.ConfirmAnswer) trigger2;
-        assertThat(noTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(trigger2).isInstanceOf(PossibilityTrigger.MessageConfirmAnswer.class);
+        PossibilityTrigger.MessageConfirmAnswer noTrigger = (PossibilityTrigger.MessageConfirmAnswer) trigger2;
+        assertThat(noTrigger.token()).isEqualTo(token);
         assertThat(noTrigger.expectedAnswer()).isFalse();
     }
 
     @Test
     public void confirmTrigger_matchesCorrectAnswer() {
         // Unit test to verify trigger matching logic
-        PossibilityTrigger.ConfirmAnswer yesAnswer = new PossibilityTrigger.ConfirmAnswer(
-                new PossibilityTrigger.Id(), confirmId, true);
-        PossibilityTrigger.ConfirmAnswer noAnswer = new PossibilityTrigger.ConfirmAnswer(
-                new PossibilityTrigger.Id(), confirmId, false);
+        PossibilityTrigger.MessageConfirmAnswer yesAnswer = new PossibilityTrigger.MessageConfirmAnswer(
+                new PossibilityTrigger.Id(), token, true);
+        PossibilityTrigger.MessageConfirmAnswer noAnswer = new PossibilityTrigger.MessageConfirmAnswer(
+                new PossibilityTrigger.Id(), token, false);
 
-        GameEvent.ConfirmAnswer yesEvent = new GameEvent.ConfirmAnswer(confirmId, true);
-        GameEvent.ConfirmAnswer noEvent = new GameEvent.ConfirmAnswer(confirmId, false);
-        GameEvent.ConfirmAnswer wrongIdEvent = new GameEvent.ConfirmAnswer(new Consequence.Id(), true);
+        GameEvent.MessageConfirmAnswer yesEvent = new GameEvent.MessageConfirmAnswer(token, true);
+        GameEvent.MessageConfirmAnswer noEvent = new GameEvent.MessageConfirmAnswer(token, false);
+        MessageToken wrongToken = new MessageToken("WRONG_TOKEN");
+        GameEvent.MessageConfirmAnswer wrongIdEvent = new GameEvent.MessageConfirmAnswer(wrongToken, true);
 
         // YES trigger should match YES event
         assertThat(yesAnswer.accept(yesEvent, List.of())).isTrue();
         assertThat(yesAnswer.accept(noEvent, List.of())).isFalse();
-        assertThat(yesAnswer.accept(wrongIdEvent, List.of())).isFalse();
+        assertThat(yesAnswer.accept(wrongIdEvent, List.of())).isFalse(); // Different token
 
         // NO trigger should match NO event
         assertThat(noAnswer.accept(noEvent, List.of())).isTrue();
@@ -178,11 +193,11 @@ public class ConfirmFlowIntegrationTest {
     public void confirmEndpoint_canReceiveAnswer() throws URISyntaxException {
         // 1. Create auth and session
         ConnectionController.ResponseDTO connection = createAuth();
-        GameSessionController.GameSessionActivedResponseDTO session = createGameSession(connection.token());
+        GameInstanceController.ResponseDTO session = createGame(connection.token());
         assertThat(session.id()).isNotNull();
 
         // 2. Call endpoint to answer - should not throw error
-        ResponseEntity<Void> response = answerConfirm(session.gameToken(), session.id(), confirmId.value(), true);
+        ResponseEntity<Void> response = answerConfirm(session.auth().token(), session.id(), token, true);
 
         // We expect 200 OK (void method returns 200)
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -191,21 +206,19 @@ public class ConfirmFlowIntegrationTest {
     @Test
     public void webSocketMessage_formatIsCorrect() {
         // Test the WebSocket message format
-        WebSocketPushAdapter adapter = new WebSocketPushAdapter(null) {
+        WebSocketPushAdapter adapter = new WebSocketPushAdapter(null, new ObjectMapper()) {
             @Override
             public void push(PushEvent event) {
                 // We just test the message method via reflection or by checking the format
             }
         };
 
-        // Verify the message format matches: SYSTEM:CONFIRM:<id>:<message>
-        String expectedPrefix = "SYSTEM:CONFIRM:";
+        // Verify the message format matches JSON
         String confirmIdValue = "test-confirm-123";
         String message = "Test message";
 
-        // The format should be: SYSTEM:CONFIRM:<confirmId>:<message>
-        String expectedFormat = expectedPrefix + confirmIdValue + ":" + message;
-        assertThat(expectedFormat).isEqualTo("SYSTEM:CONFIRM:test-confirm-123:Test message");
+        String expectedJson = "{\"origin\":\"SYSTEM\",\"type\":\"CONFIRM\",\"confirmId\":\"test-confirm-123\",\"message\":\"Test message\"}";
+        assertThat(expectedJson).contains("origin", "SYSTEM", "CONFIRM", confirmIdValue, message);
     }
 
     @Test
@@ -213,7 +226,8 @@ public class ConfirmFlowIntegrationTest {
         // Test that ConsequenceTalkHandler supports DisplayConfirm
         Consequence.DisplayConfirm confirm = new Consequence.DisplayConfirm(
                 new Consequence.Id(),
-                new I18n(Map.of(Language.FR, "Test message"))
+                new I18n(Map.of(Language.FR, "Test message")),
+                new MessageToken("ANY_TOKEN")
         );
 
         assertThat(consequenceTalkHandler.supports(confirm)).isTrue();
@@ -229,25 +243,25 @@ public class ConfirmFlowIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionActivedResponseDTO createGameSession(String token) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
+    private GameInstanceController.ResponseDTO createGame(String token) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/";
         URI uri = new URI(baseUrl);
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(template.id().value());
+        GameInstanceController.CreateRequestDTO request = new GameInstanceController.CreateRequestDTO(template.id().value());
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionActivedResponseDTO> result = this.restTemplate
-                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionActivedResponseDTO.class);
+        ResponseEntity<GameInstanceController.ResponseDTO> result = this.restTemplate
+                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameInstanceController.ResponseDTO.class);
         return result.getBody();
     }
 
-    private ResponseEntity<Void> answerConfirm(String gameToken, String sessionId, String confirmId, boolean answer) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/" + sessionId + "/confirms/" + confirmId + "/answer/";
+    private ResponseEntity<Void> answerConfirm(String gameToken, String sessionId, MessageToken messageToken, boolean answer) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/messages/" + messageToken.value() + "/confirm";
         URI uri = new URI(baseUrl);
 
-        ConfirmController.AnswerRequestDTO request = new ConfirmController.AnswerRequestDTO(answer);
+        MessageController.ConfirmRequest request = new MessageController.ConfirmRequest(answer);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", gameToken);

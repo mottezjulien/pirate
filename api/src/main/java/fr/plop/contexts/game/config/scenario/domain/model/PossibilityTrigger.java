@@ -2,12 +2,13 @@ package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
-import fr.plop.contexts.game.session.core.domain.model.GameAction;
-import fr.plop.contexts.game.session.event.domain.GameEvent;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.contexts.game.instance.core.domain.model.GameAction;
+import fr.plop.contexts.game.instance.event.domain.GameEvent;
+import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 
 import fr.plop.generic.tools.StringTools;
 
@@ -25,10 +26,11 @@ public sealed interface PossibilityTrigger permits
         PossibilityTrigger.AbsoluteTime,
         PossibilityTrigger.RelativeTimeAfterOtherPossibility,
         PossibilityTrigger.TalkOptionSelect,
-        PossibilityTrigger.TalkEnd,
+        PossibilityTrigger.Talk,
         PossibilityTrigger.TalkInputText,
         PossibilityTrigger.ImageObjectClick,
-        PossibilityTrigger.ConfirmAnswer {
+        PossibilityTrigger.InventoryItemAction,
+        PossibilityTrigger.MessageConfirmAnswer {
 
 
     record Id(String value) {
@@ -74,7 +76,10 @@ public sealed interface PossibilityTrigger permits
 
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
-            return !trigger.accept(event, previousUserActions);
+            boolean innerResult = trigger.accept(event, previousUserActions);
+            boolean result = !innerResult;
+            System.out.println("DEBUG Not.accept: inner=" + innerResult + " result=" + result + " event=" + event);
+            return result;
         }
     }
 
@@ -99,8 +104,8 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record AbsoluteTime(Id id, GameSessionTimeUnit value) implements PossibilityTrigger {
-        public AbsoluteTime(GameSessionTimeUnit value) {
+    record AbsoluteTime(Id id, GameInstanceTimeUnit value) implements PossibilityTrigger {
+        public AbsoluteTime(GameInstanceTimeUnit value) {
             this(new Id(), value);
         }
 
@@ -113,10 +118,10 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId, GameSessionTimeUnit value) implements PossibilityTrigger {
+    record RelativeTimeAfterOtherPossibility(Id id, Possibility.Id otherPossibilityId, GameInstanceTimeUnit value) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
-            if (event instanceof GameEvent.TimeClick(GameSessionTimeUnit timeUnit)) {
+            if (event instanceof GameEvent.TimeClick(GameInstanceTimeUnit timeUnit)) {
                 Optional<GameAction> optFirst = optFirst(previousUserActions, otherPossibilityId);
                 return optFirst.map(first -> first.timeClick().add(value).equals(timeUnit))
                         .orElse(false);
@@ -132,7 +137,7 @@ public sealed interface PossibilityTrigger permits
     }
 
 
-    record TalkEnd(Id id, TalkItem.Id talkId) implements PossibilityTrigger {
+    record Talk(Id id, TalkItem.Id talkId) implements PossibilityTrigger {
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
             if (event instanceof GameEvent.Talk talkEvent) {
@@ -161,15 +166,19 @@ public sealed interface PossibilityTrigger permits
         @Override
         public boolean accept(GameEvent event, List<GameAction> previousUserActions) {
             if (event instanceof GameEvent.TalkInputText(TalkItem.Id eventTalkId, String eventValue)) {
+                System.out.println("DEBUG TalkInputText.accept: eventTalkId=" + eventTalkId.value() + " talkId=" + talkId.value() + " eventValue=" + eventValue + " value=" + value + " matchType=" + matchType);
                 if (!eventTalkId.equals(talkId)) {
+                    System.out.println("DEBUG TalkInputText.accept: talkId mismatch -> false");
                     return false;
                 }
-                return switch (matchType) {
+                boolean result = switch (matchType) {
                     case EQUALS -> eventValue.equals(value);
                     case DIFFERENT -> !eventValue.equals(value);
                     case ALMOST_EQUALS -> StringTools.almostEquals(eventValue, value);
                     case COMPLETELY_DIFFERENT -> !StringTools.almostEquals(eventValue, value);
                 };
+                System.out.println("DEBUG TalkInputText.accept: result=" + result);
+                return result;
             }
             return false;
         }
@@ -182,11 +191,19 @@ public sealed interface PossibilityTrigger permits
         }
     }
 
-    record ConfirmAnswer(Id id, Consequence.Id confirmId, boolean expectedAnswer) implements PossibilityTrigger {
+    record InventoryItemAction(Id id, GameConfigInventoryItem.Id itemId)implements PossibilityTrigger  {
         @Override
         public boolean accept(GameEvent event, List<GameAction> actions) {
-            if (event instanceof GameEvent.ConfirmAnswer(Consequence.Id eventConfirmId, boolean eventAnswer)) {
-                return confirmId.equals(eventConfirmId) && expectedAnswer == eventAnswer;
+            return event instanceof GameEvent.InventoryItemAction(GameConfigInventoryItem.Id eventTtemId)
+                    && itemId.equals(eventTtemId);
+        }
+    }
+
+    record MessageConfirmAnswer(Id id, MessageToken token, boolean expectedAnswer) implements PossibilityTrigger {
+        @Override
+        public boolean accept(GameEvent event, List<GameAction> actions) {
+            if (event instanceof GameEvent.MessageConfirmAnswer(MessageToken eventMessageToken, boolean eventAnswer)) {
+                return token.equals(eventMessageToken) && expectedAnswer == eventAnswer;
             }
             return false;
         }

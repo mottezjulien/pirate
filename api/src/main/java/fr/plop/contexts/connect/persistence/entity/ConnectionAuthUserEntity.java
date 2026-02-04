@@ -2,13 +2,13 @@ package fr.plop.contexts.connect.persistence.entity;
 
 import fr.plop.contexts.connect.domain.ConnectAuthUser;
 import fr.plop.contexts.connect.domain.ConnectToken;
-import fr.plop.contexts.connect.domain.DeviceUserConnect;
+import fr.plop.contexts.connect.domain.ConnectUserDevice;
 import jakarta.persistence.*;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "TEST2_CONNECTION_USER_AUTH",
+@Table(name = "LO_CONNECTION_USER_AUTH",
         indexes = {@Index(columnList = "token", unique = true)}
 )
 public class ConnectionAuthUserEntity {
@@ -59,7 +59,7 @@ public class ConnectionAuthUserEntity {
         return toModelWithConnect(connection.toModel());
     }
 
-    public ConnectAuthUser toModelWithConnect(DeviceUserConnect connect) {
+    public ConnectAuthUser toModelWithConnect(ConnectUserDevice connect) {
         return new ConnectAuthUser(toModelId(), new ConnectToken(token), connect, createdAt);
     }
 

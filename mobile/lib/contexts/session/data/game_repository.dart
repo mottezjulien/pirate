@@ -102,7 +102,7 @@ class GameSessionRepository {
 
   Future<void> confirmAnswer({required String confirmId, required bool answer}) async {
     GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
-    var path = "$resourcePath/${GameCurrent.sessionId}/confirms/$confirmId/answer/";
+    var path = "$resourcePath/${GameCurrent.sessionId}/messages/$confirmId/confirm";
     await genericRepository.post(path: path, body: {'answer': answer}, decode: false);
   }
 

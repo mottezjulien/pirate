@@ -2,16 +2,16 @@ package fr.plop.contexts.game.config.consequence.handler;
 
 
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.scenario.adapter.GameSessionScenarioGoalAdapter;
+import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
+import fr.plop.contexts.game.instance.scenario.adapter.GameInstanceScenarioGoalAdapter;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ConsequenceScenarioGoalHandler implements ConsequenceHandler {
 
-    private final GameSessionScenarioGoalAdapter scenarioAdapter;
+    private final GameInstanceScenarioGoalAdapter scenarioAdapter;
 
-    public ConsequenceScenarioGoalHandler(GameSessionScenarioGoalAdapter scenarioAdapter) {
+    public ConsequenceScenarioGoalHandler(GameInstanceScenarioGoalAdapter scenarioAdapter) {
         this.scenarioAdapter = scenarioAdapter;
     }
 
@@ -22,7 +22,7 @@ public class ConsequenceScenarioGoalHandler implements ConsequenceHandler {
     }
 
     @Override
-    public void handle(GameSessionContext context, Consequence consequence) {
+    public void handle(GameInstanceContext context, Consequence consequence) {
         switch (consequence) {
             case Consequence.ScenarioStep scenarioStep
                     -> scenarioAdapter.saveStep(context, scenarioStep.stepId(), scenarioStep.state());

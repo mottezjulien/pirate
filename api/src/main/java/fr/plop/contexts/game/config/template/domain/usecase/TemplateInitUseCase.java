@@ -1,8 +1,12 @@
 package fr.plop.contexts.game.config.template.domain.usecase;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.plop.contexts.game.commun.domain.Game;
+import fr.plop.contexts.game.commun.domain.GameProject;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.json.TemplateGeneratorJsonUseCase;
-import fr.plop.contexts.game.config.template.domain.usecase.generator.tree.TemplateGeneratorTreeUseCase;
+import fr.plop.contexts.game.config.template.domain.usecase.generator.json.TemplateGeneratorRoot;
+import fr.plop.contexts.game.presentation.domain.Presentation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +18,11 @@ public class TemplateInitUseCase {
 
         boolean isEmpty();
 
-        void create(Template template);
+        Game.Id findOrCreateGame(GameProject.Code code, Game.Version version);
+
+        void createOrUpdate(Game.Id gameId, Template template);
+
+        void createOrUpdate(Game.Id gameId, Presentation presentation);
 
         void deleteAll();
     }
@@ -30,54 +38,39 @@ public class TemplateInitUseCase {
         //TODO: On supprime tout comme des gros bourrins ???
         outPort.deleteAll();
 
-        /*Template chezWam = chezWamTemplate();
-        if (!chezWam.isValid()) {
-            throw new IllegalStateException("Template chezWam invalide");
-        }
-        outPort.create(chezWam);*/
+        // generate("template/archives/chez_wam_easy.txt");
+        generate("template/lyon9.json");
+        generate("template/test_discution.json");
+        generate("template/lyon_bellecour.json");
 
-        Template lyon9 = lyon9Template();
-        if (!lyon9.isValid()) {
-            throw new IllegalStateException("Template lyon9 invalide");
-        }
-        outPort.create(lyon9);
-
-        Template testDiscussionTemplate = testDiscussionTemplate();
-        if (!testDiscussionTemplate.isValid()) {
-            throw new IllegalStateException("Template test_discution invalide");
-        }
-        outPort.create(testDiscussionTemplate);
     }
 
-    private Template chezWamTemplate() {
+    private void generate(String path) {
         try {
-            //String scriptContent = loadScriptFromResources("template/chez_wam.txt");
-            String scriptContent = loadScriptFromResources("template/archives/chez_wam_easy.txt");
-            TemplateGeneratorTreeUseCase generator = new TemplateGeneratorTreeUseCase();
-            TemplateGeneratorTreeUseCase.Script script = new TemplateGeneratorTreeUseCase.Script(scriptContent);
-            return generator.apply(script);
-        } catch (IOException e) {
-            throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
-        }
-    }
 
-    private Template lyon9Template() {
-        try {
-            String scriptContent = loadScriptFromResources("template/lyon9.json");
+            String scriptContent = loadScriptFromResources(path);
             TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
-            return generator.apply(scriptContent);
-        } catch (IOException e) {
-            throw new RuntimeException("Erreur lors du chargement du script chez_wam.txt", e);
-        }
-    }
 
-    private Template testDiscussionTemplate() {
-        try {
-            String scriptContent = loadScriptFromResources("template/test_discution.json");
-            TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
-            return generator.apply(scriptContent);
+            ObjectMapper mapper = new ObjectMapper();
+            TemplateGeneratorRoot root = mapper.readValue(scriptContent, TemplateGeneratorRoot.class);
+
+            GameProject.Code code = generator.code(root);
+            Game.Version version = generator.version(root);
+            Template template = generator.template(root);
+            Presentation presentation = generator.presentation(root);
+
+            if (!template.isValid()) {
+                throw new IllegalStateException("Template " + path + " invalide");
+            }
+
+            Game.Id gameId = outPort.findOrCreateGame(code, version);
+            outPort.createOrUpdate(gameId, template);
+            outPort.createOrUpdate(gameId, presentation);
+
+
+
         } catch (IOException e) {
-            throw new RuntimeException("Erreur lors du chargement du script test_discution.txt", e);
+            throw new RuntimeException("Erreur lors du chargement du script " + path, e);
         }
     }
 

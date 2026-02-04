@@ -4,7 +4,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "TEST2_SCENARIO_POSSIBILITY_RECURRENCE")
+@Table(name = "LO_SCENARIO_POSSIBILITY_RECURRENCE")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type")
 public abstract class ScenarioPossibilityRecurrenceAbstractEntity {
@@ -27,7 +27,7 @@ public abstract class ScenarioPossibilityRecurrenceAbstractEntity {
                     new PossibilityRecurrence.Always(new PossibilityRecurrence.Id(id));
             case ScenarioPossibilityRecurrenceTimesEntity times ->
                     new PossibilityRecurrence.Times(new PossibilityRecurrence.Id(id), times.getValue());
-            default -> throw new IllegalStateException("Unknown type");
+            default -> throw new IllegalStateException("Unknown status");
         };
     }
 

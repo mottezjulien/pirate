@@ -1,6 +1,6 @@
 package fr.plop.contexts.connect.persistence.entity;
 
-import fr.plop.contexts.connect.domain.DeviceUserConnect;
+import fr.plop.contexts.connect.domain.ConnectUserDevice;
 import fr.plop.contexts.user.persistence.UserEntity;
 import jakarta.persistence.*;
 
@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_CONNECTION_USER_DEVICE")
+@Table(name = "LO_CONNECTION_USER_DEVICE")
 public class ConnectionUserDeviceEntity {
 
     @Id
@@ -45,14 +45,14 @@ public class ConnectionUserDeviceEntity {
     }
 
 
-    public static ConnectionUserDeviceEntity fromModelId(DeviceUserConnect.Id modelId) {
+    public static ConnectionUserDeviceEntity fromModelId(ConnectUserDevice.Id modelId) {
         ConnectionUserDeviceEntity entity = new ConnectionUserDeviceEntity();
         entity.setId(modelId.value());
         return entity;
     }
 
-    public DeviceUserConnect toModel() {
-        return new DeviceUserConnect(new DeviceUserConnect.Id(id), deviceId, user.toModelId());
+    public ConnectUserDevice toModel() {
+        return new ConnectUserDevice(new ConnectUserDevice.Id(id), user.toModelId(), deviceId);
     }
 
 }

@@ -14,7 +14,7 @@ import org.hibernate.annotations.FetchMode;
 import java.util.Optional;
 
 @Entity
-@Table(name = "TEST2_TALK_OPTION_ITEM")
+@Table(name = "LO_TALK_OPTION_ITEM")
 public class TalkOptionEntity {
 
     @Id
@@ -22,7 +22,6 @@ public class TalkOptionEntity {
 
     @ManyToOne
     @JoinColumn(name = "value_i18n_id")
-    @Fetch(FetchMode.JOIN) //TODO GOOD idea ?
     private I18nEntity value;
 
     @Column(name = "next_id")

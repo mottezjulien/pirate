@@ -4,9 +4,9 @@ import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.config.consequence.ConsequenceUseCase;
 import fr.plop.contexts.game.config.consequence.handler.*;
 import fr.plop.contexts.game.config.scenario.domain.usecase.PossibilityGetUseCase;
-import fr.plop.contexts.game.session.core.domain.port.GamePlayerActionPort;
-import fr.plop.contexts.game.session.scenario.domain.GameSessionScenarioGoalPort;
-import fr.plop.contexts.game.session.situation.domain.port.GameSessionSituationGetPort;
+import fr.plop.contexts.game.instance.core.domain.port.GamePlayerActionPort;
+import fr.plop.contexts.game.instance.scenario.domain.GameInstanceScenarioGoalPort;
+import fr.plop.contexts.game.instance.situation.domain.port.GameInstanceSituationGetPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Lazy;
 public class GameConfigSpringConfig {
 
     @Bean
-    public PossibilityGetUseCase possibilityGetUseCase(GameSessionSituationGetPort situationGet, GamePlayerActionPort action, GameConfigCache cache, GameSessionScenarioGoalPort scenarioGoalPort) {
+    public PossibilityGetUseCase possibilityGetUseCase(GameInstanceSituationGetPort situationGet, GamePlayerActionPort action, GameConfigCache cache, GameInstanceScenarioGoalPort scenarioGoalPort) {
         return new PossibilityGetUseCase(situationGet, action, cache, scenarioGoalPort);
     }
 
@@ -23,7 +23,7 @@ public class GameConfigSpringConfig {
     public ConsequenceUseCase ConsequenceUseCase(ConsequenceScenarioGoalHandler scenarioGoalHandler,
                                                  ConsequenceTalkHandler talkHandler,
                                                  ConsequenceOverHandler gameOverHandler,
-                                                 @Lazy ConsequenceObjectHandler objectHandler,
+                                                 @Lazy ConsequenceInventoryHandler objectHandler,
                                                  ConsequenceImageHandler imageHandler,
                                                  ConsequenceMetadataHandler metadataHandler) {
         ConsequenceUseCase consequenceUseCase = new ConsequenceUseCase();

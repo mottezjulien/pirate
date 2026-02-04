@@ -1,15 +1,16 @@
 package fr.plop.contexts.game.config.condition;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
+import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import fr.plop.generic.enumerate.TrueOrFalse;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
-import java.util.Optional;
 
 public sealed interface Condition permits
         Condition.And,
@@ -19,26 +20,18 @@ public sealed interface Condition permits
         Condition.OutsideSpace,
         Condition.AbsoluteTime,
         Condition.Step,
-        Condition.Target {
+        Condition.Target,
+        Condition.TalkWithCharacter,
+        Condition.InventoryHasItem {
 
     record Id(String value) {
         public Id() {
             this(StringTools.generate());
         }
     }
-
-    static Optional<Condition> buildAndFromList(List<Condition> conditions) {
-        if(conditions.isEmpty()) {
-            return Optional.empty();
-        }
-        if(conditions.size() == 1) {
-            return Optional.of(conditions.getFirst());
-        }
-        return Optional.of(new And(conditions));
-    }
     Id id();
 
-    TrueOrFalse accept(GameSessionSituation situation);
+    TrueOrFalse accept(GameInstanceSituation situation);
 
     record And(Id id, List<Condition> conditions) implements Condition {
         public And(List<Condition> conditions) {
@@ -46,7 +39,7 @@ public sealed interface Condition permits
         }
 
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return conditions.stream()
                     .map(condition -> condition.accept(situation))
                     .reduce(TrueOrFalse::and)
@@ -56,7 +49,7 @@ public sealed interface Condition permits
 
     record Or(Id id, List<Condition> conditions) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return conditions.stream()
                     .map(condition -> condition.accept(situation))
                     .reduce(TrueOrFalse::or)
@@ -66,29 +59,29 @@ public sealed interface Condition permits
 
     record Not(Id id, Condition condition) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return condition.accept(situation).inverse();
         }
     }
 
     record InsideSpace(Id id, BoardSpace.Id spaceId) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return TrueOrFalse.fromBoolean(situation.board().spaceIds().contains(spaceId));
         }
     }
 
     record OutsideSpace(Id id, BoardSpace.Id spaceId) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return TrueOrFalse.fromBoolean(situation.board().spaceIds().contains(spaceId)).inverse();
         }
     }
 
-    record AbsoluteTime(Id id, GameSessionTimeUnit value, BeforeOrAfter beforeOrAfter) implements Condition {
+    record AbsoluteTime(Id id, GameInstanceTimeUnit value, BeforeOrAfter beforeOrAfter) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
-            final GameSessionTimeUnit timeUnit = situation.time().current();
+        public TrueOrFalse accept(GameInstanceSituation situation) {
+            final GameInstanceTimeUnit timeUnit = situation.time().current();
             return switch (beforeOrAfter) {
                 case BEFORE -> TrueOrFalse.fromBoolean(timeUnit.isBefore(value));
                 case AFTER -> TrueOrFalse.fromBoolean(timeUnit.isAfter(value));
@@ -98,15 +91,29 @@ public sealed interface Condition permits
 
     record Step(Id id, ScenarioConfig.Step.Id stepId) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return TrueOrFalse.fromBoolean(situation.scenario().stepIds().contains(stepId));
         }
     }
 
     record Target(Id id, ScenarioConfig.Target.Id targetId) implements Condition {
         @Override
-        public TrueOrFalse accept(GameSessionSituation situation) {
+        public TrueOrFalse accept(GameInstanceSituation situation) {
             return TrueOrFalse.fromBoolean(situation.scenario().targetIds().contains(targetId));
+        }
+    }
+
+    record TalkWithCharacter(Id id, TalkCharacter.Id characterId) implements Condition {
+        @Override
+        public TrueOrFalse accept(GameInstanceSituation situation) {
+            return TrueOrFalse.fromBoolean(situation.talk().hasTalk(characterId));
+        }
+    }
+
+    record InventoryHasItem(Id id, GameConfigInventoryItem.Id itemId) implements Condition {
+        @Override
+        public TrueOrFalse accept(GameInstanceSituation situation) {
+            return TrueOrFalse.fromBoolean(situation.inventory().has(itemId));
         }
     }
 

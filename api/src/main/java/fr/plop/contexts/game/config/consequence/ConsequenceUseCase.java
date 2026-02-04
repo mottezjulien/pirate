@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.consequence;
 
-import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
+import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
 import fr.plop.contexts.game.config.consequence.handler.ConsequenceHandler;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class ConsequenceUseCase {
         handlers.add(handler);
     }
 
-    public void action(GameSessionContext context, Consequence consequence) {
+    public void action(GameInstanceContext context, Consequence consequence) {
         handlers.stream()
             .filter(handler -> handler.supports(consequence))
             .forEach(handler -> {

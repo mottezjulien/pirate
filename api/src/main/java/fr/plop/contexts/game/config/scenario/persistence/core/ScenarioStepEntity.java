@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.scenario.persistence.core;
 
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityStepEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_SCENARIO_STEP")
+@Table(name = "LO_SCENARIO_STEP")
 public class ScenarioStepEntity {
 
     @Id
@@ -35,7 +35,7 @@ public class ScenarioStepEntity {
     private Set<ScenarioTargetEntity> targets = new HashSet<>();
 
     @OneToMany(mappedBy = "step")
-    private Set<ScenarioPossibilityEntity> possibilities = new HashSet<>();
+    private Set<ScenarioPossibilityStepEntity> possibilities = new HashSet<>();
 
     public String getId() {
         return id;
@@ -69,11 +69,11 @@ public class ScenarioStepEntity {
         this.targets = targets;
     }
 
-    public Set<ScenarioPossibilityEntity> getPossibilities() {
+    public Set<ScenarioPossibilityStepEntity> getPossibilities() {
         return possibilities;
     }
 
-    public void setPossibilities(Set<ScenarioPossibilityEntity> possibilities) {
+    public void setPossibilities(Set<ScenarioPossibilityStepEntity> possibilities) {
         this.possibilities = possibilities;
     }
 
@@ -85,7 +85,7 @@ public class ScenarioStepEntity {
         return new ScenarioConfig.Step(new ScenarioConfig.Step.Id(id), label.toModel(),
                 Optional.ofNullable(optDescription).map(I18nEntity::toModel),
                 order, targets.stream().map(ScenarioTargetEntity::toModel).toList(),
-                possibilities.stream().map(ScenarioPossibilityEntity::toModel).toList());
+                possibilities.stream().map(ScenarioPossibilityStepEntity::toModel).toList());
 
 
     }

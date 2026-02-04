@@ -6,7 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "TEST2_TALK_CHARACTER")
+@Table(name = "LO_TALK_CHARACTER")
 public class TalkCharacterEntity {
 
     @Id
@@ -18,6 +18,10 @@ public class TalkCharacterEntity {
         this.id = id;
     }
 
+    public String getId() {
+        return id;
+    }
+
     public TalkCharacter toModel() {
         return new TalkCharacter(new TalkCharacter.Id(id), name);
     }
@@ -26,6 +30,12 @@ public class TalkCharacterEntity {
         TalkCharacterEntity entity = new TalkCharacterEntity();
         entity.id = model.id().value();
         entity.name = model.name();
+        return entity;
+    }
+
+    public static TalkCharacterEntity fromModelId(TalkCharacter.Id characterId) {
+        TalkCharacterEntity entity = new TalkCharacterEntity();
+        entity.id = characterId.value();
         return entity;
     }
 

@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_IMAGE_CONFIG")
+@Table(name = "LO_IMAGE_CONFIG")
 public class ImageConfigEntity {
 
     @Id

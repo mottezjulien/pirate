@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_SCENARIO_TARGET")
+@Table(name = "LO_SCENARIO_TARGET")
 public class ScenarioTargetEntity {
 
     @Id
@@ -31,7 +31,7 @@ public class ScenarioTargetEntity {
 
     @OneToMany
     @JoinTable(
-            name = "TEST2_SCENARIO_TARGET_HINT",
+            name = "LO_SCENARIO_TARGET_HINT",
             joinColumns = @JoinColumn(name = "target_id"),
             inverseJoinColumns = @JoinColumn(name = "i18n_id")
     )

@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_MAP_CONFIG")
+@Table(name = "LO_MAP_CONFIG")
 public class MapConfigEntity {
 
     @Id

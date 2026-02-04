@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_BOARD_SPACE")
+@Table(name = "LO_BOARD_SPACE")
 public class BoardSpaceEntity {
 
     @Id

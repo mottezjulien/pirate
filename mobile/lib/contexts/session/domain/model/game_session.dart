@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:geolocator/geolocator.dart';
 import 'package:web_socket_channel/io.dart';
@@ -7,6 +8,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../../generic/config/server.dart';
 import '../../../../generic/components/dialog.dart';
 import '../../../../generic/app_current.dart';
+import '../../../../generic/components/notification.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
 import '../../image/game_image_dialog.dart';
@@ -137,37 +139,41 @@ class GameEventListener {
   }
 
   void _do(String message) {
-    var upperCase = message.toString().toUpperCase();
-    if(upperCase.contains('SYSTEM:MOVE')) {
-      fireOnMoveListeners();
-    }
-    if(upperCase.contains('SYSTEM:GOAL')) {
-      fireOnGoalListeners();
-    }
-    if(upperCase.contains('SYSTEM:MESSAGE')) {
-      String bodyMessage = message.toString().substring('SYSTEM:MESSAGE:'.length);
-      Dialog dialog = Dialog();
-      dialog.showMessage(message: bodyMessage);
-    }
-    if(upperCase.contains('SYSTEM:TALK')) {
-      String talkId = message.toString().substring('SYSTEM:TALK:'.length);
-      GameSessionTalkDialog talkDialog = GameSessionTalkDialog();
-      talkDialog.start(talkId: talkId);
-    }
-    if(upperCase.contains('SYSTEM:IMAGE')) {
-      String imageId = message.toString().substring('SYSTEM:IMAGE:'.length);
-      GameSessionImageDialog imageDialog = GameSessionImageDialog();
-      imageDialog.start(imageId: imageId);
-    }
-    if(upperCase.contains('SYSTEM:CONFIRM')) {
-      // Format: SYSTEM:CONFIRM:<confirmId>:<message>
-      String payload = message.toString().substring('SYSTEM:CONFIRM:'.length);
-      int separatorIndex = payload.indexOf(':');
-      if (separatorIndex > 0) {
-        String confirmId = payload.substring(0, separatorIndex);
-        String confirmMessage = payload.substring(separatorIndex + 1);
-        _handleConfirm(confirmId, confirmMessage);
+    try {
+      final Map<String, dynamic> data = jsonDecode(message);
+      final String origin = (data['origin'] ?? '').toString().toUpperCase();
+      final String type = (data['type'] ?? '').toString().toUpperCase();
+
+      if (origin == 'SYSTEM') {
+        switch (type) {
+          case 'MOVE':
+            fireOnMoveListeners();
+            break;
+          case 'GOAL':
+            fireOnGoalListeners();
+            break;
+          case 'MESSAGE':
+            Dialog().showMessage(message: data['message'] ?? '');
+            break;
+          case 'TALK':
+            GameSessionTalkDialog().start(talkId: data['talkId'] ?? '');
+            break;
+          case 'IMAGE':
+            GameSessionImageDialog().start(imageId: data['imageId'] ?? '');
+            break;
+          case 'NOTIFICATION':
+            GameNotification.show(
+              message: data['message'] ?? '',
+              type: data['notificationType'],
+            );
+            break;
+          case 'CONFIRM':
+            _handleConfirm(data['confirmId'] ?? '', data['message'] ?? '');
+            break;
+        }
       }
+    } catch (e) {
+      // Ignorer les messages non JSON ou malformés
     }
   }
 

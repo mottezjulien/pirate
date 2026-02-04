@@ -1,6 +1,8 @@
 package fr.plop.contexts.game.config.scenario.persistence.core;
 
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityConfigEntity;
+import fr.plop.contexts.game.config.scenario.persistence.possibility.ScenarioPossibilityStepEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -10,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_SCENARIO_CONFIG")
+@Table(name = "LO_SCENARIO_CONFIG")
 public class ScenarioConfigEntity {
 
     @Id
@@ -20,6 +22,9 @@ public class ScenarioConfigEntity {
 
     @OneToMany(mappedBy = "scenario")
     private Set<ScenarioStepEntity> steps = new HashSet<>();
+
+    @OneToMany(mappedBy = "config")
+    private Set<ScenarioPossibilityConfigEntity> possibilities = new HashSet<>();
 
     public String getId() {
         return id;
@@ -47,6 +52,7 @@ public class ScenarioConfigEntity {
 
     public ScenarioConfig toModel() {
         return new ScenarioConfig(new ScenarioConfig.Id(id), label,
-                steps.stream().map(ScenarioStepEntity::toModel).toList());
+                steps.stream().map(ScenarioStepEntity::toModel).toList(),
+                possibilities.stream().map(ScenarioPossibilityConfigEntity::toModel).toList());
     }
 }

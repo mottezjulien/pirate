@@ -6,7 +6,7 @@ import fr.plop.subs.image.Image;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "TEST2_TALK_CHARACTER_REFERENCE")
+@Table(name = "LO_TALK_CHARACTER_REFERENCE")
 public class TalkCharacterReferenceEntity {
 
     @Id

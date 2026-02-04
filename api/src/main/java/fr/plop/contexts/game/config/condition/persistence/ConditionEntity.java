@@ -2,18 +2,18 @@ package fr.plop.contexts.game.config.condition.persistence;
 
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.contexts.game.config.talk.domain.TalkCharacter;
+import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.enumerate.BeforeOrAfter;
 import jakarta.persistence.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "TEST2_CONDITION")
+@Table(name = "LO_CONDITION")
 public class ConditionEntity {
 
     private static final String KEY_PRIMARY = "PRIMARY";
@@ -29,9 +29,11 @@ public class ConditionEntity {
     private static final String VALUE_OPERATOR_TYPE_AND = "AND";
     private static final String VALUE_OPERATOR_TYPE_OR = "OR";
     private static final String VALUE_OPERATOR_TYPE_NOT = "NOT";
+    private static final String KEY_TALK_TYPE = "TALK_TYPE";
+    private static final String VALUE_TALK_TYPE_CHARACTER = "CHARACTER";
 
     public enum Type {
-        TIME, BOARD, SCENARIO, OPERATOR
+        TIME, BOARD, SCENARIO, OPERATOR, TALK, INVENTORY;
     }
 
     @Id
@@ -41,17 +43,16 @@ public class ConditionEntity {
     private Type type;
 
     @ElementCollection
-    @CollectionTable(name = "TEST2_CONDITION_VALUES", joinColumns = @JoinColumn(name = "condition_id"))
+    @CollectionTable(name = "LO_CONDITION_VALUES", joinColumns = @JoinColumn(name = "condition_id"))
     @MapKeyColumn(name = "map_key")
     @Column(name = "map_value")
     private Map<String, String> keyValues = new HashMap<>();
 
 
     @ManyToMany
-    @JoinTable(name = "TEST2_RELATION_CONDITION_SUB",
+    @JoinTable(name = "LO_RELATION_CONDITION_SUB",
             joinColumns = @JoinColumn(name = "condition_id"),
             inverseJoinColumns = @JoinColumn(name = "sub_condition_id"))
-    //@Fetch(value = FetchMode.JOIN) //TODO ??
     private Set<ConditionEntity> subs = new HashSet<>();
 
     public String getId() { return id; }
@@ -73,7 +74,7 @@ public class ConditionEntity {
         final Condition.Id id = new Condition.Id(this.id);
         return switch (type) {
             case TIME -> new Condition.AbsoluteTime(id,
-                    GameSessionTimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_TIME_UNIT))),
+                    GameInstanceTimeUnit.ofMinutes(Integer.parseInt(keyValues.get(KEY_TIME_UNIT))),
                     BeforeOrAfter.valueOf(keyValues.get(KEY_BEFORE_AFTER)));
             case BOARD -> {
                 BoardSpace.Id spaceId = new BoardSpace.Id(keyValues.get(KEY_PRIMARY));
@@ -81,7 +82,7 @@ public class ConditionEntity {
                 yield switch (type) {
                     case VALUE_BOARD_SPACE_TYPE_IN -> new Condition.InsideSpace(id, spaceId);
                     case VALUE_BOARD_SPACE_TYPE_OUT -> new Condition.OutsideSpace(id, spaceId);
-                    default -> throw new IllegalStateException("Unexpected space type: " + type);
+                    default -> throw new IllegalStateException("Unexpected space status: " + type);
                 };
             }
             case SCENARIO -> {
@@ -89,7 +90,7 @@ public class ConditionEntity {
                 yield switch (type) {
                     case VALUE_SCENARIO_TYPE_STEP -> new Condition.Step(id, new ScenarioConfig.Step.Id(keyValues.get(KEY_PRIMARY)));
                     case VALUE_SCENARIO_TYPE_TARGET -> new Condition.Target(id, new ScenarioConfig.Target.Id(keyValues.get(KEY_PRIMARY)));
-                    default -> throw new IllegalStateException("Unexpected scenario type: " + type);
+                    default -> throw new IllegalStateException("Unexpected scenario status: " + type);
                 };
             }
             case OPERATOR -> {
@@ -104,8 +105,16 @@ public class ConditionEntity {
                        }
                        yield new Condition.Not(id, subModels.getFirst());
                    }
-                   default -> throw new IllegalStateException("Unexpected operator type: " + operatorType);
+                   default -> throw new IllegalStateException("Unexpected operator status: " + operatorType);
                 };
+            }
+            case TALK -> {
+                TalkCharacter.Id characterId = new TalkCharacter.Id(keyValues.get(KEY_PRIMARY));
+                yield new Condition.TalkWithCharacter(id, characterId);
+            }
+            case INVENTORY -> {
+                GameConfigInventoryItem.Id itemId = new GameConfigInventoryItem.Id(keyValues.get(KEY_PRIMARY));
+                yield new Condition.InventoryHasItem(id, itemId);
             }
         };
     }
@@ -153,6 +162,15 @@ public class ConditionEntity {
                 entity.setType(Type.OPERATOR);
                 entity.getKeyValues().put(KEY_PRIMARY, VALUE_OPERATOR_TYPE_NOT);
                 entity.setSubs(Set.of(ConditionEntity.fromModel(not.condition())));
+            }
+            case Condition.TalkWithCharacter talkWithCharacter -> {
+                entity.setType(Type.TALK);
+                entity.getKeyValues().put(KEY_TALK_TYPE, VALUE_TALK_TYPE_CHARACTER);
+                entity.getKeyValues().put(KEY_PRIMARY, talkWithCharacter.characterId().value());
+            }
+            case Condition.InventoryHasItem inventoryHasItem -> {
+                entity.setType(Type.INVENTORY);
+                entity.getKeyValues().put(KEY_PRIMARY, inventoryHasItem.itemId().value());
             }
         }
         return entity;

@@ -7,7 +7,7 @@ import fr.plop.generic.enumerate.Priority;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "TEST2_MAP_ITEM_POSITION")
+@Table(name = "LO_MAP_ITEM_POSITION")
 public class MapItemPositionEntity {
 
     @Id

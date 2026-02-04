@@ -13,8 +13,10 @@ public interface ScenarioConfigRepository extends JpaRepository<ScenarioConfigEn
             " LEFT JOIN FETCH target.hints target_hints" +
             " LEFT JOIN FETCH target.label label" +
             " LEFT JOIN FETCH target.description description" +
-            " LEFT JOIN FETCH step.possibilities possibility" +
-            ScenarioPossibilityRepository.FETCH_ALL;
+            " LEFT JOIN FETCH step.possibilities step_possibility" +
+            ScenarioPossibilityRepository.FETCH_ALL_STEP +
+            " LEFT JOIN FETCH scenario.possibilities config_possibility" +
+            ScenarioPossibilityRepository.FETCH_ALL_CONFIG;
 
     @Query("SELECT DISTINCT scenario FROM ScenarioConfigEntity scenario" +
             " LEFT JOIN FETCH scenario.steps step" +

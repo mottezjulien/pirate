@@ -1,0 +1,214 @@
+{
+  "code": "SKILL_VALIDATION_TEST",
+  "version": "1.0",
+  "label": "Test de validation du skill json-template-generator",
+  "duration": 30,
+  "board": {
+    "spaces": [
+      {
+        "ref": "BELLECOUR",
+        "label": "Place Bellecour",
+        "priority": "MEDIUM",
+        "rectangles": [
+          {
+            "bottomLeft": { "lat": 45.75685821314044, "lng": 4.829412996001784 },
+            "topRight": { "lat": 45.75834025856722, "lng": 4.83419244823547 }
+          }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_STATUE",
+        "label": "Statue equestre de Louis XIV",
+        "priority": "HIGH",
+        "rectangles": [
+          {
+            "bottomLeft": { "lat": 45.757585937615076, "lng": 4.831648502957079 },
+            "topRight": { "lat": 45.757957246092154, "lng": 4.832716370145266 }
+          }
+        ]
+      },
+      {
+        "ref": "BELLECOUR_AIRE_JEUX",
+        "label": "Aire de Jeux Place Bellecour",
+        "priority": "MEDIUM",
+        "rectangles": [
+          {
+            "bottomLeft": { "lat": 45.75705883259998, "lng": 4.830043297214081 },
+            "topRight": { "lat": 45.75740817420495, "lng": 4.831731278534452 }
+          },
+          {
+            "bottomLeft": { "lat": 45.75684710935075, "lng": 4.831109191036608 },
+            "topRight": { "lat": 45.75724938283746, "lng": 4.832357159248747 }
+          }
+        ]
+      }
+    ]
+  },
+  "maps": [
+    {
+      "label": "Carte principale Bellecour",
+      "priority": "HIGH",
+      "image": { "type": "ASSET", "value": "assets/demo/map/bellecour.png" },
+      "objects": [
+        {
+          "position": { "top": 0.15, "left": 0.5 },
+          "image": { "type": "ASSET", "value": "assets/demo/map/marcel.png" }
+        },
+        {
+          "position": { "top": 0.7, "left": 0.3 },
+          "image": { "type": "ASSET", "value": "assets/demo/map/coffre.png" },
+          "condition": { "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_COMPLETE" } }
+        },
+        {
+          "position": { "top": 0.5, "left": 0.8 },
+          "point": { "color": "red" }
+        }
+      ]
+    },
+    {
+      "label": "Carte secondaire",
+      "priority": "MEDIUM",
+      "image": { "type": "ASSET", "value": "assets/demo/map/secondary.png" },
+      "objects": []
+    }
+  ],
+  "talk": {
+    "characters": [
+      {
+        "ref": "PNJ_MARCEL",
+        "images": [
+          { "ref": "happy", "value": { "type": "ASSET", "value": "assets/game/demo/marcel_happy.png" } },
+          { "ref": "default", "value": { "type": "ASSET", "value": "assets/game/demo/marcel_default.png" } }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_MARCEL_ROOT_1_001",
+        "value": { "FR": "Bonjour l'ami." },
+        "character": { "character": "PNJ_MARCEL", "image": "happy" },
+        "next": "TALK_MARCEL_ROOT_1_002"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_002",
+        "value": { "FR": "Voici ma carte." },
+        "character": { "character": "PNJ_MARCEL", "image": "happy" },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_ROOT_1_002_OPT_1",
+            "value": { "FR": "Merci, j'ai des questions." },
+            "next": "TALK_MARCEL_ROOT_2"
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_1_002_OPT_2",
+            "value": { "FR": "Merci, c'est parti !" },
+            "next": null
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_2",
+        "value": { "FR": "Que puis-je faire pour toi ?" },
+        "character": { "character": "PNJ_MARCEL", "image": "happy" },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_1",
+            "value": { "FR": "Ou est Sophie ?" },
+            "next": "TALK_MARCEL_SOPHIE"
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_2",
+            "value": { "FR": "Rien, merci." },
+            "next": null
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_3",
+            "value": { "FR": "J'ai la carte complete !" },
+            "next": "TALK_MARCEL_CARTE_COMPLETE",
+            "condition": { "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_COMPLETE" } }
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_SOPHIE",
+        "value": { "FR": "Sophie est au cafe." },
+        "character": { "character": "PNJ_MARCEL", "image": "default" },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_CARTE_COMPLETE",
+        "value": { "FR": "Bravo ! Tu peux maintenant chercher le tresor." },
+        "character": { "character": "PNJ_MARCEL", "image": "happy" }
+      }
+    ]
+  },
+  "inventory": {
+    "items": [
+      {
+        "ref": "CARTE_1",
+        "label": { "FR": "Carte dechiree" },
+        "image": { "type": "ASSET", "value": "assets/demo/inventory/carte_dechiree.png" },
+        "description": { "FR": "Premiere partie de la carte." },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_SOPHIE",
+        "label": { "FR": "Morceau carte Sophie" },
+        "image": { "type": "ASSET", "value": "assets/demo/inventory/morceau_carte_sophie.png" },
+        "description": { "FR": "Morceau obtenu aupres de Sophie." },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "CARTE_COMPLETE",
+        "label": { "FR": "Carte complete" },
+        "image": { "type": "ASSET", "value": "assets/demo/inventory/carte_complete.png" },
+        "description": { "FR": "Carte complete menant au tresor." },
+        "type": "UNIQUE"
+      },
+      {
+        "ref": "PELLE",
+        "label": { "FR": "Pelle" },
+        "image": { "type": "ASSET", "value": "assets/demo/inventory/pelle.png" },
+        "description": { "FR": "Pelle pour creuser." },
+        "type": "UNIQUE",
+        "actionType": "EQUIPPABLE"
+      },
+      {
+        "ref": "PIECES_OR",
+        "label": { "FR": "Pieces d'or" },
+        "image": { "type": "ASSET", "value": "assets/demo/inventory/pieces_or.png" },
+        "description": { "FR": "Des pieces d'or brillantes." },
+        "type": "COLLECTION"
+      }
+    ],
+    "mergeRules": [
+      { "items": ["CARTE_1", "CARTE_SOPHIE"], "result": "CARTE_COMPLETE" },
+      { "items": ["CARTE_SOPHIE", "CARTE_1"], "result": "CARTE_COMPLETE" }
+    ]
+  },
+  "scenario": {
+    "steps": [
+      {
+        "ref": "STEP_MAIN",
+        "label": { "FR": "Etape principale" },
+        "targets": [
+          { "ref": "TARGET_TRESOR", "label": { "FR": "Trouver le tresor" } }
+        ],
+        "possibilities": [
+          {
+            "trigger": { "type": "AbsoluteTime", "value": "0" },
+            "consequences": [
+              { "type": "Talk", "metadata": { "talkRef": "TALK_MARCEL_ROOT_1_001" } }
+            ]
+          },
+          {
+            "trigger": { "type": "TALKEND", "value": "TALK_MARCEL_ROOT_1_002" },
+            "consequences": [
+              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "CARTE_1" } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

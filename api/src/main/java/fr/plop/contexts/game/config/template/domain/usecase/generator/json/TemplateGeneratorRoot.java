@@ -86,7 +86,7 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
             }
 
-            public record Possibility(Trigger trigger, List<Consequence> consequences, Condition condition, Recurrence recurrence) {
+            public record Possibility(String ref,  Trigger trigger, List<Consequence> consequences, Condition condition, Recurrence recurrence) {
 
                 public record Trigger(String type, String value, String talkId, String matchType, Map<String, Object> metadata, List<Trigger> children) {
 
@@ -120,10 +120,7 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
     public record Inventory(List<InventoryItem> items, List<MergeRule> mergeRules) {
         public record InventoryItem(String ref, Map<String, String> label, Image image, Map<String, String> description,
-                                    String type, String linkTargetRef, List<ActionRule> actions) {
-            public record ActionRule(String type, List<Consequence> consequences) {
-
-            }
+                                    String type, String linkTargetRef, Integer initValue, String actionType) {
         }
         public record MergeRule(List<String> items, String result) {
 

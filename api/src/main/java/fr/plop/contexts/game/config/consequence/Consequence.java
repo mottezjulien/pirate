@@ -1,10 +1,12 @@
 package fr.plop.contexts.game.config.consequence;
 
 import fr.plop.contexts.game.config.Image.domain.ImageItem;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.session.core.domain.model.SessionGameOver;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
@@ -17,8 +19,8 @@ public sealed interface Consequence permits
         Consequence.DisplayTalk,
         Consequence.DisplayImage,
         Consequence.UpdatedMetadata,
-        Consequence.ObjetAdd,
-        Consequence.ObjetRemove {
+        Consequence.InventoryAddItem,
+        Consequence.InventoryRemoveItem {
 
     record Id(String value) {
         public Id() {
@@ -44,7 +46,7 @@ public sealed interface Consequence permits
 
     }
 
-    record DisplayConfirm(Id id, I18n message) implements Consequence {
+    record DisplayConfirm(Id id, I18n message, MessageToken token) implements Consequence {
 
     }
 
@@ -60,11 +62,11 @@ public sealed interface Consequence permits
 
     }
 
-    record ObjetAdd(Id id, String objetId) implements Consequence {
+    record InventoryAddItem(Id id, GameConfigInventoryItem.Id itemId) implements Consequence {
 
     }
 
-    record ObjetRemove(Id id, String objetId) implements Consequence {
+    record InventoryRemoveItem(Id id, GameConfigInventoryItem.Id itemId) implements Consequence {
 
     }
 

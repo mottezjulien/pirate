@@ -1,6 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
@@ -12,9 +13,9 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.session.scenario.domain.model.ScenarioSessionState;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
-import fr.plop.contexts.game.session.time.GameSessionTimeUnit;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
+import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.subs.i18n.domain.I18n;
@@ -33,15 +34,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TemplateGeneratorJsonUseCaseTest {
 
     private final TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private TemplateGeneratorRoot parseRoot(String json) throws JsonProcessingException {
+        return objectMapper.readValue(json, TemplateGeneratorRoot.class);
+    }
 
     @Test
     public void emptyDefaultTemplate() throws JsonProcessingException {
-        Template template = generator.apply("{ \"code\": \"ABCD\" }");
+        TemplateGeneratorRoot root = parseRoot("{ \"code\": \"ABCD\" }");
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("ABCD"));
-        assertThat(template.version()).isEqualTo("0.0.0");
-        assertThat(template.label()).isEqualTo("");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -56,12 +60,10 @@ public class TemplateGeneratorJsonUseCaseTest {
 
    @Test
     public void versionAndLabel() throws JsonProcessingException {
-        Template template = generator.apply("{ \"code\": \"XYZ\",\"version\": \"1.8.4\",\"label\": \"Mon nouveau niveau\" }" );
+        TemplateGeneratorRoot root = parseRoot("{ \"code\": \"XYZ\",\"version\": \"1.8.4\",\"label\": \"Mon nouveau niveau\" }");
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("XYZ"));
-        assertThat(template.version()).isEqualTo("1.8.4");
-        assertThat(template.label()).isEqualTo("Mon nouveau niveau");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -78,12 +80,10 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void versionAndLabelAndDuration() throws JsonProcessingException {
-        Template template = generator.apply("{ \"code\": \"POUET\",\"version\": \"1.4\",\"label\": \"Mon nouveau niveau 2\", \"duration\": 180 }" );
+        TemplateGeneratorRoot root = parseRoot("{ \"code\": \"POUET\",\"version\": \"1.4\",\"label\": \"Mon nouveau niveau 2\", \"duration\": 180 }");
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("POUET"));
-        assertThat(template.version()).isEqualTo("1.4");
-        assertThat(template.label()).isEqualTo("Mon nouveau niveau 2");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofMinutes(180));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -100,7 +100,7 @@ public class TemplateGeneratorJsonUseCaseTest {
     public void oneStepWithTargets() throws JsonProcessingException {
 
 
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 { "code": "Coucou","version": "2", "duration": 30, "scenario" : {
                     "steps": [
                         {
@@ -121,12 +121,10 @@ public class TemplateGeneratorJsonUseCaseTest {
                     ]
                 }
                 }""");
+        Template template = generator.template(root);
 
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("COUCOU"));
-        assertThat(template.version()).isEqualTo("2");
-        assertThat(template.label()).isEqualTo("");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofMinutes(30));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -176,7 +174,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void oneStepWithTargetAndPossibilities() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "With Possibility",
                   "version": "3",
@@ -238,11 +236,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("WITH POSSIBILITY"));
-        assertThat(template.version()).isEqualTo("3");
-        assertThat(template.label()).isEqualTo("Hello");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofMinutes(45));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -282,7 +278,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                                                     })
                                                     .anySatisfy(subCondition -> {
                                                         assertThat(subCondition).isInstanceOf(Condition.AbsoluteTime.class);
-                                                        assertThat(((Condition.AbsoluteTime) subCondition).value()).isEqualTo(GameSessionTimeUnit.ofMinutes(27));
+                                                        assertThat(((Condition.AbsoluteTime) subCondition).value()).isEqualTo(GameInstanceTimeUnit.ofMinutes(27));
                                                     });
                                         });
 
@@ -306,7 +302,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                                 assertThat(((PossibilityRecurrence.Times) possibility.recurrence()).value()).isEqualTo(4);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(42));
+                                assertThat(trigger.value()).isEqualTo(GameInstanceTimeUnit.ofMinutes(42));
                                 assertThat(possibility.optCondition())
                                         .hasValueSatisfying(condition -> {
                                             assertThat(condition).isInstanceOf(Condition.And.class);
@@ -342,7 +338,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void twoSteps() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "Two Step",
                   "version": "4",
@@ -377,11 +373,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("TWO STEP"));
-        assertThat(template.version()).isEqualTo("4");
-        assertThat(template.label()).isEqualTo("Hello");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofMinutes(50));
         assertThat(template.scenario()).isNotNull();
         assertThat(template.scenario().id()).isNotNull();
@@ -421,7 +415,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                                 assertThat(((PossibilityRecurrence.Times) possibility.recurrence()).value()).isEqualTo(5);
                                 assertThat(possibility.trigger()).isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
                                 PossibilityTrigger.AbsoluteTime trigger = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
-                                assertThat(trigger.value()).isEqualTo(GameSessionTimeUnit.ofMinutes(51));
+                                assertThat(trigger.value()).isEqualTo(GameInstanceTimeUnit.ofMinutes(51));
                                 assertThat(possibility.optCondition()).isEmpty();
                                 assertThat(possibility.consequences()).isEmpty();
                             });
@@ -431,7 +425,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void firstBoard() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "firstBoard",
                   "version": "5.1",
@@ -450,11 +444,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("FIRSTBOARD"));
-        assertThat(template.version()).isEqualTo("5.1");
-        assertThat(template.label()).isEqualTo("Mon premier plateau");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
         assertThat(template.board().id()).isNotNull();
         assertThat(template.board().spaces())
@@ -479,7 +471,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void secondBoard() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "secondBoard",
                   "version": "5.2",
@@ -505,11 +497,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("SECONDBOARD"));
-        assertThat(template.version()).isEqualTo("5.2");
-        assertThat(template.label()).isEqualTo("Mon deuxième plateau");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
         assertThat(template.board().id()).isNotNull();
         assertThat(template.board().spaces())
@@ -545,7 +535,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void firstMap() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "firstMap",
                   "version": "2.0.0",
@@ -571,11 +561,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   ]
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template).isNotNull();
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("FIRSTMAP"));
-        assertThat(template.version()).isEqualTo("2.0.0");
-        assertThat(template.label()).isEqualTo("Ma première carte");
         assertThat(template.maxDuration()).isEqualTo(Duration.ofHours(1));
         assertThat(template.map().id()).isNotNull();
         assertThat(template.map().items())
@@ -607,7 +595,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                                 assertThat(point.color()).isEqualTo("yellow");
                                 assertThat(point.atom().optCondition()).hasValueSatisfying(condition -> {
                                     assertThat(condition).isInstanceOf(Condition.AbsoluteTime.class);
-                                    assertThat(((Condition.AbsoluteTime) condition).value()).isEqualTo(new GameSessionTimeUnit(41));
+                                    assertThat(((Condition.AbsoluteTime) condition).value()).isEqualTo(new GameInstanceTimeUnit(41));
                                 });
                             });
                 });
@@ -615,7 +603,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void prepareFirstMap_ManageLinkBoardScenario() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "linkBoardScenario",
                   "version": "0.0.0",
@@ -639,10 +627,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("LINKBOARDSCENARIO"));
-        assertThat(template.version()).isEqualTo("0.0.0");
-        assertThat(template.label()).isEqualTo("Link Board Scenario");
 
         List<BoardSpace> spaces = template.board().spaces();
         assertThat(spaces.getFirst().id()).isNotNull();
@@ -664,7 +650,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void prepareFirstMap_TalkOptions() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "linkBoardScenario",
                   "version": "0.0.0",
@@ -712,10 +698,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
         assertThat(template.id()).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("LINKBOARDSCENARIO"));
-        assertThat(template.version()).isEqualTo("0.0.0");
-        assertThat(template.label()).isEqualTo("Link Board Scenario");
 
         List<BoardSpace> spaces = template.board().spaces();
         assertThat(spaces.getFirst().id()).isNotNull();
@@ -736,7 +720,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                 .hasSize(1)
                 .anySatisfy(talk -> {
                     assertThat(talk.id()).isEqualTo(talkId);
-                    I18n resolve = talk.out().resolve(new GameSessionSituation());
+                    I18n resolve = talk.out().resolve(new GameInstanceSituation());
                     assertThat(resolve.value(Language.FR)).isEqualTo("C'est quoi ton choix ?");
                     assertThat(resolve.value(Language.EN)).isEqualTo("C'est quoi ton choix en anglais ?");
 
@@ -758,7 +742,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void prepareFirstMap_add_refs_withoutStepId() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "addRef",
                   "version": "0.0.0",
@@ -789,6 +773,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
 
         List<ScenarioConfig.Step> steps = template.scenario().steps();
         assertThat(steps.size()).isEqualTo(2);
@@ -809,7 +794,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                 .isInstanceOf(PossibilityTrigger.AbsoluteTime.class);
         PossibilityTrigger.AbsoluteTime goInSpace = (PossibilityTrigger.AbsoluteTime) possibility.trigger();
         assertThat(goInSpace.id()).isNotNull();
-        assertThat(goInSpace.value()).isEqualTo(new GameSessionTimeUnit(51));
+        assertThat(goInSpace.value()).isEqualTo(new GameInstanceTimeUnit(51));
 
         assertThat(possibility.consequences().getFirst()).isInstanceOf(Consequence.ScenarioTarget.class);
         Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibility.consequences().getFirst();
@@ -831,7 +816,7 @@ public class TemplateGeneratorJsonUseCaseTest {
 
     @Test
     public void confirmConsequenceAndTrigger() throws JsonProcessingException {
-        Template template = generator.apply("""
+        TemplateGeneratorRoot root = parseRoot("""
                 {
                   "code": "confirmTest",
                   "version": "1.0.0",
@@ -882,9 +867,9 @@ public class TemplateGeneratorJsonUseCaseTest {
                   }
                 }
                 """);
+        Template template = generator.template(root);
 
         assertThat(template).isNotNull();
-        assertThat(template.code()).isEqualTo(new Template.Code("CONFIRMTEST"));
 
         List<ScenarioConfig.Step> steps = template.scenario().steps();
         assertThat(steps).hasSize(1);
@@ -903,17 +888,17 @@ public class TemplateGeneratorJsonUseCaseTest {
 
         // Second possibility: ConfirmAnswer YES trigger
         Possibility confirmYesPossibility = step.possibilities().get(1);
-        assertThat(confirmYesPossibility.trigger()).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
-        PossibilityTrigger.ConfirmAnswer confirmYesTrigger = (PossibilityTrigger.ConfirmAnswer) confirmYesPossibility.trigger();
-        assertThat(confirmYesTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(confirmYesPossibility.trigger()).isInstanceOf(PossibilityTrigger.MessageConfirmAnswer.class);
+        PossibilityTrigger.MessageConfirmAnswer confirmYesTrigger = (PossibilityTrigger.MessageConfirmAnswer) confirmYesPossibility.trigger();
+        assertThat(confirmYesTrigger.token()).isEqualTo(displayConfirm.token());
         assertThat(confirmYesTrigger.expectedAnswer()).isTrue();
         assertThat(confirmYesPossibility.consequences()).hasSize(2);
 
         // Third possibility: ConfirmAnswer NO trigger
         Possibility confirmNoPossibility = step.possibilities().get(2);
-        assertThat(confirmNoPossibility.trigger()).isInstanceOf(PossibilityTrigger.ConfirmAnswer.class);
-        PossibilityTrigger.ConfirmAnswer confirmNoTrigger = (PossibilityTrigger.ConfirmAnswer) confirmNoPossibility.trigger();
-        assertThat(confirmNoTrigger.confirmId()).isEqualTo(displayConfirm.id());
+        assertThat(confirmNoPossibility.trigger()).isInstanceOf(PossibilityTrigger.MessageConfirmAnswer.class);
+        PossibilityTrigger.MessageConfirmAnswer confirmNoTrigger = (PossibilityTrigger.MessageConfirmAnswer) confirmNoPossibility.trigger();
+        assertThat(confirmNoTrigger.token()).isEqualTo(displayConfirm.token());
         assertThat(confirmNoTrigger.expectedAnswer()).isFalse();
         assertThat(confirmNoPossibility.consequences()).hasSize(1);
     }

@@ -1,10 +1,10 @@
 package fr.plop.contexts.game.config.scenario.domain.model;
 
 import fr.plop.contexts.game.config.condition.Condition;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.session.core.domain.model.GameAction;
-import fr.plop.contexts.game.session.event.domain.GameEvent;
+import fr.plop.contexts.game.instance.core.domain.model.GameAction;
+import fr.plop.contexts.game.instance.event.domain.GameEvent;
 import fr.plop.generic.tools.StringTools;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public record Possibility(Id id, PossibilityRecurrence recurrence,
     }
 
 
-    public boolean accept(GameEvent event, List<GameAction> previousActions, GameSessionSituation situation) {
+    public boolean accept(GameEvent event, List<GameAction> previousActions, GameInstanceSituation situation) {
         int count = (int) previousActions.stream().filter(action -> action.is(id))
                 .count();
         return trigger.accept(event, previousActions)

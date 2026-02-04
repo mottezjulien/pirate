@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public record ScenarioConfig(Id id, String label, List<Step> steps) {
+public record ScenarioConfig(Id id, String label, List<Step> steps, List<Possibility> genericPossibilities) {
 
 
     public record Id(String value) {
@@ -61,7 +61,7 @@ public record ScenarioConfig(Id id, String label, List<Step> steps) {
     }
 
     public ScenarioConfig(List<Step> steps) {
-        this(new Id(), "", steps);
+        this(new Id(), "", steps, List.of());
     }
 
     public Step firstStep() {

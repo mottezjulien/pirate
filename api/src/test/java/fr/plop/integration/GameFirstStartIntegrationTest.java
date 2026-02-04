@@ -1,11 +1,13 @@
 package fr.plop.integration;
 
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.commun.domain.Game;
+import fr.plop.contexts.game.commun.domain.GameProject;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
-import fr.plop.contexts.game.session.core.presenter.GameSessionController;
+import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
+import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,7 @@ public class GameFirstStartIntegrationTest {
     int randomServerPort;
 
     @Autowired
-    private GameSessionClearPort sessionClear;
+    private GameInstanceClearPort sessionClear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
@@ -48,14 +50,15 @@ public class GameFirstStartIntegrationTest {
         templateInitUseCase.deleteAll();
 
         ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));
-        Template template = Template.builder().id(templateId).label("Mon premier jeu").scenario(scenario).build();
-        templateInitUseCase.create(template);
+        Template template = Template.builder().id(templateId).scenario(scenario).build();
+        Game.Id gameId = templateInitUseCase.findOrCreateGame(new GameProject.Code("first-start-test"), new Game.Version("1.0.0"));
+        templateInitUseCase.createOrUpdate(gameId, template);
     }
 
     @Test
     public void createSession() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = createAuth();
-        GameSessionController.GameSessionActivedResponseDTO session = createGameSession(connection.token());
+        GameInstanceController.ResponseDTO session = createGame(connection.token());
         assertThat(session.id()).isNotNull();
     }
 
@@ -69,17 +72,17 @@ public class GameFirstStartIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionActivedResponseDTO createGameSession(String token) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
+    private GameInstanceController.ResponseDTO createGame(String token) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/";
         URI uri = new URI(baseUrl);
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(templateId.value());
+        GameInstanceController.CreateRequestDTO request = new GameInstanceController.CreateRequestDTO(templateId.value());
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionActivedResponseDTO> result = this.restTemplate
-                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionActivedResponseDTO.class);
+        ResponseEntity<GameInstanceController.ResponseDTO> result = this.restTemplate
+                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameInstanceController.ResponseDTO.class);
         return result.getBody();
     }
 

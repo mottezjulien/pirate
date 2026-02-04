@@ -11,7 +11,7 @@ import jakarta.persistence.*;
 import java.util.Optional;
 
 @Entity
-@Table(name = "TEST2_IMAGE_OBJECT")
+@Table(name = "LO_IMAGE_OBJECT")
 public class ImageObjectEntity {
 
     public enum Type {

@@ -28,7 +28,4 @@ public interface TemplateRepository extends JpaRepository<TemplateEntity, String
     @Query(FROM + FETCH_FULL + WHERE_TEMPLATE_ID)
     List<TemplateEntity> fullById(@Param("id") String id);
 
-    @Query(FROM + " WHERE LOWER(REPLACE(template.code, ' ', '')) LIKE LOWER(CONCAT(:pattern, '%'))")
-    List<TemplateEntity> findLikeLowerCode(@Param("pattern") String pattern);
-
 }

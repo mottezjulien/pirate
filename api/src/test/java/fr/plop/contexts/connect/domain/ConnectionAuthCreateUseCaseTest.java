@@ -28,7 +28,7 @@ public class ConnectionAuthCreateUseCaseTest {
     @Test
     void happyPath_getTheLastAuthIfIsValid() {
         String deviceId = "deviceId";
-        DeviceUserConnect connect = findByDeviceId(deviceId);
+        ConnectUserDevice connect = findByDeviceId(deviceId);
         when(outPort.lastAuth(connect.id())).thenReturn(Optional.of(new ConnectAuthUser(new ConnectAuthUser.Id(), new ConnectToken("tokenA"), connect, Instant.now())));
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuthUser(new ConnectAuthUser.Id(), new ConnectToken("tokenB"), connect, Instant.now()));
         ConnectAuthUser result = useCase.byDeviceId(deviceId);
@@ -38,7 +38,7 @@ public class ConnectionAuthCreateUseCaseTest {
     @Test
     void createNewAuthThIfeLastAuthIsNotValid() {
         String deviceId = "deviceId";
-        DeviceUserConnect connect = findByDeviceId(deviceId);
+        ConnectUserDevice connect = findByDeviceId(deviceId);
         when(outPort.lastAuth(connect.id())).thenReturn(Optional.of(new ConnectAuthUser(new ConnectAuthUser.Id(), new ConnectToken("tokenA"), connect, Instant.now().minus(3, ChronoUnit.DAYS))));
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuthUser(new ConnectAuthUser.Id(), new ConnectToken("tokenB"), connect, Instant.now()));
         ConnectAuthUser result = useCase.byDeviceId(deviceId);
@@ -50,7 +50,7 @@ public class ConnectionAuthCreateUseCaseTest {
         String deviceId = "deviceId";
         when(outPort.findByDeviceId(deviceId)).thenReturn(Optional.empty());
 
-        DeviceUserConnect connect = new DeviceUserConnect(new DeviceUserConnect.Id("any"), deviceId, new User.Id("userId"));
+        ConnectUserDevice connect = new ConnectUserDevice(new ConnectUserDevice.Id("any"), new User.Id("userId"), deviceId);
         when(outPort.createDeviceConnect(deviceId)).thenReturn(connect);
 
         when(outPort.createAuth(connect)).thenReturn(new ConnectAuthUser(new ConnectAuthUser.Id(), new ConnectToken("tokenC"), connect, Instant.now()));
@@ -60,9 +60,9 @@ public class ConnectionAuthCreateUseCaseTest {
     }
 
 
-    public DeviceUserConnect findByDeviceId(String deviceIdStr) {
-        DeviceUserConnect.Id deviceId = mock(DeviceUserConnect.Id.class);
-        DeviceUserConnect connect = new DeviceUserConnect(deviceId, deviceIdStr, new User.Id("userId"));
+    public ConnectUserDevice findByDeviceId(String deviceIdStr) {
+        ConnectUserDevice.Id deviceId = mock(ConnectUserDevice.Id.class);
+        ConnectUserDevice connect = new ConnectUserDevice(deviceId, new User.Id("userId"), deviceIdStr);
         when(outPort.findByDeviceId(deviceIdStr)).thenReturn(Optional.of(connect));
         return connect;
     }

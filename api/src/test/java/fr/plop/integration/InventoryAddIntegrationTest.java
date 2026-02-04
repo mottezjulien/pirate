@@ -1,19 +1,28 @@
 package fr.plop.integration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.plop.contexts.connect.presenter.ConnectionController;
+import fr.plop.contexts.game.commun.domain.Game;
+import fr.plop.contexts.game.commun.domain.GameProject;
+import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
+import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
+import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
+import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
+import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
-import fr.plop.contexts.game.config.template.domain.usecase.generator.json.TemplateGeneratorJsonUseCase;
-import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
-import fr.plop.contexts.game.session.core.presenter.GameSessionController;
-import fr.plop.contexts.game.session.inventory.presenter.GameSessionInventoryController;
-import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
+import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
+import fr.plop.contexts.game.instance.inventory.presenter.GameInstanceInventoryController;
+import fr.plop.contexts.game.instance.push.PushPort;
+import fr.plop.subs.i18n.domain.I18n;
+import fr.plop.subs.i18n.domain.Language;
+import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
@@ -23,6 +32,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,71 +47,60 @@ public class InventoryAddIntegrationTest {
     int randomServerPort;
 
     @Autowired
-    private GameSessionClearPort sessionClear;
+    private GameInstanceClearPort sessionClear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
-    @MockBean
+    @MockitoBean
     private PushPort pushPort;
 
     private Template template;
 
     @BeforeEach
-    void setUp() throws JsonProcessingException {
+    void setUp() throws InterruptedException {
+        Thread.sleep(200);
         sessionClear.clearAll();
         templateInitUseCase.deleteAll();
 
-        // Create template with inventory item and auto-add via StepActive trigger
-        TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
-        template = generator.apply("""
-                {
-                  "code": "INVENTORY_ADD_TEST",
-                  "version": "1.0.0",
-                  "label": "Test Inventory Add",
-                  "inventory": {
-                    "items": [
-                      {
-                        "ref": "ITEM_KEY",
-                        "label": { "FR": "Cle doree", "EN": "Golden key" },
-                        "image": { "type": "ASSET", "value": "items/key.png" },
-                        "description": { "FR": "Une cle brillante", "EN": "A shiny key" },
-                        "type": "UNIQUE"
-                      },
-                      {
-                        "ref": "ITEM_COIN",
-                        "label": { "FR": "Piece d'or", "EN": "Gold coin" },
-                        "image": { "type": "ASSET", "value": "items/coin.png" },
-                        "type": "COLLECTION"
-                      }
-                    ]
-                  },
-                  "scenario": {
-                    "steps": [
-                      {
-                        "ref": "STEP_1",
-                        "label": { "FR": "Etape 1", "EN": "Step 1" },
-                        "targets": [
-                          { "ref": "TARGET_1", "label": { "FR": "Objectif", "EN": "Goal" } }
-                        ],
-                        "possibilities": [
-                          {
-                            "trigger": { "type": "StepActive" },
-                            "consequences": [
-                              {
-                                "type": "INVENTORY_ADD",
-                                "metadata": { "itemRef": "ITEM_KEY" }
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-                """);
+        // Item IDs
+        var itemKeyId = new GameConfigInventoryItem.Id("ITEM_KEY");
+        var itemCoinId = new GameConfigInventoryItem.Id("ITEM_COIN");
 
-        templateInitUseCase.create(template);
+        // Step & Target IDs
+        var stepId = new ScenarioConfig.Step.Id("STEP_1");
+        var target1Id = new ScenarioConfig.Target.Id("TARGET_1");
+
+        // Inventory items
+        var items = List.of(
+                new GameConfigInventoryItem(itemKeyId, i18n("Cle doree", "Golden key"),
+                        new Image(Image.Type.ASSET, "items/key.png"),
+                        Optional.of(i18n("Une cle brillante", "A shiny key")),
+                        GameConfigInventoryItem.Type.UNIQUE, 0, Optional.empty(), GameConfigInventoryItem.ActionType.NONE),
+                new GameConfigInventoryItem(itemCoinId, i18n("Piece d'or", "Gold coin"),
+                        new Image(Image.Type.ASSET, "items/coin.png"),
+                        Optional.empty(),
+                        GameConfigInventoryItem.Type.COLLECTION, 0, Optional.empty(), GameConfigInventoryItem.ActionType.NONE)
+        );
+
+        // StepActive → add ITEM_KEY
+        var stepActivePossibility = new Possibility(
+                new PossibilityTrigger.StepActive(new PossibilityTrigger.Id(), stepId),
+                List.of(new Consequence.InventoryAddItem(new Consequence.Id(), itemKeyId)));
+
+        // Step with target and possibility
+        var step = new ScenarioConfig.Step(stepId, i18n("Etape 1", "Step 1"), Optional.empty(), 0,
+                List.of(new ScenarioConfig.Target(target1Id, i18n("Objectif", "Goal"), Optional.empty(), false, List.of(), Optional.empty())),
+                List.of(stepActivePossibility));
+
+        // Build template
+        template = Template.builder()
+                .scenario(new ScenarioConfig(List.of(step)))
+                .inventory(new InventoryConfig(new InventoryConfig.Id(), items, List.of()))
+                .build();
+
+        Game.Id gameId = templateInitUseCase.findOrCreateGame(new GameProject.Code("INVENTORY_ADD_TEST"), new Game.Version("1.0.0"));
+        templateInitUseCase.createOrUpdate(gameId, template);
     }
 
     @Test
@@ -117,17 +117,17 @@ public class InventoryAddIntegrationTest {
         ConnectionController.ResponseDTO connection = createAuth();
 
         // 2. Create game session
-        GameSessionController.GameSessionActivedResponseDTO session = createGameSession(connection.token());
+        GameInstanceController.ResponseDTO session = createGame(connection.token());
         assertThat(session.id()).isNotNull();
 
         // 3. Start the session - this triggers StepActive and adds the item
-        startGameSession(session.gameToken(), session.id());
+        startGameInstance(session.auth().token(), session.id());
 
         // 4. Wait for async event processing
         Thread.sleep(500);
 
         // 5. Get inventory list
-        List<GameSessionInventoryController.SimpleResponseDTO> inventory = getInventoryList(session.gameToken(), session.id());
+        List<GameInstanceInventoryController.SimpleResponseDTO> inventory = getInventoryList(session.auth().token(), session.id());
 
         // 6. Verify the item was added
         assertThat(inventory).hasSize(1);
@@ -136,70 +136,56 @@ public class InventoryAddIntegrationTest {
     }
 
     @Test
-    public void collectionItem_canBeAddedMultipleTimes() throws URISyntaxException, JsonProcessingException, InterruptedException {
-        // Create a template that adds the same COLLECTION item twice
+    public void collectionItem_canBeAddedMultipleTimes() throws URISyntaxException, InterruptedException {
+        // Create a template that adds the same COLLECTION item 3 times
         sessionClear.clearAll();
         templateInitUseCase.deleteAll();
 
-        TemplateGeneratorJsonUseCase generator = new TemplateGeneratorJsonUseCase();
-        Template templateMultiAdd = generator.apply("""
-                {
-                  "code": "INVENTORY_MULTI_ADD_TEST",
-                  "version": "1.0.0",
-                  "label": "Test Multi Add",
-                  "inventory": {
-                    "items": [
-                      {
-                        "ref": "ITEM_COIN",
-                        "label": { "FR": "Piece d'or", "EN": "Gold coin" },
-                        "image": { "type": "ASSET", "value": "items/coin.png" },
-                        "type": "COLLECTION"
-                      }
-                    ]
-                  },
-                  "scenario": {
-                    "steps": [
-                      {
-                        "ref": "STEP_1",
-                        "label": { "FR": "Etape 1", "EN": "Step 1" },
-                        "targets": [
-                          { "ref": "TARGET_1", "label": { "FR": "Objectif", "EN": "Goal" } }
-                        ],
-                        "possibilities": [
-                          {
-                            "trigger": { "type": "StepActive" },
-                            "consequences": [
-                              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "ITEM_COIN" } },
-                              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "ITEM_COIN" } },
-                              { "type": "INVENTORY_ADD", "metadata": { "itemRef": "ITEM_COIN" } }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-                """);
+        var itemCoinId = new GameConfigInventoryItem.Id("ITEM_COIN");
+        var stepId = new ScenarioConfig.Step.Id("STEP_1");
+        var target1Id = new ScenarioConfig.Target.Id("TARGET_1");
 
-        templateInitUseCase.create(templateMultiAdd);
+        var coinItem = new GameConfigInventoryItem(itemCoinId, i18n("Piece d'or", "Gold coin"),
+                new Image(Image.Type.ASSET, "items/coin.png"), Optional.empty(),
+                GameConfigInventoryItem.Type.COLLECTION, 0, Optional.empty(), GameConfigInventoryItem.ActionType.NONE);
+
+        var stepActivePossibility = new Possibility(
+                new PossibilityTrigger.StepActive(new PossibilityTrigger.Id(), stepId),
+                List.of(
+                        new Consequence.InventoryAddItem(new Consequence.Id(), itemCoinId),
+                        new Consequence.InventoryAddItem(new Consequence.Id(), itemCoinId),
+                        new Consequence.InventoryAddItem(new Consequence.Id(), itemCoinId)
+                ));
+
+        var step = new ScenarioConfig.Step(stepId, i18n("Etape 1", "Step 1"), Optional.empty(), 0,
+                List.of(new ScenarioConfig.Target(target1Id, i18n("Objectif", "Goal"), Optional.empty(), false, List.of(), Optional.empty())),
+                List.of(stepActivePossibility));
+
+        Template templateMultiAdd = Template.builder()
+                .scenario(new ScenarioConfig(List.of(step)))
+                .inventory(new InventoryConfig(new InventoryConfig.Id(), List.of(coinItem), List.of()))
+                .build();
+
+        Game.Id gameId = templateInitUseCase.findOrCreateGame(new GameProject.Code("INVENTORY_MULTI_ADD_TEST"), new Game.Version("1.0.0"));
+        templateInitUseCase.createOrUpdate(gameId, templateMultiAdd);
 
         // Create session
         ConnectionController.ResponseDTO connection = createAuth();
-        GameSessionController.GameSessionActivedResponseDTO session = createGameSessionForTemplate(connection.token(), templateMultiAdd.id().value());
+        GameInstanceController.ResponseDTO session = createGameForTemplate(connection.token(), templateMultiAdd.id().value());
 
         // Start the session
-        startGameSession(session.gameToken(), session.id());
+        startGameInstance(session.auth().token(), session.id());
 
         // Wait for async event processing
         Thread.sleep(500);
 
         // Get inventory
-        List<GameSessionInventoryController.SimpleResponseDTO> inventory = getInventoryList(session.gameToken(), session.id());
+        List<GameInstanceInventoryController.SimpleResponseDTO> inventory = getInventoryList(session.auth().token(), session.id());
 
         // Verify count is 3
         assertThat(inventory).hasSize(1);
-        assertThat(inventory.get(0).label()).isEqualTo("Piece d'or");
-        assertThat(inventory.get(0).count()).isEqualTo(3);
+        assertThat(inventory.getFirst().label()).isEqualTo("Piece d'or");
+        assertThat(inventory.getFirst().count()).isEqualTo(3);
     }
 
     private ConnectionController.ResponseDTO createAuth() throws URISyntaxException {
@@ -212,37 +198,41 @@ public class InventoryAddIntegrationTest {
         return result.getBody();
     }
 
-    private GameSessionController.GameSessionActivedResponseDTO createGameSession(String token) throws URISyntaxException {
-        return createGameSessionForTemplate(token, template.id().value());
+    private GameInstanceController.ResponseDTO createGame(String token) throws URISyntaxException {
+        return createGameForTemplate(token, template.id().value());
     }
 
-    private GameSessionController.GameSessionActivedResponseDTO createGameSessionForTemplate(String token, String templateId) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/";
+    private GameInstanceController.ResponseDTO createGameForTemplate(String token, String templateId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/";
         URI uri = new URI(baseUrl);
 
-        GameSessionController.GameSessionCreateRequest request = new GameSessionController.GameSessionCreateRequest(templateId);
+        GameInstanceController.CreateRequestDTO request = new GameInstanceController.CreateRequestDTO(templateId);
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", token);
 
-        ResponseEntity<GameSessionController.GameSessionActivedResponseDTO> result = this.restTemplate
-                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameSessionController.GameSessionActivedResponseDTO.class);
+        ResponseEntity<GameInstanceController.ResponseDTO> result = this.restTemplate
+                .exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), GameInstanceController.ResponseDTO.class);
         return result.getBody();
     }
 
-    private void startGameSession(String gameToken, String sessionId) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/" + sessionId + "/start/";
+    private void startGameInstance(String gameToken, String sessionId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/start/";
         URI uri = new URI(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("Authorization", gameToken);
 
-        this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameSessionController.GameSessionStoppedResponseDTO.class);
+        this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameInstanceController.ResponseDTO.class);
     }
 
-    private List<GameSessionInventoryController.SimpleResponseDTO> getInventoryList(String gameToken, String sessionId) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/sessions/" + sessionId + "/inventory/";
+    private static I18n i18n(String fr, String en) {
+        return new I18n(Map.of(Language.FR, fr, Language.EN, en));
+    }
+
+    private List<GameInstanceInventoryController.SimpleResponseDTO> getInventoryList(String gameToken, String sessionId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/inventory/";
         URI uri = new URI(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
@@ -250,9 +240,9 @@ public class InventoryAddIntegrationTest {
         headers.add("Authorization", gameToken);
         headers.add("Language", "FR");
 
-        ResponseEntity<List<GameSessionInventoryController.SimpleResponseDTO>> result = this.restTemplate
+        ResponseEntity<List<GameInstanceInventoryController.SimpleResponseDTO>> result = this.restTemplate
                 .exchange(uri, HttpMethod.GET, new HttpEntity<>(headers),
-                        new ParameterizedTypeReference<List<GameSessionInventoryController.SimpleResponseDTO>>() {});
+                        new ParameterizedTypeReference<List<GameInstanceInventoryController.SimpleResponseDTO>>() {});
         return result.getBody();
     }
 }

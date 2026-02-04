@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.talk.persistence;
 
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.config.talk.domain.TalkItemOut;
+import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -18,8 +18,8 @@ public class TalkItemContinueEntity extends TalkItemEntity {
     }
 
     @Override
-    public TalkItem toModel() {
-        return TalkItem.continueItem(new TalkItem.Id(id), TalkItemOut.fixed(value.toModel()), characterReference.toModel(), new TalkItem.Id(nextId));
+    protected TalkItemNext toModelNext() {
+        return new TalkItemNext.Continue(new TalkItem.Id(nextId));
     }
 
 }

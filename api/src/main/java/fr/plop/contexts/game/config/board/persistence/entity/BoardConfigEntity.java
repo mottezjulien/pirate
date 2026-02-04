@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_BOARD_CONFIG")
+@Table(name = "LO_BOARD_CONFIG")
 public class BoardConfigEntity {
 
     @Id

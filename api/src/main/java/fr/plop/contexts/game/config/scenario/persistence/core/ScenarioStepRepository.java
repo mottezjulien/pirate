@@ -7,7 +7,7 @@ public interface ScenarioStepRepository extends JpaRepository<ScenarioStepEntity
     String FETCH_ALL = " LEFT JOIN FETCH step.label" +
             " LEFT JOIN FETCH step.targets step_target" +
             " LEFT JOIN FETCH step_target.label" +
-            " LEFT JOIN FETCH step.possibilities possibility" +
-            ScenarioPossibilityRepository.FETCH_ALL;
+            " LEFT JOIN FETCH step.possibilities step_possibility" +
+            ScenarioPossibilityRepository.FETCH_ALL_STEP;
 
 }

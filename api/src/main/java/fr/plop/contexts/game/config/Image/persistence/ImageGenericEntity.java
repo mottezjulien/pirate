@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_IMAGE_ITEM_GENERIC")
+@Table(name = "LO_IMAGE_ITEM_GENERIC")
 public class ImageGenericEntity {
 
     @Id

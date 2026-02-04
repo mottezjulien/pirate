@@ -5,7 +5,7 @@ import fr.plop.generic.tools.StringTools;
 
 import java.time.Instant;
 
-public record ConnectAuthUser(Id id, ConnectToken token, DeviceUserConnect connect, Instant createdAt) {
+public record ConnectAuthUser(Id id, ConnectToken token, ConnectUserDevice connect, Instant createdAt) {
 
     public record Id(String value) {
         public Id() {

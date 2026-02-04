@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.Image.domain.ImageItem;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "TEST2_IMAGE_ITEM")
+@Table(name = "LO_IMAGE_ITEM")
 public class ImageItemEntity {
 
     @Id

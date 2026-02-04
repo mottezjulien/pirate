@@ -2,8 +2,8 @@ package fr.plop.contexts.game.config.consequence.handler;
 
 
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.core.domain.usecase.GameOverUseCase;
+import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
+import fr.plop.contexts.game.instance.core.domain.usecase.GameOverUseCase;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,7 +21,7 @@ public class ConsequenceOverHandler implements ConsequenceHandler {
     }
 
     @Override
-    public void handle(GameSessionContext context, Consequence consequence) {
+    public void handle(GameInstanceContext context, Consequence consequence) {
         if(consequence instanceof Consequence.SessionEnd sessionEnd){
             gameOverUseCase.apply(context, sessionEnd.gameOver());
         }

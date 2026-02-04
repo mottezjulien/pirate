@@ -34,6 +34,7 @@ dependencies:
 
   #Shimmer Loading
   shimmer: ^3.0.0
+  upgrader: ^12.5.0
 
 dev_dependencies:
   flutter_test:
@@ -59,3 +60,4 @@ flutter:
     - assets/translations/
     - assets/game/
     - assets/game/lyon9/
+    - assets/game/first_demo/talk/

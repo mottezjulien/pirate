@@ -9,7 +9,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "TEST2_BOARD_RECTANGLE")
+@Table(name = "LO_BOARD_RECTANGLE")
 public class BoardRectEntity {
 
     @Id
@@ -19,16 +19,16 @@ public class BoardRectEntity {
     @JoinColumn(name = "space_id")
     private BoardSpaceEntity space;
 
-    @Column(name = "top_right_latitude")
+    @Column(name = "top_right_latitude", precision = 18, scale = 12)
     private BigDecimal topRightLatitude;
 
-    @Column(name = "top_right_longitude")
+    @Column(name = "top_right_longitude", precision = 18, scale = 12)
     private BigDecimal topRightLongitude;
 
-    @Column(name = "bottom_left_latitude")
+    @Column(name = "bottom_left_latitude", precision = 18, scale = 12)
     private BigDecimal bottomLeftLatitude;
 
-    @Column(name = "bottom_left_longitude")
+    @Column(name = "bottom_left_longitude", precision = 18, scale = 12)
     private BigDecimal bottomLeftLongitude;
 
     public String getId() {

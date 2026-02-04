@@ -2,9 +2,9 @@ package fr.plop.contexts.game.config.consequence.handler;
 
 
 import fr.plop.contexts.game.config.consequence.Consequence;
-import fr.plop.contexts.game.session.core.domain.model.GameSessionContext;
-import fr.plop.contexts.game.session.push.PushEvent;
-import fr.plop.contexts.game.session.push.PushPort;
+import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
+import fr.plop.contexts.game.instance.push.PushEvent;
+import fr.plop.contexts.game.instance.push.PushPort;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -24,7 +24,7 @@ public class ConsequenceImageHandler implements ConsequenceHandler {
     }
 
     @Override
-    public void handle(GameSessionContext context, Consequence consequence) {
+    public void handle(GameInstanceContext context, Consequence consequence) {
         if (Objects.requireNonNull(consequence) instanceof Consequence.DisplayImage image) {
             pushPort.push(new PushEvent.Image(context, image.imageId()));
         } else {

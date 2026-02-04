@@ -1,0 +1,160 @@
+package fr.plop.contexts.game.instance.core.persistence;
+
+import fr.plop.contexts.game.config.Image.persistence.ImageConfigEntity;
+import fr.plop.contexts.game.config.board.persistence.entity.BoardConfigEntity;
+import fr.plop.contexts.game.config.map.persistence.MapConfigEntity;
+import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioConfigEntity;
+import fr.plop.contexts.game.config.talk.persistence.TalkConfigEntity;
+import fr.plop.contexts.game.config.template.persistence.TemplateEntity;
+import fr.plop.contexts.game.instance.core.domain.model.GameInstance;
+import jakarta.persistence.*;
+
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "LO_GAME_SESSION")
+public class GameInstanceEntity {
+
+    @Id
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "template_id")
+    private TemplateEntity template;
+
+    @OneToMany(mappedBy = "session")
+    private final Set<GamePlayerEntity> players = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "scenario_config_id")
+    private ScenarioConfigEntity scenario;
+
+    @ManyToOne
+    @JoinColumn(name = "board_config_id")
+    private BoardConfigEntity board;
+
+    @ManyToOne
+    @JoinColumn(name = "map_config_id")
+    private MapConfigEntity map;
+
+    @ManyToOne
+    @JoinColumn(name = "talk_config_id")
+    private TalkConfigEntity talk;
+
+    @ManyToOne
+    @JoinColumn(name = "image_config_id")
+    private ImageConfigEntity image;
+
+    @Enumerated(EnumType.STRING)
+    private GameInstance.State state;
+
+    @Column(name = "start_at")
+    private Instant startAt;
+
+    @Column(name = "over_at")
+    private Instant overAt;
+
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public TemplateEntity getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(TemplateEntity template) {
+        this.template = template;
+    }
+
+    public Set<GamePlayerEntity> getPlayers() {
+        return players;
+    }
+
+    public ScenarioConfigEntity getScenario() {
+        return scenario;
+    }
+
+    public void setScenario(ScenarioConfigEntity scenario) {
+        this.scenario = scenario;
+    }
+
+    public BoardConfigEntity getBoard() {
+        return board;
+    }
+
+    public void setBoard(BoardConfigEntity board) {
+        this.board = board;
+    }
+
+    public MapConfigEntity getMap() {
+        return map;
+    }
+
+    public void setMap(MapConfigEntity map) {
+        this.map = map;
+    }
+
+    public TalkConfigEntity getTalk() {
+        return talk;
+    }
+
+    public void setTalk(TalkConfigEntity talk) {
+        this.talk = talk;
+    }
+
+    public ImageConfigEntity getImage() {
+        return image;
+    }
+
+    public void setImage(ImageConfigEntity image) {
+        this.image = image;
+    }
+
+    public GameInstance.State getState() {
+        return state;
+    }
+
+    public void setState(GameInstance.State state) {
+        this.state = state;
+    }
+
+    public Instant getStartAt() {
+        return startAt;
+    }
+
+    public void setStartAt(Instant startAt) {
+        this.startAt = startAt;
+    }
+
+    public Instant getOverAt() {
+        return overAt;
+    }
+
+    public void setOverAt(Instant overAt) {
+        this.overAt = overAt;
+    }
+
+
+    public static GameInstanceEntity fromModelId(GameInstance.Id modelId) {
+        GameInstanceEntity entity = new GameInstanceEntity();
+        entity.setId(modelId.value());
+        return entity;
+    }
+
+    public GameInstance.Id toModelId() {
+        return new GameInstance.Id(id);
+    }
+
+    public GameInstance.Atom toModelAtom() {
+        return new GameInstance.Atom(toModelId(), state, players.stream().map(GamePlayerEntity::toModel).toList());
+    }
+
+
+}

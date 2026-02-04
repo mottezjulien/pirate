@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../template/game_config_template.dart';
-import '../../template/template_repository.dart';
 import 'package:mobile/generic/app_current.dart';
 import 'package:mobile/generic/config/router.dart';
+
+import '../../../presentation/game_presentation.dart';
+import '../../../presentation/game_presentation_repository.dart';
+import '../../../presentation/widgets/game_presentation_card_widget.dart';
 
 class GameConfigSelectTextInputCodeTabWidget extends StatefulWidget {
   const GameConfigSelectTextInputCodeTabWidget({super.key});
@@ -17,10 +19,10 @@ class GameConfigSelectTextInputCodeTabWidget extends StatefulWidget {
 
 class _GameConfigSelectTextInputCodeTabWidgetState
     extends State<GameConfigSelectTextInputCodeTabWidget> {
-  final GameConfigTemplateRepository _repository = GameConfigTemplateRepository();
+  final GamePresentationRepository _repository = GamePresentationRepository();
   final TextEditingController _codeController = TextEditingController();
-  final ValueNotifier<List<GameConfigTemplateSimple>> _templatesNotifier =
-      ValueNotifier<List<GameConfigTemplateSimple>>([]);
+  final ValueNotifier<List<GamePresentationSimple>> _templatesNotifier =
+      ValueNotifier<List<GamePresentationSimple>>([]);
   final ValueNotifier<bool> _isLoadingNotifier = ValueNotifier<bool>(false);
 
   @override
@@ -50,71 +52,6 @@ class _GameConfigSelectTextInputCodeTabWidgetState
         SnackBar(content: Text('config.select.error_empty_code'.tr())),
       );
     }
-  }
-
-  void _showTemplateDetailsDialog(GameConfigTemplateSimple template) async {
-    final details = await _repository.findById(template.id);
-    if (!mounted) return;
-    
-    final parentContext = context;
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(details.label),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'config.select.template_details.description'.tr(),
-                style: Theme.of(dialogContext).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(details.description),
-              const SizedBox(height: 16),
-              Text(
-                'config.select.template_details.departure'.tr(),
-                style: Theme.of(dialogContext).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(details.departure.address),
-              const SizedBox(height: 16),
-              Text(
-                'config.select.template_details.level'.tr(),
-                style: Theme.of(dialogContext).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: List.generate(
-                  5,
-                  (starIndex) => Icon(
-                    starIndex < details.level ? Icons.star : Icons.star_outline,
-                    size: 20,
-                    color: Colors.amber,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('${'config.select.template_details.cancel'.tr()}'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              AppCurrent.templateId = details.id;
-              Navigator.of(dialogContext).pop();
-              parentContext.goNamed(AppRouter.homeName);
-            },
-            child: Text('${'config.select.template_details.select'.tr()}'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -148,7 +85,7 @@ class _GameConfigSelectTextInputCodeTabWidgetState
                 if (isLoading) {
                   return _buildShimmerLoading(); //TODO
                 }
-                return ValueListenableBuilder<List<GameConfigTemplateSimple>>(
+                return ValueListenableBuilder<List<GamePresentationSimple>>(
                   valueListenable: _templatesNotifier,
                   builder: (context, templates, _) {
                     return _buildTemplatesList(templates);
@@ -182,53 +119,15 @@ class _GameConfigSelectTextInputCodeTabWidgetState
     );
   }
 
-  Widget _buildTemplatesList(List<GameConfigTemplateSimple> templates) {
+  Widget _buildTemplatesList(List<GamePresentationSimple> templates) {
     return ListView.builder(
       itemCount: templates.length,
-      itemBuilder: (context, index) => _buildTemplateItem(templates[index]),
-    );
-  }
-
-  Widget _buildTemplateItem(GameConfigTemplateSimple template) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: GestureDetector(
-          onTap: () async => _showTemplateDetailsDialog(template),
-          child: ListTile(
-            title: Text(template.label),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  template.departureAddress,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: List.generate(
-                    5,
-                    (starIndex) => Icon(
-                      starIndex < template.level ? Icons.star : Icons.star_outline,
-                      size: 16,
-                      color: Colors.amber,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 12.0),
+        child: GamePresentationCardWidget(presentation: templates[index]),
       ),
     );
   }
+
+  // Suppression de _buildTemplateItem et _showTemplateDetailsDialog car ils sont dans GamePresentationCardWidget
 }

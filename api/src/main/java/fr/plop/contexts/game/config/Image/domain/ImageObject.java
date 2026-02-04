@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.Image.domain;
 
 import fr.plop.contexts.game.config.condition.Condition;
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.image.Image;
@@ -43,7 +43,7 @@ public sealed interface ImageObject permits ImageObject.Point, ImageObject._Imag
         return atom().center().left();
     }
 
-    default boolean isSelected(GameSessionSituation situation) {
+    default boolean isSelected(GameInstanceSituation situation) {
         return atom().optCondition().map(condition -> condition.accept(situation).toBoolean())
                 .orElse(true);
     }

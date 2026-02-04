@@ -1,7 +1,7 @@
 package fr.plop;
 
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
-import fr.plop.contexts.game.session.core.domain.port.GameSessionClearPort;
+import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,7 +21,7 @@ public class Runner {
     private TemplateInitUseCase.OutPort templateOutPort;
 
     @Autowired
-    private GameSessionClearPort sessionClear;
+    private GameInstanceClearPort sessionClear;
 
     @EventListener(ApplicationReadyEvent.class)
     public void afterStartup() {

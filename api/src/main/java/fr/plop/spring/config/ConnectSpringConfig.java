@@ -1,7 +1,7 @@
 package fr.plop.spring.config;
 
 
-import fr.plop.contexts.connect.usecase.ConnectAuthGameSessionUseCase;
+import fr.plop.contexts.connect.usecase.ConnectAuthGameInstanceUseCase;
 import fr.plop.contexts.connect.usecase.ConnectAuthUserCreateUseCase;
 import fr.plop.contexts.connect.usecase.ConnectAuthUserGetUseCase;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +21,8 @@ public class ConnectSpringConfig {
     }
 
     @Bean
-    public ConnectAuthGameSessionUseCase connectAuthGameSessionUseCase(ConnectAuthGameSessionUseCase.Port port) {
-        return new ConnectAuthGameSessionUseCase(port);
+    public ConnectAuthGameInstanceUseCase connectAuthGameInstanceUseCase(ConnectAuthGameInstanceUseCase.Port port) {
+        return new ConnectAuthGameInstanceUseCase(port);
     }
-
-    //
 
 }

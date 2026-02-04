@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Entity
-@Table(name = "TEST2_MAP_ITEM")
+@Table(name = "LO_MAP_ITEM")
 public class MapItemEntity {
 
     @Id

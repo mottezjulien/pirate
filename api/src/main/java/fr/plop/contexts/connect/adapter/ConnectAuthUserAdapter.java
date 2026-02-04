@@ -3,7 +3,7 @@ package fr.plop.contexts.connect.adapter;
 import fr.plop.contexts.connect.domain.ConnectAuthUser;
 import fr.plop.contexts.connect.domain.ConnectToken;
 import fr.plop.contexts.connect.usecase.ConnectAuthUserCreateUseCase;
-import fr.plop.contexts.connect.domain.DeviceUserConnect;
+import fr.plop.contexts.connect.domain.ConnectUserDevice;
 import fr.plop.contexts.connect.persistence.entity.ConnectionAuthUserEntity;
 import fr.plop.contexts.connect.persistence.entity.ConnectionUserDeviceEntity;
 import fr.plop.contexts.connect.usecase.ConnectAuthUserGetUseCase;
@@ -39,14 +39,14 @@ public class ConnectAuthUserAdapter implements ConnectAuthUserGetUseCase.Port, C
     }
 
     @Override
-    public Optional<DeviceUserConnect> findByDeviceId(String deviceId) {
+    public Optional<ConnectUserDevice> findByDeviceId(String deviceId) {
         return repository.findByDeviceIdFetchUser(deviceId)
                 .stream().findFirst()
                 .map(ConnectionUserDeviceEntity::toModel);
     }
 
     @Override
-    public ConnectAuthUser createAuth(DeviceUserConnect connect) {
+    public ConnectAuthUser createAuth(ConnectUserDevice connect) {
         ConnectionAuthUserEntity entity = new ConnectionAuthUserEntity();
         entity.setId(StringTools.generate());
         entity.setToken(StringTools.generate());
@@ -57,7 +57,7 @@ public class ConnectAuthUserAdapter implements ConnectAuthUserGetUseCase.Port, C
     }
 
     @Override
-    public DeviceUserConnect createDeviceConnect(String deviceId) {
+    public ConnectUserDevice createDeviceConnect(String deviceId) {
         ConnectionUserDeviceEntity entity = new ConnectionUserDeviceEntity();
         entity.setId(StringTools.generate());
         entity.setDeviceId(deviceId);
@@ -67,7 +67,7 @@ public class ConnectAuthUserAdapter implements ConnectAuthUserGetUseCase.Port, C
     }
 
     @Override
-    public Optional<ConnectAuthUser> lastAuth(DeviceUserConnect.Id id) {
+    public Optional<ConnectAuthUser> lastAuth(ConnectUserDevice.Id id) {
         List<ConnectionAuthUserEntity> list = authRepository.fullByConnectIdOrderByCreatedAtDesc(
                 id.value(),
                 Limit.of(1));

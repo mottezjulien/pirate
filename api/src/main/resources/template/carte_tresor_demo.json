@@ -1,0 +1,308 @@
+{
+  "code": "CARTE_TRESOR_DEMO",
+  "version": "1.0",
+  "label": "Démonstration - La Carte aux Trésors Oubliée dans Lyon Bellecour",
+  "duration": 30,
+  "board": null,
+  "maps": null,
+  "inventory": null,
+  "talk": {
+    "characters": [
+      {
+        "ref": "PNJ_MARCEL",
+        "images": [
+          {
+            "ref": "happy",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor_demo/marcel_happy.png"
+            }
+          },
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor_demo/marcel_default.png"
+            }
+          }
+        ]
+      },
+      {
+        "ref": "PNJ_SOPHIE",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor_demo/sophie_default.png"
+            }
+          }
+        ]
+      },
+      {
+        "ref": "PNJ_EMILIE",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor_demo/emilie_default.png"
+            }
+          }
+        ]
+      },
+      {
+        "ref": "PNJ_VICTOR",
+        "images": [
+          {
+            "ref": "default",
+            "value": {
+              "type": "ASSET",
+              "value": "assets/game/carte_tresor_demo/victor_default.png"
+            }
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "ref": "TALK_MARCEL_ROOT_1_001",
+        "value": {
+          "FR": "Bonjour l'ami. Alors, c'est aujourd'hui le grand jour, cette fois, tu trouveras le trésor, tu réussiras là où j'ai échoué."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "happy"
+        },
+        "next": "TALK_MARCEL_ROOT_1_002"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_002",
+        "value": {
+          "FR": "Comme prévu, voici ma partie de la carte du trésor."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "happy"
+        },
+        "next": "TALK_MARCEL_ROOT_1_003"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_003",
+        "value": {
+          "FR": "Sophie et Émilie possèdent les autres parties de la carte. Tu devrais leur parler afin de compléter la carte."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_1_004"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_004",
+        "value": {
+          "FR": "Sophie est une artiste, tu la trouveras en train de flâner au café des arts."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_1_005"
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_1_005",
+        "value": {
+          "FR": "Émilie se trouve dans sa librairie."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_ROOT_1_005_OPT_1",
+            "value": {
+              "FR": "Merci Marcel. J'aurai des questions à te poser."
+            },
+            "next": "TALK_MARCEL_ROOT_2"
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_1_005_OPT_2",
+            "value": {
+              "FR": "Merci Marcel. C'est parti pour l'aventure."
+            },
+            "next": null
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_ROOT_2",
+        "value": {
+          "FR": "Oui l'ami, que puis-je faire pour toi ?"
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "happy"
+        },
+        "options": [
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_1",
+            "value": {
+              "FR": "Rappelle-moi ce que je dois faire pour avoir la carte complète ?"
+            },
+            "next": "TALK_MARCEL_1",
+            "condition": {
+              "type": "NOT",
+              "metadata": {},
+              "children": [
+                {
+                  "type": "INVENTORY_HAS",
+                  "metadata": {
+                    "itemId": "CARTE_3"
+                  },
+                  "children": null
+                }
+              ]
+            }
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_2",
+            "value": {
+              "FR": "J'ai la carte complète, que dois-je faire maintenant ?"
+            },
+            "next": "TALK_MARCEL_1_BIS",
+            "condition": {
+              "type": "INVENTORY_HAS",
+              "metadata": {
+                "itemId": "CARTE_3"
+              },
+              "children": null
+            }
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_3",
+            "value": {
+              "FR": "Où puis-je trouver Sophie ?"
+            },
+            "next": "TALK_MARCEL_2"
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_4",
+            "value": {
+              "FR": "Où puis-je trouver Émilie ?"
+            },
+            "next": "TALK_MARCEL_3"
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_5",
+            "value": {
+              "FR": "Est-ce que tu fais confiance à Victor ?"
+            },
+            "next": "TALK_MARCEL_4",
+            "condition": {
+              "type": "INSTEP",
+              "metadata": {
+                "stepId": "MISSION_4"
+              },
+              "children": null
+            }
+          },
+          {
+            "ref": "TALK_MARCEL_ROOT_2_OPT_6",
+            "value": {
+              "FR": "Je n'ai plus de question."
+            },
+            "next": null
+          }
+        ]
+      },
+      {
+        "ref": "TALK_MARCEL_1",
+        "value": {
+          "FR": "Tu dois parler avec Sophie et Émilie, afin de leur demander leur partie de la carte au trésor. Dès que tu l'auras récupérée, tu pourras fusionner les cartes, afin de trouver l'emplacement du trésor."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_1_BIS",
+        "value": {
+          "FR": "Bien joué, tu y es presque. Regarde la carte, elle doit t'indiquer où se trouve le trésor. Il suffira d'utiliser ta pelle à l'endroit indiqué afin de creuser pour trouver le trésor."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_2",
+        "value": {
+          "FR": "Sophie est toujours au café des arts. Cela se trouve à côté, au sud-est de ma position."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_3",
+        "value": {
+          "FR": "La librairie d'Émilie est juste au sud-ouest de ma position, c'est à côté."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_2"
+      },
+      {
+        "ref": "TALK_MARCEL_4",
+        "value": {
+          "FR": "Victor ? Non, je ne lui fais pas confiance. Il essaiera de récupérer le trésor par tous les moyens, méfie-toi de lui."
+        },
+        "character": {
+          "character": "PNJ_MARCEL",
+          "image": "default"
+        },
+        "next": "TALK_MARCEL_ROOT_2"
+      }
+    ]
+  },
+  "scenario": {
+    "steps": [
+      {
+        "ref": "STEP_TALK_CONSEQUENCES",
+        "label": {
+          "FR": "Conséquences des dialogues"
+        },
+        "targets": null,
+        "possibilities": [
+          {
+            "trigger": {
+              "type": "TALKEND",
+              "value": "TALK_MARCEL_ROOT_1_002"
+            },
+            "consequences": [
+              {
+                "type": "INVENTORY_ADD",
+                "metadata": {
+                  "itemRef": "CARTE_1"
+                }
+              }
+            ],
+            "condition": null,
+            "recurrence": {
+              "type": "TIMES",
+              "value": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

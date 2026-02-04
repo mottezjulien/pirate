@@ -9,20 +9,29 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public record GameConfigInventoryItem(Id id, I18n label, Image image, Optional<I18n> optDescription, Type type,
-                                      Optional<ScenarioConfig.Target.Id> optLinkTargetId,
-                                      List<InventoryItemActionRule> actionRules) {
-    public Stream<InventoryItemActionRule> consumeRules() {
-        return actionRules.stream().filter(InventoryItemActionRule::canConsumed);
-    }
-
-    public Stream<InventoryItemActionRule> useRules() {
-        return actionRules.stream().filter(InventoryItemActionRule::canUsed);
-    }
-
+                                      int initValue,
+                                      Optional<ScenarioConfig.Target.Id> optTargetId,
+                                      ActionType actionType) {
     public record Id(String value) {
 
     }
 
     public enum Type { UNIQUE, COLLECTION }
+
+    public enum ActionType {
+        NONE, EQUIPPABLE, CONSUMABLE, USABLE
+    }
+
+    public boolean canEquipped() {
+        return actionType == ActionType.EQUIPPABLE;
+    }
+
+    public boolean canConsumed() {
+        return actionType == ActionType.CONSUMABLE;
+    }
+
+    public boolean canUsed() {
+        return actionType == ActionType.USABLE;
+    }
 
 }

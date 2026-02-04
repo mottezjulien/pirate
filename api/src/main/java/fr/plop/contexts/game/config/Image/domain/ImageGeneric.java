@@ -1,6 +1,6 @@
 package fr.plop.contexts.game.config.Image.domain;
 
-import fr.plop.contexts.game.session.situation.domain.GameSessionSituation;
+import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.image.Image;
 
@@ -31,7 +31,7 @@ public record ImageGeneric(Id id, String label, Image value, List<ImageObject> o
     }
 
 
-    public ImageGeneric select(GameSessionSituation situation) {
+    public ImageGeneric select(GameInstanceSituation situation) {
         return withObjects(objects.stream().filter(object -> object.isSelected(situation)).toList());
     }
 
