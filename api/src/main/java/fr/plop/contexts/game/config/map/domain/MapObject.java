@@ -2,16 +2,15 @@ package fr.plop.contexts.game.config.map.domain;
 
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
-import fr.plop.generic.position.Point;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.image.Image;
 
 import java.util.Optional;
 
-public sealed interface MapObject permits MapObject.PointMarker, MapObject.ImageMarker {
+public sealed interface MapObject permits MapObject.Point, MapObject._Image {
 
-    record Atom(Id id, String label, Point position, Optional<Condition> optCondition) {
-        public Atom(String label, Point position, Optional<Condition> optCondition) {
+    record Atom(Id id, String label, fr.plop.generic.position.Point position, Optional<Condition> optCondition) {
+        public Atom(String label, fr.plop.generic.position.Point position, Optional<Condition> optCondition) {
             this(new Id(), label, position, optCondition);
         }
     }
@@ -32,7 +31,7 @@ public sealed interface MapObject permits MapObject.PointMarker, MapObject.Image
         return atom().label();
     }
 
-    default Point position() {
+    default fr.plop.generic.position.Point position() {
         return atom().position();
     }
 
@@ -45,10 +44,11 @@ public sealed interface MapObject permits MapObject.PointMarker, MapObject.Image
                 .orElse(true);
     }
 
-    record PointMarker(Atom atom, String color) implements MapObject {
+    record Point(Atom atom, String color) implements MapObject {
     }
 
-    record ImageMarker(Atom atom, Image image) implements MapObject {
+    record _Image(Atom atom, Image image) implements MapObject {
+
     }
 
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.generic.enumerate.Priority;
-import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.Test;
 
 import static fr.plop.subs.image.Image.Type;
@@ -81,7 +80,7 @@ public class TemplateGeneratorJsonUseCaseMapTest {
         assertThat(template.map().items()).hasSize(1)
                 .anySatisfy(mapItem -> {
                     assertThat(mapItem.id()).isNotNull();
-                    assertThat(mapItem.image().type()).isEqualTo(Image.Type.WEB);
+                    assertThat(mapItem.image().type()).isEqualTo(fr.plop.subs.image.Image.Type.WEB);
                     assertThat(mapItem.image().value()).isEqualTo("toto.fr/plop.jpg");
                     assertThat(mapItem.priority()).isEqualTo(Priority.HIGH);
                     assertThat(mapItem.objects())
@@ -89,15 +88,15 @@ public class TemplateGeneratorJsonUseCaseMapTest {
                             .anySatisfy(obj -> {
                                 assertThat(obj.position().lat().doubleValue()).isCloseTo(45.7575, org.assertj.core.data.Offset.offset(0.001));
                                 assertThat(obj.position().lng().doubleValue()).isCloseTo(4.832, org.assertj.core.data.Offset.offset(0.001));
-                                assertThat(obj).isInstanceOf(MapObject.PointMarker.class);
-                                assertThat(((MapObject.PointMarker) obj).color()).isEqualTo("yellow");
+                                assertThat(obj).isInstanceOf(MapObject.Point.class);
+                                assertThat(((MapObject.Point) obj).color()).isEqualTo("yellow");
                             })
                             .anySatisfy(obj -> {
                                 assertThat(obj.position().lat().doubleValue()).isCloseTo(45.7577, org.assertj.core.data.Offset.offset(0.001));
                                 assertThat(obj.position().lng().doubleValue()).isCloseTo(4.831, org.assertj.core.data.Offset.offset(0.001));
-                                assertThat(obj).isInstanceOf(MapObject.ImageMarker.class);
-                                assertThat(((MapObject.ImageMarker) obj).image().type()).isEqualTo(Type.ASSET);
-                                assertThat(((MapObject.ImageMarker) obj).image().value()).isEqualTo("pouet/img.jpg");
+                                assertThat(obj).isInstanceOf(MapObject._Image.class);
+                                assertThat(((MapObject._Image) obj).image().type()).isEqualTo(Type.ASSET);
+                                assertThat(((MapObject._Image) obj).image().value()).isEqualTo("pouet/img.jpg");
                             });
                 });
     }

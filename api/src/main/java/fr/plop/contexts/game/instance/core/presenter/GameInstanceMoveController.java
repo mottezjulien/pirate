@@ -46,7 +46,7 @@ public class GameInstanceMoveController {
         }
     }
 
-    public record GameMoveRequestDTO(double lat, double lng, List<String> spaceIds) {
+    public record GameMoveRequestDTO(List<String> spaceIds) {
     }
 
 }

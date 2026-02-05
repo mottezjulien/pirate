@@ -13,7 +13,6 @@ import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Rectangle;
 import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.subs.i18n.domain.Language;
-import fr.plop.subs.image.Image;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -183,7 +182,7 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
             assertThat(carte1.label().value(Language.FR)).isEqualTo("Carte dechiree");
             assertThat(carte1.optDescription()).isPresent();
             assertThat(carte1.optDescription().get().value(Language.FR)).isEqualTo("Premiere partie de la carte.");
-            assertThat(carte1.image().type()).isEqualTo(Image.Type.ASSET);
+            assertThat(carte1.image().type()).isEqualTo(fr.plop.subs.image.Image.Type.ASSET);
             assertThat(carte1.image().value()).isEqualTo("assets/demo/inventory/carte_dechiree.png");
             assertThat(carte1.type()).isEqualTo(GameConfigInventoryItem.Type.UNIQUE);
             assertThat(carte1.initValue()).isEqualTo(0);
@@ -306,7 +305,7 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
 
             assertThat(map.label()).isEqualTo("Carte principale Bellecour");
             assertThat(map.priority()).isEqualTo(Priority.HIGH);
-            assertThat(map.image().type()).isEqualTo(Image.Type.ASSET);
+            assertThat(map.image().type()).isEqualTo(fr.plop.subs.image.Image.Type.ASSET);
             assertThat(map.image().value()).isEqualTo("assets/demo/map/bellecour.png");
 
             // Vérifie les bounds
@@ -328,12 +327,12 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
             MapItem map = template.map().items().get(0);
             MapObject marcel = map.objects().get(0);
 
-            assertThat(marcel).isInstanceOf(MapObject.ImageMarker.class);
+            assertThat(marcel).isInstanceOf(MapObject._Image.class);
             // Position en coordonnées GPS
             assertThat(marcel.position().lat().doubleValue()).isCloseTo(45.75790, offset(0.00001));
             assertThat(marcel.position().lng().doubleValue()).isCloseTo(4.83180, offset(0.00001));
 
-            MapObject.ImageMarker marcelImage = (MapObject.ImageMarker) marcel;
+            MapObject._Image marcelImage = (MapObject._Image) marcel;
             assertThat(marcelImage.image().value()).isEqualTo("assets/demo/map/marcel.png");
             assertThat(marcel.optCondition()).isEmpty();
         }
@@ -344,7 +343,7 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
             MapItem map = template.map().items().get(0);
             MapObject coffre = map.objects().get(1);
 
-            assertThat(coffre).isInstanceOf(MapObject.ImageMarker.class);
+            assertThat(coffre).isInstanceOf(MapObject._Image.class);
             // Position en coordonnées GPS
             assertThat(coffre.position().lat().doubleValue()).isCloseTo(45.75720, offset(0.00001));
             assertThat(coffre.position().lng().doubleValue()).isCloseTo(4.83050, offset(0.00001));
@@ -364,12 +363,12 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
             MapItem map = template.map().items().get(0);
             MapObject point = map.objects().get(2);
 
-            assertThat(point).isInstanceOf(MapObject.PointMarker.class);
+            assertThat(point).isInstanceOf(MapObject.Point.class);
             // Position en coordonnées GPS
             assertThat(point.position().lat().doubleValue()).isCloseTo(45.75760, offset(0.00001));
             assertThat(point.position().lng().doubleValue()).isCloseTo(4.83300, offset(0.00001));
 
-            MapObject.PointMarker pointObj = (MapObject.PointMarker) point;
+            MapObject.Point pointObj = (MapObject.Point) point;
             assertThat(pointObj.color()).isEqualTo("red");
         }
 

@@ -247,7 +247,7 @@ public class TemplateGeneratorJsonUseCaseComplexeTest {
                         assertThat(item.objects())
                                 .hasSize(1)
                                 .anySatisfy(obj -> {
-                                    assertThat(obj).isInstanceOf(MapObject.PointMarker.class);
+                                    assertThat(obj).isInstanceOf(MapObject.Point.class);
                                     assertThat(obj.position().lat().doubleValue()).isCloseTo(45.7785, Offset.offset(0.001));
                                     assertThat(obj.position().lng().doubleValue()).isCloseTo(4.8036, Offset.offset(0.001));
                                 });

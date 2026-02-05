@@ -91,12 +91,12 @@ public class MapObjectEntity {
     }
 
     public MapObject toModel() {
-        Point position = Point.from(latitude, longitude);
+        Point position = fr.plop.generic.position.Point.from(latitude, longitude);
         Optional<Condition> optCondition = Optional.ofNullable(nullableCondition).map(ConditionEntity::toModel);
         MapObject.Atom atom = new MapObject.Atom(new MapObject.Id(id), label, position, optCondition);
         return switch (type) {
-            case POINT -> new MapObject.PointMarker(atom, pointColor);
-            case IMAGE -> new MapObject.ImageMarker(atom, new Image(imageType, imageValue));
+            case POINT -> new MapObject.Point(atom, pointColor);
+            case IMAGE -> new MapObject._Image(atom, new Image(imageType, imageValue));
         };
     }
 

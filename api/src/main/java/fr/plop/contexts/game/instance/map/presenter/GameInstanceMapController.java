@@ -90,11 +90,11 @@ public class GameInstanceMapController {
                                 String color, ImageDTO image) {
         public static MapObjectDTO fromModel(MapObject object) {
             return switch (object) {
-                case MapObject.PointMarker point -> new MapObjectDTO(
+                case MapObject.Point point -> new MapObjectDTO(
                         point.id().value(), point.label(), "POINT",
                         PointDTO.fromModel(point.position()),
                         point.color(), null);
-                case MapObject.ImageMarker img -> new MapObjectDTO(
+                case MapObject._Image img -> new MapObjectDTO(
                         img.id().value(), img.label(), "IMAGE",
                         PointDTO.fromModel(img.position()),
                         null, ImageDTO.fromModel(img.image()));

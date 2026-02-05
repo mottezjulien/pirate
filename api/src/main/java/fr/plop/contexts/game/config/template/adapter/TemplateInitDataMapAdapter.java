@@ -67,11 +67,11 @@ public class TemplateInitDataMapAdapter {
         object.optCondition()
                 .ifPresent(condition -> objectEntity.setNullableCondition(conditionAdapter.create(condition)));
         switch (object) {
-            case MapObject.PointMarker point -> {
+            case MapObject.Point point -> {
                 objectEntity.setType(MapObjectEntity.Type.POINT);
                 objectEntity.setPointColor(point.color());
             }
-            case MapObject.ImageMarker image -> {
+            case MapObject._Image image -> {
                 objectEntity.setType(MapObjectEntity.Type.IMAGE);
                 objectEntity.setImageType(image.image().type());
                 objectEntity.setImageValue(image.image().value());

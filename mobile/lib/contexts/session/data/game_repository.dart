@@ -61,15 +61,11 @@ class GameSessionRepository {
     return GameSessionResponseDTO(session: session, auth: auth);
   }
 
-  Future<void> move(Coordinate coordinate, List<String> spaceIds) async {
+  Future<void> move(List<String> spaceIds) async {
     GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
     var path = "$resourcePath/${GameCurrent.sessionId}/move/";
     await genericRepository.post(path: path,
-        body: {
-          'lat': coordinate.lat,
-          'lng': coordinate.lng,
-          'spaceIds': spaceIds
-        }, decode: false);
+        body: {'spaceIds': spaceIds}, decode: false);
   }
 
   Future<List<BoardSpace>> findBoardSpaces() async {

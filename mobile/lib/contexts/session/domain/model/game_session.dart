@@ -113,8 +113,8 @@ class GameLocation {
         .toList();
 
     // Send position with spaceIds to the server
-    GameSessionRepository repository = GameSessionRepository();
-    repository.move(coordinate, spaceIds);
+    final GameSessionRepository repository = GameSessionRepository();
+    repository.move(spaceIds);
   }
 
   Coordinate get coordinate => Coordinate(lat: last!.latitude, lng: last!.longitude);

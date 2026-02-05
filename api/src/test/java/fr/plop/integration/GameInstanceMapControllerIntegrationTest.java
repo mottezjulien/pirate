@@ -72,7 +72,7 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpace() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("Map", new Image(Image.Type.WEB, "siteABC"), mapBounds);
+        final MapItem noSpaceNoStep = new MapItem("Map", new Image(fr.plop.subs.image.Image.Type.WEB, "siteABC"), mapBounds);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -83,9 +83,9 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceAndOneActiveStep_firstStepActiveInBeginning() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(Image.Type.WEB, "siteABC"), mapBounds);
+        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(fr.plop.subs.image.Image.Type.WEB, "siteABC"), mapBounds);
         final Condition inFirstStep = new Condition.Step(new Condition.Id(), scenario.steps().getFirst().id());
-        final MapItem firstStep = new MapItem("Map2", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inFirstStep);
+        final MapItem firstStep = new MapItem("Map2", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -97,9 +97,9 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceButNotNotInvalideStep() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(Image.Type.WEB, "siteABC"), mapBounds);
+        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(fr.plop.subs.image.Image.Type.WEB, "siteABC"), mapBounds);
         final Condition inSecondStep = new Condition.Step(new Condition.Id(), scenario.steps().get(1).id());
-        final MapItem secondStep = new MapItem("Map2", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSecondStep);
+        final MapItem secondStep = new MapItem("Map2", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -112,7 +112,7 @@ public class GameInstanceMapControllerIntegrationTest {
     @Test
     public void getMapsNotActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem inSpaceMap = new MapItem("Map", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
+        final MapItem inSpaceMap = new MapItem("Map", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -124,7 +124,7 @@ public class GameInstanceMapControllerIntegrationTest {
     @Test
     public void getMapWithActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem mapItem = new MapItem("Map", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
+        final MapItem mapItem = new MapItem("Map", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
@@ -142,23 +142,23 @@ public class GameInstanceMapControllerIntegrationTest {
     @Test
     public void getMapObjectsAndPointer() throws URISyntaxException {
         // Create map objects with lat/lng positions (within the map bounds)
-        Point objectPosition1 = Point.from(2.0, 18.0); // lat 2, lng 18
-        Point objectPosition2 = Point.from(16.0, 4.0); // lat 16, lng 4
+        Point objectPosition1 = fr.plop.generic.position.Point.from(2.0, 18.0); // lat 2, lng 18
+        Point objectPosition2 = fr.plop.generic.position.Point.from(16.0, 4.0); // lat 16, lng 4
 
         List<MapObject> objects = List.of(
-                new MapObject.ImageMarker(
+                new MapObject._Image(
                         new MapObject.Atom("object1", objectPosition1, Optional.empty()),
-                        new Image(Image.Type.ASSET, "asset/object1.png")),
-                new MapObject.PointMarker(
+                        new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/object1.png")),
+                new MapObject.Point(
                         new MapObject.Atom("object2", objectPosition2, Optional.empty()),
                         "blue")
         );
 
         final MapItem mapItem = new MapItem(
                 "MapWithObjects",
-                new Image(Image.Type.ASSET, "asset/plop.png"),
+                new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"),
                 mapBounds,
-                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")),
+                Optional.of(new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/pointer.png")),
                 objects);
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
@@ -212,9 +212,9 @@ public class GameInstanceMapControllerIntegrationTest {
     public void getMapWithPointerOnly() throws URISyntaxException {
         final MapItem mapItem = new MapItem(
                 "MapWithPointer",
-                new Image(Image.Type.ASSET, "asset/plop.png"),
+                new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"),
                 mapBounds,
-                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")),
+                Optional.of(new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/pointer.png")),
                 List.of());
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
@@ -309,7 +309,7 @@ public class GameInstanceMapControllerIntegrationTest {
 
         // Send the spaceIds that the player is now in
         List<String> spaceIds = List.of(board.spaces().getFirst().id().value());
-        GameInstanceMoveController.GameMoveRequestDTO request = new GameInstanceMoveController.GameMoveRequestDTO(10, 10, spaceIds);
+        GameInstanceMoveController.GameMoveRequestDTO request = new GameInstanceMoveController.GameMoveRequestDTO(spaceIds);
 
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), Void.class);
     }

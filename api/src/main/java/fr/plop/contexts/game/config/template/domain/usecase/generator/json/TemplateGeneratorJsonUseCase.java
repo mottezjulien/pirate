@@ -374,13 +374,13 @@ public class TemplateGeneratorJsonUseCase {
     }
 
     private MapItem mapMap(TemplateGeneratorRoot.TemplateGeneratorMap mapRoot) {
-        Image image = new Image(Image.Type.valueOf(mapRoot.image().type().toUpperCase()), mapRoot.image().value());
+        Image image = new Image(fr.plop.subs.image.Image.Type.valueOf(mapRoot.image().type().toUpperCase()), mapRoot.image().value());
         Priority priority = mapRoot.priority() != null ? Priority.valueOf(mapRoot.priority().toUpperCase()) : Priority.byDefault();
         Condition condition = mapCondition(mapRoot.condition());
         Optional<Condition> optCondition = Optional.ofNullable(condition);
         Optional<Image> optPointer = Optional.empty();
         if (mapRoot.pointer() != null) {
-            optPointer = Optional.of(new Image(Image.Type.valueOf(mapRoot.pointer().type().toUpperCase()), mapRoot.pointer().value()));
+            optPointer = Optional.of(new Image(fr.plop.subs.image.Image.Type.valueOf(mapRoot.pointer().type().toUpperCase()), mapRoot.pointer().value()));
         }
 
         Rectangle bounds = mapRoot.bounds() != null ? mapRoot.bounds().toModel() : Rectangle.lyonBellecour();
@@ -405,13 +405,13 @@ public class TemplateGeneratorJsonUseCase {
 
         if (objectRoot.point() != null) {
             String color = objectRoot.point().color() != null ? objectRoot.point().color() : "";
-            return new MapObject.PointMarker(atom, color);
+            return new MapObject.Point(atom, color);
         } else if (objectRoot.image() != null) {
-            Image image = new Image(Image.Type.valueOf(objectRoot.image().type().toUpperCase()), objectRoot.image().value());
-            return new MapObject.ImageMarker(atom, image);
+            Image image = new Image(fr.plop.subs.image.Image.Type.valueOf(objectRoot.image().type().toUpperCase()), objectRoot.image().value());
+            return new MapObject._Image(atom, image);
         }
 
-        return new MapObject.PointMarker(atom, "");
+        return new MapObject.Point(atom, "");
     }
 
     private TalkConfig mapTalk(TemplateGeneratorRoot.Talk talkRoot) {
@@ -482,7 +482,7 @@ public class TemplateGeneratorJsonUseCase {
             imageType = charImage.value().type();
         }
 
-        Image image = new Image(Image.Type.valueOf(imageType.toUpperCase()), imagePath);
+        Image image = new Image(fr.plop.subs.image.Image.Type.valueOf(imageType.toUpperCase()), imagePath);
         TalkCharacter.Reference characterRef = new TalkCharacter.Reference(character, imageRef, image);
 
         // Priority: inputText > options > next > simple
@@ -591,7 +591,7 @@ public class TemplateGeneratorJsonUseCase {
     }
 
     private ImageItem mapImageItem(TemplateGeneratorRoot.TemplateGeneratorImage.ImageItem itemRoot) {
-        Image image = new Image(Image.Type.valueOf(itemRoot.generic().value().type().toUpperCase()),
+        Image image = new Image(fr.plop.subs.image.Image.Type.valueOf(itemRoot.generic().value().type().toUpperCase()),
                 itemRoot.generic().value().value());
         List<ImageObject> objects = itemRoot.generic().objects() == null ? List.of() : itemRoot.generic().objects().stream()
                 .map(this::mapImageObject)
@@ -637,8 +637,8 @@ public class TemplateGeneratorJsonUseCase {
 
         I18n label = toI18n(itemRoot.label());
         Image image = itemRoot.image() != null
-                ? new Image(Image.Type.valueOf(itemRoot.image().type().toUpperCase()), itemRoot.image().value())
-                : new Image(Image.Type.ASSET, "");
+                ? new Image(fr.plop.subs.image.Image.Type.valueOf(itemRoot.image().type().toUpperCase()), itemRoot.image().value())
+                : new Image(fr.plop.subs.image.Image.Type.ASSET, "");
 
         Optional<I18n> optDescription = Optional.ofNullable(itemRoot.description())
                 .map(this::toI18n)

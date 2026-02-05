@@ -17,7 +17,6 @@ import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState
 import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.enumerate.Priority;
-import fr.plop.generic.position.Point;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
 import fr.plop.subs.image.Image;
@@ -458,12 +457,12 @@ public class TemplateGeneratorJsonUseCaseTest {
                     assertThat(board.rectangles())
                             .hasSize(2)
                             .anySatisfy(rect -> {
-                                assertThat(rect.bottomLeft()).isEqualTo(Point.from(5.7, 10.0));
-                                assertThat(rect.topRight()).isEqualTo(Point.from(8.097, 50.43));
+                                assertThat(rect.bottomLeft()).isEqualTo(fr.plop.generic.position.Point.from(5.7, 10.0));
+                                assertThat(rect.topRight()).isEqualTo(fr.plop.generic.position.Point.from(8.097, 50.43));
                             })
                             .anySatisfy(rect -> {
-                                assertThat(rect.bottomLeft()).isEqualTo(Point.from(10.0, 20.0));
-                                assertThat(rect.topRight()).isEqualTo(Point.from(8.56, 9.0));
+                                assertThat(rect.bottomLeft()).isEqualTo(fr.plop.generic.position.Point.from(10.0, 20.0));
+                                assertThat(rect.topRight()).isEqualTo(fr.plop.generic.position.Point.from(8.56, 9.0));
                             });
                 });
     }
@@ -511,12 +510,12 @@ public class TemplateGeneratorJsonUseCaseTest {
                     assertThat(board.rectangles())
                             .hasSize(2)
                             .anySatisfy(rect -> {
-                                assertThat(rect.bottomLeft()).isEqualTo(Point.from(5.798, 10.894));
-                                assertThat(rect.topRight()).isEqualTo(Point.from(45.98, 50.4338));
+                                assertThat(rect.bottomLeft()).isEqualTo(fr.plop.generic.position.Point.from(5.798, 10.894));
+                                assertThat(rect.topRight()).isEqualTo(fr.plop.generic.position.Point.from(45.98, 50.4338));
                             })
                             .anySatisfy(rect -> {
-                                assertThat(rect.bottomLeft()).isEqualTo(Point.from(1, 2));
-                                assertThat(rect.topRight()).isEqualTo(Point.from(4, 3));
+                                assertThat(rect.bottomLeft()).isEqualTo(fr.plop.generic.position.Point.from(1, 2));
+                                assertThat(rect.topRight()).isEqualTo(fr.plop.generic.position.Point.from(4, 3));
                             });
                 })
                 .anySatisfy(board -> {
@@ -526,8 +525,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                     assertThat(board.rectangles())
                             .hasSize(1)
                             .anySatisfy(rect -> {
-                                assertThat(rect.bottomLeft()).isEqualTo(Point.from(89.745, 5.5684));
-                                assertThat(rect.topRight()).isEqualTo(Point.from(0.8547, 8.147));
+                                assertThat(rect.bottomLeft()).isEqualTo(fr.plop.generic.position.Point.from(89.745, 5.5684));
+                                assertThat(rect.topRight()).isEqualTo(fr.plop.generic.position.Point.from(0.8547, 8.147));
                             });
                 });
     }
@@ -581,8 +580,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                             .anySatisfy(object -> {
                                 assertThat(object.id()).isNotNull();
 
-                                assertThat(object).isInstanceOf(MapObject.PointMarker.class);
-                                MapObject.PointMarker point = (MapObject.PointMarker) object;
+                                assertThat(object).isInstanceOf(MapObject.Point.class);
+                                MapObject.Point point = (MapObject.Point) object;
                                 assertThat(point.position().lat().doubleValue()).isCloseTo(45.89, Offset.offset(0.001));
                                 assertThat(point.position().lng().doubleValue()).isCloseTo(4.10, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("");
@@ -591,8 +590,8 @@ public class TemplateGeneratorJsonUseCaseTest {
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
 
-                                assertThat(position).isInstanceOf(MapObject.PointMarker.class);
-                                MapObject.PointMarker point = (MapObject.PointMarker) position;
+                                assertThat(position).isInstanceOf(MapObject.Point.class);
+                                MapObject.Point point = (MapObject.Point) position;
                                 assertThat(point.position().lat().doubleValue()).isCloseTo(45.78, Offset.offset(0.001));
                                 assertThat(point.position().lng().doubleValue()).isCloseTo(4.24, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("yellow");
