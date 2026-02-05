@@ -3,13 +3,12 @@ package fr.plop.integration;
 import fr.plop.contexts.connect.presenter.ConnectionController;
 import fr.plop.contexts.game.commun.domain.Game;
 import fr.plop.contexts.game.commun.domain.GameProject;
-import fr.plop.contexts.game.config.Image.domain.ImageGeneric;
-import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardConfig;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
@@ -17,7 +16,6 @@ import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceMoveController;
 import fr.plop.contexts.game.instance.map.presenter.GameInstanceMapController;
-import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rectangle;
@@ -32,6 +30,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -56,11 +55,13 @@ public class GameInstanceMapControllerIntegrationTest {
     private TemplateInitUseCase.OutPort templateInitUseCase;
 
 
-
     private final Template.Id templateId = new Template.Id();
     private final ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step(), new ScenarioConfig.Step()));
     private final Rectangle rectangle = new Rectangle(Point.from(0.0, 0.0), Point.from(20.0, 20.0));
     private final BoardConfig board = new BoardConfig(List.of(new BoardSpace("space", Priority.LOW, List.of(rectangle))));
+
+    // Bounds for maps (different from board rectangles - this is the visual area of the map image)
+    private final Rectangle mapBounds = new Rectangle(Point.from(0.0, 0.0), Point.from(20.0, 20.0));
 
 
     @BeforeEach
@@ -71,7 +72,7 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpace() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
+        final MapItem noSpaceNoStep = new MapItem("Map", new Image(Image.Type.WEB, "siteABC"), mapBounds);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -82,9 +83,9 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceAndOneActiveStep_firstStepActiveInBeginning() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
+        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(Image.Type.WEB, "siteABC"), mapBounds);
         final Condition inFirstStep = new Condition.Step(new Condition.Id(), scenario.steps().getFirst().id());
-        final MapItem firstStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inFirstStep);
+        final MapItem firstStep = new MapItem("Map2", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -96,9 +97,9 @@ public class GameInstanceMapControllerIntegrationTest {
 
     @Test
     public void getMapsNoStepNoSpaceButNotNotInvalideStep() throws URISyntaxException {
-        final MapItem noSpaceNoStep = new MapItem(imageGeneric(Image.Type.WEB, "siteABC"));
+        final MapItem noSpaceNoStep = new MapItem("Map1", new Image(Image.Type.WEB, "siteABC"), mapBounds);
         final Condition inSecondStep = new Condition.Step(new Condition.Id(), scenario.steps().get(1).id());
-        final MapItem secondStep = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSecondStep);
+        final MapItem secondStep = new MapItem("Map2", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -111,7 +112,7 @@ public class GameInstanceMapControllerIntegrationTest {
     @Test
     public void getMapsNotActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem inSpaceMap = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
+        final MapItem inSpaceMap = new MapItem("Map", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
         List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
@@ -123,7 +124,7 @@ public class GameInstanceMapControllerIntegrationTest {
     @Test
     public void getMapWithActiveSpace() throws URISyntaxException {
         final Condition inSpace = new Condition.InsideSpace(new Condition.Id(), board.spaces().getFirst().id());
-        final MapItem mapItem = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"), inSpace);
+        final MapItem mapItem = new MapItem("Map", new Image(Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
@@ -139,80 +140,97 @@ public class GameInstanceMapControllerIntegrationTest {
 
 
     @Test
-    public void getMapObjectsPostionsAndPointer() throws URISyntaxException {
+    public void getMapObjectsAndPointer() throws URISyntaxException {
+        // Create map objects with lat/lng positions (within the map bounds)
+        Point objectPosition1 = Point.from(2.0, 18.0); // lat 2, lng 18
+        Point objectPosition2 = Point.from(16.0, 4.0); // lat 16, lng 4
 
-
-        List<ImageObject> objects = List.of(
-                new ImageObject._Image(new ImageObject.Atom("", new ImagePoint(0.1, 0.9), Optional.empty()), new Image(Image.Type.ASSET, "asset/object1.png")),
-                new ImageObject.Point(new ImageObject.Atom("", new ImagePoint(0.8, 0.2), Optional.empty()), "blue")
+        List<MapObject> objects = List.of(
+                new MapObject.ImageMarker(
+                        new MapObject.Atom("object1", objectPosition1, Optional.empty()),
+                        new Image(Image.Type.ASSET, "asset/object1.png")),
+                new MapObject.PointMarker(
+                        new MapObject.Atom("object2", objectPosition2, Optional.empty()),
+                        "blue")
         );
-        ImageGeneric imageGeneric = new ImageGeneric("", new Image(Image.Type.ASSET, "asset/plop.png"), objects);
 
-        final List<MapItem.Position> positions = List.of(
-                new MapItem.Position(board.spaces().getFirst().id(), new ImagePoint(0.6, 0.4), Priority.MEDIUM));
-        final MapItem mapItem = new MapItem(imageGeneric,
-                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")), positions);
+        final MapItem mapItem = new MapItem(
+                "MapWithObjects",
+                new Image(Image.Type.ASSET, "asset/plop.png"),
+                mapBounds,
+                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")),
+                objects);
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
         GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
 
-        move(connectionSession.auth().token(), connectionSession.id());
+        List<GameInstanceMapController.ResponseDTO> maps = getMaps(connectionSession.auth().token(), connectionSession.id());
 
-        assertThat(getMaps(connectionSession.auth().token(), connectionSession.id()))
+        assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> {
                     assertThat(map.id()).isEqualTo(mapItem.id().value());
-                    GameInstanceMapController.ResponseDTO.Pointer pointer = map.pointer();
+
+                    // Check pointer
+                    GameInstanceMapController.ImageDTO pointer = map.pointer();
                     assertThat(pointer).isNotNull();
-                    assertThat(pointer.image().type()).isEqualTo("ASSET");
-                    assertThat(pointer.image().value()).isEqualTo("asset/pointer.png");
-                    assertThat(pointer.position().top()).isEqualTo(0.6);
-                    assertThat(pointer.position().left()).isEqualTo(0.4);
-                    assertThat(map.image().image().type()).isEqualTo("ASSET");
-                    assertThat(map.image().image().value()).isEqualTo("asset/plop.png");
-                    assertThat(map.image().objects()).hasSize(2)
+                    assertThat(pointer.type()).isEqualTo("ASSET");
+                    assertThat(pointer.value()).isEqualTo("asset/pointer.png");
+
+                    // Check image
+                    assertThat(map.image().type()).isEqualTo("ASSET");
+                    assertThat(map.image().value()).isEqualTo("asset/plop.png");
+
+                    // Check bounds
+                    assertThat(map.bounds()).isNotNull();
+                    assertThat(map.bounds().bottomLeft().lat()).isEqualByComparingTo(BigDecimal.ZERO);
+                    assertThat(map.bounds().bottomLeft().lng()).isEqualByComparingTo(BigDecimal.ZERO);
+                    assertThat(map.bounds().topRight().lat()).isEqualByComparingTo(BigDecimal.valueOf(20.0));
+                    assertThat(map.bounds().topRight().lng()).isEqualByComparingTo(BigDecimal.valueOf(20.0));
+
+                    // Check objects with lat/lng positions
+                    assertThat(map.objects()).hasSize(2)
                             .anySatisfy(object -> {
                                 assertThat(object.type()).isEqualTo("IMAGE");
                                 assertThat(object.image().type()).isEqualTo("ASSET");
                                 assertThat(object.image().value()).isEqualTo("asset/object1.png");
-                                assertThat(object.position().top()).isEqualTo(0.1);
-                                assertThat(object.position().left()).isEqualTo(0.9);
+                                assertThat(object.position().lat()).isEqualByComparingTo(BigDecimal.valueOf(2.0));
+                                assertThat(object.position().lng()).isEqualByComparingTo(BigDecimal.valueOf(18.0));
                             })
                             .anySatisfy(object -> {
                                 assertThat(object.type()).isEqualTo("POINT");
-                                assertThat(object.point().color()).isEqualTo("blue");
-                                assertThat(object.position().top()).isEqualTo(0.8);
-                                assertThat(object.position().left()).isEqualTo(0.2);
+                                assertThat(object.color()).isEqualTo("blue");
+                                assertThat(object.position().lat()).isEqualByComparingTo(BigDecimal.valueOf(16.0));
+                                assertThat(object.position().lng()).isEqualByComparingTo(BigDecimal.valueOf(4.0));
                             });
 
                 });
     }
 
     @Test
-    public void getMapObjects() throws URISyntaxException {
-
-        final List<MapItem.Position> positions = List.of(
-                new MapItem.Position(board.spaces().getFirst().id(), new ImagePoint(0.6, 0.4), Priority.MEDIUM));
-        final MapItem mapItem = new MapItem(imageGeneric(Image.Type.ASSET, "asset/plop.png"),
-                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")), positions);
+    public void getMapWithPointerOnly() throws URISyntaxException {
+        final MapItem mapItem = new MapItem(
+                "MapWithPointer",
+                new Image(Image.Type.ASSET, "asset/plop.png"),
+                mapBounds,
+                Optional.of(new Image(Image.Type.ASSET, "asset/pointer.png")),
+                List.of());
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
         GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
 
-        move(connectionSession.auth().token(), connectionSession.id());
+        List<GameInstanceMapController.ResponseDTO> maps = getMaps(connectionSession.auth().token(), connectionSession.id());
 
-        assertThat(getMaps(connectionSession.auth().token(), connectionSession.id()))
+        assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> {
                     assertThat(map.id()).isEqualTo(mapItem.id().value());
-                    GameInstanceMapController.ResponseDTO.Pointer pointer = map.pointer();
+                    GameInstanceMapController.ImageDTO pointer = map.pointer();
                     assertThat(pointer).isNotNull();
-                    assertThat(pointer.image().type()).isEqualTo("ASSET");
-                    assertThat(pointer.image().value()).isEqualTo("asset/pointer.png");
-                    assertThat(pointer.position().top()).isEqualTo(0.6);
-                    assertThat(pointer.position().left()).isEqualTo(0.4);
+                    assertThat(pointer.type()).isEqualTo("ASSET");
+                    assertThat(pointer.value()).isEqualTo("asset/pointer.png");
                 });
     }
 
@@ -289,13 +307,11 @@ public class GameInstanceMapControllerIntegrationTest {
         headers.add("Authorization", token);
         headers.add("Language", "FR");
 
-        GameInstanceMoveController.GameMoveRequestDTO request = new GameInstanceMoveController.GameMoveRequestDTO(10, 10);
+        // Send the spaceIds that the player is now in
+        List<String> spaceIds = List.of(board.spaces().getFirst().id().value());
+        GameInstanceMoveController.GameMoveRequestDTO request = new GameInstanceMoveController.GameMoveRequestDTO(10, 10, spaceIds);
 
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(request, headers), Void.class);
-    }
-
-    private ImageGeneric imageGeneric(Image.Type type, String imageValue) {
-        return new ImageGeneric("", new Image(type, imageValue), List.of());
     }
 
 }

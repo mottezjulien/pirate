@@ -17,10 +17,6 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
     }
 
-    public record Position(double top, double left) {
-
-    }
-
     public  record Point(double lat, double lng) {
 
     }
@@ -43,12 +39,9 @@ public record TemplateGeneratorRoot(String code, String version, String label, i
 
 
     public record TemplateGeneratorMap(String label, String priority, Image image, Image pointer,
-                      List<MapSpace> spaces, List<MapObject> objects) {
-        public record MapSpace(Position position, String ref) {
+                      Rectangle bounds, Condition condition, List<MapObject> objects) {
 
-        }
-
-        public record MapObject(Position position, String priority, Image image, MetaDataPoint point, Condition condition) {
+        public record MapObject(String label, Point position, String priority, Image image, MetaDataPoint point, Condition condition) {
             public record MetaDataPoint(String color) {
 
             }

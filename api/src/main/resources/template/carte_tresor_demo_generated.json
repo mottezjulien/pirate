@@ -104,9 +104,14 @@
       "label": "Place Bellecour - Carte principale",
       "priority": "HIGH",
       "image": { "type": "ASSET", "value": "assets/first_demo/map/bellecour_principale.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75685, "lng": 4.82941 },
+        "topRight": { "lat": 45.75834, "lng": 4.83419 }
+      },
       "objects": [
         {
-          "position": { "top": 0.15, "left": 0.5 },
+          "label": "Marcel",
+          "position": { "lat": 45.75815, "lng": 4.83180 },
           "image": { "type": "ASSET", "value": "assets/first_demo/map/marcel.png" }
         }
       ]
@@ -115,13 +120,19 @@
       "label": "Cafe des Arts",
       "priority": "HIGH",
       "image": { "type": "ASSET", "value": "assets/first_demo/map/cafe_des_arts.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75700, "lng": 4.83000 },
+        "topRight": { "lat": 45.75800, "lng": 4.83200 }
+      },
       "objects": [
         {
-          "position": { "top": 0.6, "left": 0.25 },
+          "label": "Sophie",
+          "position": { "lat": 45.75740, "lng": 4.83050 },
           "image": { "type": "ASSET", "value": "assets/first_demo/map/sophie.png" }
         },
         {
-          "position": { "top": 0.6, "left": 0.75 },
+          "label": "Victor",
+          "position": { "lat": 45.75740, "lng": 4.83150 },
           "image": { "type": "ASSET", "value": "assets/first_demo/map/victor.png" }
         }
       ]
@@ -130,9 +141,14 @@
       "label": "Librairie",
       "priority": "HIGH",
       "image": { "type": "ASSET", "value": "assets/first_demo/map/librairie.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75600, "lng": 4.82800 },
+        "topRight": { "lat": 45.75700, "lng": 4.83000 }
+      },
       "objects": [
         {
-          "position": { "top": 0.8, "left": 0.45 },
+          "label": "Emilie",
+          "position": { "lat": 45.75620, "lng": 4.82890 },
           "image": { "type": "ASSET", "value": "assets/first_demo/map/emilie.png" }
         }
       ]
@@ -141,6 +157,10 @@
       "label": "Eglise Antonin Poncet",
       "priority": "HIGH",
       "image": { "type": "ASSET", "value": "assets/first_demo/map/eglise_antonin_poncet.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75500, "lng": 4.83300 },
+        "topRight": { "lat": 45.75600, "lng": 4.83500 }
+      },
       "objects": []
     }
   ],

@@ -61,14 +61,21 @@ class GameSessionRepository {
     return GameSessionResponseDTO(session: session, auth: auth);
   }
 
-  Future<void> move(Coordinate coordinate) async {
+  Future<void> move(Coordinate coordinate, List<String> spaceIds) async {
     GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
     var path = "$resourcePath/${GameCurrent.sessionId}/move/";
     await genericRepository.post(path: path,
         body: {
           'lat': coordinate.lat,
-          'lng': coordinate.lng
+          'lng': coordinate.lng,
+          'spaceIds': spaceIds
         }, decode: false);
+  }
+
+  Future<List<BoardSpace>> findBoardSpaces() async {
+    GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
+    var response = await genericRepository.get(path: "$resourcePath/${GameCurrent.sessionId}/boards/");
+    return (response as List).map((json) => BoardSpace.fromJson(json)).toList();
   }
 
   Future<List<GameGoal>> findGoals() async {
@@ -112,4 +119,59 @@ class GameSessionResponseDTO {
   final GameSession session;
   final Auth auth;
   GameSessionResponseDTO({required this.session, required this.auth});
+}
+
+/// Represents a geographic zone (board space) where events can be triggered
+class BoardSpace {
+  final String id;
+  final String label;
+  final List<BoardRectangle> rectangles;
+
+  BoardSpace({required this.id, required this.label, required this.rectangles});
+
+  factory BoardSpace.fromJson(Map<String, dynamic> json) {
+    return BoardSpace(
+      id: json['id'] as String,
+      label: json['label'] as String? ?? '',
+      rectangles: (json['rectangles'] as List)
+          .map((r) => BoardRectangle.fromJson(r))
+          .toList(),
+    );
+  }
+
+  /// Check if a coordinate is inside any of this space's rectangles
+  bool contains(Coordinate coordinate) {
+    return rectangles.any((rect) => rect.contains(coordinate));
+  }
+}
+
+/// Represents a GPS rectangle (bounding box)
+class BoardRectangle {
+  final Coordinate bottomLeft;
+  final Coordinate topRight;
+
+  BoardRectangle({required this.bottomLeft, required this.topRight});
+
+  factory BoardRectangle.fromJson(Map<String, dynamic> json) {
+    final bl = json['bottomLeft'];
+    final tr = json['topRight'];
+    return BoardRectangle(
+      bottomLeft: Coordinate(
+        lat: (bl['lat'] as num).toDouble(),
+        lng: (bl['lng'] as num).toDouble(),
+      ),
+      topRight: Coordinate(
+        lat: (tr['lat'] as num).toDouble(),
+        lng: (tr['lng'] as num).toDouble(),
+      ),
+    );
+  }
+
+  /// Check if a coordinate is inside this rectangle
+  bool contains(Coordinate coordinate) {
+    return coordinate.lat >= bottomLeft.lat &&
+        coordinate.lat <= topRight.lat &&
+        coordinate.lng >= bottomLeft.lng &&
+        coordinate.lng <= topRight.lng;
+  }
 }

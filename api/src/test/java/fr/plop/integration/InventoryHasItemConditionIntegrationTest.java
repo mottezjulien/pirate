@@ -224,7 +224,7 @@ public class InventoryHasItemConditionIntegrationTest {
         Thread.sleep(500); // Wait for async processing
 
         // 3. Move into the treasure space to get the key
-        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947);
+        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947, List.of(SPACE_TREASURE_ID.value()));
         Thread.sleep(500); // Wait for consequence processing (INVENTORY_ADD)
 
         // 4. Check talk - player NOW has the key
@@ -274,12 +274,12 @@ public class InventoryHasItemConditionIntegrationTest {
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameInstanceController.ResponseDTO.class);
     }
 
-    private void sendPosition(String gameToken, String sessionId, double lat, double lng) throws URISyntaxException {
+    private void sendPosition(String gameToken, String sessionId, double lat, double lng, List<String> spaceIds) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/move/";
         URI uri = new URI(baseUrl);
 
-        record PositionRequest(double lat, double lng) {}
-        PositionRequest request = new PositionRequest(lat, lng);
+        record PositionRequest(double lat, double lng, List<String> spaceIds) {}
+        PositionRequest request = new PositionRequest(lat, lng, spaceIds);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -30,7 +30,17 @@ class GameCurrent {
   static void stopSession() => _sessionInstance._session?.stop();
 
   static void removeSession() => _sessionInstance._session = null;
-  
+
+  /// Get the player's current GPS position
+  static Coordinate? get currentPosition {
+    if (!hasSession) return null;
+    try {
+      return _sessionInstance.coordinate;
+    } catch (_) {
+      return null;
+    }
+  }
+
 }
 
 

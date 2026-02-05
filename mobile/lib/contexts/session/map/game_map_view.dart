@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../domain/model/game_session.dart';
 import '../game_current.dart';
-import '../image/game_image_objet_widget.dart';
+import '../image/game_image_repository.dart';
 import 'game_map_repository.dart';
 
 class GameMapTabView extends StatefulWidget {
@@ -109,16 +110,207 @@ class _MapWidget extends StatelessWidget {
       children: [
         Positioned.fill(
             child: Image.asset(map.imageValue, fit: BoxFit.contain)),
+        // Display player pointer if available
         if (map.pointer != null)
-          ImageObjectWidget(
-              object: map.pointer!.toImageObject(),
-              constraints: constraints),
-        for (final imageObject in map.imageObjects)
-          ImageObjectWidget(imageId: map.image.id, object: imageObject, constraints: constraints)
+          _PlayerPointerWidget(
+            bounds: map.bounds,
+            constraints: constraints,
+            pointerImage: map.pointer!,
+          ),
+        // Display map objects
+        for (final mapObject in map.objects)
+          _MapObjectWidget(
+            mapId: map.id,
+            object: mapObject,
+            bounds: map.bounds,
+            constraints: constraints,
+          )
       ],
     );
   }
+}
 
+/// Widget that displays the player's current GPS position on the map
+class _PlayerPointerWidget extends StatelessWidget {
+  final MapBounds bounds;
+  final BoxConstraints constraints;
+  final MapImage pointerImage;
+
+  const _PlayerPointerWidget({
+    required this.bounds,
+    required this.constraints,
+    required this.pointerImage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Get player's current position from GameCurrent
+    final playerPosition = GameCurrent.currentPosition;
+    if (playerPosition == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Convert GPS position to widget position
+    final pos = _gpsToWidgetPosition(
+      LatLng(playerPosition.lat, playerPosition.lng),
+      bounds,
+      constraints,
+    );
+
+    // Check if position is within bounds
+    if (pos == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      top: pos.dy - 15, // Center the pointer (30/2)
+      left: pos.dx - 15,
+      child: Image.asset(
+        pointerImage.value,
+        width: 30,
+        height: 30,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
+
+/// Widget that displays a single map object (point or image marker)
+class _MapObjectWidget extends StatelessWidget {
+  final String mapId;
+  final MapObject object;
+  final MapBounds bounds;
+  final BoxConstraints constraints;
+
+  const _MapObjectWidget({
+    required this.mapId,
+    required this.object,
+    required this.bounds,
+    required this.constraints,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Convert GPS position to widget position
+    final pos = _gpsToWidgetPosition(object.position, bounds, constraints);
+
+    // If position is outside bounds, don't display
+    if (pos == null) {
+      return const SizedBox.shrink();
+    }
+
+    void onAction() {
+      final GameImageRepository imageRepository = GameImageRepository();
+      imageRepository.clickObject(mapId, object.id);
+    }
+
+    if (object.isPoint) {
+      return Positioned(
+        top: pos.dy - 6, // Center the point (12/2)
+        left: pos.dx - 6,
+        child: GestureDetector(
+          onDoubleTap: onAction,
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: _parseColor(object.color),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (object.isImage && object.image != null) {
+      return Positioned(
+        top: pos.dy - 15, // Center the image (30/2)
+        left: pos.dx - 15,
+        child: GestureDetector(
+          onDoubleTap: onAction,
+          child: Image.asset(
+            object.image!.value,
+            width: 30,
+            height: 30,
+            fit: BoxFit.contain,
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Color _parseColor(String? colorStr) {
+    if (colorStr == null || colorStr.isEmpty) {
+      return Colors.red;
+    }
+    switch (colorStr.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'blue':
+        return Colors.blue;
+      case 'green':
+        return Colors.green;
+      case 'yellow':
+        return Colors.yellow;
+      case 'orange':
+        return Colors.orange;
+      case 'purple':
+        return Colors.purple;
+      case 'white':
+        return Colors.white;
+      case 'black':
+        return Colors.black;
+      default:
+        // Try to parse hex color
+        if (colorStr.startsWith('#')) {
+          try {
+            return Color(int.parse(colorStr.substring(1), radix: 16) + 0xFF000000);
+          } catch (_) {
+            return Colors.red;
+          }
+        }
+        return Colors.red;
+    }
+  }
+}
+
+/// Converts a GPS position to widget coordinates based on map bounds
+/// Returns null if the position is outside the bounds
+Offset? _gpsToWidgetPosition(
+  LatLng position,
+  MapBounds bounds,
+  BoxConstraints constraints,
+) {
+  // Calculate relative position within bounds (0.0 to 1.0)
+  final latRange = bounds.topRight.latitude - bounds.bottomLeft.latitude;
+  final lngRange = bounds.topRight.longitude - bounds.bottomLeft.longitude;
+
+  if (latRange == 0 || lngRange == 0) return null;
+
+  final relativeX = (position.longitude - bounds.bottomLeft.longitude) / lngRange;
+  // Note: Y is inverted because screen coordinates start from top
+  final relativeY = 1.0 - (position.latitude - bounds.bottomLeft.latitude) / latRange;
+
+  // Check if position is within bounds (with small margin for edge cases)
+  if (relativeX < -0.05 || relativeX > 1.05 || relativeY < -0.05 || relativeY > 1.05) {
+    return null;
+  }
+
+  // Convert to widget coordinates
+  return Offset(
+    relativeX.clamp(0.0, 1.0) * constraints.maxWidth,
+    relativeY.clamp(0.0, 1.0) * constraints.maxHeight,
+  );
 }
 
 class ImageZoomDialog extends StatefulWidget {

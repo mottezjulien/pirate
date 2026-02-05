@@ -1,8 +1,7 @@
 package fr.plop.contexts.game.config.template.adapter;
 
-import fr.plop.contexts.game.config.Image.domain.ImageObject;
-import fr.plop.contexts.game.config.Image.persistence.*;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.map.persistence.*;
 import org.springframework.stereotype.Component;
 
@@ -12,23 +11,18 @@ public class TemplateInitDataMapAdapter {
 
     private final MapConfigRepository mapConfigRepository;
     private final MapItemRepository mapItemRepository;
-    private final MapItemPositionRepository mapItemPositionRepository;
-    private final ImageObjectRepository imageObjectRepository;
-    private final ImageGenericRepository imageGenericRepository;
+    private final MapObjectRepository mapObjectRepository;
     private final TemplateInitDataConditionAdapter conditionAdapter;
 
-    public TemplateInitDataMapAdapter(MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapItemPositionRepository mapItemPositionRepository, ImageObjectRepository imageObjectRepository, ImageGenericRepository imageGenericRepository, TemplateInitDataConditionAdapter conditionAdapter) {
+    public TemplateInitDataMapAdapter(MapConfigRepository mapConfigRepository, MapItemRepository mapItemRepository, MapObjectRepository mapObjectRepository, TemplateInitDataConditionAdapter conditionAdapter) {
         this.mapConfigRepository = mapConfigRepository;
         this.mapItemRepository = mapItemRepository;
-        this.mapItemPositionRepository = mapItemPositionRepository;
-        this.imageObjectRepository = imageObjectRepository;
-        this.imageGenericRepository = imageGenericRepository;
+        this.mapObjectRepository = mapObjectRepository;
         this.conditionAdapter = conditionAdapter;
     }
 
     public void deleteAll() {
-        //imageObjectRepository.deleteAll();
-        mapItemPositionRepository.deleteAll();
+        mapObjectRepository.deleteAll();
         mapItemRepository.deleteAll();
         mapConfigRepository.deleteAll();
     }
@@ -39,18 +33,16 @@ public class TemplateInitDataMapAdapter {
         configEntity.setId(mapConfig.id().value());
         mapConfigRepository.save(configEntity);
         mapConfig.items().forEach(item -> {
-            ImageGenericEntity imageGenericEntity = new ImageGenericEntity();//item.imageGeneric());
-            imageGenericEntity.setId(item.imageGeneric().id().value());
-            imageGenericEntity.setLabel(item.imageGeneric().label());
-            imageGenericEntity.setType(item.imageType());
-            imageGenericEntity.setValue(item.imageValue());
-            imageGenericRepository.save(imageGenericEntity);
-            item.imageObjects().forEach(object -> imageObjectRepository.save(buildObjectEntity(object, imageGenericEntity)));
-
             MapItemEntity itemEntity = new MapItemEntity();
             itemEntity.setId(item.id().value());
             itemEntity.setConfig(configEntity);
-            itemEntity.setImageGeneric(imageGenericEntity);
+            itemEntity.setLabel(item.label());
+            itemEntity.setImageType(item.image().type());
+            itemEntity.setImageValue(item.image().value());
+            itemEntity.setBoundsBottomLeftLat(item.bounds().bottomLeft().lat());
+            itemEntity.setBoundsBottomLeftLng(item.bounds().bottomLeft().lng());
+            itemEntity.setBoundsTopRightLat(item.bounds().topRight().lat());
+            itemEntity.setBoundsTopRightLng(item.bounds().topRight().lng());
             itemEntity.setPriority(item.priority());
             item.optPointer().ifPresent(pointer -> {
                 itemEntity.setNullableImagePointerType(pointer.type());
@@ -60,46 +52,32 @@ public class TemplateInitDataMapAdapter {
                     .ifPresent(condition -> itemEntity.setNullableCondition(conditionAdapter.create(condition)));
             mapItemRepository.save(itemEntity);
 
-            item.positions().forEach(position -> {
-                MapItemPositionEntity positionEntity = new MapItemPositionEntity();
-                positionEntity.setId(position.id().value());
-                positionEntity.setItem(itemEntity);
-                positionEntity.setSpaceId(position.spaceId().value());
-                positionEntity.setTop(position.point().top());
-                positionEntity.setLeft(position.point().left());
-                positionEntity.setPriority(position.priority());
-                mapItemPositionRepository.save(positionEntity);
-            });
-
-
+            item.objects().forEach(object -> mapObjectRepository.save(buildObjectEntity(object, itemEntity)));
         });
         return configEntity;
     }
 
-    private ImageObjectEntity buildObjectEntity(ImageObject object, ImageGenericEntity imageEntity) {
-        ImageObjectEntity objectEntity = new ImageObjectEntity();
+    private MapObjectEntity buildObjectEntity(MapObject object, MapItemEntity itemEntity) {
+        MapObjectEntity objectEntity = new MapObjectEntity();
         objectEntity.setId(object.id().value());
         objectEntity.setLabel(object.label());
-        objectEntity.setImage(imageEntity);
-        object.atom().optCondition()
+        objectEntity.setItem(itemEntity);
+        objectEntity.setLatitude(object.position().lat());
+        objectEntity.setLongitude(object.position().lng());
+        object.optCondition()
                 .ifPresent(condition -> objectEntity.setNullableCondition(conditionAdapter.create(condition)));
         switch (object) {
-            case ImageObject.Point point -> {
-                objectEntity.setType(ImageObjectEntity.Type.POINT);
-                objectEntity.setTop(point.top());
-                objectEntity.setLeft(point.left());
+            case MapObject.PointMarker point -> {
+                objectEntity.setType(MapObjectEntity.Type.POINT);
                 objectEntity.setPointColor(point.color());
             }
-            case ImageObject._Image _image -> {
-                objectEntity.setType(ImageObjectEntity.Type.IMAGE);
-                objectEntity.setTop(_image.top());
-                objectEntity.setLeft(_image.left());
-                objectEntity.setImageType(_image.value().type());
-                objectEntity.setImageValue(_image.value().value());
+            case MapObject.ImageMarker image -> {
+                objectEntity.setType(MapObjectEntity.Type.IMAGE);
+                objectEntity.setImageType(image.image().type());
+                objectEntity.setImageValue(image.image().value());
             }
         }
         return objectEntity;
     }
-
 
 }

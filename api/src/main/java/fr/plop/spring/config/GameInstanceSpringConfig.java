@@ -32,8 +32,8 @@ public class GameInstanceSpringConfig {
     }
 
     @Bean
-    public GameInstanceMoveUseCase moveUseCase(GameInstanceMoveUseCase.OutPort outPort, GamePlayerGetPort gamePlayerGetPort, GameEventOrchestrator eventOrchestrator, PushPort pushPort, GameConfigCache cache) {
-        return new GameInstanceMoveUseCase(outPort, gamePlayerGetPort, eventOrchestrator, pushPort, cache);
+    public GameInstanceMoveUseCase moveUseCase(GameInstanceMoveUseCase.OutPort outPort, GamePlayerGetPort gamePlayerGetPort, GameEventOrchestrator eventOrchestrator, PushPort pushPort) {
+        return new GameInstanceMoveUseCase(outPort, gamePlayerGetPort, eventOrchestrator, pushPort);
     }
 
     @Bean

@@ -16,6 +16,7 @@ import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.inventory.domain.model.InventoryMergedRule;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.map.domain.MapItem;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityRecurrence;
@@ -375,36 +376,42 @@ public class TemplateGeneratorJsonUseCase {
     private MapItem mapMap(TemplateGeneratorRoot.TemplateGeneratorMap mapRoot) {
         Image image = new Image(Image.Type.valueOf(mapRoot.image().type().toUpperCase()), mapRoot.image().value());
         Priority priority = mapRoot.priority() != null ? Priority.valueOf(mapRoot.priority().toUpperCase()) : Priority.byDefault();
-        Optional<Condition> optCondition = Optional.empty();
+        Condition condition = mapCondition(mapRoot.condition());
+        Optional<Condition> optCondition = Optional.ofNullable(condition);
         Optional<Image> optPointer = Optional.empty();
+        if (mapRoot.pointer() != null) {
+            optPointer = Optional.of(new Image(Image.Type.valueOf(mapRoot.pointer().type().toUpperCase()), mapRoot.pointer().value()));
+        }
 
-        List<ImageObject> imageObjects = mapRoot.objects() == null ? List.of() : mapRoot.objects().stream()
+        Rectangle bounds = mapRoot.bounds() != null ? mapRoot.bounds().toModel() : Rectangle.lyonBellecour();
+
+        List<MapObject> mapObjects = mapRoot.objects() == null ? List.of() : mapRoot.objects().stream()
                 .map(this::mapMapObject)
                 .toList();
 
-        ImageGeneric imageGeneric = new ImageGeneric(mapRoot.label() != null ? mapRoot.label() : "", image, imageObjects);
+        String label = mapRoot.label() != null ? mapRoot.label() : "";
 
-        return new MapItem(imageGeneric, priority, optCondition, optPointer, List.of());
+        return new MapItem(label, image, bounds, priority, optCondition, optPointer, mapObjects);
     }
 
-    private ImageObject mapMapObject(TemplateGeneratorRoot.TemplateGeneratorMap.MapObject objectRoot) {
-        ImagePoint center = new ImagePoint((float) objectRoot.position().top(), (float) objectRoot.position().left());
+    private MapObject mapMapObject(TemplateGeneratorRoot.TemplateGeneratorMap.MapObject objectRoot) {
+        fr.plop.generic.position.Point position = fr.plop.generic.position.Point.from(
+                objectRoot.position().lat(), objectRoot.position().lng());
         Condition condition = mapCondition(objectRoot.condition());
         Optional<Condition> optCondition = Optional.ofNullable(condition);
+        String label = objectRoot.label() != null ? objectRoot.label() : "";
 
-        ImageObject.Atom atom = new ImageObject.Atom("", center, optCondition);
+        MapObject.Atom atom = new MapObject.Atom(label, position, optCondition);
 
-        // Check if it's a point or an image object
         if (objectRoot.point() != null) {
             String color = objectRoot.point().color() != null ? objectRoot.point().color() : "";
-            return new ImageObject.Point(atom, color);
+            return new MapObject.PointMarker(atom, color);
         } else if (objectRoot.image() != null) {
             Image image = new Image(Image.Type.valueOf(objectRoot.image().type().toUpperCase()), objectRoot.image().value());
-            return new ImageObject._Image(atom, image);
+            return new MapObject.ImageMarker(atom, image);
         }
 
-        // Default to Point
-        return new ImageObject.Point(atom, "");
+        return new MapObject.PointMarker(atom, "");
     }
 
     private TalkConfig mapTalk(TemplateGeneratorRoot.Talk talkRoot) {
@@ -587,7 +594,7 @@ public class TemplateGeneratorJsonUseCase {
         Image image = new Image(Image.Type.valueOf(itemRoot.generic().value().type().toUpperCase()),
                 itemRoot.generic().value().value());
         List<ImageObject> objects = itemRoot.generic().objects() == null ? List.of() : itemRoot.generic().objects().stream()
-                .map(o -> mapImageObject(o))
+                .map(this::mapImageObject)
                 .toList();
 
         ImageGeneric generic = new ImageGeneric("", image, objects);

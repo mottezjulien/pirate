@@ -1,8 +1,8 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.consequence.Consequence;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.scenario.domain.model.PossibilityTrigger;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
@@ -205,9 +205,14 @@ public class TemplateGeneratorJsonUseCaseComplexeTest {
                     {
                       "priority": "LOWEST",
                       "image": { "type": "Asset", "value": "assets/office.png" },
+                      "bounds": {
+                        "bottomLeft": { "lat": 45.777, "lng": 4.803 },
+                        "topRight": { "lat": 45.779, "lng": 4.804 }
+                      },
                       "objects": [
                         {
-                          "position": { "top": 0.2, "left": 0.8 },
+                          "label": "Desk",
+                          "position": { "lat": 45.7785, "lng": 4.8036 },
                           "priority": "HIGH",
                           "point": { "color": "" }
                         }
@@ -239,13 +244,12 @@ public class TemplateGeneratorJsonUseCaseComplexeTest {
                     .hasSize(1)
                     .anySatisfy(item -> {
                         assertThat(item.priority()).isEqualTo(Priority.LOWEST);
-                        assertThat(item.imageGeneric().objects())
+                        assertThat(item.objects())
                                 .hasSize(1)
-                                .anySatisfy(position -> {
-                                    assertThat(position).isInstanceOf(ImageObject.Point.class);
-                                    ImageObject.Point point = (ImageObject.Point) position;
-                                    assertThat(point.top()).isCloseTo(0.2, Offset.offset(0.01));
-                                    assertThat(point.left()).isCloseTo(0.8, Offset.offset(0.01));
+                                .anySatisfy(obj -> {
+                                    assertThat(obj).isInstanceOf(MapObject.PointMarker.class);
+                                    assertThat(obj.position().lat().doubleValue()).isCloseTo(45.7785, Offset.offset(0.001));
+                                    assertThat(obj.position().lng().doubleValue()).isCloseTo(4.8036, Offset.offset(0.001));
                                 });
                     });
         });

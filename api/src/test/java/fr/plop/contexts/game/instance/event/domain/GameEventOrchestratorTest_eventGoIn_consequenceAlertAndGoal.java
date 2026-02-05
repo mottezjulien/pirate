@@ -74,6 +74,8 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
     private final ScenarioConfig.Step.Id stepId = new ScenarioConfig.Step.Id();
 
+    private final BoardSpace.Id spaceId = new BoardSpace.Id();
+
 
     @BeforeEach
     void setUp() {
@@ -83,7 +85,6 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     }
 
     private void createTemplate() {
-        BoardSpace.Id spaceId = new BoardSpace.Id();
         BoardSpace space = new BoardSpace(spaceId, List.of(new Rectangle(Point.from(0, 0), Point.from(10, 10))));
 
         I18n i18nMessage = new I18n(Map.of(Language.FR, "Vous êtes piégé"));
@@ -114,8 +115,8 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     @Test
     public void moveInTrap() throws GameInstanceException, InterruptedException, ConnectException {
         GameInstanceContext context = start();
-        Point position = Point.from(5, 5);
-        moveUseCase.apply(context, position);
+        // Simule l'entrée dans la zone piégée en envoyant le spaceId
+        moveUseCase.apply(context, List.of(spaceId));
         Thread.sleep(100);
 
         assertThat(situationPort.get(context).scenario().stepIds()).isEmpty();
@@ -124,8 +125,8 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     @Test
     public void moveOtherSpace_doNothing() throws GameInstanceException, InterruptedException, ConnectException {
         GameInstanceContext context = start();
-        Point position = Point.from(15, 25);
-        moveUseCase.apply(context, position);
+        // Simule un mouvement sans entrer dans aucune zone (liste vide)
+        moveUseCase.apply(context, List.of());
         Thread.sleep(100);
 
         assertThat(situationPort.get(context).scenario().stepIds()).containsOnly(stepId);

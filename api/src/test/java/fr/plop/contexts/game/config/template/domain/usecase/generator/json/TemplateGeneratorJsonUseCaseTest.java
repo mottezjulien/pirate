@@ -2,8 +2,8 @@ package fr.plop.contexts.game.config.template.domain.usecase.generator.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.condition.Condition;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.Possibility;
@@ -544,15 +544,17 @@ public class TemplateGeneratorJsonUseCaseTest {
                     {
                       "priority": "HIGH",
                       "image": { "type": "Asset", "value": "imgs/first/map.png" },
+                      "bounds": {
+                        "bottomLeft": { "lat": 45.0, "lng": 4.0 },
+                        "topRight": { "lat": 46.0, "lng": 5.0 }
+                      },
                       "objects": [
                         {
-                          "position": { "top": 89.09, "left": 10.064 },
-                          "priority": "HIGHEST",
+                          "position": { "lat": 45.89, "lng": 4.10 },
                           "point": { "color": "" }
                         },
                         {
-                          "position": { "top": 78.865, "left": 23.9887 },
-                          "priority": "LOW",
+                          "position": { "lat": 45.78, "lng": 4.24 },
                           "point": { "color": "yellow" },
                           "condition": { "type": "AbsoluteTime", "metadata": { "duration": 41 } }
                         }
@@ -570,30 +572,31 @@ public class TemplateGeneratorJsonUseCaseTest {
                 .hasSize(1)
                 .anySatisfy(item -> {
                     assertThat(item.id()).isNotNull();
-                    assertThat(item.imageType()).isEqualTo(Image.Type.ASSET);
-                    assertThat(item.imageValue()).isEqualTo("imgs/first/map.png");
+                    assertThat(item.image().type()).isEqualTo(Image.Type.ASSET);
+                    assertThat(item.image().value()).isEqualTo("imgs/first/map.png");
                     assertThat(item.priority()).isEqualTo(Priority.HIGH);
-                    assertThat(item.imageObjects())
+                    assertThat(item.bounds()).isNotNull();
+                    assertThat(item.objects())
                             .hasSize(2)
                             .anySatisfy(object -> {
                                 assertThat(object.id()).isNotNull();
 
-                                assertThat(object).isInstanceOf(ImageObject.Point.class);
-                                ImageObject.Point point = (ImageObject.Point) object;
-                                assertThat(point.top()).isCloseTo(89.09F, Offset.offset(0.001));
-                                assertThat(point.left()).isCloseTo(10.064F, Offset.offset(0.001));
+                                assertThat(object).isInstanceOf(MapObject.PointMarker.class);
+                                MapObject.PointMarker point = (MapObject.PointMarker) object;
+                                assertThat(point.position().lat().doubleValue()).isCloseTo(45.89, Offset.offset(0.001));
+                                assertThat(point.position().lng().doubleValue()).isCloseTo(4.10, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("");
-                                assertThat(point.atom().optCondition()).isEmpty();
+                                assertThat(point.optCondition()).isEmpty();
                             })
                             .anySatisfy(position -> {
                                 assertThat(position.id()).isNotNull();
 
-                                assertThat(position).isInstanceOf(ImageObject.Point.class);
-                                ImageObject.Point point = (ImageObject.Point) position;
-                                assertThat(point.top()).isCloseTo(78.865F, Offset.offset(0.001));
-                                assertThat(point.left()).isCloseTo(23.9887F, Offset.offset(0.001));
+                                assertThat(position).isInstanceOf(MapObject.PointMarker.class);
+                                MapObject.PointMarker point = (MapObject.PointMarker) position;
+                                assertThat(point.position().lat().doubleValue()).isCloseTo(45.78, Offset.offset(0.001));
+                                assertThat(point.position().lng().doubleValue()).isCloseTo(4.24, Offset.offset(0.001));
                                 assertThat(point.color()).isEqualTo("yellow");
-                                assertThat(point.atom().optCondition()).hasValueSatisfying(condition -> {
+                                assertThat(point.optCondition()).hasValueSatisfying(condition -> {
                                     assertThat(condition).isInstanceOf(Condition.AbsoluteTime.class);
                                     assertThat(((Condition.AbsoluteTime) condition).value()).isEqualTo(new GameInstanceTimeUnit(41));
                                 });
@@ -878,7 +881,7 @@ public class TemplateGeneratorJsonUseCaseTest {
         assertThat(step.possibilities()).hasSize(3);
 
         // First possibility: DisplayConfirm consequence
-        Possibility displayConfirmPossibility = step.possibilities().get(0);
+        Possibility displayConfirmPossibility = step.possibilities().getFirst();
         assertThat(displayConfirmPossibility.consequences()).hasSize(1);
         assertThat(displayConfirmPossibility.consequences().getFirst()).isInstanceOf(Consequence.DisplayConfirm.class);
         Consequence.DisplayConfirm displayConfirm = (Consequence.DisplayConfirm) displayConfirmPossibility.consequences().getFirst();

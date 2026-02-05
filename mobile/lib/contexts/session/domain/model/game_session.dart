@@ -58,8 +58,12 @@ class GameLocation {
   late StreamSubscription<Position> _streamSubscription;
 
   Position? last;
+  List<BoardSpace> _boardSpaces = [];
 
-  Future<void> init() {
+  Future<void> init() async {
+    // Load board spaces first
+    await _loadBoardSpaces();
+
     final Completer<void> readyCompleter = Completer<void>();
     const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation);
     _streamPosition = Geolocator.getPositionStream(locationSettings: locationSettings);
@@ -77,6 +81,16 @@ class GameLocation {
     return readyCompleter.future;
   }
 
+  Future<void> _loadBoardSpaces() async {
+    try {
+      GameSessionRepository repository = GameSessionRepository();
+      _boardSpaces = await repository.findBoardSpaces();
+    } catch (e) {
+      // If loading fails, continue with empty board spaces
+      _boardSpaces = [];
+    }
+  }
+
   void stop() {
     _streamSubscription.cancel();
   }
@@ -90,9 +104,17 @@ class GameLocation {
   }
 
   void _fireMove(Position position) {
-    //REST -> WebSockets ???
+    final coordinate = Coordinate(lat: position.latitude, lng: position.longitude);
+
+    // Calculate which board spaces the player is currently in
+    final List<String> spaceIds = _boardSpaces
+        .where((space) => space.contains(coordinate))
+        .map((space) => space.id)
+        .toList();
+
+    // Send position with spaceIds to the server
     GameSessionRepository repository = GameSessionRepository();
-    repository.move(Coordinate(lat: position.latitude, lng: position.longitude));
+    repository.move(coordinate, spaceIds);
   }
 
   Coordinate get coordinate => Coordinate(lat: last!.latitude, lng: last!.longitude);

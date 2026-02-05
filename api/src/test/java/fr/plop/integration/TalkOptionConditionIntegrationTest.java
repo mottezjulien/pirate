@@ -244,7 +244,7 @@ public class TalkOptionConditionIntegrationTest {
         Thread.sleep(500);
 
         // 3. Move into the treasure space to get the carte
-        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947);
+        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947, List.of(SPACE_TREASURE_ID.value()));
         Thread.sleep(500);
 
         // 4. Get talk options - player NOW has the carte
@@ -279,7 +279,7 @@ public class TalkOptionConditionIntegrationTest {
                 .anyMatch(opt -> opt.id().equals("OPT_BONJOUR"))).isTrue();
 
         // 4. Get item and check option is still visible WITH item
-        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947);
+        sendPosition(session.auth().token(), session.id(), 48.8582, 2.2947, List.of(SPACE_TREASURE_ID.value()));
         Thread.sleep(500);
 
         GameInstanceTalkController.ResponseDTO response2 = getTalk(session.auth().token(), session.id(), TALK_OPTIONS_ID.value());
@@ -357,12 +357,12 @@ public class TalkOptionConditionIntegrationTest {
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameInstanceController.ResponseDTO.class);
     }
 
-    private void sendPosition(String gameToken, String sessionId, double lat, double lng) throws URISyntaxException {
+    private void sendPosition(String gameToken, String sessionId, double lat, double lng, List<String> spaceIds) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/move/";
         URI uri = new URI(baseUrl);
 
-        record PositionRequest(double lat, double lng) {}
-        PositionRequest request = new PositionRequest(lat, lng);
+        record PositionRequest(double lat, double lng, List<String> spaceIds) {}
+        PositionRequest request = new PositionRequest(lat, lng, spaceIds);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -49,18 +49,25 @@
       "label": "Carte principale Bellecour",
       "priority": "HIGH",
       "image": { "type": "ASSET", "value": "assets/demo/map/bellecour.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75685, "lng": 4.82941 },
+        "topRight": { "lat": 45.75834, "lng": 4.83419 }
+      },
       "objects": [
         {
-          "position": { "top": 0.15, "left": 0.5 },
+          "label": "Marcel",
+          "position": { "lat": 45.75790, "lng": 4.83180 },
           "image": { "type": "ASSET", "value": "assets/demo/map/marcel.png" }
         },
         {
-          "position": { "top": 0.7, "left": 0.3 },
+          "label": "Coffre",
+          "position": { "lat": 45.75720, "lng": 4.83050 },
           "image": { "type": "ASSET", "value": "assets/demo/map/coffre.png" },
           "condition": { "type": "INVENTORY_HAS", "metadata": { "itemId": "CARTE_COMPLETE" } }
         },
         {
-          "position": { "top": 0.5, "left": 0.8 },
+          "label": "Marqueur rouge",
+          "position": { "lat": 45.75760, "lng": 4.83300 },
           "point": { "color": "red" }
         }
       ]
@@ -69,6 +76,10 @@
       "label": "Carte secondaire",
       "priority": "MEDIUM",
       "image": { "type": "ASSET", "value": "assets/demo/map/secondary.png" },
+      "bounds": {
+        "bottomLeft": { "lat": 45.75600, "lng": 4.82800 },
+        "topRight": { "lat": 45.75900, "lng": 4.83500 }
+      },
       "objects": []
     }
   ],

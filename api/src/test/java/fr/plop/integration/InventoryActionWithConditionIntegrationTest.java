@@ -197,7 +197,7 @@ public class InventoryActionWithConditionIntegrationTest {
         Thread.sleep(500);
 
         // 3. Move OUTSIDE the treasure zone
-        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG);
+        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
         Thread.sleep(500);
 
         // 4. Get the actual session item ID for the shovel
@@ -236,7 +236,7 @@ public class InventoryActionWithConditionIntegrationTest {
         Thread.sleep(500);
 
         // 3. Move INSIDE the treasure zone
-        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG);
+        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
         Thread.sleep(500);
 
         // 4. Get the actual session item ID for the shovel
@@ -276,7 +276,7 @@ public class InventoryActionWithConditionIntegrationTest {
         String shovelSessionId = findInventoryItemSessionId(session.auth().token(), session.id(), "Pelle");
 
         // Start OUTSIDE
-        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG);
+        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
         Thread.sleep(300);
 
         // Equip the shovel while outside
@@ -284,7 +284,7 @@ public class InventoryActionWithConditionIntegrationTest {
         Thread.sleep(200);
 
         // Move INSIDE the zone
-        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG);
+        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
         Thread.sleep(500);
 
         // Now use the shovel (should trigger because we're inside)
@@ -340,12 +340,12 @@ public class InventoryActionWithConditionIntegrationTest {
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameInstanceController.ResponseDTO.class);
     }
 
-    private void sendPosition(String gameToken, String sessionId, double lat, double lng) throws URISyntaxException {
+    private void sendPosition(String gameToken, String sessionId, double lat, double lng, List<String> spaceIds) throws URISyntaxException {
         final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/move/";
         URI uri = new URI(baseUrl);
 
-        record PositionRequest(double lat, double lng) {}
-        PositionRequest request = new PositionRequest(lat, lng);
+        record PositionRequest(double lat, double lng, List<String> spaceIds) {}
+        PositionRequest request = new PositionRequest(lat, lng, spaceIds);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -1,7 +1,7 @@
 package fr.plop.contexts.game.config.template.domain.usecase.generator.json;
 
-import fr.plop.contexts.game.config.Image.domain.ImageObject;
 import fr.plop.contexts.game.config.condition.Condition;
+import fr.plop.contexts.game.config.map.domain.MapObject;
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryItem;
 import fr.plop.contexts.game.config.map.domain.MapItem;
@@ -304,31 +304,37 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
         void mapPrincipale() {
             MapItem map = template.map().items().get(0);
 
-            assertThat(map.imageGeneric().label()).isEqualTo("Carte principale Bellecour");
+            assertThat(map.label()).isEqualTo("Carte principale Bellecour");
             assertThat(map.priority()).isEqualTo(Priority.HIGH);
-            assertThat(map.imageGeneric().imageType()).isEqualTo(Image.Type.ASSET);
-            assertThat(map.imageGeneric().imageValue()).isEqualTo("assets/demo/map/bellecour.png");
+            assertThat(map.image().type()).isEqualTo(Image.Type.ASSET);
+            assertThat(map.image().value()).isEqualTo("assets/demo/map/bellecour.png");
+
+            // Vérifie les bounds
+            assertThat(map.bounds()).isNotNull();
+            assertThat(map.bounds().bottomLeft().lat().doubleValue()).isCloseTo(45.75685, offset(0.00001));
+            assertThat(map.bounds().bottomLeft().lng().doubleValue()).isCloseTo(4.82941, offset(0.00001));
         }
 
         @Test
         @DisplayName("Carte principale avec 3 objets")
         void mapObjectsCount() {
             MapItem map = template.map().items().get(0);
-            assertThat(map.imageGeneric().objects()).hasSize(3);
+            assertThat(map.objects()).hasSize(3);
         }
 
         @Test
         @DisplayName("Objet image sans condition (Marcel)")
         void objectImageSimple() {
             MapItem map = template.map().items().get(0);
-            ImageObject marcel = map.imageGeneric().objects().get(0);
+            MapObject marcel = map.objects().get(0);
 
-            assertThat(marcel).isInstanceOf(ImageObject._Image.class);
-            assertThat(marcel.top()).isCloseTo(0.15, offset(0.001));
-            assertThat(marcel.left()).isCloseTo(0.5, offset(0.001));
+            assertThat(marcel).isInstanceOf(MapObject.ImageMarker.class);
+            // Position en coordonnées GPS
+            assertThat(marcel.position().lat().doubleValue()).isCloseTo(45.75790, offset(0.00001));
+            assertThat(marcel.position().lng().doubleValue()).isCloseTo(4.83180, offset(0.00001));
 
-            ImageObject._Image marcelImage = (ImageObject._Image) marcel;
-            assertThat(marcelImage.value().value()).isEqualTo("assets/demo/map/marcel.png");
+            MapObject.ImageMarker marcelImage = (MapObject.ImageMarker) marcel;
+            assertThat(marcelImage.image().value()).isEqualTo("assets/demo/map/marcel.png");
             assertThat(marcel.optCondition()).isEmpty();
         }
 
@@ -336,11 +342,12 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
         @DisplayName("Objet image avec condition INVENTORY_HAS (Coffre)")
         void objectImageWithCondition() {
             MapItem map = template.map().items().get(0);
-            ImageObject coffre = map.imageGeneric().objects().get(1);
+            MapObject coffre = map.objects().get(1);
 
-            assertThat(coffre).isInstanceOf(ImageObject._Image.class);
-            assertThat(coffre.top()).isCloseTo(0.7, offset(0.001));
-            assertThat(coffre.left()).isCloseTo(0.3, offset(0.001));
+            assertThat(coffre).isInstanceOf(MapObject.ImageMarker.class);
+            // Position en coordonnées GPS
+            assertThat(coffre.position().lat().doubleValue()).isCloseTo(45.75720, offset(0.00001));
+            assertThat(coffre.position().lng().doubleValue()).isCloseTo(4.83050, offset(0.00001));
 
             // Vérifie la condition
             assertThat(coffre.optCondition()).isPresent();
@@ -355,13 +362,14 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
         @DisplayName("Objet point (marqueur rouge)")
         void objectPoint() {
             MapItem map = template.map().items().get(0);
-            ImageObject point = map.imageGeneric().objects().get(2);
+            MapObject point = map.objects().get(2);
 
-            assertThat(point).isInstanceOf(ImageObject.Point.class);
-            assertThat(point.top()).isCloseTo(0.5, offset(0.001));
-            assertThat(point.left()).isCloseTo(0.8, offset(0.001));
+            assertThat(point).isInstanceOf(MapObject.PointMarker.class);
+            // Position en coordonnées GPS
+            assertThat(point.position().lat().doubleValue()).isCloseTo(45.75760, offset(0.00001));
+            assertThat(point.position().lng().doubleValue()).isCloseTo(4.83300, offset(0.00001));
 
-            ImageObject.Point pointObj = (ImageObject.Point) point;
+            MapObject.PointMarker pointObj = (MapObject.PointMarker) point;
             assertThat(pointObj.color()).isEqualTo("red");
         }
 
@@ -370,9 +378,9 @@ public class TemplateGeneratorJsonUseCaseSkillValidationTest {
         void mapSecondaire() {
             MapItem map = template.map().items().get(1);
 
-            assertThat(map.imageGeneric().label()).isEqualTo("Carte secondaire");
+            assertThat(map.label()).isEqualTo("Carte secondaire");
             assertThat(map.priority()).isEqualTo(Priority.MEDIUM);
-            assertThat(map.imageGeneric().objects()).isEmpty();
+            assertThat(map.objects()).isEmpty();
         }
     }
 

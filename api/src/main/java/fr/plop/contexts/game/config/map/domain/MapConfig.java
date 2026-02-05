@@ -24,7 +24,8 @@ public record MapConfig(Id id, List<MapItem> items) {
 
     public Stream<MapItem> select(GameInstanceSituation situation) {
         return items.stream()
-                .filter(item -> item.optCondition().isEmpty() || item.optCondition().get().accept(situation).toBoolean());
+                .filter(item -> item.optCondition().isEmpty() || item.optCondition().get().accept(situation).toBoolean())
+                .map(item -> item.select(situation));
     }
 
 }

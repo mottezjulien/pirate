@@ -66,34 +66,15 @@
         "type": "ASSET",
         "value": "assets/game/lyon9/map_lyon9_0.png"
       },
+      "bounds": {
+        "bottomLeft": { "lat": 45.777, "lng": 4.803 },
+        "topRight": { "lat": 45.780, "lng": 4.806 }
+      },
       "pointer": {
         "type": "ASSET",
         "value": "assets/game/tres/pointer.png"
       },
-      "spaces": [
-        {
-          "position": {
-            "top": 0.2,
-            "left": 0.8
-          },
-          "ref": "SPACE_PLACE_PARIS"
-        },
-        {
-          "position": {
-            "top": 0.5,
-            "left": 0.5
-          },
-          "ref": "SPACE_CHEZ_WAM"
-        },
-        {
-          "position": {
-            "top": 0.7,
-            "left": 0.3
-          },
-          "ref": "SPACE_TNG"
-        }
-      ],
-      "objects": null
+      "objects": []
     },
     {
       "label": "TNG",
@@ -102,20 +83,18 @@
         "type": "ASSET",
         "value": "assets/game/lyon9/map_lyon9_1.png"
       },
-      "pointer": null,
-      "spaces": null,
+      "bounds": {
+        "bottomLeft": { "lat": 45.777163, "lng": 4.803153 },
+        "topRight": { "lat": 45.777446, "lng": 4.803636 }
+      },
       "objects": [
         {
-          "position": {
-            "top": 0.6,
-            "left": 0.2
-          },
-          "priority": "MEDIUM",
+          "label": "Coco",
+          "position": { "lat": 45.77720, "lng": 4.80325 },
           "image": {
             "type": "ASSET",
             "value": "assets/game/lyon9/coco.png"
           },
-          "point": null,
           "condition": {
             "type": "AND",
             "metadata": {},
