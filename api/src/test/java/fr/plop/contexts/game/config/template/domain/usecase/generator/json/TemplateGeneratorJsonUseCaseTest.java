@@ -13,7 +13,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
 import fr.plop.contexts.game.config.talk.domain.TalkItemNext;
 import fr.plop.contexts.game.config.template.domain.model.Template;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.situation.domain.GameInstanceSituation;
 import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.enumerate.Priority;
@@ -291,7 +291,7 @@ public class TemplateGeneratorJsonUseCaseTest {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
                                             assertThat(goalTarget.targetId()).isEqualTo(template.scenario().steps().get(1).targets().getFirst().id());
-                                            assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.FAILURE);
+                                            assertThat(goalTarget.state()).isEqualTo(ScenarioState.FAILURE);
                                         });
 
                             })
@@ -322,13 +322,13 @@ public class TemplateGeneratorJsonUseCaseTest {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioStep.class);
                                             Consequence.ScenarioStep goal = (Consequence.ScenarioStep) consequence;
                                             assertThat(goal.stepId()).isEqualTo(template.scenario().steps().get(1).id());
-                                            assertThat(goal.state()).isEqualTo(ScenarioSessionState.SUCCESS);
+                                            assertThat(goal.state()).isEqualTo(ScenarioState.SUCCESS);
                                         })
                                         .anySatisfy(consequence -> {
                                             assertThat(consequence).isInstanceOf(Consequence.ScenarioTarget.class);
                                             Consequence.ScenarioTarget goalTarget = (Consequence.ScenarioTarget) consequence;
                                             assertThat(goalTarget.targetId()).isEqualTo(template.scenario().steps().get(1).targets().getFirst().id());
-                                            assertThat(goalTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
+                                            assertThat(goalTarget.state()).isEqualTo(ScenarioState.ACTIVE);
                                         });
 
                             });
@@ -802,7 +802,7 @@ public class TemplateGeneratorJsonUseCaseTest {
         Consequence.ScenarioTarget scenarioTarget = (Consequence.ScenarioTarget) possibility.consequences().getFirst();
         assertThat(scenarioTarget.id()).isNotNull();
         assertThat(scenarioTarget.targetId()).isEqualTo(stepSecond.targets().getFirst().id());
-        assertThat(scenarioTarget.state()).isEqualTo(ScenarioSessionState.ACTIVE);
+        assertThat(scenarioTarget.state()).isEqualTo(ScenarioState.ACTIVE);
     }
 
     private Consumer<I18n> withoutId(I18n compareTo) {

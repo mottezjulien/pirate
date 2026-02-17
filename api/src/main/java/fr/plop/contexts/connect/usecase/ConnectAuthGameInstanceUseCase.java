@@ -16,7 +16,7 @@ public class ConnectAuthGameInstanceUseCase {
     public interface Port {
         Stream<ConnectAuthGameInstance> findOpenedByUserId(User.Id id);
         ConnectAuthGameInstance create(ConnectAuthUser.Id authUserId, GameInstanceContext context);
-        Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authSessionId);
+        Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authId);
         Optional<ConnectAuthGameInstance> findByToken(ConnectToken connectToken);
     }
 
@@ -34,19 +34,19 @@ public class ConnectAuthGameInstanceUseCase {
          return port.create(connectAuthUser.id(), context);
     }
 
-    public Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authSessionId) throws ConnectException {
-        return port.close(authSessionId);
+    public Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authId) throws ConnectException {
+        return port.close(authId);
     }
 
-    public GameInstanceContext findContext(GameInstance.Id sessionId, ConnectToken connectToken) throws ConnectException {
-        return findSessionAuth(sessionId, connectToken).context();
+    public GameInstanceContext findContext(GameInstance.Id instanceId, ConnectToken connectToken) throws ConnectException {
+        return findAuth(instanceId, connectToken).context();
     }
 
-    public ConnectAuthGameInstance findSessionAuth(GameInstance.Id sessionId, ConnectToken connectToken) throws ConnectException {
+    public ConnectAuthGameInstance findAuth(GameInstance.Id instanceId, ConnectToken connectToken) throws ConnectException {
         ConnectAuthGameInstance auth = port.findByToken(connectToken)
                 .orElseThrow(() -> new ConnectException(ConnectException.Type.NOT_FOUND));
-        if(!auth.isSessionId(sessionId)) {
-            throw new ConnectException(ConnectException.Type.INVALID_SESSION_ID);
+        if(!auth.isInstanceId(instanceId)) {
+            throw new ConnectException(ConnectException.Type.INVALID_INSTANCE_ID);
         }
         if(!auth.isValid()) {
             //TODO AUTO - RECONNECT

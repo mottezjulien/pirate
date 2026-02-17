@@ -1,5 +1,5 @@
 package fr.plop.contexts.game.instance.scenario.domain.model;
 
-public enum ScenarioSessionState {
+public enum ScenarioState {
     ACTIVE, SUCCESS, FAILURE
 }

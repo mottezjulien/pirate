@@ -21,11 +21,11 @@ public class Runner {
     private TemplateInitUseCase.OutPort templateOutPort;
 
     @Autowired
-    private GameInstanceClearPort sessionClear;
+    private GameInstanceClearPort clear;
 
     @EventListener(ApplicationReadyEvent.class)
     public void afterStartup() {
-        sessionClear.clearAll();
+        clear.clearAll();
         TemplateInitUseCase templateInitUseCase = new TemplateInitUseCase(templateOutPort);
         templateInitUseCase.apply();
     }

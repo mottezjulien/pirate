@@ -5,7 +5,7 @@ import 'game_inventory.dart';
 
 class GameInventoryRepository {
 
-  String get _basePath => '/sessions/${GameCurrent.sessionId}/inventory';
+  String get _basePath => '/instances/${GameCurrent.sessionId}/inventory';
 
   Future<List<GameInventorySimple>> list() async {
     GenericGameSessionRepository genericRepository = GenericGameSessionRepository();

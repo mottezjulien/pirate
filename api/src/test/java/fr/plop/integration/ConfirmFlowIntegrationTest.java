@@ -51,7 +51,7 @@ public class ConfirmFlowIntegrationTest {
     int randomServerPort;
 
     @Autowired
-    private GameInstanceClearPort sessionClear;
+    private GameInstanceClearPort clear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
@@ -67,7 +67,7 @@ public class ConfirmFlowIntegrationTest {
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
-        sessionClear.clearAll();
+        clear.clearAll();
         templateInitUseCase.deleteAll();
 
         // Create template with Confirm flow
@@ -193,11 +193,11 @@ public class ConfirmFlowIntegrationTest {
     public void confirmEndpoint_canReceiveAnswer() throws URISyntaxException {
         // 1. Create auth and session
         ConnectionController.ResponseDTO connection = createAuth();
-        GameInstanceController.ResponseDTO session = createGame(connection.token());
-        assertThat(session.id()).isNotNull();
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
+        assertThat(responseDTO.id()).isNotNull();
 
         // 2. Call endpoint to answer - should not throw error
-        ResponseEntity<Void> response = answerConfirm(session.auth().token(), session.id(), token, true);
+        ResponseEntity<Void> response = answerConfirm(responseDTO.auth().token(), responseDTO.id(), token, true);
 
         // We expect 200 OK (void method returns 200)
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -257,8 +257,8 @@ public class ConfirmFlowIntegrationTest {
         return result.getBody();
     }
 
-    private ResponseEntity<Void> answerConfirm(String gameToken, String sessionId, MessageToken messageToken, boolean answer) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/messages/" + messageToken.value() + "/confirm";
+    private ResponseEntity<Void> answerConfirm(String gameToken, String instanceId, MessageToken messageToken, boolean answer) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + instanceId + "/messages/" + messageToken.value() + "/confirm";
         URI uri = new URI(baseUrl);
 
         MessageController.ConfirmRequest request = new MessageController.ConfirmRequest(answer);

@@ -6,6 +6,7 @@ import 'package:mobile/generic/components/dialog.dart';
 import '../../../generic/app_current.dart';
 import '../data/game_repository.dart';
 import '../game_current.dart';
+import 'foreground_task_handler.dart';
 
 class GameSessionUseCase {
 
@@ -36,6 +37,7 @@ class GameSessionUseCase {
     GameCurrent.session = sessionCreate.session;
     AppCurrent.gameSessionAuth = sessionCreate.auth;
     await sessionCreate.session.init();
+    await ForegroundTaskHandler.start();
     await repository.start();
     if(dialogContext != null) {
       Navigator.pop(dialogContext);
@@ -44,6 +46,7 @@ class GameSessionUseCase {
 
   Future<void> stop() async {
     GameCurrent.stopSession();
+    await ForegroundTaskHandler.stop();
     final GameSessionRepository repository = GameSessionRepository();
     await repository.stop();
     GameCurrent.removeSession();

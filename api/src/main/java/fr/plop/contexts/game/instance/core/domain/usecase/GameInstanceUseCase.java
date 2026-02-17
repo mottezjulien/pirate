@@ -53,13 +53,13 @@ public class GameInstanceUseCase {
         Template template = port.findTemplateById(templateId)
                 .orElseThrow(() -> new GameInstanceException(GameInstanceException.Type.TEMPLATE_NOT_FOUND));
 
-        GameInstance session = port.create(template);
-        GamePlayer player = port.insertUserId(session.id(), userId);
+        GameInstance instance = port.create(template);
+        GamePlayer player = port.insertUserId(instance.id(), userId);
 
-        session = session.insertPlayer(player);
-        cache.insert(session);
+        instance = instance.insertPlayer(player);
+        cache.insert(instance);
 
-        return session.atom();
+        return instance.atom();
     }
 
 }

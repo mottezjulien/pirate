@@ -4,9 +4,9 @@ import fr.plop.subs.i18n.domain.I18n;
 
 import java.util.Optional;
 
-public record SessionGameOver(Type type, Optional<I18n.Id> optReasonId) {
+public record InstanceGameOver(Type type, Optional<I18n.Id> optReasonId) {
 
-    public SessionGameOver(Type type) {
+    public InstanceGameOver(Type type) {
         this(type, Optional.empty());
     }
 

@@ -25,8 +25,8 @@ public record ConnectAuthGameInstance(Id id, Status status, ConnectToken token, 
         return new ConnectAuthGameInstance(new Id(), Status.OPENED, new ConnectToken(), authUserId, context, Instant.now());
     }
 
-    public boolean isSessionId(GameInstance.Id sessionId) {
-        return context.isInstanceId(sessionId);
+    public boolean isInstanceId(GameInstance.Id instanceId) {
+        return context.isInstanceId(instanceId);
     }
 
     private static final int SIX_HOURS_IN_SECOND = 60 * 60 * 6; //TODO BETTER (5 minutes)

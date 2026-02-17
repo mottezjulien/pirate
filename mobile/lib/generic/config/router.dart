@@ -3,9 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../contexts/config/select/game_config_select_view.dart';
+import '../../contexts/onboarding/views/onboarding_screen.dart';
 import '../../contexts/session/views/home/game_home_view.dart';
 import '../../contexts/session/views/menu/game_menu_view.dart';
-import '../../contexts/config/onboarding/views/onboarding_screen.dart';
 import '../app_current.dart';
 
 class AppRouter {

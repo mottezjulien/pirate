@@ -1,5 +1,6 @@
-import '../contexts/config/user/user.dart';
+
 import '../contexts/connect/auth.dart';
+import '../contexts/user/user.dart';
 import 'config/language.dart';
 
 class AppCurrent {

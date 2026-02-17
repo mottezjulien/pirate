@@ -12,7 +12,7 @@ import java.util.List;
 public class GameMapUseCase {
 
     public interface OutputPort {
-        List<MapItem> findMaps(GameInstance.Id sessionId, List<ScenarioConfig.Step.Id> ids);
+        List<MapItem> findMaps(GameInstance.Id instanceId, List<ScenarioConfig.Step.Id> ids);
     }
 
     public record Response(List<MapItem> maps) {
@@ -27,8 +27,8 @@ public class GameMapUseCase {
     }
 
 
-    public Response apply(GameInstance.Id sessionId, GamePlayer player) {
-        List<MapItem> maps = output.findMaps(sessionId, player.activeStepIds());
+    public Response apply(GameInstance.Id instanceId, GamePlayer player) {
+        List<MapItem> maps = output.findMaps(instanceId, player.activeStepIds());
         return new Response(maps);
     }
 

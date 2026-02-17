@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -9,25 +11,33 @@ import '../../../../generic/config/server.dart';
 import '../../../../generic/components/dialog.dart';
 import '../../../../generic/app_current.dart';
 import '../../../../generic/components/notification.dart';
+import '../../../config/board/board.dart';
+import '../../../config/board/board_repository.dart';
 import '../../../geo/domain/model/coordinate.dart';
 import '../../data/game_repository.dart';
 import '../../image/game_image_dialog.dart';
 import '../../talk/views/game_session_talk_dialog.dart';
+import 'game_session_move_usecase.dart';
 
 class GameSession {
 
   final String _id;
+  final String _playerId;
+  final String _state;
   final GameLocation gameLocation = GameLocation();
   final GameEventListener eventListener = GameEventListener();
 
-  GameSession({required String id}) : _id = id;
+  GameSession({required String id, required String playerId, required String state}) : _id = id, _playerId = playerId, _state = state;
 
   String get id => _id;
+  String get playerId => _playerId;
+  String get state => _state;
 
   Future<void> init() async {
+    final Board board = Board(spaces: await _loadBoardSpaces());
     await Future.wait([
-      eventListener.init(_id),
-      gameLocation.init(),
+      gameLocation.init(board: board),
+      eventListener.init(_id)
     ]);
   }
 
@@ -50,6 +60,11 @@ class GameSession {
     eventListener.dispose();
   }
 
+  Future<List<BoardSpace>> _loadBoardSpaces() async {
+    final GameConfigBoardRepository repository = GameConfigBoardRepository();
+    return await repository.findBoardSpaces();
+  }
+
 }
 
 class GameLocation {
@@ -57,21 +72,38 @@ class GameLocation {
   late Stream<Position> _streamPosition;
   late StreamSubscription<Position> _streamSubscription;
 
-  Position? last;
-  List<BoardSpace> _boardSpaces = [];
+  //final List<BoardSpace> _allBoardSpaces = [];
+  Coordinate? _lastCoordinate;
+  final List<BoardSpace> _lastSpaces = [];
 
-  Future<void> init() async {
-    // Load board spaces first
-    await _loadBoardSpaces();
 
+  Future<void> init({required Board board}) async {
     final Completer<void> readyCompleter = Completer<void>();
-    const LocationSettings locationSettings = LocationSettings(accuracy: LocationAccuracy.bestForNavigation);
+
+    LocationSettings locationSettings;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        allowBackgroundLocationUpdates: true,
+        pauseLocationUpdatesAutomatically: false,
+        showBackgroundLocationIndicator: true,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+      );
+    }
+
     _streamPosition = Geolocator.getPositionStream(locationSettings: locationSettings);
     _streamSubscription = _streamPosition.listen((position) {
       if (!readyCompleter.isCompleted) {
         readyCompleter.complete();
       }
-      onMove(position);
+      onMove(board: board, current: Coordinate(lat: position.latitude, lng: position.longitude));
     },
     onError: (e) {
       if (!readyCompleter.isCompleted) {
@@ -81,48 +113,40 @@ class GameLocation {
     return readyCompleter.future;
   }
 
-  Future<void> _loadBoardSpaces() async {
-    try {
-      GameSessionRepository repository = GameSessionRepository();
-      _boardSpaces = await repository.findBoardSpaces();
-    } catch (e) {
-      // If loading fails, continue with empty board spaces
-      _boardSpaces = [];
-    }
-  }
-
   void stop() {
     _streamSubscription.cancel();
   }
 
 
-  void onMove(Position position) {
-    if(last == null || last != position) { //TODO IF MOVE IS ENOUGH
-      last = position;
-      _fireMove(position);
+  void onMove({ required Board board, required Coordinate current }) {
+    if(_lastCoordinate == null || _lastCoordinate != current) {
+      List<BoardSpace> currentSpaces = _fireMove(board: board, current: current);
+      _lastCoordinate = current;
+      _lastSpaces.clear();
+      _lastSpaces.addAll(currentSpaces);
     }
   }
 
-  void _fireMove(Position position) {
-    final coordinate = Coordinate(lat: position.latitude, lng: position.longitude);
 
-    // Calculate which board spaces the player is currently in
-    final List<String> spaceIds = _boardSpaces
-        .where((space) => space.contains(coordinate))
-        .map((space) => space.id)
-        .toList();
-
-    // Send position with spaceIds to the server
-    final GameSessionRepository repository = GameSessionRepository();
-    repository.move(spaceIds);
+  List<BoardSpace> _fireMove({required Board board, required Coordinate current}) {
+    final GameSessionMoveUseCase useCase = new GameSessionMoveUseCase(board: board);
+    final GameSessionMoveResult result = useCase.apply(currentCoordinate: current, lastSpaces: _lastSpaces);
+    if(result is GameSessionMoveResultUpdate) {
+      GameSessionMoveResultUpdate resultUpdate = result;
+      // Send position with spaceIds to the server
+      final GameSessionRepository repository = GameSessionRepository();
+      repository.move(resultUpdate.current);
+      return resultUpdate.current;
+    }
+    return _lastSpaces;
   }
 
-  Coordinate get coordinate => Coordinate(lat: last!.latitude, lng: last!.longitude);
+  Coordinate get coordinate => _lastCoordinate!;
 
+  /*
   Stream<Coordinate> get stream => _streamPosition
       .map((position) => Coordinate(lat: position.latitude, lng: position.longitude));
-
-
+   */
 
 }
 
@@ -142,7 +166,7 @@ class GameEventListener {
 
   Future<void> connect(String sessionId) {
     final Completer<void> connectionCompleter = Completer<void>();
-    final String wsUrl = "${Server.wsAPI}/ws/games/sessions?token=${AppCurrent.gameSessionToken}&sessionId=$sessionId";
+    final String wsUrl = "${Server.wsAPI}/ws/games/instances?token=${AppCurrent.gameSessionToken}&sessionId=$sessionId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _streamSubscription = _channel.stream.listen((message) {
         if (!connectionCompleter.isCompleted) {
@@ -163,8 +187,8 @@ class GameEventListener {
   void _do(String message) {
     try {
       final Map<String, dynamic> data = jsonDecode(message);
-      final String origin = (data['origin'] ?? '').toString().toUpperCase();
-      final String type = (data['type'] ?? '').toString().toUpperCase();
+      final String origin = (data['origin'] ?? '').toUpperCase();
+      final String type = (data['type'] ?? '').toUpperCase();
 
       if (origin == 'SYSTEM') {
         switch (type) {
@@ -194,9 +218,17 @@ class GameEventListener {
             break;
         }
       }
+
+      if((data['vibrant'] ?? 'false').toBoolean()) {
+        HapticFeedback.vibrate();
+      }
+
     } catch (e) {
       // Ignorer les messages non JSON ou malformés
     }
+
+
+
   }
 
   Future<void> _handleConfirm(String confirmId, String message) async {

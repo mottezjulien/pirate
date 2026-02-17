@@ -20,30 +20,30 @@ import java.util.stream.Stream;
 @Component
 public class GameInstanceInventoryAdapter implements GameInstanceInventoryUseCase.Port {
 
-    private final GameInstanceInventoryRepository sessionRepository;
-    private final GameInstanceInventoryItemRepository sessionItemRepository;
+    private final GameInstanceInventoryRepository repository;
+    private final GameInstanceInventoryItemRepository itemRepository;
 
-    public GameInstanceInventoryAdapter(GameInstanceInventoryRepository sessionRepository, GameInstanceInventoryItemRepository sessionItemRepository) {
-        this.sessionRepository = sessionRepository;
-        this.sessionItemRepository = sessionItemRepository;
+    public GameInstanceInventoryAdapter(GameInstanceInventoryRepository repository, GameInstanceInventoryItemRepository itemRepository) {
+        this.repository = repository;
+        this.itemRepository = itemRepository;
     }
 
     @Override
-    public Stream<GameInstanceInventoryUseCase.SessionItemRaw> inventory(GamePlayer.Id playerId) {
-        return sessionRepository.fetchConfigItemByPlayerId(playerId.value())
+    public Stream<GameInstanceInventoryUseCase.ItemRaw> inventory(GamePlayer.Id playerId) {
+        return repository.fetchConfigItemByPlayerId(playerId.value())
                 .stream()
-                .flatMap(session -> session.getItems().stream().map(GameInstanceInventoryItemEntity::toRawModel));
+                .flatMap(entity -> entity.getItems().stream().map(GameInstanceInventoryItemEntity::toRawModel));
     }
 
     @Override
-    public Optional<GameInstanceInventoryUseCase.SessionItemRaw> findBySessionId(GameInstanceInventoryItem.Id sessionId) {
-        return sessionItemRepository.fetchConfigById(sessionId.value())
+    public Optional<GameInstanceInventoryUseCase.ItemRaw> findByInstanceId(GameInstanceInventoryItem.Id instanceId) {
+        return itemRepository.fetchConfigById(instanceId.value())
                 .map(GameInstanceInventoryItemEntity::toRawModel);
     }
 
     @Override
-    public Optional<GameInstanceInventoryUseCase.SessionItemRaw> findByConfigId(GameInstanceContext context, GameConfigInventoryItem.Id configId) {
-        return sessionItemRepository.fetchConfigById(configId.value())
+    public Optional<GameInstanceInventoryUseCase.ItemRaw> findByConfigId(GameInstanceContext context, GameConfigInventoryItem.Id configId) {
+        return itemRepository.fetchConfigById(configId.value())
                 .map(GameInstanceInventoryItemEntity::toRawModel);
     }
 
@@ -62,75 +62,75 @@ public class GameInstanceInventoryAdapter implements GameInstanceInventoryUseCas
         itemEntity.setCollectionCount(1);
         itemEntity.setAvailability(GameInstanceInventoryItem.Availability.FREE);
 
-        sessionItemRepository.save(itemEntity);
+        itemRepository.save(itemEntity);
         return new GameInstanceInventoryItem.Id(itemEntity.getId());
     }
 
     private GameInstanceInventoryEntity createIfNeeded(GamePlayer.Id playerId) {
-        return sessionRepository.findByPlayerId(playerId.value()).orElseGet(() -> {
+        return repository.findByPlayerId(playerId.value()).orElseGet(() -> {
                 var entity = new GameInstanceInventoryEntity();
                 entity.setId(StringTools.generate());
                 entity.setPlayer(GamePlayerEntity.fromModelId(playerId));
-                return sessionRepository.save(entity);
+                return repository.save(entity);
             });
     }
 
     @Override
     public void updateCount(GameInstanceInventoryItem.Id id, int count) {
-        sessionItemRepository.findById(id.value()).ifPresent(entity -> {
+        itemRepository.findById(id.value()).ifPresent(entity -> {
             entity.setCollectionCount(count);
-            sessionItemRepository.save(entity);
+            itemRepository.save(entity);
         });
     }
 
     @Override
     public void delete(GameInstanceInventoryItem.Id id) {
-        sessionItemRepository.deleteById(id.value());
+        itemRepository.deleteById(id.value());
     }
 
     @Override
-    public Stream<GameInstanceInventoryUseCase.SessionItemRaw> findEquipped(GamePlayer.Id playerId) {
+    public Stream<GameInstanceInventoryUseCase.ItemRaw> findEquipped(GamePlayer.Id playerId) {
         return inventory(playerId) //TODO IN QUERY ?
                 .filter(raw -> raw.availability() == GameInstanceInventoryItem.Availability.EQUIP);
     }
 
     @Override
     public void equip(GameInstanceInventoryItem.Id id) {
-        sessionItemRepository.findById(id.value())
+        itemRepository.findById(id.value())
             .ifPresent(entity -> {
                 entity.setAvailability(GameInstanceInventoryItem.Availability.EQUIP);
-                sessionItemRepository.save(entity);
+                itemRepository.save(entity);
             });
     }
 
     @Override
     public void unequip(GameInstanceInventoryItem.Id id) {
-        sessionItemRepository.findById(id.value())
+        itemRepository.findById(id.value())
             .ifPresent(entity -> {
                 entity.setAvailability(GameInstanceInventoryItem.Availability.FREE);
-                sessionItemRepository.save(entity);
+                itemRepository.save(entity);
             });
     }
 
     @Override
     public boolean exist(GamePlayer.Id playerId, GameConfigInventoryItem.Id configItemId) {
-        return sessionItemRepository.existsByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value());
+        return itemRepository.existsByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value());
     }
 
     @Override
     public int count(GamePlayer.Id playerId, GameConfigInventoryItem.Id configItemId) {
-        return sessionItemRepository.findByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value())
+        return itemRepository.findByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value())
                 .map(GameInstanceInventoryItemEntity::getCollectionCount)
                 .orElse(0);
     }
 
     @Override
     public void count(GamePlayer.Id playerId, GameConfigInventoryItem.Id configItemId, int count) {
-        sessionItemRepository.findByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value())
+        itemRepository.findByInventory_Player_IdAndConfig_Id(playerId.value(), configItemId.value())
                 .ifPresentOrElse(
                         entity -> {
                             entity.setCollectionCount(count);
-                            sessionItemRepository.save(entity);
+                            itemRepository.save(entity);
                         },
                         () -> {
                             // L'item n'existe pas encore, on le crée
@@ -145,7 +145,7 @@ public class GameInstanceInventoryAdapter implements GameInstanceInventoryUseCas
 
                             itemEntity.setCollectionCount(count);
                             itemEntity.setAvailability(GameInstanceInventoryItem.Availability.FREE);
-                            sessionItemRepository.save(itemEntity);
+                            itemRepository.save(itemEntity);
                         }
                 );
     }

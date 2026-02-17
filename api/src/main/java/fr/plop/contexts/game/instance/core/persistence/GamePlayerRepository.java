@@ -14,16 +14,16 @@ public interface GamePlayerRepository extends JpaRepository<GamePlayerEntity, St
     //fetch space && goal bugs -> separate queries
     String FETCH_LAST_POSITION = "LEFT JOIN FETCH player.lastPosition position LEFT JOIN FETCH position.spaces spaces";
     String W_PLAYER_ID_EQUALS = "player.id = :currentPlayerId";
-    String W_SESSION_ID_EQUALS = "player.session.id = :instanceId";
+    String W_INSTANCE_ID_EQUALS = "player.instance.id = :instanceId";
     String W_PLAYER_IS_ACTIVE = "player.state = fr.plop.contexts.game.instance.core.domain.model.GamePlayer.State.ACTIVE";
 
     @Query(FROM + " " + FETCH_LAST_POSITION + " WHERE " + W_PLAYER_ID_EQUALS)
     Optional<GamePlayerEntity> findByIdFetchLastPosition(@Param("currentPlayerId") String playerId);
 
     @Query("SELECT player.id " + FROM +
-            " WHERE " + W_SESSION_ID_EQUALS +
+            " WHERE " + W_INSTANCE_ID_EQUALS +
             " AND " + W_PLAYER_IS_ACTIVE)
-    List<String> activeIdsBySessionId(@Param("instanceId") String sessionId);
+    List<String> activeIdsByInstanceId(@Param("instanceId") String instanceId);
 
     @Query(FROM + " LEFT JOIN FETCH player.user user" +
             " WHERE " + W_PLAYER_ID_EQUALS)

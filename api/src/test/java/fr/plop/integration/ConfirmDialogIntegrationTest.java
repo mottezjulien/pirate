@@ -14,7 +14,7 @@ import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.message.MessageController;
 import fr.plop.contexts.game.instance.push.PushPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.scenario.presenter.GameInstanceScenarioController;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
@@ -125,7 +125,7 @@ public class ConfirmDialogIntegrationTest {
                         true // expected answer: YES
                 ),
                 List.of(
-                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPENED_ID, ScenarioSessionState.SUCCESS)
+                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPENED_ID, ScenarioState.SUCCESS)
                 )
         );
 
@@ -137,7 +137,7 @@ public class ConfirmDialogIntegrationTest {
                         false // expected answer: NO
                 ),
                 List.of(
-                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_CLOSED_ID, ScenarioSessionState.SUCCESS)
+                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_CLOSED_ID, ScenarioState.SUCCESS)
                 )
         );
 

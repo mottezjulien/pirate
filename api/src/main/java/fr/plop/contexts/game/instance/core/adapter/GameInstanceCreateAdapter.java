@@ -28,24 +28,24 @@ import java.util.stream.Stream;
 public class GameInstanceCreateAdapter implements GameInstanceUseCase.Port {
 
     private final TemplateRepository templateRepository;
-    private final GameInstanceRepository sessionRepository;
+    private final GameInstanceRepository instanceRepository;
     private final GamePlayerRepository playerRepository;
 
-    public GameInstanceCreateAdapter(TemplateRepository templateRepository, GameInstanceRepository sessionRepository, GamePlayerRepository playerRepository) {
+    public GameInstanceCreateAdapter(TemplateRepository templateRepository, GameInstanceRepository instanceRepository, GamePlayerRepository playerRepository) {
         this.templateRepository = templateRepository;
-        this.sessionRepository = sessionRepository;
+        this.instanceRepository = instanceRepository;
         this.playerRepository = playerRepository;
     }
 
     @Override
     public Stream<GameInstance.Atom> findOpenedByUserId(User.Id userId) {
-        return sessionRepository
+        return instanceRepository
                 .fullOpenedByUserId(userId.value()).stream().map(GameInstanceEntity::toModelAtom);
     }
 
     @Override
     public Optional<GameInstance.Atom> findById(GameInstance.Id instanceId) {
-        return sessionRepository
+        return instanceRepository
                 .fullById(instanceId.value())
                 .map(GameInstanceEntity::toModelAtom);
     }
@@ -91,7 +91,7 @@ public class GameInstanceCreateAdapter implements GameInstanceUseCase.Port {
         imageEntity.setId(template.image().id().value());
         entity.setImage(imageEntity);
 
-        entity = sessionRepository.save(entity);
+        entity = instanceRepository.save(entity);
 
         return GameInstance.buildWithoutPlayer(new GameInstance.Id(entity.getId()),
                 state, template.scenario(), template.board(), template.map(),
@@ -99,13 +99,13 @@ public class GameInstanceCreateAdapter implements GameInstanceUseCase.Port {
     }
 
     @Override
-    public GamePlayer insertUserId(GameInstance.Id sessionId, User.Id userId) {
+    public GamePlayer insertUserId(GameInstance.Id isntanceId, User.Id userId) {
         GamePlayerEntity playerEntity = new GamePlayerEntity();
         playerEntity.setId(StringTools.generate());
 
-        GameInstanceEntity session = new GameInstanceEntity();
-        session.setId(sessionId.value());
-        playerEntity.setSession(session);
+        GameInstanceEntity instanceEntity = new GameInstanceEntity();
+        instanceEntity.setId(isntanceId.value());
+        playerEntity.setInstance(instanceEntity);
 
 
         playerEntity.setUser(UserEntity.buildWithModelId(userId));

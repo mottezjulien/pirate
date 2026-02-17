@@ -29,12 +29,12 @@ public class GameInstanceMoveController {
 
 
     @PostMapping({"", "/"})
-    public void move(@RequestHeader("Authorization") String rawSessionToken,
-                     @PathVariable("instanceId") String sessionIdStr,
+    public void move(@RequestHeader("Authorization") String InstanceToken,
+                     @PathVariable("instanceId") String instanceIdStr,
                      @RequestBody GameMoveRequestDTO request) {
-        GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         try {
-            final GameInstanceContext context = authGameInstanceUseCase.findContext(sessionId, new ConnectToken(rawSessionToken));
+            final GameInstanceContext context = authGameInstanceUseCase.findContext(instanceId, new ConnectToken(InstanceToken));
 
             List<BoardSpace.Id> spaceIds = request.spaceIds() == null ? List.of()
                     : request.spaceIds().stream().map(BoardSpace.Id::new).toList();

@@ -70,8 +70,8 @@ public class GameInstanceInventoryItemEntity {
         this.availability = availability;
     }
 
-    public GameInstanceInventoryUseCase.SessionItemRaw toRawModel() {
-        return new GameInstanceInventoryUseCase.SessionItemRaw(new GameInstanceInventoryItem.Id(id),
+    public GameInstanceInventoryUseCase.ItemRaw toRawModel() {
+        return new GameInstanceInventoryUseCase.ItemRaw(new GameInstanceInventoryItem.Id(id),
                 new GameConfigInventoryItem.Id(config.getId()), pourcentUsury, availability, collectionCount);
     }
 }

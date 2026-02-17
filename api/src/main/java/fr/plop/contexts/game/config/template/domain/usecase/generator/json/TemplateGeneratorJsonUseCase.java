@@ -26,8 +26,8 @@ import fr.plop.contexts.game.config.talk.domain.*;
 import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.generator.GlobalCache;
 import fr.plop.contexts.game.presentation.domain.Presentation;
-import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.core.domain.model.InstanceGameOver;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import fr.plop.generic.ImagePoint;
 import fr.plop.generic.enumerate.BeforeOrAfter;
@@ -312,13 +312,13 @@ public class TemplateGeneratorJsonUseCase {
             case "GOALTARGET" -> {
                 String targetRef = (String) consequenceRoot.metadata().get("targetId");
                 ScenarioConfig.Target.Id targetId = globalCache.reference(targetRef, ScenarioConfig.Target.Id.class, new ScenarioConfig.Target.Id(targetRef));
-                ScenarioSessionState state = parseState((String) consequenceRoot.metadata().get("state"));
+                ScenarioState state = parseState((String) consequenceRoot.metadata().get("state"));
                 yield new Consequence.ScenarioTarget(new Consequence.Id(), targetId, state);
             }
             case "GOAL" -> {
                 String stepRef = (String) consequenceRoot.metadata().get("stepId");
                 ScenarioConfig.Step.Id stepId = globalCache.reference(stepRef, ScenarioConfig.Step.Id.class, new ScenarioConfig.Step.Id(stepRef));
-                ScenarioSessionState state = parseState((String) consequenceRoot.metadata().get("state"));
+                ScenarioState state = parseState((String) consequenceRoot.metadata().get("state"));
                 yield new Consequence.ScenarioStep(new Consequence.Id(), stepId, state);
             }
             case "TALK" -> {
@@ -328,8 +328,8 @@ public class TemplateGeneratorJsonUseCase {
             }
             case "GAMEOVER" -> {
                 String result = (String) consequenceRoot.metadata().get("result");
-                SessionGameOver.Type type = SessionGameOver.Type.valueOf(result);
-                yield new Consequence.SessionEnd(new Consequence.Id(), new SessionGameOver(type));
+                InstanceGameOver.Type type = InstanceGameOver.Type.valueOf(result);
+                yield new Consequence.StopPlayer(new Consequence.Id(), new InstanceGameOver(type));
             }
             case "CONFIRM" -> {
                 String confirmRef = (String) consequenceRoot.metadata().get("ref");
@@ -345,12 +345,12 @@ public class TemplateGeneratorJsonUseCase {
         };
     }
 
-    private ScenarioSessionState parseState(String state) {
-        if (state == null) return ScenarioSessionState.ACTIVE;
+    private ScenarioState parseState(String state) {
+        if (state == null) return ScenarioState.ACTIVE;
         return switch (state.toLowerCase()) {
-            case "success" -> ScenarioSessionState.SUCCESS;
-            case "failure" -> ScenarioSessionState.FAILURE;
-            default -> ScenarioSessionState.ACTIVE;
+            case "success" -> ScenarioState.SUCCESS;
+            case "failure" -> ScenarioState.FAILURE;
+            default -> ScenarioState.ACTIVE;
         };
     }
 

@@ -17,18 +17,18 @@ import java.util.stream.Stream;
 @Component
 public class GameOverAdapter implements GameOverUseCase.OutputPort {
 
-    private final GameInstanceRepository sessionRepository;
+    private final GameInstanceRepository instanceRepository;
     private final GamePlayerRepository playerRepository;
 
 
-    public GameOverAdapter(GameInstanceRepository sessionRepository, GamePlayerRepository playerRepository) {
-        this.sessionRepository = sessionRepository;
+    public GameOverAdapter(GameInstanceRepository instanceRepository, GamePlayerRepository playerRepository) {
+        this.instanceRepository = instanceRepository;
         this.playerRepository = playerRepository;
     }
 
     @Override
-    public Stream<GamePlayer.Id> findActivePlayerIds(GameInstance.Id sessionId) {
-        return playerRepository.activeIdsBySessionId(sessionId.value()).stream()
+    public Stream<GamePlayer.Id> findActivePlayerIds(GameInstance.Id instanceId) {
+        return playerRepository.activeIdsByInstanceId(instanceId.value()).stream()
                 .map(GamePlayer.Id::new);
     }
 
@@ -56,12 +56,12 @@ public class GameOverAdapter implements GameOverUseCase.OutputPort {
     }
 
     @Override
-    public void ended(GameInstance.Id sessionId) {
-        sessionRepository.findById(sessionId.value())
-                .ifPresent(session -> {
-                    session.setState(GameInstance.State.OVER);
-                    session.setOverAt(Instant.now());
-                    sessionRepository.save(session);
+    public void ended(GameInstance.Id instanceId) {
+        instanceRepository.findById(instanceId.value())
+                .ifPresent(instance -> {
+                    instance.setState(GameInstance.State.OVER);
+                    instance.setOverAt(Instant.now());
+                    instanceRepository.save(instance);
                 });
     }
 }

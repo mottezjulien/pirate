@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:mobile/generic/app_current.dart';
-import 'package:mobile/generic/config/router.dart';
 
 import '../../../presentation/game_presentation.dart';
 import '../../../presentation/game_presentation_repository.dart';

@@ -61,8 +61,8 @@ public class GameInstanceSituationAdapter implements GameInstanceSituationGetPor
     }
 
     private GameInstanceSituation.Inventory inventory(GamePlayer.Id playerId) {
-        Stream<GameInstanceInventoryUseCase.SessionItemRaw> rawStream = inventoryPort.inventory(playerId);
-        return new GameInstanceSituation.Inventory(rawStream.map(GameInstanceInventoryUseCase.SessionItemRaw::configId).toList());
+        Stream<GameInstanceInventoryUseCase.ItemRaw> rawStream = inventoryPort.inventory(playerId);
+        return new GameInstanceSituation.Inventory(rawStream.map(GameInstanceInventoryUseCase.ItemRaw::configId).toList());
     }
 
 

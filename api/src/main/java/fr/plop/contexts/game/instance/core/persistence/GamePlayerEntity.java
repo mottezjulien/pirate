@@ -1,17 +1,13 @@
 package fr.plop.contexts.game.instance.core.persistence;
 
-import fr.plop.contexts.game.config.board.domain.model.BoardSpace;
-import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.instance.board.persistence.BoardPositionEntity;
 import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.instance.scenario.persistence.ScenarioGoalStepEntity;
-import fr.plop.contexts.user.User;
 import fr.plop.contexts.user.persistence.UserEntity;
 import fr.plop.subs.i18n.persistence.I18nEntity;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -22,8 +18,8 @@ public class GamePlayerEntity {
     private String id;
 
     @ManyToOne
-    @JoinColumn(name = "session_id")
-    private GameInstanceEntity session;
+    @JoinColumn(name = "instance_id")
+    private GameInstanceEntity instance;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -55,12 +51,12 @@ public class GamePlayerEntity {
         this.id = id;
     }
 
-    public GameInstanceEntity getSession() {
-        return session;
+    public GameInstanceEntity getInstance() {
+        return instance;
     }
 
-    public void setSession(GameInstanceEntity session) {
-        this.session = session;
+    public void setInstance(GameInstanceEntity instance) {
+        this.instance = instance;
     }
 
     public UserEntity getUser() {

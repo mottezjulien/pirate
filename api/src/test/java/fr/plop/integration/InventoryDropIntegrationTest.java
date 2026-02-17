@@ -17,7 +17,7 @@ import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.inventory.presenter.GameInstanceInventoryController;
 import fr.plop.contexts.game.instance.push.PushEvent;
 import fr.plop.contexts.game.instance.push.PushPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.scenario.presenter.GameInstanceScenarioController;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
@@ -133,15 +133,15 @@ public class InventoryDropIntegrationTest {
 
         var consumePossibility = new Possibility(
                 new PossibilityTrigger.InventoryItemAction(new PossibilityTrigger.Id(), itemConsumableId),
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetConsumeId, ScenarioSessionState.SUCCESS)));
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetConsumeId, ScenarioState.SUCCESS)));
 
         var usePossibility = new Possibility(
                 new PossibilityTrigger.InventoryItemAction(new PossibilityTrigger.Id(), itemUsableId),
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetUseId, ScenarioSessionState.SUCCESS)));
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetUseId, ScenarioState.SUCCESS)));
 
         var equipUsePossibility = new Possibility(
                 new PossibilityTrigger.InventoryItemAction(new PossibilityTrigger.Id(), itemEquippableId),
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetEquipUseId, ScenarioSessionState.SUCCESS)));
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), targetEquipUseId, ScenarioState.SUCCESS)));
 
         // Step
         var step = new ScenarioConfig.Step(stepId, i18n("Etape 1", "Step 1"), Optional.empty(), 0, targets,

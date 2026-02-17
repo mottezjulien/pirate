@@ -8,11 +8,11 @@ import '../game_current.dart';
 
 class GameImageRepository {
 
-  static const resourcePath = '/sessions';
+  static const resourcePath = '/instances';
 
   Future<ImageDetails> findById(String imageId) async {
     final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
-    final responseBody = await genericRepository.get(path: "/sessions/${GameCurrent.sessionId}/images/$imageId");
+    final responseBody = await genericRepository.get(path: "$resourcePath/${GameCurrent.sessionId}/images/$imageId");
     return ImageDetails.fromJson(responseBody);
   }
 

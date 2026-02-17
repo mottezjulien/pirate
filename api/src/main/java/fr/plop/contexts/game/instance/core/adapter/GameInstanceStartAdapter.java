@@ -29,8 +29,8 @@ public class GameInstanceStartAdapter implements GameInstanceStartUseCase.Port {
     }
 
     @Override
-    public void active(GameInstance.Id sessionId) {
-        instanceRepository.findById(sessionId.value())
+    public void active(GameInstance.Id instanceId) {
+        instanceRepository.findById(instanceId.value())
                 .ifPresent(entity -> {
                     entity.setState(GameInstance.State.ACTIVE);
                     instanceRepository.save(entity);

@@ -75,7 +75,7 @@ public class GameInstanceMapControllerIntegrationTest {
         final MapItem noSpaceNoStep = new MapItem("Map", new Image(fr.plop.subs.image.Image.Type.WEB, "siteABC"), mapBounds);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep)));
 
-        List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
+        List<GameInstanceMapController.ResponseDTO> maps = startAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -88,7 +88,7 @@ public class GameInstanceMapControllerIntegrationTest {
         final MapItem firstStep = new MapItem("Map2", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inFirstStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, firstStep)));
 
-        List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
+        List<GameInstanceMapController.ResponseDTO> maps = startAndFindMaps();
         assertThat(maps)
                 .hasSize(2)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()))
@@ -102,7 +102,7 @@ public class GameInstanceMapControllerIntegrationTest {
         final MapItem secondStep = new MapItem("Map2", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inSecondStep);
         createTemplateWithMaps(new MapConfig(List.of(noSpaceNoStep, secondStep)));
 
-        List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
+        List<GameInstanceMapController.ResponseDTO> maps = startAndFindMaps();
         assertThat(maps)
                 .hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(noSpaceNoStep.id().value()));
@@ -115,7 +115,7 @@ public class GameInstanceMapControllerIntegrationTest {
         final MapItem inSpaceMap = new MapItem("Map", new Image(fr.plop.subs.image.Image.Type.ASSET, "asset/plop.png"), mapBounds, inSpace);
         createTemplateWithMaps(new MapConfig(List.of(inSpaceMap)));
 
-        List<GameInstanceMapController.ResponseDTO> maps = startSessionAndFindMaps();
+        List<GameInstanceMapController.ResponseDTO> maps = startAndFindMaps();
         assertThat(maps)
                 .hasSize(0);
     }
@@ -128,13 +128,13 @@ public class GameInstanceMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
 
-        assertThat(getMaps(connectionSession.auth().token(), connectionSession.id())).hasSize(0);
+        assertThat(getMaps(responseDTO.auth().token(), responseDTO.id())).hasSize(0);
 
-        move(connectionSession.auth().token(), connectionSession.id());
+        move(responseDTO.auth().token(), responseDTO.id());
 
-        assertThat(getMaps(connectionSession.auth().token(), connectionSession.id())).hasSize(1)
+        assertThat(getMaps(responseDTO.auth().token(), responseDTO.id())).hasSize(1)
                 .anySatisfy(map -> assertThat(map.id()).isEqualTo(mapItem.id().value()));
     }
 
@@ -163,9 +163,9 @@ public class GameInstanceMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
 
-        List<GameInstanceMapController.ResponseDTO> maps = getMaps(connectionSession.auth().token(), connectionSession.id());
+        List<GameInstanceMapController.ResponseDTO> maps = getMaps(responseDTO.auth().token(), responseDTO.id());
 
         assertThat(maps)
                 .hasSize(1)
@@ -219,9 +219,9 @@ public class GameInstanceMapControllerIntegrationTest {
         createTemplateWithMaps(new MapConfig(List.of(mapItem)));
 
         ConnectionController.ResponseDTO connection = connect();
-        GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
 
-        List<GameInstanceMapController.ResponseDTO> maps = getMaps(connectionSession.auth().token(), connectionSession.id());
+        List<GameInstanceMapController.ResponseDTO> maps = getMaps(responseDTO.auth().token(), responseDTO.id());
 
         assertThat(maps)
                 .hasSize(1)
@@ -254,8 +254,8 @@ public class GameInstanceMapControllerIntegrationTest {
         return result.getBody();
     }
 
-    private void startGameInstance(String token, String sessionId) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort +  "/instances/" + sessionId + "/start";
+    private void startGameInstance(String token, String instanceId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort +  "/instances/" + instanceId + "/start";
 
         GameInstanceController.CreateRequestDTO request = new GameInstanceController.CreateRequestDTO(templateId.value());
         HttpHeaders headers = new HttpHeaders();
@@ -276,7 +276,7 @@ public class GameInstanceMapControllerIntegrationTest {
         templateInitUseCase.createOrUpdate(gameId, template);
     }
 
-    private List<GameInstanceMapController.ResponseDTO> startSessionAndFindMaps() throws URISyntaxException {
+    private List<GameInstanceMapController.ResponseDTO> startAndFindMaps() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = connect();
         GameInstanceController.ResponseDTO connectionSession = createGame(connection.token());
         startGameInstance(connectionSession.auth().token(), connectionSession.id());

@@ -6,7 +6,7 @@ import fr.plop.contexts.game.config.inventory.domain.model.InventoryConfig;
 import fr.plop.contexts.game.config.map.domain.MapConfig;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkConfig;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSession;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioInstance;
 import fr.plop.contexts.user.User;
 import fr.plop.generic.tools.ListTools;
 import fr.plop.generic.tools.StringTools;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public record GameInstance(Atom atom, ScenarioSession scenario,
+public record GameInstance(Atom atom, ScenarioInstance scenario,
                            BoardConfig board, MapConfig map, TalkConfig talk, ImageConfig image,
                            InventoryConfig inventory) {
 
@@ -41,7 +41,7 @@ public record GameInstance(Atom atom, ScenarioSession scenario,
 
     public static GameInstance buildWithoutPlayer(Id id, State state, ScenarioConfig scenarioConfig, BoardConfig boardConfig,
                                                   MapConfig mapConfig, TalkConfig talkConfig, ImageConfig imageConfig, InventoryConfig inventory) {
-        return new GameInstance(new Atom(id, state, List.of()), ScenarioSession.build(scenarioConfig),
+        return new GameInstance(new Atom(id, state, List.of()), ScenarioInstance.build(scenarioConfig),
                 boardConfig, mapConfig, talkConfig, imageConfig, inventory);
     }
 

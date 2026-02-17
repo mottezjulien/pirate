@@ -17,13 +17,13 @@ public class ConsequenceOverHandler implements ConsequenceHandler {
 
     @Override
     public boolean supports(Consequence consequence) {
-        return consequence instanceof Consequence.SessionEnd;
+        return consequence instanceof Consequence.StopPlayer;
     }
 
     @Override
     public void handle(GameInstanceContext context, Consequence consequence) {
-        if(consequence instanceof Consequence.SessionEnd sessionEnd){
-            gameOverUseCase.apply(context, sessionEnd.gameOver());
+        if(consequence instanceof Consequence.StopPlayer stopPlayer){
+            gameOverUseCase.apply(context, stopPlayer.gameOver());
         }
     }
 }

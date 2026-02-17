@@ -19,7 +19,7 @@ import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceUseCase;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceStartUseCase;
 import fr.plop.contexts.game.instance.scenario.adapter.GameInstanceScenarioGoalAdapter;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.time.GameInstanceTimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,28 +64,28 @@ public class GameInstanceTimerAdapterIntegrationTest {
         ConnectAuthUser authUser = createAuthUseCase.byDeviceId("anyDeviceId");
         GameInstance.Atom atom = createGameUseCase.create(template.id(), authUser.userId());
         GameInstanceContext context = atom.byUserId(authUser.userId()).orElseThrow();
-        ConnectAuthGameInstance authSession = authGameUseCase.create(authUser, context);
+        ConnectAuthGameInstance auth = authGameUseCase.create(authUser, context);
 
         ScenarioConfig.Step.Id step0 = template.scenario().steps().getFirst().id();
         ScenarioConfig.Step.Id step1 = template.scenario().steps().get(1).id();
 
-        startUseCase.apply(authSession);
+        startUseCase.apply(auth);
 
         assertThat(scenarioAdapter.findSteps(context.playerId()))
-                .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.ACTIVE)); //DEFAULT
+                .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioState.ACTIVE)); //DEFAULT
 
         await().pollDelay(Duration.ofSeconds(2)).until(() -> {
-            Map<ScenarioConfig.Step.Id, ScenarioSessionState> steps = scenarioAdapter.findSteps(context.playerId());
+            Map<ScenarioConfig.Step.Id, ScenarioState> steps = scenarioAdapter.findSteps(context.playerId());
             assertThat(steps)
-                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.ACTIVE),
-                            new AbstractMap.SimpleEntry<>(step1, ScenarioSessionState.ACTIVE));
+                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioState.ACTIVE),
+                            new AbstractMap.SimpleEntry<>(step1, ScenarioState.ACTIVE));
             return true;
         });
 
         await().pollDelay(Duration.ofSeconds(4)).until(() -> {
-            Map<ScenarioConfig.Step.Id, ScenarioSessionState> steps = scenarioAdapter.findSteps(context.playerId());
+            Map<ScenarioConfig.Step.Id, ScenarioState> steps = scenarioAdapter.findSteps(context.playerId());
             assertThat(steps)
-                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioSessionState.FAILURE), new AbstractMap.SimpleEntry<>(step1, ScenarioSessionState.ACTIVE));
+                    .containsOnly(new AbstractMap.SimpleEntry<>(step0, ScenarioState.FAILURE), new AbstractMap.SimpleEntry<>(step1, ScenarioState.ACTIVE));
             return true;
         });
 
@@ -97,11 +97,11 @@ public class GameInstanceTimerAdapterIntegrationTest {
         ScenarioConfig.Step.Id stepId1 = new ScenarioConfig.Step.Id();
 
         PossibilityTrigger.AbsoluteTime trigger0 = new PossibilityTrigger.AbsoluteTime(new GameInstanceTimeUnit(1));
-        Consequence.ScenarioStep consequence0 = new Consequence.ScenarioStep(stepId1, ScenarioSessionState.ACTIVE);
+        Consequence.ScenarioStep consequence0 = new Consequence.ScenarioStep(stepId1, ScenarioState.ACTIVE);
         Possibility possibility0 = new Possibility(trigger0, List.of(consequence0));
 
         PossibilityTrigger.AbsoluteTime trigger1 = new PossibilityTrigger.AbsoluteTime(new GameInstanceTimeUnit(3));
-        Consequence.ScenarioStep consequence1 = new Consequence.ScenarioStep(stepId0, ScenarioSessionState.FAILURE);
+        Consequence.ScenarioStep consequence1 = new Consequence.ScenarioStep(stepId0, ScenarioState.FAILURE);
         Possibility possibility1 = new Possibility(trigger1, List.of(consequence1));
 
         ScenarioConfig.Step step0 = new ScenarioConfig.Step(stepId0, List.of(possibility0, possibility1));

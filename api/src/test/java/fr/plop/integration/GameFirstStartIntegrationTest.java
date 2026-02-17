@@ -37,7 +37,7 @@ public class GameFirstStartIntegrationTest {
     int randomServerPort;
 
     @Autowired
-    private GameInstanceClearPort sessionClear;
+    private GameInstanceClearPort clear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templateInitUseCase;
@@ -46,7 +46,7 @@ public class GameFirstStartIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        sessionClear.clearAll();
+        clear.clearAll();
         templateInitUseCase.deleteAll();
 
         ScenarioConfig scenario = new ScenarioConfig(List.of(new ScenarioConfig.Step()));
@@ -56,10 +56,10 @@ public class GameFirstStartIntegrationTest {
     }
 
     @Test
-    public void createSession() throws URISyntaxException {
+    public void createInstance() throws URISyntaxException {
         ConnectionController.ResponseDTO connection = createAuth();
-        GameInstanceController.ResponseDTO session = createGame(connection.token());
-        assertThat(session.id()).isNotNull();
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
+        assertThat(responseDTO.id()).isNotNull();
     }
 
     private ConnectionController.ResponseDTO createAuth() throws URISyntaxException {

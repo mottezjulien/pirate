@@ -84,8 +84,6 @@ class _GameMapTabViewState extends State<GameMapTabView> implements OnMoveListen
     );
   }
 
-
-
   void _showImageZoomDialog(GameMap map) {
     showDialog(
       context: context,

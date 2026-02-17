@@ -28,11 +28,11 @@ public class GameInstanceBoardController {
     }
 
     @GetMapping({"", "/"})
-    public List<BoardSpaceDTO> boards(@RequestHeader("Authorization") String rawSessionToken,
+    public List<BoardSpaceDTO> boards(@RequestHeader("Authorization") String rawInstanceToken,
                                       @PathVariable("instanceId") String instanceIdStr) {
         GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         try {
-            authGameInstanceUseCase.findContext(instanceId, new ConnectToken(rawSessionToken));
+            authGameInstanceUseCase.findContext(instanceId, new ConnectToken(rawInstanceToken));
             final BoardConfig board = cache.board(instanceId);
             return board.spaces().stream()
                     .map(BoardSpaceDTO::fromModel)

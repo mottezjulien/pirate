@@ -12,7 +12,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.push.PushPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.talk.GameInstanceTalkController;
 import fr.plop.subs.i18n.domain.I18n;
 import fr.plop.subs.i18n.domain.Language;
@@ -123,7 +123,7 @@ public class TalkInputTextIntegrationTest {
                         SECRET_CODE,
                         PossibilityTrigger.TalkInputText.MatchType.EQUALS
                 ),
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPEN_CHEST_ID, ScenarioSessionState.SUCCESS))
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPEN_CHEST_ID, ScenarioState.SUCCESS))
         );
 
         // Possibility 2: Almost correct code (ALMOST_EQUALS but not EQUALS) -> Alert "Presque !"
@@ -138,7 +138,7 @@ public class TalkInputTextIntegrationTest {
                         SECRET_CODE,
                         PossibilityTrigger.TalkInputText.MatchType.COMPLETELY_DIFFERENT
                 ),
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPEN_CHEST_ID, ScenarioSessionState.FAILURE))
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_OPEN_CHEST_ID, ScenarioState.FAILURE))
         );
 
         ScenarioConfig.Step step = new ScenarioConfig.Step(

@@ -45,13 +45,13 @@ public class ConnectAuthGameInstanceUseCaseTest {
 
 
     @Test
-    public void returnSessionExceptionIfSessionInvalid() {
+    public void returnInstanceExceptionIfSessionInvalid() {
         when(port.findByToken(token)).thenReturn(Optional.of(new ConnectAuthGameInstance(new ConnectAuthGameInstance.Id(),
                 ConnectAuthGameInstance.Status.OPENED, token, authUserId, context, Instant.now().minus(3, ChronoUnit.MINUTES))));
 
         assertThatThrownBy(() -> useCase.findContext(new GameInstance.Id(), token))
                 .isInstanceOf(ConnectException.class)
-                .hasFieldOrPropertyWithValue("type", ConnectException.Type.INVALID_SESSION_ID);
+                .hasFieldOrPropertyWithValue("type", ConnectException.Type.INVALID_INSTANCE_ID);
     }
 
     @Test

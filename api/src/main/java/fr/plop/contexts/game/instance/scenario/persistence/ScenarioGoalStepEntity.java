@@ -5,7 +5,7 @@ import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.scenario.persistence.core.ScenarioStepEntity;
 import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.instance.core.persistence.GamePlayerEntity;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.generic.tools.StringTools;
 import jakarta.persistence.*;
 
@@ -25,7 +25,7 @@ public class ScenarioGoalStepEntity {
     private ScenarioStepEntity step;
 
     @Enumerated(EnumType.STRING)
-    private ScenarioSessionState state;
+    private ScenarioState state;
 
     public String getId() {
         return id;
@@ -51,15 +51,15 @@ public class ScenarioGoalStepEntity {
         this.step = step;
     }
 
-    public void setState(ScenarioSessionState state) {
+    public void setState(ScenarioState state) {
         this.state = state;
     }
 
-    public ScenarioSessionState getState() {
+    public ScenarioState getState() {
         return state;
     }
 
-    public static ScenarioGoalStepEntity build(GamePlayer.Id playerId, ScenarioConfig.Step.Id stepId, ScenarioSessionState state) {
+    public static ScenarioGoalStepEntity build(GamePlayer.Id playerId, ScenarioConfig.Step.Id stepId, ScenarioState state) {
         ScenarioGoalStepEntity entity = new ScenarioGoalStepEntity();
         entity.setId(StringTools.generate());
         entity.setState(state);

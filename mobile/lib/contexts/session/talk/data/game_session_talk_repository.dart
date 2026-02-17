@@ -6,13 +6,13 @@ class GameSessionTalkRepository {
 
   Future<GameTalk> findById(String talkId) async {
     final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
-    final responseBody = await genericRepository.get(path: "/sessions/${GameCurrent.sessionId}/talks/$talkId");
+    final responseBody = await genericRepository.get(path: resources(talkId));
     return toModel(responseBody);
   }
 
   Future<GameTalk?> selectOption({required String talkId, required String optionId}) async {
     final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
-    final responseBody = await genericRepository.post(path: "/sessions/${GameCurrent.sessionId}/talks/$talkId/options/$optionId/");
+    final responseBody = await genericRepository.post(path: "${resources(talkId)}/options/$optionId/");
     if(responseBody == GenericGameSessionRepository.noContent) {
       return null;
     }
@@ -22,11 +22,12 @@ class GameSessionTalkRepository {
   Future<void> submitInputText({required String talkId, required String value}) async {
     final GenericGameSessionRepository genericRepository = GenericGameSessionRepository();
     await genericRepository.post(
-      path: "/sessions/${GameCurrent.sessionId}/talks/$talkId/inputtext/",
+      path: "${resources(talkId)}/inputtext/",
       body: {"value": value},
     );
   }
 
+  String resources(String talkId) => "/instances/${GameCurrent.sessionId}/talks/$talkId";
 
   GameTalk toModel(Map<String, dynamic> json) {
     final GameImage image = GameImage(

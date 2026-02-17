@@ -18,7 +18,7 @@ import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.push.PushPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.scenario.presenter.GameInstanceScenarioController;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
@@ -159,7 +159,7 @@ public class InventoryActionWithConditionIntegrationTest {
                 new PossibilityRecurrence.Always(),
                 new PossibilityTrigger.InventoryItemAction(new PossibilityTrigger.Id(), SHOVEL_ID),
                 insideZoneCondition, // CONDITION: must be inside treasure zone
-                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_TREASURE_ID, ScenarioSessionState.SUCCESS))
+                List.of(new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_TREASURE_ID, ScenarioState.SUCCESS))
         );
 
         ScenarioConfig.Step step = new ScenarioConfig.Step(
@@ -189,30 +189,30 @@ public class InventoryActionWithConditionIntegrationTest {
     public void useEquippedItem_outsideZone_doesNotTriggerConsequence() throws URISyntaxException, InterruptedException {
         // 1. Create connection and session
         ConnectionController.ResponseDTO connection = createAuth();
-        GameInstanceController.ResponseDTO session = createGame(connection.token());
-        assertThat(session.id()).isNotNull();
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
+        assertThat(responseDTO.id()).isNotNull();
 
         // 2. Start the session
-        startGame(session.auth().token(), session.id());
+        startGame(responseDTO.auth().token(), responseDTO.id());
         Thread.sleep(500);
 
         // 3. Move OUTSIDE the treasure zone
-        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
+        sendPosition(responseDTO.auth().token(), responseDTO.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
         Thread.sleep(500);
 
         // 4. Get the actual session item ID for the shovel
-        String shovelSessionId = findInventoryItemSessionId(session.auth().token(), session.id(), "Pelle");
+        String shovelInstanceId = findInventoryItemSessionId(responseDTO.auth().token(), responseDTO.id(), "Pelle");
 
         // 5. Equip the shovel
-        equipItem(session.auth().token(), session.id(), shovelSessionId);
+        equipItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(200);
 
         // 6. Use the equipped shovel (outside zone)
-        useEquippedItem(session.auth().token(), session.id(), shovelSessionId);
+        useEquippedItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(500);
 
         // 7. Check goals - TARGET_TREASURE should NOT be done (condition not met)
-        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(session.auth().token(), session.id());
+        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(responseDTO.auth().token(), responseDTO.id());
         assertThat(goals).isNotEmpty();
 
         boolean treasureFound = Arrays.stream(goals)
@@ -228,30 +228,30 @@ public class InventoryActionWithConditionIntegrationTest {
     public void useEquippedItem_insideZone_triggersConsequence() throws URISyntaxException, InterruptedException {
         // 1. Create connection and session
         ConnectionController.ResponseDTO connection = createAuth();
-        GameInstanceController.ResponseDTO session = createGame(connection.token());
-        assertThat(session.id()).isNotNull();
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
+        assertThat(responseDTO.id()).isNotNull();
 
         // 2. Start the session
-        startGame(session.auth().token(), session.id());
+        startGame(responseDTO.auth().token(), responseDTO.id());
         Thread.sleep(500);
 
         // 3. Move INSIDE the treasure zone
-        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
+        sendPosition(responseDTO.auth().token(), responseDTO.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
         Thread.sleep(500);
 
         // 4. Get the actual session item ID for the shovel
-        String shovelSessionId = findInventoryItemSessionId(session.auth().token(), session.id(), "Pelle");
+        String shovelInstanceId = findInventoryItemSessionId(responseDTO.auth().token(), responseDTO.id(), "Pelle");
 
         // 5. Equip the shovel
-        equipItem(session.auth().token(), session.id(), shovelSessionId);
+        equipItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(200);
 
         // 6. Use the equipped shovel (inside zone)
-        useEquippedItem(session.auth().token(), session.id(), shovelSessionId);
+        useEquippedItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(500);
 
         // 7. Check goals - TARGET_TREASURE should be SUCCESS
-        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(session.auth().token(), session.id());
+        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(responseDTO.auth().token(), responseDTO.id());
         assertThat(goals).isNotEmpty();
 
         boolean treasureFound = Arrays.stream(goals)
@@ -267,32 +267,32 @@ public class InventoryActionWithConditionIntegrationTest {
     public void useEquippedItem_moveInsideThenUse_triggersConsequence() throws URISyntaxException, InterruptedException {
         // Test: Start outside, equip, move inside, then use
         ConnectionController.ResponseDTO connection = createAuth();
-        GameInstanceController.ResponseDTO session = createGame(connection.token());
+        GameInstanceController.ResponseDTO responseDTO = createGame(connection.token());
 
-        startGame(session.auth().token(), session.id());
+        startGame(responseDTO.auth().token(), responseDTO.id());
         Thread.sleep(500);
 
         // Get the actual session item ID for the shovel
-        String shovelSessionId = findInventoryItemSessionId(session.auth().token(), session.id(), "Pelle");
+        String shovelInstanceId = findInventoryItemSessionId(responseDTO.auth().token(), responseDTO.id(), "Pelle");
 
         // Start OUTSIDE
-        sendPosition(session.auth().token(), session.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
+        sendPosition(responseDTO.auth().token(), responseDTO.id(), OUTSIDE_LAT, OUTSIDE_LNG, List.of());
         Thread.sleep(300);
 
         // Equip the shovel while outside
-        equipItem(session.auth().token(), session.id(), shovelSessionId);
+        equipItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(200);
 
         // Move INSIDE the zone
-        sendPosition(session.auth().token(), session.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
+        sendPosition(responseDTO.auth().token(), responseDTO.id(), INSIDE_LAT, INSIDE_LNG, List.of(TREASURE_ZONE_ID.value()));
         Thread.sleep(500);
 
         // Now use the shovel (should trigger because we're inside)
-        useEquippedItem(session.auth().token(), session.id(), shovelSessionId);
+        useEquippedItem(responseDTO.auth().token(), responseDTO.id(), shovelInstanceId);
         Thread.sleep(500);
 
         // Check result
-        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(session.auth().token(), session.id());
+        GameInstanceScenarioController.GameGoalResponseDTO[] goals = getGoals(responseDTO.auth().token(), responseDTO.id());
         boolean treasureFound = Arrays.stream(goals)
                 .flatMap(goal -> goal.targets().stream())
                 .anyMatch(target -> target.id().contains("TARGET_TREASURE_FOUND") && target.done());
@@ -329,8 +329,8 @@ public class InventoryActionWithConditionIntegrationTest {
         return result.getBody();
     }
 
-    private void startGame(String gameToken, String sessionId) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/start/";
+    private void startGame(String gameToken, String instanceId) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + instanceId + "/start/";
         URI uri = new URI(baseUrl);
 
         HttpHeaders headers = new HttpHeaders();
@@ -340,8 +340,8 @@ public class InventoryActionWithConditionIntegrationTest {
         this.restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(headers), GameInstanceController.ResponseDTO.class);
     }
 
-    private void sendPosition(String gameToken, String sessionId, double lat, double lng, List<String> spaceIds) throws URISyntaxException {
-        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + sessionId + "/move/";
+    private void sendPosition(String gameToken, String instanceId, double lat, double lng, List<String> spaceIds) throws URISyntaxException {
+        final String baseUrl = "http://localhost:" + randomServerPort + "/instances/" + instanceId + "/move/";
         URI uri = new URI(baseUrl);
 
         record PositionRequest(double lat, double lng, List<String> spaceIds) {}

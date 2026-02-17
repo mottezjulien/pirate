@@ -3,7 +3,7 @@ package fr.plop.contexts.connect.domain;
 public class ConnectException extends Exception {
 
     public enum Type {
-        NOT_FOUND, ALREADY_CONNECTED, INVALID_SESSION_ID, EXPIRED_TOKEN
+        NOT_FOUND, ALREADY_CONNECTED, INVALID_INSTANCE_ID, EXPIRED_TOKEN
     }
 
     private final Type type;

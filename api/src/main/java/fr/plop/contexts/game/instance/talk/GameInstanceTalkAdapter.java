@@ -45,12 +45,12 @@ public class GameInstanceTalkAdapter implements GameInstanceTalkUseCase.Port {
     }
 
     @Override
-    public void insert(GameInstanceTalk.Id sessionTalkId, TalkCharacter.Id characterId, TalkItem.Id talkId) {
-        GameInstanceTalkItemEntity sessionTalkItem = new GameInstanceTalkItemEntity();
-        sessionTalkItem.setId(StringTools.generate());
-        sessionTalkItem.setTalk(GameInstanceTalkEntity.fromModelId(sessionTalkId));
-        sessionTalkItem.setConfigItem(TalkItemEntity.fromModelId(talkId));
-        sessionTalkItem.setConfigCharacter(TalkCharacterEntity.fromModelId(characterId));
-        talkItemRepository.save(sessionTalkItem);
+    public void insert(GameInstanceTalk.Id instanceTalkId, TalkCharacter.Id characterId, TalkItem.Id talkId) {
+        GameInstanceTalkItemEntity instanceTalkItem = new GameInstanceTalkItemEntity();
+        instanceTalkItem.setId(StringTools.generate());
+        instanceTalkItem.setTalk(GameInstanceTalkEntity.fromModelId(instanceTalkId));
+        instanceTalkItem.setConfigItem(TalkItemEntity.fromModelId(talkId));
+        instanceTalkItem.setConfigCharacter(TalkCharacterEntity.fromModelId(characterId));
+        talkItemRepository.save(instanceTalkItem);
     }
 }

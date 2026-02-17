@@ -22,51 +22,51 @@ public class GameConfigCacheAdapter implements GameConfigCache {
 
     }
 
-    private final Map<GameInstance.Id, Data> sessions = new HashMap<>();
+    private final Map<GameInstance.Id, Data> instances = new HashMap<>();
 
     @Override
-    public void insert(GameInstance session) {
-        sessions.put(session.id(), new Data(session.players().map(GamePlayer::id).toList(),
-                session.scenario().config(), session.board(), session.map(), session.talk(), session.image(), session.inventory()));
+    public void insert(GameInstance instance) {
+        instances.put(instance.id(), new Data(instance.players().map(GamePlayer::id).toList(),
+                instance.scenario().config(), instance.board(), instance.map(), instance.talk(), instance.image(), instance.inventory()));
     }
 
     @Override
-    public void remove(GameInstance.Id sessionId) {
-        sessions.remove(sessionId);
+    public void remove(GameInstance.Id instanceId) {
+        instances.remove(instanceId);
     }
 
     @Override
-    public ScenarioConfig scenario(GameInstance.Id sessionId) {
-        return data(sessionId).scenario;
+    public ScenarioConfig scenario(GameInstance.Id instanceId) {
+        return data(instanceId).scenario;
     }
 
     @Override
-    public BoardConfig board(GameInstance.Id sessionId) {
-        return data(sessionId).board;
+    public BoardConfig board(GameInstance.Id instanceId) {
+        return data(instanceId).board;
     }
 
     @Override
-    public MapConfig map(GameInstance.Id sessionId) {
-        return data(sessionId).map;
+    public MapConfig map(GameInstance.Id instanceId) {
+        return data(instanceId).map;
     }
 
     @Override
-    public TalkConfig talk(GameInstance.Id sessionId) {
-        return data(sessionId).talk;
+    public TalkConfig talk(GameInstance.Id instanceId) {
+        return data(instanceId).talk;
     }
 
     @Override
-    public ImageConfig image(GameInstance.Id sessionId) {
-        return data(sessionId).image;
+    public ImageConfig image(GameInstance.Id instanceId) {
+        return data(instanceId).image;
     }
 
     @Override
-    public InventoryConfig inventory(GameInstance.Id sessionId) {
-        return data(sessionId).inventory;
+    public InventoryConfig inventory(GameInstance.Id instanceId) {
+        return data(instanceId).inventory;
     }
 
-    private Data data(GameInstance.Id sessionId) {
-        return sessions.get(sessionId);
+    private Data data(GameInstance.Id instanceId) {
+        return instances.get(instanceId);
     }
 
 }

@@ -14,27 +14,27 @@ import java.util.function.BiConsumer;
 @Repository
 public class GameInstanceTimerMemoryRepository implements GameInstanceTimerGet, GameInstanceTimerRemove {
 
-    private final Map<GameInstance.Id, GameInstanceTimeUnit> bySession = new HashMap<>();
+    private final Map<GameInstance.Id, GameInstanceTimeUnit> byInstance = new HashMap<>();
 
     @Override
-    public GameInstanceTimeUnit current(GameInstance.Id sessionId) {
-        return bySession.get(sessionId);
+    public GameInstanceTimeUnit current(GameInstance.Id instanceId) {
+        return byInstance.get(instanceId);
     }
 
-    public void insert(GameInstance.Id sessionId) {
-        bySession.put(sessionId, new GameInstanceTimeUnit());
+    public void insert(GameInstance.Id instanceId) {
+        byInstance.put(instanceId, new GameInstanceTimeUnit());
     }
 
-    public void remove(GameInstance.Id sessionId) {
-        bySession.remove(sessionId);
+    public void remove(GameInstance.Id instanceId) {
+        byInstance.remove(instanceId);
     }
 
     public void incAll() {
-        bySession.replaceAll((key, timeUnit) -> timeUnit.inc());
+        byInstance.replaceAll((key, timeUnit) -> timeUnit.inc());
     }
 
     public void forEach(BiConsumer<GameInstance.Id, GameInstanceTimeUnit> consumer) {
-        bySession.forEach(consumer);
+        byInstance.forEach(consumer);
     }
 
 }

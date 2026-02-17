@@ -16,31 +16,31 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/instances/admin")
-public class GameAdminSessionController {
+public class GameAdminInstanceController {
 
     private final GameInstanceRepository gameInstanceRepository;
-    public GameAdminSessionController(GameInstanceRepository gameInstanceRepository) {
+    public GameAdminInstanceController(GameInstanceRepository gameInstanceRepository) {
         this.gameInstanceRepository = gameInstanceRepository;
     }
 
     @GetMapping({"", "/"})
-    public List<GameAdminSessionResponseDTO> sessions() {
+    public List<GameAdminInstanceResponseDTO> instances() {
         return gameInstanceRepository.findAll()
                 .stream()
                 .sorted(Comparator.comparing(GameInstanceEntity::getStartAt))
-                .map(GameAdminSessionResponseDTO::fromEntity)
+                .map(GameAdminInstanceResponseDTO::fromEntity)
                 .toList();
     }
 
     @GetMapping({"/{instanceId}", "/{instanceId}/"})
-    public GameInstanceDetailsResponseDTO oneSession(@PathVariable("instanceId") String sessionIdStr) {
-        return gameInstanceRepository.fullById(sessionIdStr)
+    public GameInstanceDetailsResponseDTO oneInstance(@PathVariable("instanceId") String instanceIdStr) {
+        return gameInstanceRepository.fullById(instanceIdStr)
                 .map(GameInstanceDetailsResponseDTO::fromEntity)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    public record GameAdminSessionResponseDTO(String id, String state, String startAt, String overAt) {
-        public static GameAdminSessionResponseDTO fromEntity(GameInstanceEntity entity) {
+    public record GameAdminInstanceResponseDTO(String id, String state, String startAt, String overAt) {
+        public static GameAdminInstanceResponseDTO fromEntity(GameInstanceEntity entity) {
             String startAt = null;
             if (entity.getStartAt() != null) {
                 startAt = entity.getStartAt().toString();
@@ -49,7 +49,7 @@ public class GameAdminSessionController {
             if (entity.getOverAt() != null) {
                 overAt = entity.getOverAt().toString();
             }
-            return new GameAdminSessionResponseDTO(entity.getId(),
+            return new GameAdminInstanceResponseDTO(entity.getId(),
                     entity.getState().name(), startAt, overAt);
         }
     }

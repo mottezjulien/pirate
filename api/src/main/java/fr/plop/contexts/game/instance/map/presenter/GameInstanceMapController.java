@@ -36,15 +36,15 @@ public class GameInstanceMapController {
 
 
     @GetMapping({"", "/"})
-    public List<ResponseDTO> maps(@RequestHeader("Authorization") String rawSessionToken,
-                                  @PathVariable("instanceId") String sessionIdStr) {
-        GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+    public List<ResponseDTO> maps(@RequestHeader("Authorization") String rawInstanceToken,
+                                  @PathVariable("instanceId") String instanceIdStr) {
+        GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
 
             final GameInstanceSituation situation = situationGetPort.get(context);
-            final MapConfig map = cache.map(sessionId);
+            final MapConfig map = cache.map(instanceId);
             return map.select(situation)
                     .map(ResponseDTO::fromModel)
                     .toList();

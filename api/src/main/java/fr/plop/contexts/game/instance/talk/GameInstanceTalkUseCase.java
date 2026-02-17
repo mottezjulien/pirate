@@ -16,7 +16,7 @@ public class GameInstanceTalkUseCase {
 
         GameInstanceTalk createTalk(GamePlayer.Id playerId);
 
-        void insert(GameInstanceTalk.Id sessionTalkId, TalkCharacter.Id characterId, TalkItem.Id talkId);
+        void insert(GameInstanceTalk.Id instanceTalkId, TalkCharacter.Id characterId, TalkItem.Id talkId);
     }
 
     private final Port port;

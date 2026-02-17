@@ -37,21 +37,21 @@ public class GameInstanceTimerAdapter implements GameInstanceTimer {
         repository.forEach(this::tick);
     }
 
-    private void tick(GameInstance.Id sessionId, GameInstanceTimeUnit timeUnit) {
+    private void tick(GameInstance.Id instanceId, GameInstanceTimeUnit timeUnit) {
         final GameEvent.TimeClick event = new GameEvent.TimeClick(timeUnit);
-        for (GamePlayer.Id playerId : findActivePlayerIdsBySessionId(sessionId)) {
-            eventOrchestrator.fire( new GameInstanceContext(sessionId, playerId), event);
+        for (GamePlayer.Id playerId : findActivePlayerIdsByInstanceId(instanceId)) {
+            eventOrchestrator.fire( new GameInstanceContext(instanceId, playerId), event);
         }
     }
 
-    private List<GamePlayer.Id> findActivePlayerIdsBySessionId(GameInstance.Id sessionId) {
-        return gamePlayerRepository.activeIdsBySessionId(sessionId.value())
+    private List<GamePlayer.Id> findActivePlayerIdsByInstanceId(GameInstance.Id instanceId) {
+        return gamePlayerRepository.activeIdsByInstanceId(instanceId.value())
                 .stream().map(GamePlayer.Id::new).toList();
     }
 
     @Override
-    public void start(GameInstance.Id sessionId) {
-        repository.insert(sessionId);
+    public void start(GameInstance.Id instanceId) {
+        repository.insert(instanceId);
     }
 
 }

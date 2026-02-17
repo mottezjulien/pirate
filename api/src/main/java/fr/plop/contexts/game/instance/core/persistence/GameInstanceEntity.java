@@ -24,7 +24,7 @@ public class GameInstanceEntity {
     @JoinColumn(name = "template_id")
     private TemplateEntity template;
 
-    @OneToMany(mappedBy = "session")
+    @OneToMany(mappedBy = "instance")
     private final Set<GamePlayerEntity> players = new HashSet<>();
 
     @ManyToOne

@@ -5,15 +5,15 @@ import fr.plop.contexts.game.config.inventory.domain.model.GameConfigInventoryIt
 import fr.plop.contexts.game.config.message.MessageToken;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
 import fr.plop.contexts.game.config.talk.domain.TalkItem;
-import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.core.domain.model.InstanceGameOver;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.generic.tools.StringTools;
 import fr.plop.subs.i18n.domain.I18n;
 
 public sealed interface Consequence permits
         Consequence.ScenarioStep,
         Consequence.ScenarioTarget,
-        Consequence.SessionEnd,
+        Consequence.StopPlayer,
         Consequence.DisplayAlert,
         Consequence.DisplayConfirm,
         Consequence.DisplayTalk,
@@ -28,17 +28,17 @@ public sealed interface Consequence permits
         }
     }
 
-    record ScenarioStep(Id id, ScenarioConfig.Step.Id stepId, ScenarioSessionState state) implements Consequence {
-        public ScenarioStep(ScenarioConfig.Step.Id stepId, ScenarioSessionState state) {
+    record ScenarioStep(Id id, ScenarioConfig.Step.Id stepId, ScenarioState state) implements Consequence {
+        public ScenarioStep(ScenarioConfig.Step.Id stepId, ScenarioState state) {
             this(new Id(), stepId, state);
         }
     }
 
-    record ScenarioTarget(Id id, ScenarioConfig.Target.Id targetId, ScenarioSessionState state) implements Consequence {
+    record ScenarioTarget(Id id, ScenarioConfig.Target.Id targetId, ScenarioState state) implements Consequence {
 
     }
 
-    record SessionEnd(Id id, SessionGameOver gameOver) implements Consequence {
+    record StopPlayer(Id id, InstanceGameOver gameOver) implements Consequence {
 
     }
 

@@ -23,7 +23,7 @@ import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceMoveUseCase;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceUseCase;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceStartUseCase;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.situation.domain.port.GameInstanceSituationGetPort;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rectangle;
@@ -47,7 +47,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
     private GameEventOrchestrator eventOrchestrator;
 
     @Autowired
-    private GameInstanceClearPort sessionClear;
+    private GameInstanceClearPort clear;
 
     @Autowired
     private TemplateInitUseCase.OutPort templatePort;
@@ -79,7 +79,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
     @BeforeEach
     void setUp() {
-        sessionClear.clearAll();
+        clear.clearAll();
         templatePort.deleteAll();
         createTemplate();
     }
@@ -89,7 +89,7 @@ public class GameEventOrchestratorTest_eventGoIn_consequenceAlertAndGoal {
 
         I18n i18nMessage = new I18n(Map.of(Language.FR, "Vous êtes piégé"));
         Consequence.DisplayAlert message = new Consequence.DisplayAlert(new Consequence.Id(), i18nMessage);
-        Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), stepId, ScenarioSessionState.FAILURE);
+        Consequence.ScenarioStep goal = new Consequence.ScenarioStep(new Consequence.Id(), stepId, ScenarioState.FAILURE);
         List<Consequence> consequences = List.of(message, goal);
 
         PossibilityTrigger.SpaceGoIn trigger = new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), spaceId);

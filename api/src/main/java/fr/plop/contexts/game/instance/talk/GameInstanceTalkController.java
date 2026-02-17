@@ -47,17 +47,17 @@ public class GameInstanceTalkController {
 
 
     @GetMapping({"/{talkId}", "/{talkId}/"})
-    public ResponseDTO getOne(@RequestHeader("Authorization") String rawSessionToken,
+    public ResponseDTO getOne(@RequestHeader("Authorization") String rawInstanceToken,
                               @RequestHeader("Language") String languageStr,
-                              @PathVariable("instanceId") String sessionIdStr,
+                              @PathVariable("instanceId") String instanceIdStr,
                               @PathVariable("talkId") String talkIdStr) {
         final Language language = Language.valueOf(languageStr.toUpperCase());
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
-            final TalkConfig talkConfig = cache.talk(sessionId);
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
+            final TalkConfig talkConfig = cache.talk(instanceId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
 
@@ -74,18 +74,18 @@ public class GameInstanceTalkController {
 
 
     @PostMapping({"/{talkId}/options/{optionId}", "/{talkId}/options/{optionId}/"})
-    public ResponseDTO selectOption(@RequestHeader("Authorization") String rawSessionToken,
+    public ResponseDTO selectOption(@RequestHeader("Authorization") String rawInstanceToken,
                                     @RequestHeader("Language") String languageStr,
-                                    @PathVariable("instanceId") String sessionIdStr,
+                                    @PathVariable("instanceId") String instanceIdStr,
                                     @PathVariable("talkId") String talkIdStr,
                                     @PathVariable("optionId") String optionIdStr) {
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         final TalkItemNext.Options.Option.Id optionId = new TalkItemNext.Options.Option.Id(optionIdStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
-            final TalkConfig talkConfig = cache.talk(sessionId);
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
+            final TalkConfig talkConfig = cache.talk(instanceId);
             final TalkItem item = talkConfig.byId(talkId).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
 
             if (item.next() instanceof TalkItemNext.Options multipleOptions) {
@@ -94,7 +94,7 @@ public class GameInstanceTalkController {
                     eventOrchestrator.fire(context, new GameEvent.Talk(item.id(), Optional.of(new TalkItemNext.Options.Option.Id(optionIdStr))));
                     TalkItemNext.Options.Option option = optOption.get();
                     if (option.hasNext()) {
-                        return getOne(rawSessionToken, languageStr, sessionIdStr, option.nextId().value());
+                        return getOne(rawInstanceToken, languageStr, instanceIdStr, option.nextId().value());
                     }
                     throw new ResponseStatusException(HttpStatus.NO_CONTENT);
                 }
@@ -110,15 +110,15 @@ public class GameInstanceTalkController {
 
 
     @PostMapping({"/{talkId}/inputtext", "/{talkId}/inputtext/"})
-    public void submitInputText(@RequestHeader("Authorization") String rawSessionToken,
-                                @PathVariable("instanceId") String sessionIdStr,
+    public void submitInputText(@RequestHeader("Authorization") String rawInstanceToken,
+                                @PathVariable("instanceId") String instanceIdStr,
                                 @PathVariable("talkId") String talkIdStr,
                                 @RequestBody InputTextRequestDTO request) {
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         final TalkItem.Id talkId = new TalkItem.Id(talkIdStr);
         try {
-            final GameInstanceContext context = authGameInstanceUseCase.findContext(sessionId, new ConnectToken(rawSessionToken));
-            final TalkConfig talkConfig = cache.talk(sessionId);
+            final GameInstanceContext context = authGameInstanceUseCase.findContext(instanceId, new ConnectToken(rawInstanceToken));
+            final TalkConfig talkConfig = cache.talk(instanceId);
             final TalkItem item = talkConfig.byId(talkId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
 

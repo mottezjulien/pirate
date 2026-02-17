@@ -4,7 +4,7 @@ import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstance;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
 import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
-import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.instance.core.domain.model.InstanceGameOver;
 import fr.plop.contexts.game.instance.push.PushEvent;
 import fr.plop.contexts.game.instance.push.PushPort;
 import fr.plop.contexts.game.instance.time.GameInstanceTimerRemove;
@@ -19,13 +19,13 @@ public class GameOverUseCase {
 
 
     public interface OutputPort {
-        Stream<GamePlayer.Id> findActivePlayerIds(GameInstance.Id sessionId);
+        Stream<GamePlayer.Id> findActivePlayerIds(GameInstance.Id instanceId);
 
         void win(GamePlayer.Id playerId, Optional<I18n.Id> optReasonId);
 
         void lose(GamePlayer.Id each, Optional<I18n.Id> optReasonId);
 
-        void ended(GameInstance.Id sessionId);
+        void ended(GameInstance.Id instanceId);
     }
 
     private final OutputPort output;
@@ -40,12 +40,12 @@ public class GameOverUseCase {
         this.cache = cache;
     }
 
-    public void apply(GameInstanceContext context, SessionGameOver gameOver) {
+    public void apply(GameInstanceContext context, InstanceGameOver gameOver) {
         switch (gameOver.type()) {
             case SUCCESS_ALL_ENDED -> {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.instanceId()).toList();
                 playerIds.forEach(each -> output.win(each, gameOver.optReasonId()));
-                endSession(context.instanceId());
+                endInstance(context.instanceId());
                 playerIds.forEach(each -> {
                     try {
                         pushPort.push(new PushEvent.GameStatus(new GameInstanceContext(context.instanceId(), each)));
@@ -57,7 +57,7 @@ public class GameOverUseCase {
             case FAILURE_ALL_ENDED -> {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.instanceId()).toList();
                 playerIds.forEach(each -> output.lose(each, gameOver.optReasonId()));
-                endSession(context.instanceId());
+                endInstance(context.instanceId());
                 playerIds.forEach(each -> {
                     try {
                         pushPort.push(new PushEvent.GameStatus(new GameInstanceContext(context.instanceId(), each)));
@@ -70,7 +70,7 @@ public class GameOverUseCase {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.instanceId()).toList();
                 output.win(context.playerId(), gameOver.optReasonId());
                 if (playerIds.size() == 1) {
-                    endSession(context.instanceId());
+                    endInstance(context.instanceId());
                 }
                 try {
                     pushPort.push(new PushEvent.GameStatus(context));
@@ -82,7 +82,7 @@ public class GameOverUseCase {
                 List<GamePlayer.Id> playerIds = output.findActivePlayerIds(context.instanceId()).toList();
                 output.lose(context.playerId(), gameOver.optReasonId());
                 if (playerIds.size() == 1) {
-                    endSession(context.instanceId());
+                    endInstance(context.instanceId());
                 }
                 try {
                     pushPort.push(new PushEvent.GameStatus(context));
@@ -93,9 +93,9 @@ public class GameOverUseCase {
         }
     }
 
-    private void endSession(GameInstance.Id sessionId) {
-        output.ended(sessionId);
-        timerRemove.remove(sessionId);
-        cache.remove(sessionId);
+    private void endInstance(GameInstance.Id instanceId) {
+        output.ended(instanceId);
+        timerRemove.remove(instanceId);
+        cache.remove(instanceId);
     }
 }

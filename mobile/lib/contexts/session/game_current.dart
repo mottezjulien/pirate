@@ -7,43 +7,38 @@ import 'domain/model/game_session.dart';
 
 class GameCurrent {
 
-  static final _GameSession _sessionInstance = _GameSession();
+  static GameSession? _sessionInstance = null;
 
-  static bool get hasSession => _sessionInstance.hasSession;
+  static bool get hasSession => _sessionInstance != null;
 
-  static String get sessionId => _sessionInstance._session!.id;
+  static String get sessionId => _sessionInstance!.id;
 
-  static set session(GameSession session) => _sessionInstance._session = session;
+  static set session(GameSession session) => _sessionInstance = session;
 
-  static void addOnMoveListener(onMoveListener) => _sessionInstance.addOnMoveListener(onMoveListener);
+  static void addOnMoveListener(onMoveListener) => _sessionInstance!.addOnMoveListener(onMoveListener);
 
-  static void removeOnMoveListener(onMoveListener) => _sessionInstance.removeOnMoveListener(onMoveListener);
+  static void removeOnMoveListener(onMoveListener) => _sessionInstance!.removeOnMoveListener(onMoveListener);
 
-  static void addOnGoalListener(onGoalListener) => _sessionInstance.addOnGoalListener(onGoalListener);
+  static void addOnGoalListener(onGoalListener) => _sessionInstance!.addOnGoalListener(onGoalListener);
 
-  static void removeOnGoalListener(onGoalListener) => _sessionInstance.removeOnGoalListener(onGoalListener);
+  static void removeOnGoalListener(onGoalListener) => _sessionInstance!.removeOnGoalListener(onGoalListener);
 
   static final _Style _styleInstance = _Style();
 
   static _Style get style => _styleInstance;
 
-  static void stopSession() => _sessionInstance._session?.stop();
+  static void stopSession() => _sessionInstance?.stop();
 
-  static void removeSession() => _sessionInstance._session = null;
+  static void removeSession() => _sessionInstance = null;
 
   /// Get the player's current GPS position
   static Coordinate? get currentPosition {
-    if (!hasSession) return null;
-    try {
-      return _sessionInstance.coordinate;
-    } catch (_) {
-      return null;
-    }
+    return _sessionInstance?.coordinate;
   }
 
 }
 
-
+/*
 class _GameSession {
 
   GameSession? _session;
@@ -60,7 +55,7 @@ class _GameSession {
 
   void removeOnGoalListener(onGoalListener) => _session!.removeOnGoalListener(onGoalListener);
 
-}
+}*/
 
 //TODO
 

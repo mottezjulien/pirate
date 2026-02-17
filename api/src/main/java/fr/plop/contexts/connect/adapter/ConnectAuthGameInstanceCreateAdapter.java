@@ -46,8 +46,8 @@ public class ConnectAuthGameInstanceCreateAdapter implements ConnectAuthGameInst
     }
 
     @Override
-    public Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authSessionId) {
-        return repository.findById(authSessionId.value())
+    public Optional<ConnectAuthGameInstance> close(ConnectAuthGameInstance.Id authId) {
+        return repository.findById(authId.value())
                 .map(entity -> {
                     entity.setType(ConnectAuthGameInstance.Status.CLOSED);
                     return repository.save(entity).toModel();

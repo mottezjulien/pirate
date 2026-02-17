@@ -27,15 +27,15 @@ public class MessageController {
     }
 
     @PostMapping({"/{token}/confirm", "/{token}/confirm/"})
-    public void confirm(@RequestHeader("Authorization") String rawSessionToken,
-                        @PathVariable("instanceId") String sessionIdStr,
+    public void confirm(@RequestHeader("Authorization") String rawInstanceToken,
+                        @PathVariable("instanceId") String instanceIdStr,
                         @PathVariable("token") String tokenStr,
                         @RequestBody ConfirmRequest request) {
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         final MessageToken token = new MessageToken(tokenStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
             eventOrchestrator.fire(context, new GameEvent.MessageConfirmAnswer(token, request.answer()));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);

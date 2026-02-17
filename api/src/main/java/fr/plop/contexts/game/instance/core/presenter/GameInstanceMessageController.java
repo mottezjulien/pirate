@@ -23,12 +23,12 @@ public class GameInstanceMessageController {
 
     //TODO UNIQUEMENT POUR l'ADMIN ?? USELESS ?? ADD CONNECT TOKEN ?
     @PostMapping({"", "/"})
-    public void sendMessage(@PathVariable("instanceId") String sessionIdStr,
+    public void sendMessage(@PathVariable("instanceId") String instanceIdStr,
                             @PathVariable("currentPlayerId") String playerIdStr,
                             @RequestBody SendMessageRequest request) {
-        GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         GamePlayer.Id playerId = new GamePlayer.Id(playerIdStr);
-        pushPort.push(new PushEvent.Message(new GameInstanceContext(sessionId, playerId), request.value()));
+        pushPort.push(new PushEvent.Message(new GameInstanceContext(instanceId, playerId), request.value()));
     }
 
     public record SendMessageRequest(String value) {

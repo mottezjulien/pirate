@@ -3,7 +3,7 @@ package fr.plop.contexts.game.instance.event.adapter.action;
 import fr.plop.contexts.game.config.cache.GameConfigCache;
 import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
-import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.instance.core.domain.model.InstanceGameOver;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.instance.push.PushEvent;
 import fr.plop.contexts.game.instance.push.PushPort;
@@ -42,7 +42,7 @@ public class GameEventActionGameTest {
     public void allSuccess() {
 
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ALL_ENDED, Optional.of(i18nId));
+        InstanceGameOver gameOver = new InstanceGameOver(InstanceGameOver.Type.SUCCESS_ALL_ENDED, Optional.of(i18nId));
         event.apply(context, gameOver);
 
         verify(outputPort).win(context.playerId(), Optional.of(i18nId));
@@ -63,7 +63,7 @@ public class GameEventActionGameTest {
     @Test
     public void oneSuccess() {
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
+        InstanceGameOver gameOver = new InstanceGameOver(InstanceGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
         event.apply(context, gameOver);
 
         verify(outputPort).win(context.playerId(), Optional.of(i18nId));
@@ -83,7 +83,7 @@ public class GameEventActionGameTest {
                 .thenReturn(Stream.of(context.playerId()));
 
         I18n.Id i18nId = new I18n.Id();
-        SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
+        InstanceGameOver gameOver = new InstanceGameOver(InstanceGameOver.Type.SUCCESS_ONE_CONTINUE, Optional.of(i18nId));
         event.apply(context, gameOver);
 
         verify(outputPort).win(context.playerId(), Optional.of(i18nId));

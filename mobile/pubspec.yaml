@@ -35,6 +35,7 @@ dependencies:
   #Shimmer Loading
   shimmer: ^3.0.0
   upgrader: ^12.5.0
+  flutter_foreground_task: ^8.0.0
 
 dev_dependencies:
   flutter_test:

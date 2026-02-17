@@ -11,7 +11,7 @@ import fr.plop.contexts.game.config.template.domain.model.Template;
 import fr.plop.contexts.game.instance.core.domain.GameInstanceException;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstance;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
-import fr.plop.contexts.game.instance.core.domain.model.SessionGameOver;
+import fr.plop.contexts.game.instance.core.domain.model.InstanceGameOver;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameOverUseCase;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceUseCase;
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceStartUseCase;
@@ -49,9 +49,9 @@ public class GameInstanceController {
     public ResponseDTO find(@RequestHeader("Authorization") String rawUserToken) {
         try {
             final ConnectAuthUser connectAuthUser = authUserGetUseCase.findByConnectToken(new ConnectToken(rawUserToken));
-            final Optional<GameInstance.Atom> optSession = useCase.current(connectAuthUser.userId());
-            if(optSession.isPresent()){
-                final GameInstance.Atom atom = optSession.get();
+            final Optional<GameInstance.Atom> optInstance = useCase.current(connectAuthUser.userId());
+            if(optInstance.isPresent()){
+                final GameInstance.Atom atom = optInstance.get();
                 GameInstanceContext context = toContext(atom, connectAuthUser.userId());
                 final ConnectAuthGameInstance authGame = authGameInstanceUseCase.create(connectAuthUser, context);
                 return ResponseDTO.fromModel(authGame, atom.state());
@@ -91,12 +91,12 @@ public class GameInstanceController {
     }
 
     @GetMapping({"/{instanceId}", "/{instanceId}/"})
-    public ResponseDTO get(@RequestHeader("Authorization") String rawSessionToken, @PathVariable("instanceId") String sessionIdStr) {
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
-        final ConnectToken connectToken = new ConnectToken(rawSessionToken);
+    public ResponseDTO get(@RequestHeader("Authorization") String rawInstanceToken, @PathVariable("instanceId") String instanceIdStr) {
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
+        final ConnectToken connectToken = new ConnectToken(rawInstanceToken);
         try {
-            final ConnectAuthGameInstance auth = authGameInstanceUseCase.findSessionAuth(sessionId, connectToken);
-            GameInstance.Atom atom = useCase.find(sessionId)
+            final ConnectAuthGameInstance auth = authGameInstanceUseCase.findAuth(instanceId, connectToken);
+            GameInstance.Atom atom = useCase.find(instanceId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
             if(atom.byPlayerId(auth.context().playerId()).isEmpty()){
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -109,19 +109,19 @@ public class GameInstanceController {
 
 
     @PostMapping({"/{instanceId}/start", "/{instanceId}/start/"})
-    public ResponseDTO start(@RequestHeader("Authorization") String rawSessionToken, @PathVariable("instanceId") String sessionIdStr) {
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
-        final ConnectToken connectToken = new ConnectToken(rawSessionToken);
+    public ResponseDTO start(@RequestHeader("Authorization") String rawInstanceToken, @PathVariable("instanceId") String instanceIdStr) {
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
+        final ConnectToken connectToken = new ConnectToken(rawInstanceToken);
         try {
             final ConnectAuthGameInstance authGameInstance = authGameInstanceUseCase
-                    .findSessionAuth(sessionId, connectToken);
+                    .findAuth(instanceId, connectToken);
             startUseCase.apply(authGameInstance);
             return ResponseDTO.fromModel(authGameInstance, GameInstance.State.ACTIVE);
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);
         } catch (GameInstanceException e) {
             switch (e.type()) {
-                case SESSION_NOT_FOUND, PLAYER_NOT_FOUND, TEMPLATE_NOT_FOUND ->
+                case INSTANCE_NOT_FOUND, PLAYER_NOT_FOUND, TEMPLATE_NOT_FOUND ->
                         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
                 default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
             }
@@ -129,22 +129,22 @@ public class GameInstanceController {
     }
 
     @PostMapping({"/{instanceId}/stop", "/{instanceId}/stop/"})
-    public ResponseDTO stop(@RequestHeader("Authorization") String rawSessionToken,
-                            @PathVariable("instanceId") String sessionIdStr) {
+    public ResponseDTO stop(@RequestHeader("Authorization") String rawInstanceToken,
+                            @PathVariable("instanceId") String instanceIdStr) {
 
-        GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         try {
             ConnectAuthGameInstance auth = authGameInstanceUseCase
-                    .findSessionAuth(sessionId, new ConnectToken(rawSessionToken));
+                    .findAuth(instanceId, new ConnectToken(rawInstanceToken));
 
-            SessionGameOver gameOver = new SessionGameOver(SessionGameOver.Type.FAILURE_ONE_CONTINUE);
+            InstanceGameOver gameOver = new InstanceGameOver(InstanceGameOver.Type.FAILURE_ONE_CONTINUE);
             gameOverUseCase.apply(auth.context(), gameOver);
 
             Optional<ConnectAuthGameInstance> optUpdatedAuth = authGameInstanceUseCase.close(auth.id());
             if (optUpdatedAuth.isPresent()) {
                 auth = optUpdatedAuth.get();
             }
-            GameInstance.Atom atom = useCase.find(sessionId)
+            GameInstance.Atom atom = useCase.find(instanceId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
             return ResponseDTO.fromModel(auth, atom.state());

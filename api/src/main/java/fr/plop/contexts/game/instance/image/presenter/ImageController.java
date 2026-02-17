@@ -37,16 +37,16 @@ public class ImageController {
 
 
     @GetMapping({"/{imageId}", "/{imageId}/"})
-    public ResponseDTO getOne(@RequestHeader("Authorization") String rawSessionToken,
-                              @PathVariable("instanceId") String sessionIdStr,
+    public ResponseDTO getOne(@RequestHeader("Authorization") String rawInstanceToken,
+                              @PathVariable("instanceId") String instanceIdStr,
                               @PathVariable("imageId") String imageIdStr) {
 
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
         final ImageItem.Id imageId = new ImageItem.Id(imageIdStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
-            final ImageConfig imageConfig = cache.image(sessionId);
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
+            final ImageConfig imageConfig = cache.image(instanceId);
             final ImageItem item = imageConfig.byItemId(imageId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No talk found"));
             final GameInstanceSituation situation = situationGetPort.get(context);
@@ -64,18 +64,18 @@ public class ImageController {
 
     @PostMapping({"/{imageId}/objects/{objectId}", "/{imageId}/objects/{objectId}/"})
     public void clickObject(
-            @RequestHeader("Authorization") String rawSessionToken,
-            @PathVariable("instanceId") String sessionIdStr,
+            @RequestHeader("Authorization") String rawInstanceToken,
+            @PathVariable("instanceId") String instanceIdStr,
             @PathVariable("imageId") String imageIdStr,
             @PathVariable("objectId") String objectIdStr) {
 
 
-        final GameInstance.Id sessionId = new GameInstance.Id(sessionIdStr);
-        final ImageItem.Id imageId = new ImageItem.Id(imageIdStr);
+        final GameInstance.Id instanceId = new GameInstance.Id(instanceIdStr);
+        //final ImageItem.Id imageId = new ImageItem.Id(imageIdStr);
         final ImageObject.Id objectId = new ImageObject.Id(objectIdStr);
         try {
             final GameInstanceContext context = authGameInstanceUseCase
-                    .findContext(sessionId, new ConnectToken(rawSessionToken));
+                    .findContext(instanceId, new ConnectToken(rawInstanceToken));
             eventOrchestrator.fire(context, new GameEvent.ImageObjectClick(objectId));
         } catch (ConnectException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.type().name(), e);

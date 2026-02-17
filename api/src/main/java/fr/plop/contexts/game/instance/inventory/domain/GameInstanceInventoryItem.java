@@ -7,7 +7,7 @@ import fr.plop.subs.image.Image;
 import java.util.List;
 import java.util.Optional;
 
-public record GameInstanceInventoryItem(Id sessionId, GameConfigInventoryItem.Id configId,
+public record GameInstanceInventoryItem(Id instanceId, GameConfigInventoryItem.Id configId,
                                         I18n label, Image image, Optional<I18n> optDescription, List<Action> actions,
                                         State state) {
 

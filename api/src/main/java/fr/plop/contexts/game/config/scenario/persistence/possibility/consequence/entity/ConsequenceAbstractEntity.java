@@ -68,11 +68,11 @@ public abstract class ConsequenceAbstractEntity {
                 entity.setState(goalTarget.state());
                 yield entity;
             }
-            case Consequence.SessionEnd sessionEnd -> {
+            case Consequence.StopPlayer stopPlayer -> {
                 ConsequenceGameOverEntity entity = new ConsequenceGameOverEntity();
-                entity.setId(sessionEnd.id().value());
-                entity.setGameOverType(sessionEnd.gameOver().type());
-                sessionEnd.gameOver().optReasonId().ifPresent(reasonId -> entity.setLabelId(reasonId.value()));
+                entity.setId(stopPlayer.id().value());
+                entity.setGameOverType(stopPlayer.gameOver().type());
+                stopPlayer.gameOver().optReasonId().ifPresent(reasonId -> entity.setLabelId(reasonId.value()));
                 yield entity;
             }
             case Consequence.UpdatedMetadata updatedMetadata -> {

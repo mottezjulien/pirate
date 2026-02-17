@@ -6,7 +6,7 @@ import '../game_current.dart';
 
 class GameMapRepository {
 
-  static const resourcePath = '/sessions';
+  static const resourcePath = '/instances';
 
   Future<List<GameMap>> get() async {
     GenericGameSessionRepository genericRepository = GenericGameSessionRepository();

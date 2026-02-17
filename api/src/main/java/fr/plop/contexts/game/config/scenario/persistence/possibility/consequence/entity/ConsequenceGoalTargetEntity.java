@@ -3,7 +3,7 @@ package fr.plop.contexts.game.config.scenario.persistence.possibility.consequenc
 
 import fr.plop.contexts.game.config.consequence.Consequence;
 import fr.plop.contexts.game.config.scenario.domain.model.ScenarioConfig;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,7 +15,7 @@ public final class ConsequenceGoalTargetEntity extends
     private String targetId;
 
     @Enumerated(EnumType.STRING)
-    private ScenarioSessionState state;
+    private ScenarioState state;
 
     public String getTargetId() {
         return targetId;
@@ -25,11 +25,11 @@ public final class ConsequenceGoalTargetEntity extends
         this.targetId = targetId;
     }
 
-    public ScenarioSessionState getState() {
+    public ScenarioState getState() {
         return state;
     }
 
-    public void setState(ScenarioSessionState state) {
+    public void setState(ScenarioState state) {
         this.state = state;
     }
 

@@ -8,7 +8,7 @@ import fr.plop.contexts.game.instance.core.domain.model.GameInstance;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstanceContext;
 import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
 import fr.plop.contexts.game.instance.scenario.domain.GameInstanceScenarioGoalPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.time.GameInstanceTimer;
 
 import java.util.Optional;
@@ -17,7 +17,7 @@ public class GameInstanceStartUseCase {
 
     public interface Port {
         Optional<GameInstance.Atom> find(GameInstance.Id id);
-        void active(GameInstance.Id sessionId);
+        void active(GameInstance.Id instanceId);
         void active(GamePlayer.Id id);
     }
 
@@ -42,9 +42,9 @@ public class GameInstanceStartUseCase {
         Optional<GameInstance.Atom> opt = port.find(context.instanceId());
 
         final GameInstance.Atom instance = opt
-                .orElseThrow(() -> new GameInstanceException(GameInstanceException.Type.SESSION_NOT_FOUND));
+                .orElseThrow(() -> new GameInstanceException(GameInstanceException.Type.INSTANCE_NOT_FOUND));
         if(!instance.state().equals(GameInstance.State.INIT)) {
-            throw new GameInstanceException(GameInstanceException.Type.SESSION_INVALID);
+            throw new GameInstanceException(GameInstanceException.Type.INSTANCE_INVALID);
         }
         Optional<GamePlayer> optPlayer = instance.byPlayerId(context.playerId());
         final GamePlayer player = optPlayer
@@ -61,10 +61,10 @@ public class GameInstanceStartUseCase {
 
         ScenarioConfig scenario = cache.scenario(context.instanceId());
         ScenarioConfig.Step step = scenario.firstStep();
-        scenarioGoalPort.saveStep(context, step.id(), ScenarioSessionState.ACTIVE);
+        scenarioGoalPort.saveStep(context, step.id(), ScenarioState.ACTIVE);
         
         step.targets().forEach(target ->
-            scenarioGoalPort.saveTarget(context.playerId(), target.id(), ScenarioSessionState.ACTIVE)
+            scenarioGoalPort.saveTarget(context.playerId(), target.id(), ScenarioState.ACTIVE)
         );
 
     }

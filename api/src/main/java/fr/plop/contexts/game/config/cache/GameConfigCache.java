@@ -9,12 +9,12 @@ import fr.plop.contexts.game.config.talk.domain.TalkConfig;
 import fr.plop.contexts.game.instance.core.domain.model.GameInstance;
 
 public interface GameConfigCache {
-    void insert(GameInstance session);
-    void remove(GameInstance.Id sessionId);
-    ScenarioConfig scenario(GameInstance.Id sessionId);
-    BoardConfig board(GameInstance.Id sessionId);
-    MapConfig map(GameInstance.Id sessionId);
-    TalkConfig talk(GameInstance.Id sessionId);
-    ImageConfig image(GameInstance.Id sessionId);
+    void insert(GameInstance instance);
+    void remove(GameInstance.Id instanceId);
+    ScenarioConfig scenario(GameInstance.Id instanceId);
+    BoardConfig board(GameInstance.Id instanceId);
+    MapConfig map(GameInstance.Id instanceId);
+    TalkConfig talk(GameInstance.Id instanceId);
+    ImageConfig image(GameInstance.Id instanceId);
     InventoryConfig inventory(GameInstance.Id id);
 }

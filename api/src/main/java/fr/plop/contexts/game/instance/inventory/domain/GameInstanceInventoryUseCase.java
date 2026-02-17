@@ -19,13 +19,13 @@ import java.util.stream.Stream;
 public class GameInstanceInventoryUseCase {
 
     public interface Port {
-        Stream<SessionItemRaw> inventory(GamePlayer.Id playerId);
-        Optional<SessionItemRaw> findBySessionId(GameInstanceInventoryItem.Id sessionId);
-        Optional<SessionItemRaw> findByConfigId(GameInstanceContext context, GameConfigInventoryItem.Id configId);
+        Stream<ItemRaw> inventory(GamePlayer.Id playerId);
+        Optional<ItemRaw> findByInstanceId(GameInstanceInventoryItem.Id instanceId);
+        Optional<ItemRaw> findByConfigId(GameInstanceContext context, GameConfigInventoryItem.Id configId);
         GameInstanceInventoryItem.Id add(GamePlayer.Id playerId, GameConfigInventoryItem.Id configId);
         void updateCount(GameInstanceInventoryItem.Id id, int count);
         void delete(GameInstanceInventoryItem.Id id);
-        Stream<SessionItemRaw> findEquipped(GamePlayer.Id playerId);
+        Stream<ItemRaw> findEquipped(GamePlayer.Id playerId);
         void equip(GameInstanceInventoryItem.Id id);
         void unequip(GameInstanceInventoryItem.Id id);
         boolean exist(GamePlayer.Id playerId, GameConfigInventoryItem.Id configItemId);
@@ -34,9 +34,9 @@ public class GameInstanceInventoryUseCase {
     }
 
 
-    public record SessionItemRaw(GameInstanceInventoryItem.Id sessionId, GameConfigInventoryItem.Id configId, int pourcentUsury, GameInstanceInventoryItem.Availability availability, int collectionCount) {
+    public record ItemRaw(GameInstanceInventoryItem.Id instanceId, GameConfigInventoryItem.Id configId, int pourcentUsury, GameInstanceInventoryItem.Availability availability, int collectionCount) {
 
-        public GameInstanceInventoryItem toSessionItem(GameConfigInventoryItem configItem, boolean mergeable) {
+        public GameInstanceInventoryItem toInstance(GameConfigInventoryItem configItem, boolean mergeable) {
             List<GameInstanceInventoryItem.Action> actions = new ArrayList<>();
             if(configItem.optTargetId().isEmpty()){
                 actions.add(GameInstanceInventoryItem.Action.DROP);
@@ -55,7 +55,7 @@ public class GameInstanceInventoryUseCase {
                 case UNIQUE -> new GameInstanceInventoryItem.State.Unique(pourcentUsury, availability);
                 case COLLECTION -> new GameInstanceInventoryItem.State.Collection(collectionCount);
             };
-            return new GameInstanceInventoryItem(sessionId, configItem.id(), configItem.label(), configItem.image(), configItem.optDescription(),
+            return new GameInstanceInventoryItem(instanceId, configItem.id(), configItem.label(), configItem.image(), configItem.optDescription(),
                     actions, state);
         }
     }
@@ -75,61 +75,61 @@ public class GameInstanceInventoryUseCase {
 
     public Stream<GameInstanceInventoryItem> list(GameInstanceContext context) {
         final InventoryConfig config = cache.inventory(context.instanceId());
-        Stream<SessionItemRaw> rawList = port.inventory(context.playerId());
+        Stream<ItemRaw> rawList = port.inventory(context.playerId());
         return rawList
-                .flatMap(raw -> toSessionItem(raw, config).stream());
+                .flatMap(raw -> toInstance(raw, config).stream());
     }
 
 
     
-    public Optional<GameInstanceInventoryItem> details(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) {
+    public Optional<GameInstanceInventoryItem> details(GameInstanceContext context, GameInstanceInventoryItem.Id itemId) {
         final InventoryConfig config = cache.inventory(context.instanceId());
-        return port.findBySessionId(sessionItemId)
-                .flatMap(raw -> toSessionItem(raw, config));
+        return port.findByInstanceId(itemId)
+                .flatMap(raw -> toInstance(raw, config));
     }
 
-    private static Optional<GameInstanceInventoryItem> toSessionItem(SessionItemRaw raw, InventoryConfig config) {
-        return config.byId(raw.configId()).map(configItem -> raw.toSessionItem(configItem, config.isMergeable(configItem.id())));
+    private static Optional<GameInstanceInventoryItem> toInstance(ItemRaw raw, InventoryConfig config) {
+        return config.byId(raw.configId()).map(configItem -> raw.toInstance(configItem, config.isMergeable(configItem.id())));
     }
     
-    public void drop(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isDroppable()) {
+    public void drop(GameInstanceContext context, GameInstanceInventoryItem.Id itemId) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem instanceItem = details(context, itemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!instanceItem.isDroppable()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Action drop not allowed for this item");
         }
-        deleteOne_noPush(sessionItem);
+        deleteOne_noPush(instanceItem);
         pushPort.push(new PushEvent.Inventory(context));
     }
 
-    public void use(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isUsable()) {
+    public void use(GameInstanceContext context, GameInstanceInventoryItem.Id itemId) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem instanceItem = details(context, itemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!instanceItem.isUsable()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Action consume not allowed for this item");
         }
         final InventoryConfig config = cache.inventory(context.instanceId());
-        GameConfigInventoryItem configItem = config.byId(sessionItem.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        GameConfigInventoryItem configItem = config.byId(instanceItem.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
         eventOrchestrator.fire(context, new GameEvent.InventoryItemAction(configItem.id()));
     }
 
-    public void consume(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isConsumable()) {
+    public void consume(GameInstanceContext context, GameInstanceInventoryItem.Id id) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem item = details(context, id).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!item.isConsumable()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Action consume not allowed for this item");
         }
         final InventoryConfig config = cache.inventory(context.instanceId());
-        GameConfigInventoryItem configItem = config.byId(sessionItem.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        GameConfigInventoryItem configItem = config.byId(item.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
         eventOrchestrator.fire(context, new GameEvent.InventoryItemAction(configItem.id()));
 
-        deleteOne_noPush(sessionItem);
+        deleteOne_noPush(item);
         pushPort.push(new PushEvent.Inventory(context));
     }
     
-    public void equip(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isEquippable()) {
+    public void equip(GameInstanceContext context, GameInstanceInventoryItem.Id id) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem item = details(context, id).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!item.isEquippable()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Action equip not allowed for this item");
         }
-        if (!sessionItem.isFree()) {
+        if (!item.isFree()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Item is not free, cannot equip");
         }
 
@@ -137,46 +137,46 @@ public class GameInstanceInventoryUseCase {
         port.findEquipped(context.playerId())
                 .forEach(equipped -> {
                     try {
-                        unequip(context, equipped.sessionId());
+                        unequip(context, equipped.instanceId());
                     } catch (GameInstanceInventoryException e) {
                         throw new RuntimeException(e);
                     }
                 });
 
         // Équiper le nouvel item
-        port.equip(sessionItemId);
+        port.equip(id);
     }
 
-    public void unequip(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isEquipped()) {
+    public void unequip(GameInstanceContext context, GameInstanceInventoryItem.Id id) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem item = details(context, id).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!item.isEquipped()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Item is not equipped, cannot unequip");
         }
-        port.unequip(sessionItemId);
+        port.unequip(id);
     }
 
-    public void useEquip(GameInstanceContext context, GameInstanceInventoryItem.Id sessionItemId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionItem = details(context, sessionItemId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isEquipped()) {
+    public void useEquip(GameInstanceContext context, GameInstanceInventoryItem.Id id) throws GameInstanceInventoryException {
+        final GameInstanceInventoryItem item = details(context, id).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        if(!item.isEquipped()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Item is equipped, cannot use");
         }
         final InventoryConfig config = cache.inventory(context.instanceId());
-        GameConfigInventoryItem configItem = config.byId(sessionItem.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        GameConfigInventoryItem configItem = config.byId(item.configId()).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
         eventOrchestrator.fire(context, new GameEvent.InventoryItemAction(configItem.id()));
     }
 
     public void merge(GameInstanceContext context, GameInstanceInventoryItem.Id oneId, GameInstanceInventoryItem.Id otherId) throws GameInstanceInventoryException {
-        final GameInstanceInventoryItem sessionOneItem = details(context, oneId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        final GameInstanceInventoryItem sessionOtherItem = details(context, otherId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        final GameInstanceInventoryItem oneItem = details(context, oneId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
+        final GameInstanceInventoryItem otherItem = details(context, otherId).orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
         
         final InventoryConfig config = cache.inventory(context.instanceId());
-        final Optional<InventoryMergedRule> optRule = config.mergedRule(sessionOneItem.configId(), sessionOtherItem.configId());
+        final Optional<InventoryMergedRule> optRule = config.mergedRule(oneItem.configId(), otherItem.configId());
         if(optRule.isEmpty()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Items not mergeable");
         }
 
-        deleteOne_noPush(sessionOneItem);
-        deleteOne_noPush(sessionOtherItem);
+        deleteOne_noPush(oneItem);
+        deleteOne_noPush(otherItem);
         insertOne(context, optRule.get().convertTo());
 
     }
@@ -204,26 +204,26 @@ public class GameInstanceInventoryUseCase {
 
     public void deleteOne(GameInstanceContext context, GameConfigInventoryItem.Id configItemId) throws GameInstanceInventoryException {
         final InventoryConfig config = cache.inventory(context.instanceId());
-        final GameInstanceInventoryItem sessionItem =  port.findByConfigId(context, configItemId)
-                .flatMap(raw -> toSessionItem(raw, config))
+        final GameInstanceInventoryItem item =  port.findByConfigId(context, configItemId)
+                .flatMap(raw -> toInstance(raw, config))
                 .orElseThrow(() -> new GameInstanceInventoryException(GameInstanceInventoryException.Type.ITEM_NOT_FOUND));
-        if(!sessionItem.isDroppable()) {
+        if(!item.isDroppable()) {
             throw new GameInstanceInventoryException(GameInstanceInventoryException.Type.ACTION_NOT_ALLOWED, "Action drop not allowed for this item");
         }
-        deleteOne_noPush(sessionItem);
+        deleteOne_noPush(item);
         pushPort.push(new PushEvent.Inventory(context));
     }
 
-    private void deleteOne_noPush(GameInstanceInventoryItem sessionItem) {
-        switch (sessionItem.state()) {
+    private void deleteOne_noPush(GameInstanceInventoryItem item) {
+        switch (item.state()) {
             case GameInstanceInventoryItem.State.Collection collection -> {
                 if(collection.count() > 1){
-                    port.updateCount(sessionItem.sessionId(), collection.count()-1);
+                    port.updateCount(item.instanceId(), collection.count()-1);
                 } else{
-                    port.delete(sessionItem.sessionId());
+                    port.delete(item.instanceId());
                 }
             }
-            case GameInstanceInventoryItem.State.Unique ignored -> port.delete(sessionItem.sessionId());
+            case GameInstanceInventoryItem.State.Unique ignored -> port.delete(item.instanceId());
         }
     }
 

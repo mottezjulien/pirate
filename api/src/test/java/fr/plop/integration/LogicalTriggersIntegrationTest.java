@@ -28,7 +28,7 @@ import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceStartUseCa
 import fr.plop.contexts.game.instance.core.domain.usecase.GameInstanceUseCase;
 import fr.plop.contexts.game.instance.event.domain.GameEvent;
 import fr.plop.contexts.game.instance.event.domain.GameEventOrchestrator;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.situation.domain.port.GameInstanceSituationGetPort;
 import fr.plop.generic.position.Point;
 import fr.plop.generic.position.Rectangle;
@@ -136,7 +136,7 @@ public class LogicalTriggersIntegrationTest {
         // Possibility 1: "Golu" (ALMOST_EQUALS) -> SUCCESS
         PossibilityTrigger triggerGolu = new PossibilityTrigger.TalkInputText(
                 new PossibilityTrigger.Id(), talkInputId, "Golu", PossibilityTrigger.TalkInputText.MatchType.ALMOST_EQUALS);
-        Consequence consequenceSuccess = new Consequence.ScenarioTarget(new Consequence.Id(), targetSuccess, ScenarioSessionState.SUCCESS);
+        Consequence consequenceSuccess = new Consequence.ScenarioTarget(new Consequence.Id(), targetSuccess, ScenarioState.SUCCESS);
         Possibility possibilitySuccess = new Possibility(triggerGolu, List.of(consequenceSuccess));
 
         // Possibility 2: OR("Losof", "Celle") -> WRONG_ARTIST
@@ -145,7 +145,7 @@ public class LogicalTriggersIntegrationTest {
         PossibilityTrigger triggerCelle = new PossibilityTrigger.TalkInputText(
                 new PossibilityTrigger.Id(), talkInputId, "Celle", PossibilityTrigger.TalkInputText.MatchType.ALMOST_EQUALS);
         PossibilityTrigger triggerOr = new PossibilityTrigger.Or(new PossibilityTrigger.Id(), List.of(triggerLosof, triggerCelle));
-        Consequence consequenceWrongArtist = new Consequence.ScenarioTarget(new Consequence.Id(), targetWrongArtist, ScenarioSessionState.SUCCESS);
+        Consequence consequenceWrongArtist = new Consequence.ScenarioTarget(new Consequence.Id(), targetWrongArtist, ScenarioState.SUCCESS);
         Possibility possibilityWrongArtist = new Possibility(triggerOr, List.of(consequenceWrongArtist));
 
         // Possibility 3: NOT(ALMOST_EQUALS "Golu") AND NOT(OR("Losof", "Celle")) -> UNKNOWN
@@ -157,7 +157,7 @@ public class LogicalTriggersIntegrationTest {
         PossibilityTrigger triggerNotCelle = new PossibilityTrigger.TalkInputText(
                 new PossibilityTrigger.Id(), talkInputId, "Celle", PossibilityTrigger.TalkInputText.MatchType.COMPLETELY_DIFFERENT);
         PossibilityTrigger triggerAnd = new PossibilityTrigger.And(new PossibilityTrigger.Id(), List.of(triggerNotGolu, triggerNotLosof, triggerNotCelle));
-        Consequence consequenceUnknown = new Consequence.ScenarioTarget(new Consequence.Id(), targetUnknown, ScenarioSessionState.SUCCESS);
+        Consequence consequenceUnknown = new Consequence.ScenarioTarget(new Consequence.Id(), targetUnknown, ScenarioState.SUCCESS);
         Possibility possibilityUnknown = new Possibility(triggerAnd, List.of(consequenceUnknown));
 
         // Step with all genericPossibilities
@@ -306,7 +306,7 @@ public class LogicalTriggersIntegrationTest {
         PossibilityTrigger innerTrigger = new PossibilityTrigger.TalkInputText(
                 new PossibilityTrigger.Id(), notTalkId, "secret", PossibilityTrigger.TalkInputText.MatchType.EQUALS);
         PossibilityTrigger notTrigger = new PossibilityTrigger.Not(new PossibilityTrigger.Id(), innerTrigger);
-        Consequence consequence = new Consequence.ScenarioTarget(new Consequence.Id(), notTargetId, ScenarioSessionState.SUCCESS);
+        Consequence consequence = new Consequence.ScenarioTarget(new Consequence.Id(), notTargetId, ScenarioState.SUCCESS);
         Possibility possibility = new Possibility(notTrigger, List.of(consequence));
 
         ScenarioConfig.Step step = new ScenarioConfig.Step(notStepId, new I18n(Map.of(Language.FR, "Test NOT")),

@@ -6,10 +6,10 @@ import fr.plop.contexts.game.instance.core.domain.model.GamePlayer;
 import java.util.HashMap;
 import java.util.Map;
 
-public record ScenarioSession(ScenarioConfig config, Map<GamePlayer.Id, ScenarioSessionPlayer> byPlayers) {
+public record ScenarioInstance(ScenarioConfig config, Map<GamePlayer.Id, ScenarioInstancePlayer> byPlayers) {
 
-    public static ScenarioSession build(ScenarioConfig config) {
-        return new ScenarioSession(config, new HashMap<>());
+    public static ScenarioInstance build(ScenarioConfig config) {
+        return new ScenarioInstance(config, new HashMap<>());
     }
 
 

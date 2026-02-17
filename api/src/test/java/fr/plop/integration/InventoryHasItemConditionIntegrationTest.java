@@ -18,7 +18,7 @@ import fr.plop.contexts.game.config.template.domain.usecase.TemplateInitUseCase;
 import fr.plop.contexts.game.instance.core.domain.port.GameInstanceClearPort;
 import fr.plop.contexts.game.instance.core.presenter.GameInstanceController;
 import fr.plop.contexts.game.instance.push.PushPort;
-import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioSessionState;
+import fr.plop.contexts.game.instance.scenario.domain.model.ScenarioState;
 import fr.plop.contexts.game.instance.talk.GameInstanceTalkController;
 import fr.plop.generic.enumerate.Priority;
 import fr.plop.generic.position.Point;
@@ -166,7 +166,7 @@ public class InventoryHasItemConditionIntegrationTest {
                 new PossibilityTrigger.SpaceGoIn(new PossibilityTrigger.Id(), SPACE_TREASURE_ID),
                 List.of(
                         new Consequence.InventoryAddItem(new Consequence.Id(), ITEM_KEY_ID),
-                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_FIND_KEY_ID, ScenarioSessionState.SUCCESS)
+                        new Consequence.ScenarioTarget(new Consequence.Id(), TARGET_FIND_KEY_ID, ScenarioState.SUCCESS)
                 )
         );
 
